@@ -61,10 +61,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     .gte('paid_at', startOfMonth.toISOString())
 
   const revenueThisMonth = (paymentsData || []).reduce((sum, payment) => {
-    const amount = typeof (payment as { deposit_amount: string | number | null }).deposit_amount === 'string'
-      ? parseFloat((payment as { deposit_amount: string }).deposit_amount)
-      : ((payment as { deposit_amount: number | null }).deposit_amount ?? 0)
-    return sum + amount
+    // numeric : PostgREST le renvoie en nombre, Number() couvre aussi une éventuelle chaîne
+    return sum + Number(payment.deposit_amount ?? 0)
   }, 0)
 
   return {

@@ -79,8 +79,8 @@ export default async function AgenciesPage() {
                             </p>
                           </div>
                         </div>
-                        <Badge variant={reminderPriorityBadgeVariants[reminder.priority]}>
-                          {reminderPriorityLabels[reminder.priority]}
+                        <Badge variant={reminderPriorityBadgeVariants[reminder.priority ?? 'medium']}>
+                          {reminderPriorityLabels[reminder.priority ?? 'medium']}
                         </Badge>
                       </Link>
                     )

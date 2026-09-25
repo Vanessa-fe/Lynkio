@@ -54,8 +54,8 @@ export function ContactForm({ contact, statuses, sources, onSuccess }: ContactFo
           city: contact.city ?? '',
           sourceId: contact.source_id ?? undefined,
           statusId: contact.status_id ?? undefined,
-          favorite: contact.favorite,
-          riskLevel: contact.risk_level,
+          favorite: contact.favorite ?? false,
+          riskLevel: contact.risk_level ?? 'normal',
           notes: contact.notes ?? '',
         }
       : {

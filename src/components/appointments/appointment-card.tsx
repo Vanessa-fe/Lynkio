@@ -27,8 +27,8 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h4 className="font-semibold">{appointment.title}</h4>
-            <Badge className={appointmentStatusColors[appointment.status]}>
-              {appointmentStatusLabels[appointment.status]}
+            <Badge className={appointmentStatusColors[appointment.status ?? 'scheduled']}>
+              {appointmentStatusLabels[appointment.status ?? 'scheduled']}
             </Badge>
           </div>
 

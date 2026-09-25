@@ -50,19 +50,38 @@ export type UpdateAgency = Database['public']['Tables']['agencies']['Update']
 export type UpdateAgencyInteraction = Database['public']['Tables']['agency_interactions']['Update']
 
 // Types énumérés
-export type RiskLevel = Contact['risk_level']
-export type ChannelType = ContactChannel['channel_type']
-export type InteractionType = Interaction['type']
-export type InteractionDirection = NonNullable<Interaction['direction']>
-export type AppointmentStatus = Appointment['status']
-export type PaymentMethod = NonNullable<Payment['payment_method']>
-export type PaymentStatus = Payment['payment_status']
-export type ReminderPriority = Reminder['priority']
-export type SizeRange = NonNullable<Agency['size_range']>
-export type SignalType = NonNullable<Agency['signal_type']>
-export type PreferredChannel = NonNullable<Agency['preferred_channel']>
-export type AgencyInteractionType = AgencyInteraction['type']
-export type AgencyInteractionDirection = NonNullable<AgencyInteraction['direction']>
+// Les types générés par Supabase ne connaissent pas les contraintes CHECK
+// (ces colonnes y sont de simples `string | null`) : les valeurs possibles
+// sont donc déclarées ici.
+export type RiskLevel = 'normal' | 'monitor' | 'insistent' | 'blocked'
+export type ChannelType =
+  | 'whatsapp'
+  | 'sms'
+  | 'telegram'
+  | 'signal'
+  | 'phone'
+  | 'instagram'
+  | 'email'
+  | 'website'
+  | 'other'
+export type InteractionType =
+  | 'message'
+  | 'call_incoming'
+  | 'call_outgoing'
+  | 'call_missed'
+  | 'note'
+  | 'reminder'
+  | 'system_event'
+export type InteractionDirection = 'incoming' | 'outgoing'
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'check' | 'paypal' | 'other'
+export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'refunded'
+export type ReminderPriority = 'low' | 'medium' | 'high'
+export type SizeRange = '1-5' | '6-15' | '16-50' | '50+'
+export type SignalType = 'job_posting_dev' | 'nextjs_portfolio' | 'ai_offer' | 'other'
+export type PreferredChannel = 'email' | 'linkedin' | 'phone' | 'other'
+export type AgencyInteractionType = InteractionType
+export type AgencyInteractionDirection = InteractionDirection
 
 // Types composés pour les vues avec relations
 export type ContactWithRelations = Contact & {

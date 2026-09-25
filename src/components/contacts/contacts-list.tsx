@@ -330,7 +330,7 @@ export function ContactsList({ contacts, statuses, sources, totalCount }: Contac
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {riskLevelIcons[contact.risk_level]}
+                      {riskLevelIcons[contact.risk_level ?? 'normal']}
                       <span className="text-sm">
                         {contact.risk_level === 'normal' && 'Normal'}
                         {contact.risk_level === 'monitor' && 'À surveiller'}
@@ -349,7 +349,7 @@ export function ContactsList({ contacts, statuses, sources, totalCount }: Contac
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleToggleFavorite(contact.id, contact.favorite)}
+                        onClick={() => handleToggleFavorite(contact.id, contact.favorite ?? false)}
                       >
                         <Star
                           className={`w-4 h-4 ${contact.favorite ? 'fill-yellow-400 text-yellow-400' : ''}`}

@@ -52,9 +52,11 @@ export function RecentContacts({ contacts }: RecentContactsProps) {
                         Favori
                       </Badge>
                     )}
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(contact.created_at), 'dd MMM yyyy', { locale: fr })}
-                    </p>
+                    {contact.created_at && (
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(contact.created_at), 'dd MMM yyyy', { locale: fr })}
+                      </p>
+                    )}
                   </div>
                 </Link>
               )

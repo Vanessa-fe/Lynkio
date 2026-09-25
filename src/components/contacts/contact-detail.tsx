@@ -174,7 +174,7 @@ export function ContactDetail({ contact, interactions, appointments, payments }:
                 <CardDescription className="text-lg mt-1">&ldquo;{contact.nickname}&rdquo;</CardDescription>
               )}
             </div>
-            {riskLevelIcons[contact.risk_level]}
+            {riskLevelIcons[contact.risk_level ?? 'normal']}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -248,11 +248,11 @@ export function ContactDetail({ contact, interactions, appointments, payments }:
           {contact.risk_level !== 'normal' && (
             <div className="p-4 rounded-lg bg-muted">
               <div className="flex items-start gap-3">
-                {riskLevelIcons[contact.risk_level]}
+                {riskLevelIcons[contact.risk_level ?? 'normal']}
                 <div>
-                  <p className="font-semibold">{riskLevelLabels[contact.risk_level]}</p>
+                  <p className="font-semibold">{riskLevelLabels[contact.risk_level ?? 'normal']}</p>
                   <p className="text-sm text-muted-foreground">
-                    {riskLevelDescriptions[contact.risk_level]}
+                    {riskLevelDescriptions[contact.risk_level ?? 'normal']}
                   </p>
                 </div>
               </div>
@@ -272,12 +272,14 @@ export function ContactDetail({ contact, interactions, appointments, payments }:
 
           {/* Dates */}
           <div className="flex flex-wrap gap-6 text-sm text-muted-foreground border-t pt-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>
-                Créé le {format(new Date(contact.created_at), 'dd MMMM yyyy', { locale: fr })}
-              </span>
-            </div>
+            {contact.created_at && (
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                <span>
+                  Créé le {format(new Date(contact.created_at), 'dd MMMM yyyy', { locale: fr })}
+                </span>
+              </div>
+            )}
             {contact.last_interaction_at && (
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4" />
@@ -366,7 +368,7 @@ export function ContactDetail({ contact, interactions, appointments, payments }:
                       <div>
                         <p className="font-medium">{amount.toFixed(2)} €</p>
                         <p className="text-sm text-muted-foreground">
-                          {paymentStatusLabels[payment.payment_status]}
+                          {paymentStatusLabels[payment.payment_status ?? 'pending']}
                           {payment.payment_method && ` - ${paymentMethodLabels[payment.payment_method]}`}
                         </p>
                         {depositAmount > 0 && (

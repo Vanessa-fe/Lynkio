@@ -148,8 +148,8 @@ export function PaymentsList({ payments, totalCount, contactId }: PaymentsListPr
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge className={paymentStatusColors[payment.payment_status]}>
-                            {paymentStatusLabels[payment.payment_status]}
+                          <Badge className={paymentStatusColors[payment.payment_status ?? 'pending']}>
+                            {paymentStatusLabels[payment.payment_status ?? 'pending']}
                           </Badge>
                           {payment.payment_method && (
                             <Badge variant="outline">

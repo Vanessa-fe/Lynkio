@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { ReminderWithRelations } from '@/types'
+import type { ReminderPriority, ReminderWithRelations } from '@/types'
 
 const REMINDER_SELECT = `
   *,
@@ -12,7 +12,7 @@ export async function getReminders(options?: {
   offset?: number
   contactId?: string
   agencyId?: string
-  priority?: string
+  priority?: ReminderPriority
   includeCompleted?: boolean
 }): Promise<ReminderWithRelations[]> {
   const supabase = await createClient()
@@ -104,7 +104,7 @@ export async function getAgencyReminders(agencyId: string): Promise<ReminderWith
 export async function getRemindersCount(options?: {
   contactId?: string
   agencyId?: string
-  priority?: string
+  priority?: ReminderPriority
   includeCompleted?: boolean
 }): Promise<number> {
   const supabase = await createClient()

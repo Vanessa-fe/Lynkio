@@ -98,7 +98,7 @@ export function RemindersList({ reminders, totalCount, contactId, agencyId }: Re
     (groups, reminder) => {
       const urgency = getReminderUrgency(
         new Date(reminder.due_at),
-        reminder.priority,
+        reminder.priority ?? 'medium',
         reminder.completed_at ? new Date(reminder.completed_at) : null
       )
       if (!groups[urgency]) {
@@ -212,9 +212,9 @@ export function RemindersList({ reminders, totalCount, contactId, agencyId }: Re
                                 </h4>
                               </div>
                               <Badge
-                                variant={reminderPriorityBadgeVariants[reminder.priority]}
+                                variant={reminderPriorityBadgeVariants[reminder.priority ?? 'medium']}
                               >
-                                {reminderPriorityLabels[reminder.priority]}
+                                {reminderPriorityLabels[reminder.priority ?? 'medium']}
                               </Badge>
                             </div>
 

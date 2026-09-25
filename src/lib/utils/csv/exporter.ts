@@ -14,7 +14,7 @@ export function exportContactsToCSV(contacts: Contact[]): string {
     favorite: contact.favorite ? 'Oui' : 'Non',
     risk_level: contact.risk_level,
     notes: contact.notes || '',
-    created_at: format(new Date(contact.created_at), 'yyyy-MM-dd HH:mm:ss'),
+    created_at: contact.created_at ? format(new Date(contact.created_at), 'yyyy-MM-dd HH:mm:ss') : '',
     last_interaction_at: contact.last_interaction_at
       ? format(new Date(contact.last_interaction_at), 'yyyy-MM-dd HH:mm:ss')
       : '',
@@ -38,7 +38,7 @@ export function exportAppointmentsToCSV(appointments: Appointment[]): string {
     reminder_at: appointment.reminder_at
       ? format(new Date(appointment.reminder_at), 'yyyy-MM-dd HH:mm:ss')
       : '',
-    created_at: format(new Date(appointment.created_at), 'yyyy-MM-dd HH:mm:ss'),
+    created_at: appointment.created_at ? format(new Date(appointment.created_at), 'yyyy-MM-dd HH:mm:ss') : '',
   }))
 
   return Papa.unparse(data, {
@@ -65,7 +65,7 @@ export function exportPaymentsToCSV(payments: Payment[]): string {
         ? format(new Date(payment.paid_at), 'yyyy-MM-dd HH:mm:ss')
         : '',
       notes: payment.notes || '',
-      created_at: format(new Date(payment.created_at), 'yyyy-MM-dd HH:mm:ss'),
+      created_at: payment.created_at ? format(new Date(payment.created_at), 'yyyy-MM-dd HH:mm:ss') : '',
     }
   })
 

@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import type { PaymentWithRelations } from '@/types'
+import type { PaymentStatus, PaymentWithRelations } from '@/types'
 
 export async function getPayments(options?: {
   limit?: number
   offset?: number
   contactId?: string
   appointmentId?: string
-  paymentStatus?: string
+  paymentStatus?: PaymentStatus
 }): Promise<PaymentWithRelations[]> {
   const supabase = await createClient()
 
@@ -104,7 +104,7 @@ export async function getAppointmentPayments(appointmentId: string): Promise<Pay
 
 export async function getPaymentsCount(options?: {
   contactId?: string
-  paymentStatus?: string
+  paymentStatus?: PaymentStatus
 }): Promise<number> {
   const supabase = await createClient()
 
@@ -165,10 +165,8 @@ export async function getTotalRevenue(): Promise<number> {
   }
 
   return (data || []).reduce((sum, payment) => {
-    const amount = typeof (payment as { deposit_amount: string | number | null }).deposit_amount === 'string'
-      ? parseFloat((payment as { deposit_amount: string }).deposit_amount)
-      : ((payment as { deposit_amount: number | null }).deposit_amount ?? 0)
-    return sum + amount
+    // numeric : PostgREST le renvoie en nombre, Number() couvre aussi une éventuelle chaîne
+    return sum + Number(payment.deposit_amount ?? 0)
   }, 0)
 }
 
@@ -201,9 +199,7 @@ export async function getRevenueThisMonth(): Promise<number> {
   }
 
   return (data || []).reduce((sum, payment) => {
-    const amount = typeof (payment as { deposit_amount: string | number | null }).deposit_amount === 'string'
-      ? parseFloat((payment as { deposit_amount: string }).deposit_amount)
-      : ((payment as { deposit_amount: number | null }).deposit_amount ?? 0)
-    return sum + amount
+    // numeric : PostgREST le renvoie en nombre, Number() couvre aussi une éventuelle chaîne
+    return sum + Number(payment.deposit_amount ?? 0)
   }, 0)
 }

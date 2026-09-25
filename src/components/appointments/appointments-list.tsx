@@ -198,7 +198,7 @@ export function AppointmentsList({ appointments, totalCount }: AppointmentsListP
                                 )}
                               </div>
                               <Select
-                                value={appointment.status}
+                                value={appointment.status ?? 'scheduled'}
                                 onValueChange={(value) => handleStatusChange(appointment.id, value)}
                               >
                                 <SelectTrigger className="w-[140px]">

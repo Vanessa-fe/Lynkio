@@ -283,12 +283,14 @@ export function AgencyDetail({ agency, interactions, reminders }: AgencyDetailPr
 
           {/* Dates */}
           <div className="flex flex-wrap gap-6 text-sm text-muted-foreground border-t pt-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>
-                Créée le {format(new Date(agency.created_at), 'dd MMMM yyyy', { locale: fr })}
-              </span>
-            </div>
+            {agency.created_at && (
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                <span>
+                  Créée le {format(new Date(agency.created_at), 'dd MMMM yyyy', { locale: fr })}
+                </span>
+              </div>
+            )}
             {agency.last_interaction_at && (
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4" />

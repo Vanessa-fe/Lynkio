@@ -55,8 +55,8 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
                       </div>
                     </div>
                   </div>
-                  <Badge className={appointmentStatusColors[appointment.status]}>
-                    {appointmentStatusLabels[appointment.status]}
+                  <Badge className={appointmentStatusColors[appointment.status ?? 'scheduled']}>
+                    {appointmentStatusLabels[appointment.status ?? 'scheduled']}
                   </Badge>
                 </Link>
               )
