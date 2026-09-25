@@ -89,6 +89,13 @@ npm run supabase:generate-types
 
 Rien ne change pour l'application actuelle : les nouvelles tables sont vides et non utilisées.
 
+### Étape 2 bis : un seul métier au lancement (00011)
+
+On valide le produit avec les développeur·ses web avant d'ouvrir les autres métiers :
+`professions.is_active` passe à `FALSE` pour tous les autres. Ils restent en base avec leurs signaux
+et leurs critères d'ICP ; pour en rouvrir un, il suffit de repasser `is_active` à `TRUE`.
+Tant qu'un seul métier est actif, l'onboarding le présélectionne.
+
 ### Étape 3 : basculer l'application
 
 Dans cet ordre, une branche Git par point :
@@ -103,7 +110,7 @@ Dans cet ordre, une branche Git par point :
 4. **Paramètres** : étapes et sources sur `pipeline_stages` / `lead_sources` ; nouvel écran ICP.
 5. **Import / export, tableau de bord, relances** sur le nouveau modèle.
 
-### Étape 4 : supprimer l'ancien modèle (00011, « contract »)
+### Étape 4 : supprimer l'ancien modèle (00012, « contract »)
 
 Une fois plus aucun code ne référence les anciennes tables : suppression de `contacts`,
 `contact_*`, `interactions`, `appointments`, `payments`, `agencies`, `agency_*`,

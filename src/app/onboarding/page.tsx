@@ -16,6 +16,8 @@ export default async function OnboardingPage() {
   }
 
   const hasValidTheme = THEMES.some((theme) => theme.id === profile.selected_theme)
+  // Tant qu'un seul métier est ouvert, il est présélectionné
+  const onlyProfessionKey = professions.length === 1 ? professions[0]?.key : undefined
 
   return (
     <OnboardingForm
@@ -23,7 +25,7 @@ export default async function OnboardingPage() {
       defaultValues={{
         firstName: profile.first_name ?? undefined,
         businessName: profile.business_name ?? undefined,
-        professionKey: profile.profession_key ?? undefined,
+        professionKey: profile.profession_key ?? onlyProfessionKey,
         selectedTheme: hasValidTheme && profile.selected_theme ? profile.selected_theme : undefined,
       }}
       isReturningUser={profile.onboarding_completed === true}
