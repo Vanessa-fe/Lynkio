@@ -26,11 +26,11 @@ import {
   User,
   Mail,
   Phone,
-  Linkedin,
   Tag,
   FileText,
   Zap,
 } from 'lucide-react'
+import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { AgencyInteractionsTimeline } from './agency-interactions-timeline'
@@ -248,7 +248,7 @@ export function AgencyDetail({ agency, interactions, reminders }: AgencyDetailPr
                 )}
                 {agency.contact_linkedin_url && (
                   <div className="flex items-center gap-3">
-                    <Linkedin className="w-5 h-5 text-muted-foreground" />
+                    <LinkedinIcon className="w-5 h-5 text-muted-foreground" />
                     <a
                       href={agency.contact_linkedin_url}
                       target="_blank"

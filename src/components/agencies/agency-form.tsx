@@ -26,7 +26,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { AgencyWithRelations, AgencyStatus, AgencySource } from '@/types'
-import { Loader2, Search, UserSearch, Linkedin } from 'lucide-react'
+import { Loader2, Search, UserSearch } from 'lucide-react'
+import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 
 type ContactCandidate = {
   name: string | null
@@ -519,7 +520,7 @@ export function AgencyForm({ agency, statuses, sources, onSuccess }: AgencyFormP
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Linkedin className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                            <LinkedinIcon className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                           </a>
                         )}
                       </div>

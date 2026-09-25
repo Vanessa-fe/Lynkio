@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { Palette, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,15 +13,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { themes, getStoredTheme, setStoredTheme } from '@/lib/themes'
 
-export function ThemeSelector() {
-  const [currentTheme, setCurrentTheme] = useState('blue')
-  const [mounted, setMounted] = useState(false)
+const subscribeNoop = () => () => {}
 
-  useEffect(() => {
-    setMounted(true)
-    const stored = getStoredTheme()
-    setCurrentTheme(stored)
-  }, [])
+export function ThemeSelector() {
+  // false au rendu serveur, true côté client : évite un décalage d'hydratation
+  const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false)
+  const [selectedTheme, setCurrentTheme] = useState<string | null>(null)
+  const currentTheme = selectedTheme ?? (mounted ? getStoredTheme() : 'blue')
 
   const handleThemeChange = (themeName: string) => {
     setCurrentTheme(themeName)
