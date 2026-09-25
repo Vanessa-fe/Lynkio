@@ -14,7 +14,8 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  if (!profile.onboarding_completed) {
+  // Les comptes créés avant le choix du métier repassent par l'onboarding
+  if (!profile.onboarding_completed || !profile.profession_key) {
     redirect('/onboarding')
   }
 

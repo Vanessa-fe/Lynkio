@@ -41,16 +41,24 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       }
     }
 
-    // Mettre à jour le profil
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .single()
+
+    const isFirstOnboarding = !profile?.onboarding_completed
+
+    // 1. Profil et métier. Le métier doit être enregistré avant l'initialisation :
+    //    le premier ICP est copié depuis ses critères par défaut.
     const { error: updateError } = await supabase
       .from('user_profiles')
       .update({
         first_name: validated.firstName,
         business_name: validated.businessName,
-        business_type: validated.businessType,
+        profession_key: validated.professionKey,
         selected_theme: validated.selectedTheme,
-        onboarding_completed: true,
-      } as never)
+      })
       .eq('id', user.id)
 
     if (updateError) {
@@ -60,15 +68,43 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       }
     }
 
-    // Initialiser les statuts et sources par défaut
-    const { error: initError } = await supabase
-      .rpc('initialize_user_defaults', {
+    // 2. Ancien modèle (contacts, agences), toujours utilisé par l'application.
+    //    Seulement au premier passage : la fonction n'est pas idempotente.
+    if (isFirstOnboarding) {
+      const { error: legacyInitError } = await supabase.rpc('initialize_user_defaults', {
         target_user_id: user.id,
-      } as never)
+      })
+
+      if (legacyInitError) {
+        console.error('Error initializing user defaults:', legacyInitError)
+        // On ne bloque pas l'onboarding même si cette étape échoue
+      }
+    }
+
+    // 3. Nouveau modèle : étapes du pipeline, sources, premier ICP (idempotente)
+    const { error: initError } = await supabase.rpc('initialize_prospection_defaults')
 
     if (initError) {
-      console.error('Error initializing user defaults:', initError)
-      // On ne bloque pas l'onboarding même si cette étape échoue
+      console.error('Error initializing prospection defaults:', initError)
+      return {
+        success: false,
+        error: 'Impossible de préparer votre espace de prospection, réessayez',
+      }
+    }
+
+    // 4. Onboarding terminé seulement une fois tout initialisé
+    if (isFirstOnboarding) {
+      const { error: completeError } = await supabase
+        .from('user_profiles')
+        .update({ onboarding_completed: true })
+        .eq('id', user.id)
+
+      if (completeError) {
+        return {
+          success: false,
+          error: 'Impossible de sauvegarder votre profil',
+        }
+      }
     }
   } catch (error) {
     return {

@@ -18,6 +18,7 @@ export type AgencyStatus = Database['public']['Tables']['agency_statuses']['Row'
 export type AgencySource = Database['public']['Tables']['agency_sources']['Row']
 export type Agency = Database['public']['Tables']['agencies']['Row']
 export type AgencyInteraction = Database['public']['Tables']['agency_interactions']['Row']
+export type Profession = Database['public']['Tables']['professions']['Row']
 
 // Types d'insertion
 export type InsertUserProfile = Database['public']['Tables']['user_profiles']['Insert']

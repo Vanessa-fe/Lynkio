@@ -13,10 +13,10 @@ export const onboardingSchema = z.object({
     .string()
     .min(1, 'Le nom de l\'activité est requis')
     .max(100, 'Le nom de l\'activité est trop long'),
-  businessType: z
-    .string()
-    .min(1, 'Le type d\'activité est requis')
-    .max(100, 'Le type d\'activité est trop long'),
+  // Clé d'une ligne de la table professions ; la clé étrangère vérifie qu'elle existe
+  professionKey: z
+    .string({ required_error: 'Choisissez votre métier' })
+    .regex(/^[a-z][a-z0-9_]*$/, 'Choisissez votre métier'),
   selectedTheme: z
     .string()
     .min(1, 'Le thème est requis')
