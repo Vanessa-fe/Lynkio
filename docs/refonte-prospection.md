@@ -136,7 +136,17 @@ Dans cet ordre, une branche Git par point :
    - tableau de bord : pistes en cours, nouvelles de la semaine (dont Sophie), relances en retard,
      taux de réussite (gagnées / tranchées), « À faire aujourd'hui », meilleures opportunités
      (en cours, jamais contactées, par score), pipeline par étape, dernière recherche de Sophie.
-   **Reste à faire** : import / export sur le nouveau modèle.
+6. ✅ **Import / export** des entreprises (`/import-export`, bouton sur la liste des entreprises) :
+   - import CSV (« ; » ou « , », 1 000 lignes au plus) : intitulés courants reconnus (Entreprise,
+     Société, SIRET, E-mail…), SIRET ramené au SIREN, un contact facultatif par ligne ;
+   - aperçu avant import : lignes prêtes, doublons (SIREN, domaine du site ou nom, déjà suivis ou
+     répétés dans le fichier) et erreurs, avec leur motif. L'import refait l'analyse côté serveur ;
+   - entreprises créées avec l'origine « import », dans l'étape par défaut, score calculé par la base ;
+     contacts avec `data_source = 'import'`, sans doublon d'e-mail ;
+   - export CSV pour Excel (« ; », BOM UTF-8, cellules protégées contre l'injection de formules) :
+     étape, score, signaux en cours, contact principal (jamais un contact opposé à la prospection).
+     Un fichier exporté se réimporte tel quel ; un modèle avec une ligne d'exemple est téléchargeable.
+   L'ancien import / export des contacts n'est plus accessible ; son code part à l'étape 4.
 
 ### Étape 4 : supprimer l'ancien modèle (00018, « contract »)
 
