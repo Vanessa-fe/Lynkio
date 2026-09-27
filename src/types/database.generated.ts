@@ -1473,6 +1473,10 @@ export type Database = {
       }
       rescore_companies_with_expired_signals: { Args: never; Returns: number }
       score_company: { Args: { p_company_id: string }; Returns: undefined }
+      sync_tech_stack_signal: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { technologyLabel } from '@/lib/constants/technologies'
 import {
   Select,
   SelectContent,
@@ -45,6 +46,9 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
   const [duplicateId, setDuplicateId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  // La stack n'est enregistrée que si une analyse a vraiment eu lieu dans ce formulaire :
+  // sinon, chaque enregistrement la marquait « analysée » à la date du jour
+  const [hasAnalyzed, setHasAnalyzed] = useState(false)
 
   const isEditing = !!company
   const defaultStage = stages.find((stage) => stage.is_default) ?? stages[0]
@@ -96,7 +100,7 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
     setIsAnalyzing(true)
 
     try {
-      const response = await fetch('/api/agencies/detect-stack', {
+      const response = await fetch('/api/companies/detect-stack', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: toWebsiteUrl(website) }),
@@ -113,10 +117,11 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
       }
 
       setValue('detectedStack', result.detected ?? [])
+      setHasAnalyzed(true)
       toast({
         title: 'Analyse terminée',
         description: result.detected?.length
-          ? `Technologies détectées : ${result.detected.join(', ')}`
+          ? `Technologies détectées : ${result.detected.map(technologyLabel).join(', ')}`
           : 'Aucune technologie reconnue',
       })
     } catch {
@@ -135,7 +140,9 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
     setDuplicateId(null)
     setIsLoading(true)
 
-    const result = isEditing ? await updateCompany(company.id, data) : await createCompany(data)
+    const { detectedStack, ...fields } = data
+    const payload = hasAnalyzed ? { ...fields, detectedStack } : fields
+    const result = isEditing ? await updateCompany(company.id, payload) : await createCompany(payload)
 
     setIsLoading(false)
 
@@ -210,7 +217,7 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
                 <div className="flex flex-wrap gap-1 pt-1">
                   {detectedStack.map((tech) => (
                     <Badge key={tech} variant="secondary">
-                      {tech}
+                      {technologyLabel(tech)}
                     </Badge>
                   ))}
                 </div>

@@ -15,6 +15,8 @@ import {
   FileText,
   Globe,
   Hash,
+  Loader2,
+  ScanSearch,
   MapPin,
   MessageSquare,
   Tag,
@@ -25,7 +27,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { deleteCompany } from '@/lib/actions/companies'
+import { analyzeCompanyWebsite, deleteCompany } from '@/lib/actions/companies'
+import { technologyLabel } from '@/lib/constants/technologies'
 import { companyAge, sizeCategoryLabels, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import type {
@@ -196,22 +199,8 @@ export function CompanyDetail({
             )}
           </dl>
 
-          {company.detected_stack.length > 0 && (
-            <div>
-              <p className="font-semibold mb-2">Stack technique détectée</p>
-              <div className="flex flex-wrap gap-2">
-                {company.detected_stack.map((tech) => (
-                  <Badge key={tech} variant="secondary">
-                    {tech}
-                  </Badge>
-                ))}
-              </div>
-              {company.stack_detected_at && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Analysé le {format(new Date(company.stack_detected_at), 'dd MMMM yyyy', { locale: fr })}
-                </p>
-              )}
-            </div>
+          {(company.website || company.detected_stack.length > 0) && (
+            <CompanyStack company={company} />
           )}
 
           {company.notes && (
@@ -297,6 +286,74 @@ export function CompanyDetail({
       </Card>
 
       <CompanyInteractions companyId={company.id} contacts={contacts} interactions={interactions} />
+    </div>
+  )
+}
+
+/**
+ * Stack technique du site. L'analyse est enregistrée : si une technologie de votre
+ * client idéal est détectée, la base ajoute le signal « Stack technique compatible ».
+ */
+function CompanyStack({ company }: { company: CompanyWithRelations }) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true)
+    const result = await analyzeCompanyWebsite(company.id)
+    setIsAnalyzing(false)
+
+    if (!result.success) {
+      toast({ variant: 'destructive', title: 'Analyse impossible', description: result.error })
+      return
+    }
+
+    const detected = result.data?.detected ?? []
+    toast({
+      title: 'Analyse terminée',
+      description: detected.length
+        ? `Technologies détectées : ${detected.map(technologyLabel).join(', ')}`
+        : 'Aucune technologie reconnue sur ce site',
+    })
+    router.refresh()
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <p className="font-semibold">Stack technique du site</p>
+        {company.website && (
+          <Button type="button" variant="outline" size="sm" onClick={handleAnalyze} disabled={isAnalyzing}>
+            {isAnalyzing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <ScanSearch className="w-4 h-4 mr-2" />
+            )}
+            {company.stack_detected_at ? 'Analyser à nouveau' : 'Analyser le site'}
+          </Button>
+        )}
+      </div>
+      {company.detected_stack.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {company.detected_stack.map((tech) => (
+            <Badge key={tech} variant="secondary">
+              {technologyLabel(tech)}
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {company.stack_detected_at
+            ? 'Aucune technologie reconnue lors de la dernière analyse.'
+            : 'Pas encore analysée.'}
+        </p>
+      )}
+      {company.stack_detected_at && (
+        <p className="text-xs text-muted-foreground mt-2">
+          Analysé le {format(new Date(company.stack_detected_at), 'dd MMMM yyyy', { locale: fr })}
+        </p>
+      )}
     </div>
   )
 }

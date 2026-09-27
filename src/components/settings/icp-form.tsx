@@ -24,6 +24,12 @@ import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { IcpProfile } from '@/types'
 import type { SignalWeightOption } from '@/lib/queries/icp'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  DETECTABLE_TECHNOLOGIES,
+  TECHNOLOGY_LABELS,
+  type DetectableTechnology,
+} from '@/lib/constants/technologies'
 
 interface IcpFormProps {
   icp: IcpProfile
@@ -45,6 +51,9 @@ function toFormValues(icp: IcpProfile, signals: SignalWeightOption[]): IcpInput 
       })
     ),
     excludeKeywords: criteria.exclude_keywords ?? [],
+    techStack: (criteria.tech_stack ?? []).filter((tech): tech is DetectableTechnology =>
+      (DETECTABLE_TECHNOLOGIES as readonly string[]).includes(tech)
+    ),
   }
 }
 
@@ -233,6 +242,49 @@ export function IcpForm({ icp, signals, companiesCount }: IcpFormProps) {
           {errors.signalWeights && (
             <p className="text-sm text-destructive">Vérifiez les points : entre 0 et {MAX_SIGNAL_WEIGHT}.</p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Technologies qui vous intéressent</CardTitle>
+          <CardDescription>
+            Quand l&apos;analyse du site d&apos;une entreprise en détecte une, Sophie ajoute le signal « Stack
+            technique compatible » à sa fiche.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Controller
+            name="techStack"
+            control={control}
+            render={({ field }) => (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {DETECTABLE_TECHNOLOGIES.map((tech) => {
+                  const checked = field.value.includes(tech)
+                  return (
+                    <div key={tech} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`tech-${tech}`}
+                        checked={checked}
+                        onCheckedChange={(value) =>
+                          field.onChange(
+                            value === true ? [...field.value, tech] : field.value.filter((item) => item !== tech)
+                          )
+                        }
+                        disabled={isSaving}
+                      />
+                      <Label htmlFor={`tech-${tech}`} className="font-normal">
+                        {TECHNOLOGY_LABELS[tech]}
+                      </Label>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          />
+          <p className="text-sm text-muted-foreground mt-3">
+            Vous pouvez aussi cocher WordPress ou Webflow si vous proposez des refontes de ces sites.
+          </p>
         </CardContent>
       </Card>
 

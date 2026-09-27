@@ -62,6 +62,7 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
       ...((icp.criteria ?? {}) as IcpCriteria),
       size_categories: sizeCategoriesFromFit(validated.sizeFit),
       exclude_keywords: validated.excludeKeywords,
+      tech_stack: validated.techStack,
     }
 
     const { error } = await supabase

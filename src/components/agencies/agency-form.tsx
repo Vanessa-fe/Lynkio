@@ -36,7 +36,7 @@ type ContactCandidate = {
   linkedinUrl: string | null
   confidence: number | null
   seniority: string | null
-  isTechLead: boolean
+  isTargetRole: boolean
 }
 
 interface AgencyFormProps {
@@ -510,8 +510,8 @@ export function AgencyForm({ agency, statuses, sources, onSuccess }: AgencyFormP
                         <span className="font-medium truncate">
                           {candidate.name || candidate.email}
                         </span>
-                        {candidate.isTechLead && (
-                          <Badge variant="default">Tech lead</Badge>
+                        {candidate.isTargetRole && (
+                          <Badge variant="default">Poste visé</Badge>
                         )}
                         {candidate.linkedinUrl && (
                           <a

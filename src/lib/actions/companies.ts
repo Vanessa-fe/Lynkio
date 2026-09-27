@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { StackDetectionError, detectStack } from '@/lib/detectors/stack'
 import {
   createCompanySchema,
   updateCompanySchema,
@@ -260,5 +261,59 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
   } catch (error) {
     console.error('Delete company error:', error)
     return { success: false, error: 'Une erreur est survenue lors de la suppression' }
+  }
+}
+
+/**
+ * Analyse le site d'une entreprise déjà enregistrée et garde le résultat.
+ * La base ajoute ou retire alors le signal « Stack technique compatible »
+ * (trigger sync_tech_stack_on_company_change) et recalcule le score.
+ */
+export async function analyzeCompanyWebsite(
+  companyId: string
+): Promise<ActionResult<{ detected: string[] }>> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Vous devez être connecté' }
+    }
+
+    const { data: company } = await supabase
+      .from('companies')
+      .select('website')
+      .eq('id', companyId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!company) return { success: false, error: 'Entreprise introuvable' }
+    if (!company.website) return { success: false, error: 'Renseignez d\'abord le site web de l\'entreprise' }
+
+    const result = await detectStack(company.website)
+
+    const { error } = await supabase
+      .from('companies')
+      .update({ detected_stack: result.detected, stack_detected_at: result.checkedAt })
+      .eq('id', companyId)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('Analyze company website error:', error)
+      return { success: false, error: 'Impossible d\'enregistrer l\'analyse' }
+    }
+
+    revalidatePath(`/companies/${companyId}`)
+    revalidatePath('/companies')
+    return { success: true, data: { detected: result.detected } }
+  } catch (error) {
+    if (error instanceof StackDetectionError) {
+      return { success: false, error: error.message }
+    }
+    console.error('Analyze company website error:', error)
+    return { success: false, error: 'Impossible d\'analyser le site' }
   }
 }

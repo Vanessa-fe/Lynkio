@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { sizeCategories, sizeCategoryLabels } from './company'
 import type { SizeCategory } from '@/types'
+import { DETECTABLE_TECHNOLOGIES } from '@/lib/constants/technologies'
 import type { Json } from '@/types/database'
 
 /**
@@ -31,6 +32,8 @@ export const icpSchema = z.object({
       .min(0, 'Pas de points négatifs')
       .max(MAX_SIGNAL_WEIGHT, `Au plus ${MAX_SIGNAL_WEIGHT} points par signal`)
   ),
+  // Technologies qui déclenchent le signal « Stack technique compatible »
+  techStack: z.array(z.enum(DETECTABLE_TECHNOLOGIES)).transform((technologies) => [...new Set(technologies)]),
   excludeKeywords: z
     .array(z.string().trim().toLowerCase().min(2, 'Mot-clé trop court').max(60, 'Mot-clé trop long'))
     .max(30, 'Au plus 30 mots-clés')
@@ -44,6 +47,7 @@ export type IcpCriteria = {
   countries?: string[]
   size_categories?: { preferred?: string[]; accepted?: string[] }
   exclude_keywords?: string[]
+  tech_stack?: string[]
   [key: string]: Json | undefined
 }
 

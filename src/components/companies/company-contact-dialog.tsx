@@ -25,14 +25,14 @@ import { createCompanyContact, updateCompanyContact } from '@/lib/actions/compan
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact } from '@/types'
 
-// Réponse de /api/agencies/find-contact (Hunter.io)
+// Réponse de /api/companies/find-contact (Hunter.io)
 type ContactCandidate = {
   name: string | null
   position: string | null
   email: string
   linkedinUrl: string | null
   confidence: number | null
-  isTechLead: boolean
+  isTargetRole: boolean
 }
 
 interface CompanyContactDialogProps {
@@ -108,7 +108,7 @@ export function CompanyContactDialog({
     setCandidates(null)
 
     try {
-      const response = await fetch('/api/agencies/find-contact', {
+      const response = await fetch('/api/companies/find-contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -147,7 +147,7 @@ export function CompanyContactDialog({
       setValue('lastName', rest.join(' '))
     }
     if (candidate.position) setValue('role', candidate.position)
-    if (candidate.isTechLead) setValue('isDecisionMaker', true)
+    if (candidate.isTargetRole) setValue('isDecisionMaker', true)
     setValue('email', candidate.email)
     setValue('emailSource', 'hunter')
     setValue('emailConfidence', candidate.confidence)
@@ -230,7 +230,7 @@ export function CompanyContactDialog({
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium truncate">{candidate.name || candidate.email}</span>
-                          {candidate.isTechLead && <Badge>Décideur tech</Badge>}
+                          {candidate.isTargetRole && <Badge>Poste visé</Badge>}
                           {candidate.linkedinUrl && (
                             <LinkedinIcon className="w-4 h-4 text-muted-foreground shrink-0" />
                           )}

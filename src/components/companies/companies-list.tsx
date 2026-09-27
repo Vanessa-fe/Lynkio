@@ -9,6 +9,7 @@ import { Search, Plus, Trash2, Eye, Globe, Building2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { technologyLabel } from '@/lib/constants/technologies'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
@@ -243,7 +244,7 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
                       {company.detected_stack.length > 0 ? (
                         company.detected_stack.map((tech) => (
                           <Badge key={tech} variant="outline" className="text-xs">
-                            {tech}
+                            {technologyLabel(tech)}
                           </Badge>
                         ))
                       ) : (

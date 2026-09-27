@@ -107,9 +107,18 @@ Dans cet ordre, une branche Git par point :
    Contacts, Agences, Rendez-vous, Paiements et Import / export sortent du menu, leurs pages restent
    accessibles jusqu'à l'étape 4. Les routes `/api/agencies/detect-stack` et `find-contact` sont
    réutilisées telles quelles par les écrans Entreprises.
-3. **Détecteurs existants** (et déplacement de leurs routes hors de `/api/agencies`) :
-   - `detect-stack` écrit `companies.detected_stack` et, si la stack correspond, un signal `tech_stack_match`.
-   - `find-contact` lit les postes à cibler dans `professions.target_roles` au lieu de `TECH_LEAD_KEYWORDS`.
+3. ✅ **Détecteurs existants** (00017), routes déplacées sous `/api/companies/` (les anciennes adresses
+   `/api/agencies/*` renvoient vers elles jusqu'à la suppression de l'ancien modèle) :
+   - analyse de site : logique dans `src/lib/detectors/stack.ts`. Redirections suivies à la main et
+     revérifiées une à une (un site public ne peut plus rediriger l'analyse vers une adresse interne),
+     protocoles autres que http(s) refusés. Bouton « Analyser le site » sur la fiche ;
+   - signal `tech_stack_match` créé, mis à jour ou retiré **par la base** (`sync_tech_stack_signal`)
+     dès que `companies.detected_stack` change ou que les technologies de l'ICP changent
+     (`criteria.tech_stack`, Next.js et React par défaut, réglable dans « Client idéal ») ;
+   - Hunter : postes à cibler lus dans `professions.target_roles` (+ équivalents anglais), badge
+     « Poste visé » ;
+   - correctif du score (00016) : un changement de score pouvait être ignoré quand plusieurs calculs
+     avaient lieu dans la même transaction (même `NOW()`).
 4. ✅ **Paramètres** : page « Étapes et sources » (`/settings/pipeline`) sur `pipeline_stages` /
    `lead_sources` : ajout, modification (nom, couleur, nature), ordre, étape d'arrivée des nouvelles
    entreprises (forcément « en cours »), suppression avec le nombre d'entreprises concernées (elles
@@ -129,7 +138,7 @@ Dans cet ordre, une branche Git par point :
      (en cours, jamais contactées, par score), pipeline par étape, dernière recherche de Sophie.
    **Reste à faire** : import / export sur le nouveau modèle.
 
-### Étape 4 : supprimer l'ancien modèle (00017, « contract »)
+### Étape 4 : supprimer l'ancien modèle (00018, « contract »)
 
 Une fois plus aucun code ne référence les anciennes tables : suppression de `contacts`,
 `contact_*`, `interactions`, `appointments`, `payments`, `agencies`, `agency_*`,
