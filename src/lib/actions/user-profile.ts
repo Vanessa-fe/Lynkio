@@ -68,20 +68,7 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       }
     }
 
-    // 2. Ancien modèle (contacts, agences), toujours utilisé par l'application.
-    //    Seulement au premier passage : la fonction n'est pas idempotente.
-    if (isFirstOnboarding) {
-      const { error: legacyInitError } = await supabase.rpc('initialize_user_defaults', {
-        target_user_id: user.id,
-      })
-
-      if (legacyInitError) {
-        console.error('Error initializing user defaults:', legacyInitError)
-        // On ne bloque pas l'onboarding même si cette étape échoue
-      }
-    }
-
-    // 3. Nouveau modèle : étapes du pipeline, sources, premier ICP (idempotente)
+    // 2. Espace de prospection : étapes du pipeline, sources, premier ICP (idempotente)
     const { error: initError } = await supabase.rpc('initialize_prospection_defaults')
 
     if (initError) {
@@ -92,7 +79,7 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       }
     }
 
-    // 4. Onboarding terminé seulement une fois tout initialisé
+    // 3. Onboarding terminé seulement une fois tout initialisé
     if (isFirstOnboarding) {
       const { error: completeError } = await supabase
         .from('user_profiles')
@@ -147,9 +134,6 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
     }
     if (validated.businessName !== undefined) {
       updateData.business_name = validated.businessName
-    }
-    if (validated.businessType !== undefined) {
-      updateData.business_type = validated.businessType
     }
     if (validated.selectedTheme !== undefined) {
       updateData.selected_theme = validated.selectedTheme

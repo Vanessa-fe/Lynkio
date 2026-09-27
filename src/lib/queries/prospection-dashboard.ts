@@ -58,7 +58,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
       supabase.from('pipeline_stages').select('id, name, color, kind').eq('user_id', user.id).order('order'),
       supabase
         .from('reminders')
-        .select('*, contact:contacts(*), agency:agencies(*), company:companies(id, name)')
+        .select('*, company:companies(id, name)')
         .eq('user_id', user.id)
         .is('completed_at', null)
         .lte('due_at', endOfToday.toISOString())

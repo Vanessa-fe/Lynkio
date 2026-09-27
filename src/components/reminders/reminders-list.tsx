@@ -24,7 +24,7 @@ import {
   getReminderUrgency,
   isReminderOverdue,
 } from '@/lib/validations/reminder'
-import { Clock, User, Building2, Trash2, AlertCircle } from 'lucide-react'
+import { Clock, Building2, Trash2, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ReminderFormDialog } from './reminder-form-dialog'
@@ -32,8 +32,6 @@ import { ReminderFormDialog } from './reminder-form-dialog'
 interface RemindersListProps {
   reminders: ReminderWithRelations[]
   totalCount: number
-  contactId?: string
-  agencyId?: string
   companyId?: string
   // Entreprises proposées à la création d'une relance (page Relances)
   companies?: { id: string; name: string }[]
@@ -42,8 +40,6 @@ interface RemindersListProps {
 export function RemindersList({
   reminders,
   totalCount,
-  contactId,
-  agencyId,
   companyId,
   companies,
 }: RemindersListProps) {
@@ -167,8 +163,6 @@ export function RemindersList({
           </Select>
 
           <ReminderFormDialog
-            contactId={contactId}
-            agencyId={agencyId}
             companyId={companyId}
             companies={companies}
           />
@@ -242,20 +236,6 @@ export function RemindersList({
                                 </span>
                               </div>
 
-                              {reminder.contact && (
-                                <div className="flex items-center gap-2">
-                                  <User className="w-4 h-4" />
-                                  <Link
-                                    href={`/contacts/${reminder.contact_id}`}
-                                    className="hover:underline"
-                                  >
-                                    {[reminder.contact.first_name, reminder.contact.last_name]
-                                      .filter(Boolean)
-                                      .join(' ') || 'Sans nom'}
-                                  </Link>
-                                </div>
-                              )}
-
                               {reminder.company && !companyId && (
                                 <div className="flex items-center gap-2">
                                   <Building2 className="w-4 h-4" />
@@ -264,18 +244,6 @@ export function RemindersList({
                                     className="hover:underline"
                                   >
                                     {reminder.company.name}
-                                  </Link>
-                                </div>
-                              )}
-
-                              {reminder.agency && (
-                                <div className="flex items-center gap-2">
-                                  <Building2 className="w-4 h-4" />
-                                  <Link
-                                    href={`/agencies/${reminder.agency_id}`}
-                                    className="hover:underline"
-                                  >
-                                    {reminder.agency.name}
                                   </Link>
                                 </div>
                               )}

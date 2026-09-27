@@ -26,26 +26,15 @@ export const reminderPriorityBadgeVariants: Record<
 }
 
 const baseReminderSchema = z.object({
-  contactId: z.string().uuid().optional().nullable(),
-  agencyId: z.string().uuid().optional().nullable(),
   companyId: z.string().uuid().optional().nullable(),
   title: z.string().min(1, 'Le titre est requis').max(200).trim(),
   dueAt: z.coerce.date(),
   priority: z.enum(reminderPriorities).default('medium'),
 })
 
-// Une relance vise au plus une cible (règle aussi garantie par la base)
-const singleTarget = (data: { contactId?: string | null; agencyId?: string | null; companyId?: string | null }) =>
-  [data.contactId, data.agencyId, data.companyId].filter(Boolean).length <= 1
+export const createReminderSchema = baseReminderSchema
 
-const singleTargetMessage = {
-  message: 'Une relance ne peut viser qu\'une seule entreprise, agence ou contact',
-  path: ['companyId'],
-}
-
-export const createReminderSchema = baseReminderSchema.refine(singleTarget, singleTargetMessage)
-
-export const updateReminderSchema = baseReminderSchema.partial().refine(singleTarget, singleTargetMessage)
+export const updateReminderSchema = baseReminderSchema.partial()
 
 export type CreateReminderInput = z.infer<typeof createReminderSchema>
 export type UpdateReminderInput = z.infer<typeof updateReminderSchema>

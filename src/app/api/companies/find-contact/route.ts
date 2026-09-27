@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { extractDomain } from '@/lib/validations/agency'
+import { toWebsiteDomain } from '@/lib/validations/company'
 
 const HUNTER_DOMAIN_SEARCH_URL = 'https://api.hunter.io/v2/domain-search'
 const HUNTER_EMAIL_FINDER_URL = 'https://api.hunter.io/v2/email-finder'
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Le site web est requis' }, { status: 400 })
     }
 
-    const domain = extractDomain(website)
+    const domain = toWebsiteDomain(website)
     const rolePatterns = await targetRolePatterns(supabase, user.id)
     if (!domain) {
       return NextResponse.json({ error: 'Impossible d\'extraire un nom de domaine de cette URL' }, { status: 400 })

@@ -33,8 +33,6 @@ import {
 import { Plus, Bell } from 'lucide-react'
 
 interface ReminderFormDialogProps {
-  contactId?: string
-  agencyId?: string
   companyId?: string
   // Sans cible imposée : entreprises proposées pendant la saisie
   companies?: { id: string; name: string }[]
@@ -64,8 +62,6 @@ function sameName(a: string, b: string) {
 }
 
 export function ReminderFormDialog({
-  contactId,
-  agencyId,
   companyId,
   companies,
   triggerVariant = 'default',
@@ -78,11 +74,9 @@ export function ReminderFormDialog({
   const [companyName, setCompanyName] = useState('')
   const [companyError, setCompanyError] = useState<string | null>(null)
 
-  const canPickCompany = !contactId && !agencyId && !companyId && !!companies
+  const canPickCompany = !companyId && !!companies
 
   const defaultValues = {
-    contactId: contactId ?? undefined,
-    agencyId: agencyId ?? undefined,
     companyId: companyId ?? undefined,
     priority: 'medium' as const,
     // Le champ datetime-local manipule une chaîne ; zod la convertit en Date à la validation

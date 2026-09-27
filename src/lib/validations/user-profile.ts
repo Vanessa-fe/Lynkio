@@ -36,10 +36,6 @@ export const updateProfileSchema = z.object({
     .string()
     .max(100, 'Le nom de l\'activité est trop long')
     .optional(),
-  businessType: z
-    .string()
-    .max(100, 'Le type d\'activité est trop long')
-    .optional(),
   avatarUrl: z
     .string()
     .url('L\'URL de l\'avatar n\'est pas valide')

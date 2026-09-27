@@ -16,8 +16,6 @@ type ActionResult<T = unknown> = {
 }
 
 type ReminderTargets = {
-  contact_id?: string | null
-  agency_id?: string | null
   company_id?: string | null
 }
 
@@ -27,13 +25,6 @@ type ReminderTargets = {
 function revalidateReminderPages(targets: ReminderTargets) {
   revalidatePath('/reminders')
   revalidatePath('/dashboard')
-  if (targets.contact_id) {
-    revalidatePath(`/contacts/${targets.contact_id}`)
-  }
-  if (targets.agency_id) {
-    revalidatePath(`/agencies/${targets.agency_id}`)
-    revalidatePath('/agencies')
-  }
   if (targets.company_id) {
     revalidatePath(`/companies/${targets.company_id}`)
   }
@@ -58,34 +49,6 @@ export async function createReminder(
     // Valider les données
     const validated = createReminderSchema.parse(input)
 
-    // Si un contact_id est fourni, vérifier qu'il appartient à l'utilisateur
-    if (validated.contactId) {
-      const { data: contact } = await supabase
-        .from('contacts')
-        .select('id')
-        .eq('id', validated.contactId)
-        .eq('user_id', user.id)
-        .single()
-
-      if (!contact) {
-        return { success: false, error: 'Contact non trouvé' }
-      }
-    }
-
-    // Si un agency_id est fourni, vérifier qu'elle appartient à l'utilisateur
-    if (validated.agencyId) {
-      const { data: agency } = await supabase
-        .from('agencies')
-        .select('id')
-        .eq('id', validated.agencyId)
-        .eq('user_id', user.id)
-        .single()
-
-      if (!agency) {
-        return { success: false, error: 'Agence non trouvée' }
-      }
-    }
-
     // Si une entreprise est fournie, vérifier qu'elle appartient à l'utilisateur
     if (validated.companyId) {
       const { data: company } = await supabase
@@ -103,8 +66,6 @@ export async function createReminder(
     // Préparer les données pour l'insertion
     const insertData = {
       user_id: user.id,
-      contact_id: validated.contactId,
-      agency_id: validated.agencyId,
       company_id: validated.companyId,
       title: validated.title,
       due_at: validated.dueAt,
@@ -123,8 +84,6 @@ export async function createReminder(
     }
 
     revalidateReminderPages({
-      contact_id: validated.contactId,
-      agency_id: validated.agencyId,
       company_id: validated.companyId,
     })
 
@@ -163,41 +122,13 @@ export async function updateReminder(
     // Vérifier que la relance appartient à l'utilisateur
     const { data: reminder } = await supabase
       .from('reminders')
-      .select('id, contact_id, agency_id, company_id')
+      .select('id, company_id')
       .eq('id', reminderId)
       .eq('user_id', user.id)
       .single()
 
     if (!reminder) {
       return { success: false, error: 'Relance non trouvée' }
-    }
-
-    // Si un contact_id est fourni, vérifier qu'il appartient à l'utilisateur
-    if (validated.contactId) {
-      const { data: contact } = await supabase
-        .from('contacts')
-        .select('id')
-        .eq('id', validated.contactId)
-        .eq('user_id', user.id)
-        .single()
-
-      if (!contact) {
-        return { success: false, error: 'Contact non trouvé' }
-      }
-    }
-
-    // Si un agency_id est fourni, vérifier qu'elle appartient à l'utilisateur
-    if (validated.agencyId) {
-      const { data: agency } = await supabase
-        .from('agencies')
-        .select('id')
-        .eq('id', validated.agencyId)
-        .eq('user_id', user.id)
-        .single()
-
-      if (!agency) {
-        return { success: false, error: 'Agence non trouvée' }
-      }
     }
 
     // Si une entreprise est fournie, vérifier qu'elle appartient à l'utilisateur
@@ -217,8 +148,6 @@ export async function updateReminder(
     // Préparer les données pour la mise à jour
     const updateData: Record<string, unknown> = {}
 
-    if (validated.contactId !== undefined) updateData.contact_id = validated.contactId
-    if (validated.agencyId !== undefined) updateData.agency_id = validated.agencyId
     if (validated.companyId !== undefined) updateData.company_id = validated.companyId
     if (validated.title !== undefined) updateData.title = validated.title
     if (validated.dueAt !== undefined) updateData.due_at = validated.dueAt
@@ -263,7 +192,7 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
     // Vérifier que la relance appartient à l'utilisateur
     const { data: reminder } = await supabase
       .from('reminders')
-      .select('contact_id, agency_id, company_id')
+      .select('company_id')
       .eq('id', reminderId)
       .eq('user_id', user.id)
       .single()
@@ -311,7 +240,7 @@ export async function uncompleteReminder(reminderId: string): Promise<ActionResu
     // Vérifier que la relance appartient à l'utilisateur
     const { data: reminder } = await supabase
       .from('reminders')
-      .select('contact_id, agency_id, company_id')
+      .select('company_id')
       .eq('id', reminderId)
       .eq('user_id', user.id)
       .single()
@@ -359,7 +288,7 @@ export async function deleteReminder(reminderId: string): Promise<ActionResult> 
     // Vérifier que la relance appartient à l'utilisateur
     const { data: reminder } = await supabase
       .from('reminders')
-      .select('contact_id, agency_id, company_id')
+      .select('company_id')
       .eq('id', reminderId)
       .eq('user_id', user.id)
       .single()

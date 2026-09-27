@@ -155,6 +155,17 @@ Une fois plus aucun code ne référence les anciennes tables : suppression de `c
 `initialize_user_defaults`, des colonnes `reminders.contact_id` / `reminders.agency_id`
 et de `user_profiles.business_type`, puis du code associé.
 
+Validée le 27/09. Ordre de mise en ligne, pour ne jamais casser la production :
+1. ✅ **Code** : pages, composants, actions, requêtes et routes de l'ancien modèle supprimés
+   (contacts, agences, rendez-vous, paiements, anciens paramètres, ancien import / export) ;
+   relances réduites aux entreprises ; l'onboarding n'appelle plus `initialize_user_defaults` ;
+   dépendance `recharts` retirée. À mettre en ligne **avant** la migration.
+2. **Migration 00018** (`00018_drop_legacy_model.sql`), testée dans une transaction annulée :
+   supprime aussi les 81 contacts de test de contactsolynk, 1 agence et la relance ouverte qui lui
+   était rattachée. `DROP TABLE` sans `CASCADE` : une dépendance oubliée ferait échouer la
+   migration au lieu de supprimer autre chose en silence.
+3. Régénérer `database.generated.ts` une fois la migration appliquée.
+
 ### Étape 5 : le pipeline automatique (« Sophie »)
 
 1. ✅ **Onglet Prospection v1** : état (« prochaine prospection : lundi 28 septembre à 9h »), bouton

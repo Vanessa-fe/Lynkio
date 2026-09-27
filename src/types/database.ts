@@ -9,25 +9,16 @@
 import type { MergeDeep } from 'type-fest'
 import type { Database as GeneratedDatabase } from './database.generated'
 import type {
-  AppointmentStatus,
-  ChannelType,
   CompanyInteractionStatus,
   CompanyInteractionType,
   CompanyOrigin,
   EmailSource,
   InteractionDirection,
-  InteractionType,
-  PaymentMethod,
-  PaymentStatus,
   PipelineRunStatus,
   PipelineRunTrigger,
   PipelineStageKind,
-  PreferredChannel,
   ReminderPriority,
-  RiskLevel,
-  SignalType,
   SizeCategory,
-  SizeRange,
 } from './models'
 
 export type { Json } from './database.generated'
@@ -41,24 +32,7 @@ export type Database = MergeDeep<
   {
     public: {
       Tables: {
-        contacts: Columns<{ risk_level: RiskLevel | null }>
-        contact_channels: Columns<{ channel_type: ChannelType }>
-        interactions: Columns<{ type: InteractionType; direction: InteractionDirection | null }>
-        appointments: Columns<{ status: AppointmentStatus | null }>
-        payments: Columns<{
-          payment_method: PaymentMethod | null
-          payment_status: PaymentStatus | null
-        }>
         reminders: Columns<{ priority: ReminderPriority | null }>
-        agencies: Columns<{
-          size_range: SizeRange | null
-          signal_type: SignalType | null
-          preferred_channel: PreferredChannel | null
-        }>
-        agency_interactions: Columns<{
-          type: InteractionType
-          direction: InteractionDirection | null
-        }>
         pipeline_stages: Columns<{ kind: PipelineStageKind }>
         companies: Columns<{ origin: CompanyOrigin; size_category: SizeCategory | null }>
         company_contacts: Columns<{ email_source: EmailSource | null }>

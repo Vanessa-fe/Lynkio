@@ -15,11 +15,6 @@ import type { ReminderWithRelations } from '@/types'
 
 function reminderTarget(reminder: ReminderWithRelations): { href: string; label: string } | null {
   if (reminder.company) return { href: `/companies/${reminder.company.id}`, label: reminder.company.name }
-  if (reminder.agency) return { href: `/agencies/${reminder.agency.id}`, label: reminder.agency.name }
-  if (reminder.contact) {
-    const name = [reminder.contact.first_name, reminder.contact.last_name].filter(Boolean).join(' ')
-    return { href: `/contacts/${reminder.contact.id}`, label: name || 'Contact' }
-  }
   return null
 }
 
