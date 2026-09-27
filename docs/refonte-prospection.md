@@ -1,5 +1,7 @@
 # Refonte : outil de prospection multi-métiers
 
+> Résumé de l'avancement et de ce qu'il reste à faire : [avancement.md](avancement.md).
+
 ## Objectif
 
 Transformer Prospect CRM en outil de prospection B2B pour freelances, quel que soit leur métier.
