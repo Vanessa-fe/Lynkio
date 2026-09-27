@@ -1,98 +1,70 @@
 # Prospect CRM
 
-CRM mobile-first destiné aux indépendants et petites entreprises pour gérer prospects, clients, interactions, rendez-vous et paiements.
+Outil de prospection B2B pour freelances. Sophie, l'agente automatique, repère les entreprises qui
+ont probablement besoin d'un freelance (offres d'emploi, missions), les note selon le client idéal
+et les range dans un pipeline. Premier métier pris en charge : développeuse web.
+
+- Où en est le projet : [docs/avancement.md](docs/avancement.md)
+- Choix techniques et détail des étapes : [docs/refonte-prospection.md](docs/refonte-prospection.md)
 
 ## Stack technique
 
-- **Framework** : Next.js 14 (App Router)
-- **Langage** : TypeScript (strict mode)
-- **Styling** : Tailwind CSS
-- **UI Components** : shadcn/ui
-- **Base de données** : PostgreSQL (Supabase)
-- **Authentification** : Supabase Auth
+- **Framework** : Next.js 16 (App Router), React 19, TypeScript strict
+- **Styling** : Tailwind CSS 3, composants shadcn/ui, icônes Lucide
+- **Base de données et authentification** : Supabase (PostgreSQL, RLS, pg_cron, Edge Functions)
 - **Formulaires** : React Hook Form + Zod
-- **Tables** : TanStack Table
-- **Graphiques** : Recharts
-- **Icônes** : Lucide Icons
+- **Sources de données** : France Travail (offres d'emploi), BODACC et API Recherche d'entreprises,
+  Hunter.io (contacts)
 
 ## Prérequis
 
-- Node.js 18+
-- npm ou yarn
-- Compte Supabase
+- Node.js 22 (voir `.nvmrc`)
+- Un projet Supabase
 
 ## Installation
-
-1. Cloner le repository
 
 ```bash
 git clone <repository-url>
 cd prospect
-```
-
-2. Installer les dépendances
-
-```bash
 npm install
-```
-
-3. Configurer les variables d'environnement
-
-```bash
 cp .env.local.example .env.local
 ```
 
-Compléter les variables dans `.env.local` :
+Compléter `.env.local` (ce fichier ne doit jamais être commité) :
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+HUNTER_API_KEY=
+FRANCE_TRAVAIL_CLIENT_ID=
+FRANCE_TRAVAIL_CLIENT_SECRET=
 ```
 
-4. Configurer Supabase
+Les clés France Travail servent aussi à la fonction `prospection-run` : elles se déclarent dans les
+secrets Supabase (`npx supabase@latest secrets set ...`).
 
-### Option A : Utiliser Supabase local (développement)
+## Base de données
+
+Les changements de schéma passent uniquement par des fichiers de migration (`supabase/migrations`),
+jamais par l'éditeur SQL :
 
 ```bash
-# Installer Supabase CLI
-npm install -g supabase
-
-# Démarrer Supabase localement
-supabase start
-
-# Appliquer les migrations
-supabase db reset
+npx supabase@latest db push --dry-run   # voir ce qui sera appliqué
+npx supabase@latest db push             # appliquer
+npm run supabase:generate-types         # régénérer les types TypeScript
 ```
 
-### Option B : Utiliser un projet Supabase cloud
+## Scripts
 
-1. Créer un projet sur [supabase.com](https://supabase.com)
-2. Récupérer les clés API dans Project Settings > API
-3. Exécuter les migrations dans l'éditeur SQL :
-   - `supabase/migrations/00001_initial_schema.sql`
-   - `supabase/migrations/00002_rls_policies.sql`
-   - `supabase/migrations/00003_seed_default_data.sql`
+- `npm run dev` : serveur de développement
+- `npm run build` : build de production
+- `npm run lint` : ESLint
+- `npm run typecheck` : vérification des types
+- `npm run supabase:generate-types` : types TypeScript depuis Supabase
 
-5. Lancer le serveur de développement
-
-```bash
-npm run dev
-```
-
-Ouvrir [http://localhost:3000](http://localhost:3000) dans votre navigateur.
-
-## Scripts disponibles
-
-- `npm run dev` : Lancer le serveur de développement
-- `npm run build` : Construire l'application pour la production
-- `npm run start` : Lancer l'application en production
-- `npm run lint` : Lancer ESLint
-- `npm run typecheck` : Vérifier les types TypeScript
-- `npm run supabase:generate-types` : Générer les types TypeScript depuis Supabase
-
-## Structure du projet
+## Structure
 
 ```
 prospect/
@@ -100,112 +72,37 @@ prospect/
 │   ├── app/              # Pages et routes (App Router)
 │   ├── components/       # Composants React
 │   ├── lib/
-│   │   ├── supabase/     # Configuration Supabase
 │   │   ├── actions/      # Server Actions
-│   │   ├── queries/      # Data fetching
+│   │   ├── queries/      # Lecture des données
 │   │   ├── validations/  # Schémas Zod
-│   │   └── utils/        # Utilitaires
-│   └── types/            # Types TypeScript
+│   │   └── detectors/    # Analyse des sites (stack technique)
+│   └── types/            # Types TypeScript (dont types générés)
 ├── supabase/
-│   └── migrations/       # Migrations SQL
-└── public/               # Fichiers statiques
+│   ├── migrations/       # Migrations SQL
+│   └── functions/        # Edge Function de Sophie (prospection-run)
+└── docs/                 # Plan et avancement
 ```
 
-## Fonctionnalités principales (MVP)
+## Fonctionnalités
 
-### Authentification
-- Inscription / Connexion
-- Récupération de mot de passe
-- Onboarding premier utilisateur
-
-### Gestion des contacts
-- CRUD complet
-- Détection de doublons (téléphone)
-- Détection d'activité inhabituelle
-- Gestion des canaux (WhatsApp, SMS, Telegram, etc.)
-- Niveaux de risque (normal, à surveiller, insistant, bloqué)
-- Statuts personnalisables
-- Sources personnalisables
-
-### Interactions
-- Enregistrement manuel des interactions
-- Timeline chronologique
-- Types : message, appel, note, relance
-
-### Rendez-vous
-- Création et gestion
-- Vue liste et calendrier
-- Statuts (prévu, confirmé, terminé, annulé, absent)
-- Rappels
-
-### Paiements
-- Enregistrement des montants
-- Gestion des acomptes
-- Association optionnelle avec rendez-vous
-- Tracking du chiffre d'affaires
-
-### Relances
-- Création de rappels
-- Priorisation
-- Suivi des relances en retard
-
-### Dashboard
-- Statistiques globales
-- Graphiques (répartition par statut/source)
-- Derniers contacts
-- Prochains rendez-vous
-- Relances en retard
-
-### Import/Export
-- Import CSV avec mapping de colonnes
-- Export CSV (contacts, rendez-vous, paiements)
-
-### Personnalisation
-- 6 thèmes disponibles (Minimal, Pink Candy, Dark Violet, Sage, Ocean, Sunset)
-- Mode clair / sombre
-- Statuts et sources personnalisables
+- **Prospection** : réglages de Sophie (planning, départements, sources), lancement manuel,
+  historique des passages, offres anonymes à identifier.
+- **Entreprises** : pipeline par étapes, fiche avec signaux d'achat, score expliqué, contacts,
+  échanges, analyse du site, recherche de contact.
+- **Relances** rattachées aux entreprises.
+- **Tableau de bord** : pistes en cours, relances du jour, meilleures opportunités.
+- **Paramètres** : profil, client idéal, étapes du pipeline, sources.
+- **Import / export** CSV des entreprises.
 
 ## Sécurité
 
-- Row Level Security (RLS) activé sur toutes les tables
-- Isolation complète des données par utilisateur
-- Validation côté client (Zod) et côté serveur
-- Authentification gérée par Supabase Auth
-
-## Roadmap
-
-Les fonctionnalités suivantes sont hors périmètre du MVP mais prévues pour les versions ultérieures :
-
-- Application mobile native (React Native)
-- Intégration WhatsApp Business API
-- Intégration Telegram Bot
-- Lecture automatique des SMS
-- Synchronisation Google Calendar
-- Intelligence artificielle (suggestions, détection automatique)
-- Abonnements Stripe
-- Gestion d'équipe
-- Notifications push
-- Export PDF/XLSX
-- Automatisations avancées
+- Row Level Security sur toutes les tables, clés étrangères composites `(id, user_id)`.
+- Validation Zod côté serveur, score et dédoublonnage garantis par la base.
+- Protection SSRF pour l'analyse des sites, protection contre l'injection de formules dans les exports.
 
 ## Déploiement
 
-Le projet est configuré pour être déployé sur Vercel.
-
-1. Pusher le code sur GitHub
-2. Connecter le repository à Vercel
-3. Configurer les variables d'environnement
-4. Déployer
-
-## Contribution
-
-Ce projet suit une architecture stricte et typée. Avant de contribuer :
-
-1. Lire la documentation complète dans `/docs`
-2. Respecter le TypeScript strict mode
-3. Utiliser les validations Zod
-4. Tester les politiques RLS
-5. Maintenir le fichier TASKS.md à jour
+Netlify déploie automatiquement la branche `main` (https://lynkio.netlify.app).
 
 ## Licence
 

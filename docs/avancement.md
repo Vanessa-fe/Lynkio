@@ -28,16 +28,8 @@ Site en ligne : https://lynkio.netlify.app (mis à jour à chaque fusion dans `m
 | Tableau de bord | Pistes en cours, nouveautés, relances du jour et en retard, meilleures opportunités, dernière recherche de Sophie |
 | Relances | Rattachées à une entreprise, raccourcis de date |
 | Import / export | CSV des entreprises avec aperçu, doublons, modèle à télécharger |
-
-## En cours : suppression de l'ancien modèle (étape 4)
-
-Branche `feat/remove-legacy-model`, poussée et testée, **pas encore en ligne**.
-
-1. ⏳ Fusionner le code dans `main` (le site en ligne n'utilise plus les anciennes tables).
-2. ⏳ Appliquer la migration 00018 : **irréversible**, attend ton « oui ». Supprime les contacts
-   particuliers, rendez-vous, paiements et agences (81 contacts de test sur contactsolynk, 1 agence
-   et sa relance).
-3. ⏳ Régénérer les types de la base.
+| Ancien modèle | Contacts particuliers, rendez-vous, paiements et agences supprimés (code et base, 00018, 27/09) |
+| Site web | Bouton « Rechercher le site » sur les fiches qui n'en ont pas |
 
 ## Ce qu'il reste à faire
 
@@ -58,10 +50,10 @@ Par ordre de priorité proposé :
 - CLI Supabase 1.x dans `package.json` : faille connue, passer à la version actuelle.
 - Alerte Supabase sur la fonction `rls_auto_enable`.
 - Règles RLS des relances : écrire `(select auth.uid())` comme sur les nouvelles tables (plus rapide).
-- Fichiers `TASKS.md`, `SESSION-NOTES.md`, `DEMAIN.md` à la racine : datent d'août et décrivent
-  l'ancien modèle, à supprimer ou archiver.
 
 ## À faire de ton côté
 
+- Régler Sophie dans l'onglet Prospection sur ton compte (activer, départements, jours, heure).
+- Vérifier que `HUNTER_API_KEY` est bien déclarée dans les variables d'environnement Netlify.
 - Activer la protection contre les mots de passe divulgués (Supabase, Authentication).
 - Faire l'onboarding de ton compte principal.

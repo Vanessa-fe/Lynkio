@@ -150,7 +150,7 @@ Dans cet ordre, une branche Git par point :
      Un fichier exporté se réimporte tel quel ; un modèle avec une ligne d'exemple est téléchargeable.
    L'ancien import / export des contacts n'est plus accessible ; son code part à l'étape 4.
 
-### Étape 4 : supprimer l'ancien modèle (00018, « contract »)
+### Étape 4 : supprimer l'ancien modèle (00018, « contract ») ✅
 
 Une fois plus aucun code ne référence les anciennes tables : suppression de `contacts`,
 `contact_*`, `interactions`, `appointments`, `payments`, `agencies`, `agency_*`,
@@ -162,11 +162,12 @@ Validée le 27/09. Ordre de mise en ligne, pour ne jamais casser la production :
    (contacts, agences, rendez-vous, paiements, anciens paramètres, ancien import / export) ;
    relances réduites aux entreprises ; l'onboarding n'appelle plus `initialize_user_defaults` ;
    dépendance `recharts` retirée. À mettre en ligne **avant** la migration.
-2. **Migration 00018** (`00018_drop_legacy_model.sql`), testée dans une transaction annulée :
+2. ✅ **Migration 00018** (`00018_drop_legacy_model.sql`), testée dans une transaction annulée :
    supprime aussi les 81 contacts de test de contactsolynk, 1 agence et la relance ouverte qui lui
    était rattachée. `DROP TABLE` sans `CASCADE` : une dépendance oubliée ferait échouer la
    migration au lieu de supprimer autre chose en silence.
-3. Régénérer `database.generated.ts` une fois la migration appliquée.
+3. ✅ `database.generated.ts` régénéré.
+   Appliquée le 27/09 : il reste 17 tables, toutes du nouveau modèle.
 
 ### Étape 5 : le pipeline automatique (« Sophie »)
 

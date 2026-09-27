@@ -39,259 +39,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      agencies: {
-        Row: {
-          city: string | null
-          contact_email: string | null
-          contact_linkedin_url: string | null
-          contact_name: string | null
-          contact_phone: string | null
-          contact_role: string | null
-          created_at: string | null
-          detected_stack: string[] | null
-          id: string
-          last_interaction_at: string | null
-          name: string
-          notes: string | null
-          preferred_channel: string | null
-          signal_detected_at: string | null
-          signal_type: string | null
-          signal_url: string | null
-          size_range: string | null
-          source_id: string | null
-          stack_detected_at: string | null
-          stack_evidence: Json | null
-          status_id: string | null
-          updated_at: string | null
-          user_id: string
-          website: string | null
-        }
-        Insert: {
-          city?: string | null
-          contact_email?: string | null
-          contact_linkedin_url?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          contact_role?: string | null
-          created_at?: string | null
-          detected_stack?: string[] | null
-          id?: string
-          last_interaction_at?: string | null
-          name: string
-          notes?: string | null
-          preferred_channel?: string | null
-          signal_detected_at?: string | null
-          signal_type?: string | null
-          signal_url?: string | null
-          size_range?: string | null
-          source_id?: string | null
-          stack_detected_at?: string | null
-          stack_evidence?: Json | null
-          status_id?: string | null
-          updated_at?: string | null
-          user_id: string
-          website?: string | null
-        }
-        Update: {
-          city?: string | null
-          contact_email?: string | null
-          contact_linkedin_url?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          contact_role?: string | null
-          created_at?: string | null
-          detected_stack?: string[] | null
-          id?: string
-          last_interaction_at?: string | null
-          name?: string
-          notes?: string | null
-          preferred_channel?: string | null
-          signal_detected_at?: string | null
-          signal_type?: string | null
-          signal_url?: string | null
-          size_range?: string | null
-          source_id?: string | null
-          stack_detected_at?: string | null
-          stack_evidence?: Json | null
-          status_id?: string | null
-          updated_at?: string | null
-          user_id?: string
-          website?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agencies_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "agency_sources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agencies_status_id_fkey"
-            columns: ["status_id"]
-            isOneToOne: false
-            referencedRelation: "agency_statuses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      agency_interactions: {
-        Row: {
-          agency_id: string
-          channel: string | null
-          content: string | null
-          created_at: string | null
-          direction: string | null
-          duration: number | null
-          id: string
-          occurred_at: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          agency_id: string
-          channel?: string | null
-          content?: string | null
-          created_at?: string | null
-          direction?: string | null
-          duration?: number | null
-          id?: string
-          occurred_at: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          agency_id?: string
-          channel?: string | null
-          content?: string | null
-          created_at?: string | null
-          direction?: string | null
-          duration?: number | null
-          id?: string
-          occurred_at?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agency_interactions_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "agencies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      agency_sources: {
-        Row: {
-          created_at: string | null
-          icon: string | null
-          id: string
-          name: string
-          order: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          icon?: string | null
-          id?: string
-          name: string
-          order: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          icon?: string | null
-          id?: string
-          name?: string
-          order?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      agency_statuses: {
-        Row: {
-          color: string
-          created_at: string | null
-          id: string
-          is_default: boolean | null
-          name: string
-          order: number
-          user_id: string
-        }
-        Insert: {
-          color: string
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          name: string
-          order: number
-          user_id: string
-        }
-        Update: {
-          color?: string
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          name?: string
-          order?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      appointments: {
-        Row: {
-          contact_id: string
-          created_at: string | null
-          end_at: string | null
-          id: string
-          location: string | null
-          notes: string | null
-          reminder_at: string | null
-          start_at: string
-          status: string | null
-          title: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          contact_id: string
-          created_at?: string | null
-          end_at?: string | null
-          id?: string
-          location?: string | null
-          notes?: string | null
-          reminder_at?: string | null
-          start_at: string
-          status?: string | null
-          title: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          contact_id?: string
-          created_at?: string | null
-          end_at?: string | null
-          id?: string
-          location?: string | null
-          notes?: string | null
-          reminder_at?: string | null
-          start_at?: string
-          status?: string | null
-          title?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appointments_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       companies: {
         Row: {
           city: string | null
@@ -649,173 +396,6 @@ export type Database = {
           },
         ]
       }
-      contact_channels: {
-        Row: {
-          channel_type: string
-          contact_id: string
-          created_at: string | null
-          external_identifier: string | null
-          id: string
-          username: string | null
-        }
-        Insert: {
-          channel_type: string
-          contact_id: string
-          created_at?: string | null
-          external_identifier?: string | null
-          id?: string
-          username?: string | null
-        }
-        Update: {
-          channel_type?: string
-          contact_id?: string
-          created_at?: string | null
-          external_identifier?: string | null
-          id?: string
-          username?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contact_channels_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contact_sources: {
-        Row: {
-          created_at: string | null
-          icon: string | null
-          id: string
-          name: string
-          order: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          icon?: string | null
-          id?: string
-          name: string
-          order: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          icon?: string | null
-          id?: string
-          name?: string
-          order?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      contact_statuses: {
-        Row: {
-          color: string
-          created_at: string | null
-          id: string
-          is_default: boolean | null
-          name: string
-          order: number
-          user_id: string
-        }
-        Insert: {
-          color: string
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          name: string
-          order: number
-          user_id: string
-        }
-        Update: {
-          color?: string
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          name?: string
-          order?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      contacts: {
-        Row: {
-          age: number | null
-          city: string | null
-          created_at: string | null
-          email: string | null
-          favorite: boolean | null
-          first_name: string | null
-          id: string
-          last_interaction_at: string | null
-          last_name: string | null
-          nickname: string | null
-          notes: string | null
-          phone: string | null
-          risk_level: string | null
-          source_id: string | null
-          status_id: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          age?: number | null
-          city?: string | null
-          created_at?: string | null
-          email?: string | null
-          favorite?: boolean | null
-          first_name?: string | null
-          id?: string
-          last_interaction_at?: string | null
-          last_name?: string | null
-          nickname?: string | null
-          notes?: string | null
-          phone?: string | null
-          risk_level?: string | null
-          source_id?: string | null
-          status_id?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          age?: number | null
-          city?: string | null
-          created_at?: string | null
-          email?: string | null
-          favorite?: boolean | null
-          first_name?: string | null
-          id?: string
-          last_interaction_at?: string | null
-          last_name?: string | null
-          nickname?: string | null
-          notes?: string | null
-          phone?: string | null
-          risk_level?: string | null
-          source_id?: string | null
-          status_id?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contacts_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "contact_sources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contacts_status_id_fkey"
-            columns: ["status_id"]
-            isOneToOne: false
-            referencedRelation: "contact_statuses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       icp_profiles: {
         Row: {
           created_at: string
@@ -863,53 +443,6 @@ export type Database = {
           },
         ]
       }
-      interactions: {
-        Row: {
-          channel: string | null
-          contact_id: string
-          content: string | null
-          created_at: string | null
-          direction: string | null
-          duration: number | null
-          id: string
-          occurred_at: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          channel?: string | null
-          contact_id: string
-          content?: string | null
-          created_at?: string | null
-          direction?: string | null
-          duration?: number | null
-          id?: string
-          occurred_at: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          channel?: string | null
-          contact_id?: string
-          content?: string | null
-          created_at?: string | null
-          direction?: string | null
-          duration?: number | null
-          id?: string
-          occurred_at?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "interactions_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       lead_sources: {
         Row: {
           created_at: string
@@ -936,63 +469,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      payments: {
-        Row: {
-          amount: number
-          appointment_id: string | null
-          contact_id: string
-          created_at: string | null
-          deposit_amount: number | null
-          id: string
-          notes: string | null
-          paid_at: string | null
-          payment_method: string | null
-          payment_status: string | null
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          appointment_id?: string | null
-          contact_id: string
-          created_at?: string | null
-          deposit_amount?: number | null
-          id?: string
-          notes?: string | null
-          paid_at?: string | null
-          payment_method?: string | null
-          payment_status?: string | null
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          appointment_id?: string | null
-          contact_id?: string
-          created_at?: string | null
-          deposit_amount?: number | null
-          id?: string
-          notes?: string | null
-          paid_at?: string | null
-          payment_method?: string | null
-          payment_status?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_appointment_id_fkey"
-            columns: ["appointment_id"]
-            isOneToOne: false
-            referencedRelation: "appointments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       pipeline_runs: {
         Row: {
@@ -1236,10 +712,8 @@ export type Database = {
       }
       reminders: {
         Row: {
-          agency_id: string | null
           company_id: string | null
           completed_at: string | null
-          contact_id: string | null
           created_at: string | null
           due_at: string
           id: string
@@ -1248,10 +722,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          agency_id?: string | null
           company_id?: string | null
           completed_at?: string | null
-          contact_id?: string | null
           created_at?: string | null
           due_at: string
           id?: string
@@ -1260,10 +732,8 @@ export type Database = {
           user_id: string
         }
         Update: {
-          agency_id?: string | null
           company_id?: string | null
           completed_at?: string | null
-          contact_id?: string | null
           created_at?: string | null
           due_at?: string
           id?: string
@@ -1273,25 +743,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "reminders_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "agencies"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "reminders_company_fkey"
             columns: ["company_id", "user_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id", "user_id"]
-          },
-          {
-            foreignKeyName: "reminders_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -1395,7 +851,6 @@ export type Database = {
         Row: {
           avatar_url: string | null
           business_name: string | null
-          business_type: string | null
           created_at: string | null
           first_name: string | null
           id: string
@@ -1407,7 +862,6 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           business_name?: string | null
-          business_type?: string | null
           created_at?: string | null
           first_name?: string | null
           id: string
@@ -1419,7 +873,6 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           business_name?: string | null
-          business_type?: string | null
           created_at?: string | null
           first_name?: string | null
           id?: string
@@ -1467,10 +920,6 @@ export type Database = {
         Returns: string
       }
       initialize_prospection_defaults: { Args: never; Returns: undefined }
-      initialize_user_defaults: {
-        Args: { target_user_id: string }
-        Returns: undefined
-      }
       rescore_companies_with_expired_signals: { Args: never; Returns: number }
       score_company: { Args: { p_company_id: string }; Returns: undefined }
       sync_tech_stack_signal: {
