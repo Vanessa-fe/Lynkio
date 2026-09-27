@@ -192,6 +192,7 @@ async function finishRun(
       details: {
         departments,
         signals_added: sum((stats) => stats.signalsAdded),
+        unidentified: sum((stats) => stats.unidentified),
         skip_reasons: skipReasons,
         created: outcomes.flatMap((stats) => stats.createdCompanies).slice(0, 100),
         sources: Object.fromEntries(
@@ -202,6 +203,7 @@ async function finishRun(
               created: stats.created,
               skipped: stats.skipped,
               signals_added: stats.signalsAdded,
+              unidentified: stats.unidentified,
               since: stats.since ?? null,
               until: stats.until ?? null,
               error: stats.error ?? null,

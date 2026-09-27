@@ -17,6 +17,7 @@ type SourceDetails = {
 type RunDetails = {
   departments?: string[]
   signals_added?: number
+  unidentified?: number
   skip_reasons?: Record<string, number>
   created?: { id: string; name: string }[]
   sources?: Record<string, SourceDetails>
@@ -59,6 +60,7 @@ function RunItem({ run }: { run: PipelineRun }) {
   const skipReasons = Object.entries(details.skip_reasons ?? {}).sort((a, b) => b[1] - a[1])
   const sources = Object.entries(details.sources ?? {})
   const signalsAdded = details.signals_added ?? 0
+  const unidentified = details.unidentified ?? 0
   const startedAt = new Date(run.started_at)
 
   return (
@@ -90,6 +92,12 @@ function RunItem({ run }: { run: PipelineRun }) {
               {' · '}
               <strong>{plural(signalsAdded, 'nouvelle offre', 'nouvelles offres')}</strong> chez des entreprises
               déjà suivies
+            </>
+          )}
+          {unidentified > 0 && (
+            <>
+              {' · '}
+              {plural(unidentified, 'offre anonyme à identifier', 'offres anonymes à identifier')}
             </>
           )}
         </p>

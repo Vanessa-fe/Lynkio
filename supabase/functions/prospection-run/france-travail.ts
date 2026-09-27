@@ -21,11 +21,13 @@ const MAX_DEPARTMENTS_PER_SEARCH = 5
 export type JobOffer = {
   id: string
   intitule?: string
+  description?: string
   dateCreation?: string
   romeCode?: string
   romeLibelle?: string
   typeContrat?: string
   typeContratLibelle?: string
+  alternance?: boolean
   secteurActivite?: string
   secteurActiviteLibelle?: string
   lieuTravail?: { libelle?: string; codePostal?: string; commune?: string }

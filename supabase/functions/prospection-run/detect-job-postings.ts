@@ -20,11 +20,13 @@ import { searchRegistryByName, type RegistryCompany } from './sources.ts'
 import {
   isIntermediary,
   isNonDiffusible,
+  isRecruitmentFirm,
   matchesExcludedKeyword,
   nafSectionFromDivision,
   normalizeCompanyName,
   summarizeActivity,
   toTitleCase,
+  truncate,
 } from './rules.ts'
 import { findExistingCompany, insertCompany, insertDirectors, insertSignal } from './store.ts'
 
@@ -76,9 +78,13 @@ export async function detectJobPostings(
   )
   stats.until = newest
 
-  for (const group of groupByCompany(offers, stats)) {
+  const { groups, anonymous } = groupByCompany(offers, stats)
+
+  for (const group of groups) {
     await processCompany(admin, settings, context, budget, stats, group, romeToSignal)
   }
+
+  stats.unidentified = await saveAnonymousOffers(admin, context.userId, anonymous, romeToSignal)
 
   return { stats, cursor: newest }
 }
@@ -102,30 +108,33 @@ async function jobSignalTypes(admin: SupabaseClient, professionKey: string | nul
 }
 
 /**
- * Regroupe les offres par entreprise (une entreprise peut publier plusieurs offres)
- * et écarte celles qui ne mènent pas à un client possible
+ * Regroupe les offres par entreprise (une entreprise peut publier plusieurs offres).
+ * Les offres sans nom d'entreprise sont mises de côté pour être identifiées à la main ;
+ * l'intérim est écarté (il recrute des salariés, pas des indépendants).
  */
-function groupByCompany(offers: JobOffer[], stats: SourceStats): OfferGroup[] {
+function groupByCompany(offers: JobOffer[], stats: SourceStats): { groups: OfferGroup[]; anonymous: JobOffer[] } {
   const groups = new Map<string, OfferGroup>()
+  const anonymous: JobOffer[] = []
 
   for (const offer of offers) {
     stats.seen++
     const name = offer.entreprise?.nom?.trim()
 
-    if (!name) {
-      skip(stats, 'Offre sans nom d\'entreprise')
-      continue
-    }
     if (offer.secteurActivite === RECRUITMENT_DIVISION) {
-      skip(stats, 'Cabinet de recrutement ou intérim')
-      continue
-    }
-    if (isIntermediary(name)) {
-      skip(stats, 'Plateforme freelance ou cabinet intermédiaire')
+      skip(stats, 'Agence d\'intérim')
       continue
     }
     if (offer.typeContrat === 'MIS') {
       skip(stats, 'Mission d\'intérim')
+      continue
+    }
+    if (offer.alternance) {
+      skip(stats, 'Contrat en alternance')
+      continue
+    }
+    // Pas de nom, ou un cabinet qui cache son client : à identifier à la main
+    if (!name || (isRecruitmentFirm(name) && !isFreelanceOffer(offer))) {
+      anonymous.push(offer)
       continue
     }
 
@@ -135,7 +144,7 @@ function groupByCompany(offers: JobOffer[], stats: SourceStats): OfferGroup[] {
     groups.set(key, group)
   }
 
-  return [...groups.values()]
+  return { groups: [...groups.values()], anonymous }
 }
 
 function skipGroup(stats: SourceStats, group: OfferGroup, reason: string) {
@@ -224,6 +233,11 @@ async function processCompany(
 
   const firstOffer = group.offers[0]
   const description = group.offers.find((offer) => offer.entreprise?.description)?.entreprise?.description
+  const notes = isIntermediary(group.name)
+    ? 'Plateforme freelance ou cabinet : le client final n\'est pas nommé dans les offres. Les missions sont listées dans les signaux, avec leur lien.'
+    : description
+      ? `Présentation (offre France Travail) : ${summarizeActivity(description)}`
+      : null
 
   const companyId = await insertCompany(
     admin,
@@ -236,7 +250,7 @@ async function processCompany(
       legalForm: null,
       city: cityFromLabel(firstOffer?.lieuTravail?.libelle),
       postalCode: firstOffer?.lieuTravail?.codePostal ?? null,
-      notes: description ? `Présentation (offre France Travail) : ${summarizeActivity(description)}` : null,
+      notes,
     },
     registry
   )
@@ -275,9 +289,26 @@ async function addSignals(
   for (let i = 0; i < alreadyKnown; i++) skip(stats, 'Offre déjà enregistrée')
 }
 
+/**
+ * Mission ouverte aux indépendants : contrat freelance (« profession libérale »),
+ * intitulé explicite ou offre publiée par une plateforme de mise en relation
+ */
+function isFreelanceOffer(offer: JobOffer): boolean {
+  return (
+    offer.typeContrat === 'LIB' ||
+    /freelance|free-lance|ind[ée]pendant|portage salarial/i.test(offer.intitule ?? '') ||
+    isIntermediary(offer.entreprise?.nom ?? '')
+  )
+}
+
+function offerSignalType(offer: JobOffer, romeToSignal: Map<string, string>): string {
+  if (isFreelanceOffer(offer)) return 'freelance_mission'
+  return (offer.romeCode && romeToSignal.get(offer.romeCode)) || 'job_posting_dev'
+}
+
 function offerSignal(offer: JobOffer, romeToSignal: Map<string, string>) {
   return {
-    type: (offer.romeCode && romeToSignal.get(offer.romeCode)) || 'job_posting_dev',
+    type: offerSignalType(offer, romeToSignal),
     dedupeKey: `francetravail:${offer.id}`,
     sourceUrl: offerUrl(offer),
     evidence: {
@@ -290,6 +321,46 @@ function offerSignal(offer: JobOffer, romeToSignal: Map<string, string>) {
       metier: offer.romeLibelle ?? null,
     },
   }
+}
+
+/**
+ * Offres sans nom d'entreprise : gardées avec leur lien pour être identifiées à la main.
+ * Renvoie le nombre de nouvelles offres (celles déjà gardées ne sont pas recomptées).
+ */
+async function saveAnonymousOffers(
+  admin: SupabaseClient,
+  userId: string,
+  offers: JobOffer[],
+  romeToSignal: Map<string, string>
+): Promise<number> {
+  if (offers.length === 0) return 0
+
+  const { data, error } = await admin
+    .from('unidentified_job_offers')
+    .upsert(
+      offers.map((offer) => ({
+        user_id: userId,
+        source: 'france_travail',
+        external_id: offer.id,
+        signal_type: offerSignalType(offer, romeToSignal),
+        title: offer.intitule ?? 'Offre sans intitulé',
+        description: [
+          offer.entreprise?.nom ? `Publiée par ${offer.entreprise.nom} (cabinet de recrutement).` : null,
+          offer.description ? truncate(offer.description, 2000) : null,
+        ]
+          .filter(Boolean)
+          .join('\n\n') || null,
+        location: offer.lieuTravail?.libelle ?? null,
+        contract_type: offer.typeContratLibelle ?? offer.typeContrat ?? null,
+        url: offerUrl(offer),
+        published_at: offer.dateCreation ?? null,
+      })),
+      { onConflict: 'user_id,source,external_id', ignoreDuplicates: true }
+    )
+    .select('id')
+
+  if (error) throw error
+  return data?.length ?? 0
 }
 
 // « 69 - LYON 03 » → « Lyon 03 »

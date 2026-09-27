@@ -26,6 +26,8 @@ export type SourceStats = {
   skipped: number
   // Signaux ajoutés à des entreprises déjà suivies (ex. elle recrute à nouveau)
   signalsAdded: number
+  // Offres sans nom d'entreprise gardées pour être identifiées à la main
+  unidentified: number
   skipReasons: Record<string, number>
   createdCompanies: { id: string; name: string }[]
   since?: string | null
@@ -34,7 +36,7 @@ export type SourceStats = {
 }
 
 export function newSourceStats(): SourceStats {
-  return { seen: 0, created: 0, skipped: 0, signalsAdded: 0, skipReasons: {}, createdCompanies: [] }
+  return { seen: 0, created: 0, skipped: 0, signalsAdded: 0, unidentified: 0, skipReasons: {}, createdCompanies: [] }
 }
 
 export function skip(stats: SourceStats, reason: string) {

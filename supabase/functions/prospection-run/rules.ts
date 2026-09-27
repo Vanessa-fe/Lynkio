@@ -80,6 +80,19 @@ const INTERMEDIARY_NAMES = [
   'silkhom',
 ]
 
+// Mots qui trahissent un cabinet de recrutement dans le nom de l'entreprise
+const RECRUITMENT_WORDS = new Set(['recrutement', 'recruitment', 'talent', 'talents', 'interim', 'staffing', 'headhunting'])
+
+/**
+ * Cabinet de recrutement : il recrute pour un client qu'il ne nomme pas.
+ * Son offre est traitée comme une offre anonyme (à identifier), pas comme un prospect.
+ */
+export function isRecruitmentFirm(name: string): boolean {
+  return normalizeCompanyName(name)
+    .split(' ')
+    .some((word) => RECRUITMENT_WORDS.has(word))
+}
+
 export function isIntermediary(name: string): boolean {
   const normalized = normalizeCompanyName(name)
   return INTERMEDIARY_NAMES.some((intermediary) => normalized === intermediary || normalized.startsWith(`${intermediary} `))

@@ -1,10 +1,21 @@
 import { ProspectionStatus } from '@/components/prospection/prospection-status'
 import { ProspectionSettingsForm } from '@/components/prospection/prospection-settings-form'
 import { PipelineRunsList } from '@/components/prospection/pipeline-runs-list'
-import { getPipelineRuns, getProspectionSettings } from '@/lib/queries/prospection'
+import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers'
+import {
+  getCompanyChoices,
+  getPipelineRuns,
+  getProspectionSettings,
+  getUnidentifiedOffers,
+} from '@/lib/queries/prospection'
 
 export default async function ProspectionPage() {
-  const [settings, runs] = await Promise.all([getProspectionSettings(), getPipelineRuns()])
+  const [settings, runs, unidentifiedOffers, companyChoices] = await Promise.all([
+    getProspectionSettings(),
+    getPipelineRuns(),
+    getUnidentifiedOffers(),
+    getCompanyChoices(),
+  ])
   const runningRun = runs.find((run) => run.status === 'running') ?? null
 
   return (
@@ -18,6 +29,7 @@ export default async function ProspectionPage() {
       </div>
 
       <ProspectionStatus settings={settings} runningRun={runningRun} />
+      <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />
       {/* Premier usage : les réglages d'abord, l'historique est encore vide */}
       {runs.length === 0 ? (
         <>

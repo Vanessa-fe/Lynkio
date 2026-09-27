@@ -1322,6 +1322,75 @@ export type Database = {
         }
         Relationships: []
       }
+      unidentified_job_offers: {
+        Row: {
+          company_id: string | null
+          contract_type: string | null
+          created_at: string
+          description: string | null
+          external_id: string
+          id: string
+          location: string | null
+          published_at: string | null
+          signal_type: string
+          source: string
+          status: string
+          title: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          contract_type?: string | null
+          created_at?: string
+          description?: string | null
+          external_id: string
+          id?: string
+          location?: string | null
+          published_at?: string | null
+          signal_type: string
+          source?: string
+          status?: string
+          title: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          contract_type?: string | null
+          created_at?: string
+          description?: string | null
+          external_id?: string
+          id?: string
+          location?: string | null
+          published_at?: string | null
+          signal_type?: string
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unidentified_job_offers_company_id_user_id_fkey"
+            columns: ["company_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "unidentified_job_offers_signal_type_fkey"
+            columns: ["signal_type"]
+            isOneToOne: false
+            referencedRelation: "signal_types"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null

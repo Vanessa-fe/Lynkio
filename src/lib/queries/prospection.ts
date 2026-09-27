@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { PipelineRun, ProspectionSettings } from '@/types'
+import type { PipelineRun, ProspectionSettings, UnidentifiedJobOffer } from '@/types'
 
 export async function getProspectionSettings(): Promise<ProspectionSettings | null> {
   const supabase = await createClient()
@@ -41,6 +41,55 @@ export async function getPipelineRuns(limit = 20): Promise<PipelineRun[]> {
     .eq('user_id', user.id)
     .order('started_at', { ascending: false })
     .limit(limit)
+
+  return data ?? []
+}
+
+/**
+ * Offres sans nom d'entreprise encore à traiter, les plus récentes d'abord
+ */
+export async function getUnidentifiedOffers(limit = 50): Promise<UnidentifiedJobOffer[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return []
+  }
+
+  const { data } = await supabase
+    .from('unidentified_job_offers')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'new')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(limit)
+
+  return data ?? []
+}
+
+/**
+ * Noms des entreprises suivies, pour rattacher une offre anonyme
+ */
+export async function getCompanyChoices(): Promise<{ id: string; name: string }[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return []
+  }
+
+  const { data } = await supabase
+    .from('companies')
+    .select('id, name')
+    .eq('user_id', user.id)
+    .order('name')
+    .limit(500)
 
   return data ?? []
 }
