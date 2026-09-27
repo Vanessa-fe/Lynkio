@@ -110,7 +110,12 @@ Dans cet ordre, une branche Git par point :
 3. **Détecteurs existants** (et déplacement de leurs routes hors de `/api/agencies`) :
    - `detect-stack` écrit `companies.detected_stack` et, si la stack correspond, un signal `tech_stack_match`.
    - `find-contact` lit les postes à cibler dans `professions.target_roles` au lieu de `TECH_LEAD_KEYWORDS`.
-4. **Paramètres** : étapes et sources sur `pipeline_stages` / `lead_sources`.
+4. ✅ **Paramètres** : page « Étapes et sources » (`/settings/pipeline`) sur `pipeline_stages` /
+   `lead_sources` : ajout, modification (nom, couleur, nature), ordre, étape d'arrivée des nouvelles
+   entreprises (forcément « en cours »), suppression avec le nombre d'entreprises concernées (elles
+   passent « Sans étape » / sans source). « Détection automatique » est protégée : Sophie la retrouve
+   par son nom. Les quatre anciennes cartes (statuts et sources des contacts et des agences) ont
+   quitté la page Paramètres ; leurs écrans restent accessibles par leur adresse jusqu'à l'étape 4.
    ✅ Écran « Client idéal » (`/settings/icp`) : tailles (idéale / acceptée / hors cible), points de
    chaque signal (seuls les écarts avec les valeurs du métier sont enregistrés dans `signal_weights`),
    mots-clés exclus. Les critères non gérés par l'écran (pays, télétravail) sont conservés.

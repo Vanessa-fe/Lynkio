@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge, Tag, Palette, User, ChevronRight, Building2, Compass, Target } from 'lucide-react'
+import { Palette, User, ChevronRight, Target, ListOrdered } from 'lucide-react'
 
 const settingsCards = [
   {
@@ -12,36 +12,12 @@ const settingsCards = [
     bgColor: 'bg-rose-500/10',
   },
   {
-    title: 'Statuts',
-    description: 'Gérer les statuts de vos contacts',
-    icon: Badge,
-    href: '/settings/statuses',
+    title: 'Étapes et sources',
+    description: 'Les étapes de votre pipeline et l\'origine de vos entreprises',
+    icon: ListOrdered,
+    href: '/settings/pipeline',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
-  },
-  {
-    title: 'Sources',
-    description: 'Gérer les sources de vos contacts',
-    icon: Tag,
-    href: '/settings/sources',
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
-  },
-  {
-    title: 'Statuts agences',
-    description: 'Gérer les statuts de vos agences',
-    icon: Building2,
-    href: '/settings/agency-statuses',
-    color: 'text-cyan-500',
-    bgColor: 'bg-cyan-500/10',
-  },
-  {
-    title: 'Sources agences',
-    description: 'Gérer les sources de vos agences',
-    icon: Compass,
-    href: '/settings/agency-sources',
-    color: 'text-indigo-500',
-    bgColor: 'bg-indigo-500/10',
   },
   {
     title: 'Thèmes',

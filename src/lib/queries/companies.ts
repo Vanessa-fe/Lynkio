@@ -197,3 +197,28 @@ export async function getLatestQualification(companyId: string): Promise<Company
 
   return data
 }
+
+/**
+ * Nombre d'entreprises par étape et par source (pour prévenir avant une suppression)
+ */
+export async function getPipelineUsage(): Promise<{
+  byStage: Record<string, number>
+  bySource: Record<string, number>
+}> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const usage = { byStage: {} as Record<string, number>, bySource: {} as Record<string, number> }
+  if (!user) return usage
+
+  const { data } = await supabase.from('companies').select('stage_id, source_id').eq('user_id', user.id)
+
+  for (const company of data ?? []) {
+    if (company.stage_id) usage.byStage[company.stage_id] = (usage.byStage[company.stage_id] ?? 0) + 1
+    if (company.source_id) usage.bySource[company.source_id] = (usage.bySource[company.source_id] ?? 0) + 1
+  }
+  return usage
+}
