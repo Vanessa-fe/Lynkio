@@ -126,6 +126,11 @@ function sameName(a: string, b: string) {
   return a.trim().toLocaleLowerCase('fr') === b.trim().toLocaleLowerCase('fr')
 }
 
+// Lieu France Travail « 69 - Lyon 3e Arrondissement » → « Lyon 3e Arrondissement »
+function cityFromLocation(location: string | null): string {
+  return location?.replace(/^\s*\d{2,3}\s*-\s*/, '').trim() ?? ''
+}
+
 function LinkOfferDialog({
   offer,
   companies,
@@ -138,10 +143,13 @@ function LinkOfferDialog({
   const router = useRouter()
   const { toast } = useToast()
   const [name, setName] = useState('')
+  const [city, setCity] = useState(cityFromLocation(offer.location))
+  const [website, setWebsite] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
   const existing = companies.find((company) => sameName(company.name, name))
+  const isNew = !!name.trim() && !existing
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -155,7 +163,9 @@ function LinkOfferDialog({
     setIsSaving(true)
     const result = await linkUnidentifiedOffer(
       offer.id,
-      existing ? { companyId: existing.id } : { newCompanyName: name.trim() }
+      existing
+        ? { companyId: existing.id }
+        : { newCompany: { name: name.trim(), city: city.trim() || null, website: website.trim() || null } }
     )
     setIsSaving(false)
 
@@ -165,7 +175,7 @@ function LinkOfferDialog({
     }
 
     toast({
-      title: 'Offre rattachée',
+      title: existing ? 'Offre rattachée' : 'Entreprise créée et offre rattachée',
       description: result.companyId ? (
         <Link href={`/companies/${result.companyId}`} className="underline">
           Voir l&apos;entreprise
@@ -181,7 +191,10 @@ function LinkOfferDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Rattacher l&apos;offre</DialogTitle>
-          <DialogDescription>{offer.title}</DialogDescription>
+          <DialogDescription>
+            {offer.title}. Choisissez une entreprise que vous suivez, ou tapez le nom d&apos;une
+            nouvelle : elle sera créée.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -213,16 +226,48 @@ function LinkOfferDialog({
                 ? 'Vos entreprises vous sont proposées pendant la saisie.'
                 : existing
                   ? `L'offre sera ajoutée à ${existing.name}, que vous suivez déjà.`
-                  : 'Nouvelle entreprise : vous pourrez compléter sa fiche (site, SIREN, contacts) ensuite.'}
+                  : 'Nouvelle entreprise : elle arrivera dans « À qualifier », avec l\'offre comme signal.'}
             </p>
           </div>
+
+          {isNew && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="linkCompanyCity">Ville</Label>
+                <Input
+                  id="linkCompanyCity"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  autoComplete="off"
+                  disabled={isSaving}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="linkCompanyWebsite">Site web (facultatif)</Label>
+                <Input
+                  id="linkCompanyWebsite"
+                  value={website}
+                  onChange={(event) => setWebsite(event.target.value)}
+                  placeholder="exemple.fr"
+                  autoComplete="off"
+                  disabled={isSaving}
+                />
+              </div>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground rounded-md bg-muted p-3">
+            Offre publiée par un cabinet de recrutement (Michael Page, Hays…) ? Le cabinet n&apos;est pas
+            votre client : cherchez l&apos;entreprise qui recrute (secteur, ville, taille, projet décrits
+            dans l&apos;annonce). Si elle reste introuvable, ignorez l&apos;offre.
+          </p>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
               Annuler
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Rattachement...' : 'Rattacher'}
+              {isSaving ? 'Rattachement...' : isNew ? 'Créer et rattacher' : 'Rattacher'}
             </Button>
           </DialogFooter>
         </form>

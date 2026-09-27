@@ -125,7 +125,7 @@ export async function dismissUnidentifiedOffer(offerId: string): Promise<ActionR
  */
 export async function linkUnidentifiedOffer(
   offerId: string,
-  target: { companyId: string } | { newCompanyName: string }
+  target: { companyId: string } | { newCompany: { name: string; city?: string | null; website?: string | null } }
 ): Promise<ActionResult & { companyId?: string }> {
   try {
     const supabase = await createClient()
@@ -153,7 +153,13 @@ export async function linkUnidentifiedOffer(
     if ('companyId' in target) {
       companyId = target.companyId
     } else {
-      const created = await createCompany({ name: target.newCompanyName })
+      // La fiche garde la trace de l'offre qui a permis d'identifier l'entreprise
+      const created = await createCompany({
+        name: target.newCompany.name,
+        city: target.newCompany.city,
+        website: target.newCompany.website,
+        notes: `Identifiée à partir de l'offre « ${offer.title} »${offer.url ? ` : ${offer.url}` : ''}`,
+      })
       if (!created.success || !created.data) {
         // Entreprise déjà suivie sous ce site ou ce SIREN : on la réutilise
         if (created.data?.id) {
