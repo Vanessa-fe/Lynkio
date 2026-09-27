@@ -1191,9 +1191,11 @@ export type Database = {
           departments: string[]
           excluded_naf_sections: string[]
           is_active: boolean
+          job_postings_cursor: string | null
           max_companies_per_run: number
           next_run_at: string | null
           run_hour: number
+          sources: string[]
           timezone: string
           updated_at: string
           user_id: string
@@ -1205,9 +1207,11 @@ export type Database = {
           departments?: string[]
           excluded_naf_sections?: string[]
           is_active?: boolean
+          job_postings_cursor?: string | null
           max_companies_per_run?: number
           next_run_at?: string | null
           run_hour?: number
+          sources?: string[]
           timezone?: string
           updated_at?: string
           user_id: string
@@ -1219,9 +1223,11 @@ export type Database = {
           departments?: string[]
           excluded_naf_sections?: string[]
           is_active?: boolean
+          job_postings_cursor?: string | null
           max_companies_per_run?: number
           next_run_at?: string | null
           run_hour?: number
+          sources?: string[]
           timezone?: string
           updated_at?: string
           user_id?: string

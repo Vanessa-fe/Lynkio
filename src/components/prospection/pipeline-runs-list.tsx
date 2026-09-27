@@ -7,10 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { PipelineRun } from '@/types'
 
 // Contenu de pipeline_runs.details écrit par la fonction prospection-run
+type SourceDetails = {
+  seen: number
+  created: number
+  signals_added: number
+  error: string | null
+}
+
 type RunDetails = {
   departments?: string[]
+  signals_added?: number
   skip_reasons?: Record<string, number>
   created?: { id: string; name: string }[]
+  sources?: Record<string, SourceDetails>
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  job_postings: 'Offres d\'emploi',
+  recent_creations: 'Créations récentes',
 }
 
 function plural(count: number, singular: string, pluralForm: string) {
@@ -43,6 +57,8 @@ function RunItem({ run }: { run: PipelineRun }) {
   const details = (run.details ?? {}) as RunDetails
   const created = details.created ?? []
   const skipReasons = Object.entries(details.skip_reasons ?? {}).sort((a, b) => b[1] - a[1])
+  const sources = Object.entries(details.sources ?? {})
+  const signalsAdded = details.signals_added ?? 0
   const startedAt = new Date(run.started_at)
 
   return (
@@ -69,11 +85,34 @@ function RunItem({ run }: { run: PipelineRun }) {
       ) : (
         <p className="text-sm">
           <strong>{plural(run.companies_created, 'entreprise ajoutée', 'entreprises ajoutées')}</strong>
-          <span className="text-muted-foreground">
-            {' '}
-            sur {plural(run.companies_seen, 'création examinée', 'créations examinées')}
-          </span>
+          {signalsAdded > 0 && (
+            <>
+              {' · '}
+              <strong>{plural(signalsAdded, 'nouvelle offre', 'nouvelles offres')}</strong> chez des entreprises
+              déjà suivies
+            </>
+          )}
         </p>
+      )}
+
+      {/* Détail par source (absent des passages antérieurs aux sources multiples ;
+          inutile quand une seule source a échoué, le message est déjà affiché) */}
+      {run.status !== 'running' && sources.length > 0 && !(run.status === 'failed' && sources.length === 1) && (
+        <ul className="text-sm text-muted-foreground space-y-0.5">
+          {sources.map(([key, source]) => (
+            <li key={key}>
+              {SOURCE_LABELS[key] ?? key} :{' '}
+              {source.error ? (
+                <span className="text-amber-700 dark:text-amber-400">{source.error}</span>
+              ) : (
+                <>
+                  {plural(source.seen, 'élément examiné', 'éléments examinés')},{' '}
+                  {plural(source.created, 'entreprise ajoutée', 'entreprises ajoutées')}
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
 
       {created.length > 0 && (
@@ -94,7 +133,7 @@ function RunItem({ run }: { run: PipelineRun }) {
       {skipReasons.length > 0 && (
         <details className="text-sm">
           <summary className="cursor-pointer text-muted-foreground">
-            {plural(run.companies_skipped, 'création écartée', 'créations écartées')}
+            {plural(run.companies_skipped, 'élément écarté', 'éléments écartés')}
           </summary>
           <ul className="mt-2 space-y-1 text-muted-foreground">
             {skipReasons.map(([reason, count]) => (

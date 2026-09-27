@@ -162,6 +162,25 @@ export const RUN_HOURS = Array.from({ length: 15 }, (_, index) => index + 6) // 
 
 export const MAX_COMPANIES_OPTIONS = [5, 10, 20, 30, 50] as const
 
+// Sources de Sophie, dans l'ordre où elle les consulte
+export const PROSPECTION_SOURCES = [
+  {
+    key: 'job_postings',
+    label: 'Entreprises qui recrutent un développeur',
+    description:
+      'Offres d\'emploi publiées sur France Travail. Une entreprise qui recrute a un besoin et un budget : elle peut préférer un freelance en attendant, ou en complément.',
+  },
+  {
+    key: 'recent_creations',
+    label: 'Sociétés tout juste créées',
+    description:
+      'Immatriculations publiées au BODACC. Elles ont besoin de tout, mais rarement d\'un gros budget.',
+  },
+] as const
+
+export type ProspectionSourceKey = (typeof PROSPECTION_SOURCES)[number]['key']
+const sourceKeys = PROSPECTION_SOURCES.map((source) => source.key) as [ProspectionSourceKey, ...ProspectionSourceKey[]]
+
 export const prospectionSettingsSchema = z
   .object({
     isActive: z.boolean(),
@@ -175,6 +194,10 @@ export const prospectionSettingsSchema = z
       .transform((codes) => [...new Set(codes)]),
     excludedNafSections: z.array(z.string().refine((code) => code in NAF_SECTIONS, 'Secteur inconnu')),
     maxCompaniesPerRun: z.number().int().min(1).max(100),
+    sources: z
+      .array(z.enum(sourceKeys))
+      .min(1, 'Choisissez au moins une source')
+      .transform((keys) => [...new Set(keys)]),
   })
   .refine((data) => !data.isActive || data.daysOfWeek.length > 0, {
     message: 'Choisissez au moins un jour pour la prospection automatique',
@@ -198,4 +221,5 @@ export const DEFAULT_PROSPECTION_SETTINGS: ProspectionSettingsInput = {
   departments: [],
   excludedNafSections: ['K', 'L', 'O', 'T', 'U'],
   maxCompaniesPerRun: 20,
+  sources: ['job_postings'],
 }

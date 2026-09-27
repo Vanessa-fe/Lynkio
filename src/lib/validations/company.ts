@@ -202,3 +202,25 @@ export function formatPhoneForDisplay(phone: string): string {
   if (!parsed) return phone
   return parsed.country === 'FR' ? parsed.formatNational() : parsed.formatInternational()
 }
+
+/**
+ * Ancienneté d'une entreprise à partir de sa date de création (AAAA-MM-JJ) :
+ * une information pour juger du budget probable, pas un critère de sélection
+ */
+export function companyAge(foundedOn: string | null): { since: string; age: string } | null {
+  if (!foundedOn) return null
+  const founded = new Date(`${foundedOn}T00:00:00`)
+  if (Number.isNaN(founded.getTime())) return null
+
+  const now = new Date()
+  let years = now.getFullYear() - founded.getFullYear()
+  const anniversaryPassed =
+    now.getMonth() > founded.getMonth() ||
+    (now.getMonth() === founded.getMonth() && now.getDate() >= founded.getDate())
+  if (!anniversaryPassed) years--
+
+  return {
+    since: founded.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+    age: years < 1 ? 'moins d\'un an' : `${years} an${years > 1 ? 's' : ''}`,
+  }
+}

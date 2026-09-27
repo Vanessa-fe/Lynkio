@@ -113,7 +113,7 @@ Dans cet ordre, une branche Git par point :
 4. **Paramètres** : étapes et sources sur `pipeline_stages` / `lead_sources` ; nouvel écran ICP.
 5. **Import / export, tableau de bord, relances** sur le nouveau modèle.
 
-### Étape 4 : supprimer l'ancien modèle (00014, « contract »)
+### Étape 4 : supprimer l'ancien modèle (00015, « contract »)
 
 Une fois plus aucun code ne référence les anciennes tables : suppression de `contacts`,
 `contact_*`, `interactions`, `appointments`, `payments`, `agencies`, `agency_*`,
@@ -125,16 +125,25 @@ et de `user_profiles.business_type`, puis du code associé.
 1. ✅ **Onglet Prospection v1** : état (« prochaine prospection : lundi 28 septembre à 9h »), bouton
    « Lancer maintenant », planning (jours cochés + heure), départements, secteurs ignorés, nombre
    maximum d'entreprises par passage, historique des passages avec les raisons d'exclusion.
-2. ✅ **Premier détecteur, signal `recently_created`** : le BODACC (gratuit, sans clé) liste chaque jour
-   les immatriculations avec SIREN, département et activité déclarée ; l'API Recherche d'entreprises
-   complète avec le code NAF, la tranche d'effectif et les dirigeants (importés comme contacts
-   décideurs). Elle seule ne suffit pas : elle ne sait pas filtrer par date de création.
+2. ✅ **Détecteur « entreprises qui recrutent » (source principale, 00014)** : offres d'emploi France
+   Travail pour les métiers liés au métier de l'utilisateur (`profession_signals` → codes ROME, M1805
+   pour les développeur·ses), dans ses départements. Chaque offre devient un signal `job_posting_dev`
+   (intitulé, contrat, lieu, lien). Entreprise déjà suivie : le signal s'ajoute à sa fiche (elle
+   recrute à nouveau) ; sinon elle est créée, avec son site quand l'offre le donne, et complétée par
+   sa fiche officielle (SIREN, ancienneté, taille, dirigeants) retrouvée par nom exact dans le
+   département : mieux vaut pas de fiche qu'une fiche d'une autre entreprise.
+   Écartés : offres sans nom d'entreprise, cabinets de recrutement et intérim (NAF 78), missions
+   d'intérim, secteurs ignorés, mots-clés exclus. Les offres sont lues des plus récentes aux plus
+   anciennes depuis le passage précédent (`job_postings_cursor`).
+   **Décision (27/09)** : l'ancienneté d'une entreprise est une information affichée (fiche et liste),
+   pas un critère de sélection : une société qui vient de se créer a rarement le budget d'un freelance.
+3. ✅ **Détecteur « sociétés tout juste créées » (en option, désactivé par défaut)** : le BODACC liste
+   les immatriculations ; l'API Recherche d'entreprises complète (NAF, effectif, dirigeants).
    Écartés : entrepreneurs individuels, sociétés civiles (SCI…), secteurs ignorés, données non
-   diffusibles, mots-clés exclus de l'ICP, entreprises déjà connues.
-   Les créations sont lues de la plus récente à la plus ancienne, jusqu'à la date du passage
-   précédent : le signal vaut par sa fraîcheur, un surplus est laissé de côté plutôt qu'accumulé.
-3. Deuxième détecteur : API Offres d'emploi France Travail → signal `job_posting_dev`
-   (filtrer les offres publiées par des ESN et cabinets de recrutement).
+   diffusibles, mots-clés exclus, entreprises déjà connues. Lu des plus récentes aux plus anciennes
+   jusqu'à la date du passage précédent (`bodacc_cursor`).
+   Les sources partagent le quota d'entreprises du passage, la plus utile en premier ; une source en
+   panne n'empêche pas les autres (le passage n'échoue que si toutes échouent).
 4. Scoring par règles (`model = 'rules-v1'`) à partir de l'ICP et des poids de signaux.
 5. Qualification par IA en complément, sur les entreprises déjà filtrées par les règles.
 6. Hunter.io en dernier, uniquement sur les entreprises qualifiées (quota gratuit limité),
@@ -152,8 +161,9 @@ et de `user_profiles.business_type`, puis du code associé.
   l'hébergement Netlify coupe une action serveur au bout d'une dizaine de secondes.
 - Déploiement : `npx supabase@latest functions deploy prospection-run --use-api`.
 - Suspendre toutes les prospections automatiques : `select cron.unschedule('sophie-prospection');`
-- Les clés France Travail et Hunter devront être enregistrées dans les secrets Supabase quand leurs
-  détecteurs rejoindront la fonction.
+- Clés France Travail : dans `.env.local` pour le développement, et dans les secrets Supabase pour
+  la fonction : `npx supabase@latest secrets set FRANCE_TRAVAIL_CLIENT_ID=… FRANCE_TRAVAIL_CLIENT_SECRET=…`
+  (la fonction les relit à chaque démarrage, pas besoin de la redéployer).
 
 **Point ouvert** : aucune API gouvernementale ne donne le site web de l'entreprise, indispensable
 pour Hunter, la détection de stack et PageSpeed. Pistes : site présent dans certaines offres
@@ -164,7 +174,7 @@ France Travail, déduction à partir du nom avec vérification, saisie manuelle 
 | Onglet | Rôle |
 |---|---|
 | Tableau de bord | Ce qui s'est passé depuis la dernière visite, relances du jour |
-| Prospection | ✅ Régler Sophie : planning, lancement, historique (étape 5) |
+| Prospection | ✅ Régler Sophie : sources, zone, planning, lancement, historique (étape 5) |
 | Entreprises | Le pipeline : ce que Sophie trouve arrive dans « À qualifier » |
 | Relances | Inchangé |
 | Références | Missions passées, citées dans les messages |

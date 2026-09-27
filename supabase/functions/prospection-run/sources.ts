@@ -139,18 +139,23 @@ export type RegistryCompany = {
   siren: string
   nom_complet: string
   nom_raison_sociale: string | null
+  sigle: string | null
   date_creation: string | null
   activite_principale: string | null
   section_activite_principale: string | null
   tranche_effectif_salarie: string | null
+  etat_administratif: string | null
   dirigeants: CompanyDirector[]
+  siege?: {
+    code_postal?: string | null
+    libelle_commune?: string | null
+    nom_commercial?: string | null
+    liste_enseignes?: string[] | null
+  }
 }
 
-/**
- * Fiche d'une entreprise par son SIREN, ou null si elle n'est pas (encore) référencée
- */
-export async function fetchRegistryCompany(siren: string): Promise<RegistryCompany | null> {
-  const url = `${RECHERCHE_ENTREPRISES_URL}?${new URLSearchParams({ q: siren, per_page: '1' })}`
+async function searchRegistry(params: Record<string, string>): Promise<RegistryCompany[]> {
+  const url = `${RECHERCHE_ENTREPRISES_URL}?${new URLSearchParams(params)}`
 
   for (let attempt = 0; attempt < 2; attempt++) {
     await sleep(RECHERCHE_ENTREPRISES_DELAY_MS * (attempt + 1))
@@ -168,8 +173,26 @@ export async function fetchRegistryCompany(siren: string): Promise<RegistryCompa
     }
 
     const body = (await response.json()) as { results?: RegistryCompany[] }
-    return body.results?.find((company) => company.siren === siren) ?? null
+    return body.results ?? []
   }
 
-  return null
+  return []
+}
+
+/**
+ * Fiche d'une entreprise par son SIREN, ou null si elle n'est pas (encore) référencée
+ */
+export async function fetchRegistryCompany(siren: string): Promise<RegistryCompany | null> {
+  const results = await searchRegistry({ q: siren, per_page: '1' })
+  return results.find((company) => company.siren === siren) ?? null
+}
+
+/**
+ * Entreprises actives dont un établissement est dans le département, pour un nom donné.
+ * Le rapprochement final (même nom ?) est fait par l'appelant.
+ */
+export async function searchRegistryByName(name: string, department: string | null): Promise<RegistryCompany[]> {
+  const params: Record<string, string> = { q: name, per_page: '5', etat_administratif: 'A' }
+  if (department) params.departement = department
+  return await searchRegistry(params)
 }

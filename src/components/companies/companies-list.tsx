@@ -26,7 +26,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { deleteCompany } from '@/lib/actions/companies'
-import { toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import { companyAge, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
@@ -208,7 +208,9 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
                       {company.name}
                     </Link>
                     <p className="text-sm text-muted-foreground">
-                      {[company.city, company.sector].filter(Boolean).join(' · ') || '-'}
+                      {[company.city, company.sector, companyAge(company.founded_on)?.age]
+                        .filter(Boolean)
+                        .join(' · ') || '-'}
                     </p>
                   </TableCell>
                   <TableCell>

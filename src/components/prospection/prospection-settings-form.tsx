@@ -22,10 +22,12 @@ import {
   DEPARTMENT_LIST,
   MAX_COMPANIES_OPTIONS,
   NAF_SECTIONS,
+  PROSPECTION_SOURCES,
   RUN_HOURS,
   WEEK_DAYS,
   prospectionSettingsSchema,
   type ProspectionSettingsInput,
+  type ProspectionSourceKey,
 } from '@/lib/validations/prospection'
 import { saveProspectionSettings } from '@/lib/actions/prospection'
 import { useToast } from '@/lib/hooks/use-toast'
@@ -45,6 +47,9 @@ function toFormValues(settings: ProspectionSettings | null): ProspectionSettings
     departments: settings.departments,
     excludedNafSections: settings.excluded_naf_sections,
     maxCompaniesPerRun: settings.max_companies_per_run,
+    sources: settings.sources.filter((key): key is ProspectionSourceKey =>
+      PROSPECTION_SOURCES.some((source) => source.key === key)
+    ),
   }
 }
 
@@ -88,13 +93,50 @@ export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormPro
       <CardHeader>
         <CardTitle>Réglages</CardTitle>
         <CardDescription>
-          Sophie repère les sociétés créées récemment (publiées au BODACC) dans vos départements, puis
-          les complète avec les données officielles : activité, taille, dirigeants.
+          Sophie repère des entreprises dans vos départements, puis les complète avec les données
+          officielles : ancienneté, activité, taille, dirigeants.
         </CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <CardContent className="space-y-8">
+          {/* Quoi chercher */}
+          <section className="space-y-3">
+            <h3 className="font-semibold">Quoi chercher</h3>
+            <Controller
+              name="sources"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-3">
+                  {PROSPECTION_SOURCES.map((source) => {
+                    const checked = field.value.includes(source.key)
+                    return (
+                      <div key={source.key} className="flex items-start gap-2">
+                        <Checkbox
+                          id={`source-${source.key}`}
+                          checked={checked}
+                          onCheckedChange={(value) =>
+                            field.onChange(
+                              value === true
+                                ? [...field.value, source.key]
+                                : field.value.filter((key) => key !== source.key)
+                            )
+                          }
+                          disabled={isSaving}
+                        />
+                        <div>
+                          <Label htmlFor={`source-${source.key}`}>{source.label}</Label>
+                          <p className="text-sm text-muted-foreground">{source.description}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            />
+            {errors.sources && <p className="text-sm text-destructive">{errors.sources.message}</p>}
+          </section>
+
           {/* Où chercher */}
           <section className="space-y-3">
             <h3 className="font-semibold">Où chercher</h3>

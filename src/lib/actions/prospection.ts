@@ -39,6 +39,7 @@ export async function saveProspectionSettings(input: ProspectionSettingsInput): 
       departments: validated.departments,
       excluded_naf_sections: validated.excludedNafSections,
       max_companies_per_run: validated.maxCompaniesPerRun,
+      sources: validated.sources,
     })
 
     if (error) {

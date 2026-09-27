@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Building2,
   Calendar,
+  Cake,
   Edit,
   ExternalLink,
   FileText,
@@ -25,7 +26,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { deleteCompany } from '@/lib/actions/companies'
-import { sizeCategoryLabels, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import { companyAge, sizeCategoryLabels, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import type {
   CompanyContact,
@@ -74,6 +75,7 @@ export function CompanyDetail({ company, stages, contacts, signals, interactions
   }
 
   const location = [company.postal_code, company.city].filter(Boolean).join(' ')
+  const age = companyAge(company.founded_on)
 
   return (
     <div className="space-y-6">
@@ -158,6 +160,11 @@ export function CompanyDetail({ company, stages, contacts, signals, interactions
                 </a>
               </InfoItem>
             )}
+            {age && (
+              <InfoItem icon={<Cake className="w-5 h-5" />} label="Création">
+                {age.since} · {age.age}
+              </InfoItem>
+            )}
             {company.size_category && (
               <InfoItem icon={<Users className="w-5 h-5" />} label="Taille">
                 {sizeCategoryLabels[company.size_category]}
@@ -238,9 +245,7 @@ export function CompanyDetail({ company, stages, contacts, signals, interactions
                 <li key={signal.id} className="flex items-start justify-between gap-4 rounded-lg bg-muted p-3">
                   <div className="min-w-0">
                     <p className="font-medium">{signal.type?.label ?? signal.signal_type}</p>
-                    {signal.type?.description && (
-                      <p className="text-sm text-muted-foreground">{signal.type.description}</p>
-                    )}
+                    <SignalSummary signal={signal} />
                     {signal.source_url && (
                       <a
                         href={signal.source_url}
@@ -268,6 +273,24 @@ export function CompanyDetail({ company, stages, contacts, signals, interactions
       <CompanyInteractions companyId={company.id} contacts={contacts} interactions={interactions} />
     </div>
   )
+}
+
+// Pour une offre d'emploi, l'intitulé et le contrat parlent plus que la description générique
+function SignalSummary({ signal }: { signal: CompanySignalWithType }) {
+  const evidence = (signal.evidence ?? {}) as Record<string, unknown>
+  const title = typeof evidence.intitule === 'string' ? evidence.intitule : null
+
+  if (title) {
+    const contract = typeof evidence.type_contrat === 'string' ? evidence.type_contrat : null
+    const place = typeof evidence.lieu === 'string' ? evidence.lieu : null
+    return (
+      <p className="text-sm text-muted-foreground">
+        « {title} »{[contract, place].filter(Boolean).map((item) => ` · ${item}`)}
+      </p>
+    )
+  }
+
+  return signal.type?.description ? <p className="text-sm text-muted-foreground">{signal.type.description}</p> : null
 }
 
 function InfoItem({
