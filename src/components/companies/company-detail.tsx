@@ -159,6 +159,27 @@ export function CompanyDetail({
                 </a>
               </InfoItem>
             )}
+            {/* Sans site, ni analyse de la stack ni recherche de contact : on aide à le retrouver */}
+            {!company.website && (
+              <InfoItem icon={<Globe className="w-5 h-5" />} label="Site web">
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(
+                      [company.name, company.city, 'site officiel'].filter(Boolean).join(' ')
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium hover:underline inline-flex items-center gap-1"
+                  >
+                    Rechercher le site
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <Link href={`/companies/${company.id}/edit`} className="text-sm text-muted-foreground hover:underline">
+                    Ajouter
+                  </Link>
+                </span>
+              </InfoItem>
+            )}
             {location && (
               <InfoItem icon={<MapPin className="w-5 h-5" />} label="Adresse">
                 {location}
