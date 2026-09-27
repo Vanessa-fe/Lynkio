@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { dismissUnidentifiedOffer, linkUnidentifiedOffer } from '@/lib/actions/prospection'
+import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { UnidentifiedJobOffer } from '@/types'
 
@@ -124,11 +125,6 @@ export function UnidentifiedOffers({ offers, companies }: UnidentifiedOffersProp
     </Card>
   )
 }
-
-// Appel au serveur impossible : réseau coupé, ou application mise à jour depuis
-// l'ouverture de la page (les actions de l'ancienne version n'existent plus)
-const CONNECTION_ERROR =
-  'Le serveur n\'a pas répondu. Rechargez la page (l\'application a peut-être été mise à jour), puis réessayez.'
 
 // Même comparaison que pour retrouver une entreprise : sans casse ni espaces superflus
 function sameName(a: string, b: string) {

@@ -8,6 +8,7 @@ import { CalendarClock, Loader2, Play, Radar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { launchProspection } from '@/lib/actions/prospection'
+import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { PipelineRun, ProspectionSettings } from '@/types'
 
@@ -35,8 +36,15 @@ export function ProspectionStatus({ settings, runningRun }: ProspectionStatusPro
 
   const handleLaunch = async () => {
     setIsLaunching(true)
-    const result = await launchProspection()
-    setIsLaunching(false)
+    let result: Awaited<ReturnType<typeof launchProspection>>
+    try {
+      result = await launchProspection()
+    } catch {
+      toast({ variant: 'destructive', title: 'Lancement impossible', description: CONNECTION_ERROR })
+      return
+    } finally {
+      setIsLaunching(false)
+    }
 
     if (result.success) {
       toast({ title: 'Sophie est partie chercher', description: 'Les résultats arrivent dans quelques instants.' })

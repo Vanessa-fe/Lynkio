@@ -30,6 +30,7 @@ import {
   type ProspectionSourceKey,
 } from '@/lib/validations/prospection'
 import { saveProspectionSettings } from '@/lib/actions/prospection'
+import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { ProspectionSettings } from '@/types'
@@ -72,8 +73,15 @@ export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormPro
 
   const onSubmit = async (data: ProspectionSettingsInput) => {
     setIsSaving(true)
-    const result = await saveProspectionSettings(data)
-    setIsSaving(false)
+    let result: Awaited<ReturnType<typeof saveProspectionSettings>>
+    try {
+      result = await saveProspectionSettings(data)
+    } catch {
+      toast({ variant: 'destructive', title: 'Enregistrement impossible', description: CONNECTION_ERROR })
+      return
+    } finally {
+      setIsSaving(false)
+    }
 
     if (result.success) {
       toast({ title: 'Réglages enregistrés' })
@@ -362,11 +370,18 @@ export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormPro
           </details>
         </CardContent>
 
-        <CardFooter className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {/* Tant qu'il reste des modifications, le bouton reste visible en bas de l'écran
+            (au-dessus de la barre de navigation sur mobile) : l'interrupteur seul n'enregistre rien */}
+        <CardFooter
+          className={cn(
+            'flex flex-col sm:flex-row sm:items-center gap-3',
+            isDirty && 'sticky bottom-16 md:bottom-0 z-40 bg-background border-t rounded-b-lg pt-4'
+          )}
+        >
           <Button type="submit" disabled={isSaving || !isDirty}>
             {isSaving ? 'Enregistrement...' : 'Enregistrer les réglages'}
           </Button>
-          {isDirty && <p className="text-sm text-muted-foreground">Modifications non enregistrées</p>}
+          {isDirty && <p className="text-sm font-medium text-amber-600">Modifications non enregistrées</p>}
         </CardFooter>
       </form>
     </Card>
