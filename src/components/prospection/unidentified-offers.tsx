@@ -38,13 +38,17 @@ export function UnidentifiedOffers({ offers, companies }: UnidentifiedOffersProp
 
   const handleDismiss = async (offer: UnidentifiedJobOffer) => {
     setBusyId(offer.id)
-    const result = await dismissUnidentifiedOffer(offer.id)
-    setBusyId(null)
-
-    if (result.success) {
-      router.refresh()
-    } else {
-      toast({ variant: 'destructive', title: 'Erreur', description: result.error })
+    try {
+      const result = await dismissUnidentifiedOffer(offer.id)
+      if (result.success) {
+        router.refresh()
+      } else {
+        toast({ variant: 'destructive', title: 'Erreur', description: result.error })
+      }
+    } catch {
+      toast({ variant: 'destructive', title: 'Erreur', description: CONNECTION_ERROR })
+    } finally {
+      setBusyId(null)
     }
   }
 
@@ -121,6 +125,11 @@ export function UnidentifiedOffers({ offers, companies }: UnidentifiedOffersProp
   )
 }
 
+// Appel au serveur impossible : réseau coupé, ou application mise à jour depuis
+// l'ouverture de la page (les actions de l'ancienne version n'existent plus)
+const CONNECTION_ERROR =
+  'Le serveur n\'a pas répondu. Rechargez la page (l\'application a peut-être été mise à jour), puis réessayez.'
+
 // Même comparaison que pour retrouver une entreprise : sans casse ni espaces superflus
 function sameName(a: string, b: string) {
   return a.trim().toLocaleLowerCase('fr') === b.trim().toLocaleLowerCase('fr')
@@ -161,13 +170,20 @@ function LinkOfferDialog({
     }
 
     setIsSaving(true)
-    const result = await linkUnidentifiedOffer(
-      offer.id,
-      existing
-        ? { companyId: existing.id }
-        : { newCompany: { name: name.trim(), city: city.trim() || null, website: website.trim() || null } }
-    )
-    setIsSaving(false)
+    let result: Awaited<ReturnType<typeof linkUnidentifiedOffer>>
+    try {
+      result = await linkUnidentifiedOffer(
+        offer.id,
+        existing
+          ? { companyId: existing.id }
+          : { newCompany: { name: name.trim(), city: city.trim() || null, website: website.trim() || null } }
+      )
+    } catch {
+      setError(CONNECTION_ERROR)
+      return
+    } finally {
+      setIsSaving(false)
+    }
 
     if (!result.success) {
       setError(result.error || 'Une erreur est survenue')
