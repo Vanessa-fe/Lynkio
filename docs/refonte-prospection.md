@@ -120,7 +120,14 @@ Dans cet ordre, une branche Git par point :
    chaque signal (seuls les écarts avec les valeurs du métier sont enregistrés dans `signal_weights`),
    mots-clés exclus. Les critères non gérés par l'écran (pays, télétravail) sont conservés.
    L'enregistrement incrémente la version de l'ICP et la base recalcule tous les scores.
-5. **Import / export, tableau de bord, relances** sur le nouveau modèle.
+5. ✅ **Tableau de bord et relances** sur le nouveau modèle :
+   - relances rattachées à une entreprise (`reminders.company_id`) : bloc « Relances » sur la fiche,
+     entreprise proposée à la saisie sur la page Relances, raccourcis de date (demain, 3 jours,
+     1 semaine, 2 semaines, à 9 h). Les anciennes relances (contacts, agences) restent affichées ;
+   - tableau de bord : pistes en cours, nouvelles de la semaine (dont Sophie), relances en retard,
+     taux de réussite (gagnées / tranchées), « À faire aujourd'hui », meilleures opportunités
+     (en cours, jamais contactées, par score), pipeline par étape, dernière recherche de Sophie.
+   **Reste à faire** : import / export sur le nouveau modèle.
 
 ### Étape 4 : supprimer l'ancien modèle (00017, « contract »)
 

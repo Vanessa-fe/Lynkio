@@ -34,9 +34,19 @@ interface RemindersListProps {
   totalCount: number
   contactId?: string
   agencyId?: string
+  companyId?: string
+  // Entreprises proposées à la création d'une relance (page Relances)
+  companies?: { id: string; name: string }[]
 }
 
-export function RemindersList({ reminders, totalCount, contactId, agencyId }: RemindersListProps) {
+export function RemindersList({
+  reminders,
+  totalCount,
+  contactId,
+  agencyId,
+  companyId,
+  companies,
+}: RemindersListProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
@@ -156,7 +166,12 @@ export function RemindersList({ reminders, totalCount, contactId, agencyId }: Re
             </SelectContent>
           </Select>
 
-          <ReminderFormDialog contactId={contactId} agencyId={agencyId} />
+          <ReminderFormDialog
+            contactId={contactId}
+            agencyId={agencyId}
+            companyId={companyId}
+            companies={companies}
+          />
         </div>
       </div>
 
@@ -237,6 +252,18 @@ export function RemindersList({ reminders, totalCount, contactId, agencyId }: Re
                                     {[reminder.contact.first_name, reminder.contact.last_name]
                                       .filter(Boolean)
                                       .join(' ') || 'Sans nom'}
+                                  </Link>
+                                </div>
+                              )}
+
+                              {reminder.company && !companyId && (
+                                <div className="flex items-center gap-2">
+                                  <Building2 className="w-4 h-4" />
+                                  <Link
+                                    href={`/companies/${reminder.company.id}`}
+                                    className="hover:underline"
+                                  >
+                                    {reminder.company.name}
                                   </Link>
                                 </div>
                               )}

@@ -1,60 +1,33 @@
-import { getUserProfile } from '@/lib/queries/user-profile'
 import { redirect } from 'next/navigation'
-import { getDashboardStats, getContactsByStatus, getContactsBySource } from '@/lib/queries/dashboard'
-import { getContacts } from '@/lib/queries/contacts'
-import { getUpcomingAppointments } from '@/lib/queries/appointments'
-import { getOverdueReminders } from '@/lib/queries/reminders'
-import { StatsCards } from '@/components/dashboard/stats-cards'
-import { Charts } from '@/components/dashboard/charts'
-import { RecentContacts } from '@/components/dashboard/recent-contacts'
-import { UpcomingAppointments } from '@/components/dashboard/upcoming-appointments'
-import { OverdueReminders } from '@/components/dashboard/overdue-reminders'
+import { getUserProfile } from '@/lib/queries/user-profile'
+import { getDashboardData } from '@/lib/queries/prospection-dashboard'
+import { ProspectionStats } from '@/components/dashboard/prospection-stats'
+import { TodayReminders } from '@/components/dashboard/today-reminders'
+import { TopOpportunities } from '@/components/dashboard/top-opportunities'
+import { PipelineOverview } from '@/components/dashboard/pipeline-overview'
+import { SophieCard } from '@/components/dashboard/sophie-card'
 
 export default async function DashboardPage() {
-  const profile = await getUserProfile()
+  const [profile, data] = await Promise.all([getUserProfile(), getDashboardData()])
 
-  if (!profile) {
+  if (!profile || !data) {
     redirect('/login')
   }
-
-  if (!profile.onboarding_completed) {
-    redirect('/onboarding')
-  }
-
-  // Charger toutes les données du dashboard
-  const [stats, contactsByStatus, contactsBySource, recentContacts, upcomingAppointments, overdueReminders] =
-    await Promise.all([
-      getDashboardStats(),
-      getContactsByStatus(),
-      getContactsBySource(),
-      getContacts({ limit: 5, sortBy: 'createdAt', sortOrder: 'desc' }),
-      getUpcomingAppointments(5),
-      getOverdueReminders(),
-    ])
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">
-          Bienvenue, {profile.first_name || 'Utilisateur'}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          {profile.business_name && `${profile.business_name} - `}
-          Voici un aperçu de votre activité
-        </p>
+        <h1 className="text-3xl font-bold">Bonjour {profile.first_name || ''}</h1>
+        <p className="text-muted-foreground mt-2">Où en est votre prospection</p>
       </div>
 
-      {/* Cartes de statistiques */}
-      <StatsCards stats={stats} />
+      <ProspectionStats stats={data.stats} />
 
-      {/* Graphiques */}
-      <Charts contactsByStatus={contactsByStatus} contactsBySource={contactsBySource} />
-
-      {/* Widgets */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <RecentContacts contacts={recentContacts} />
-        <UpcomingAppointments appointments={upcomingAppointments} />
-        <OverdueReminders reminders={overdueReminders} />
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        <TodayReminders reminders={data.todayReminders} />
+        <TopOpportunities opportunities={data.opportunities} />
+        <PipelineOverview pipeline={data.pipeline} />
+        <SophieCard lastRun={data.lastRun} unidentifiedOffers={data.unidentifiedOffers} nextRunAt={data.nextRunAt} />
       </div>
     </div>
   )

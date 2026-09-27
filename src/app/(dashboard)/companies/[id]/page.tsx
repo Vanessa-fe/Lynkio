@@ -8,6 +8,7 @@ import {
   getLatestQualification,
   getPipelineStages,
 } from '@/lib/queries/companies'
+import { getCompanyReminders } from '@/lib/queries/reminders'
 
 interface CompanyPageProps {
   params: Promise<{
@@ -17,13 +18,14 @@ interface CompanyPageProps {
 
 export default async function CompanyPage({ params }: CompanyPageProps) {
   const { id } = await params
-  const [company, stages, contacts, signals, interactions, qualification] = await Promise.all([
+  const [company, stages, contacts, signals, interactions, qualification, reminders] = await Promise.all([
     getCompanyById(id),
     getPipelineStages(),
     getCompanyContacts(id),
     getCompanySignals(id),
     getCompanyInteractions(id),
     getLatestQualification(id),
+    getCompanyReminders(id),
   ])
 
   if (!company) {
@@ -38,6 +40,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
       signals={signals}
       interactions={interactions}
       qualification={qualification}
+      reminders={reminders}
     />
   )
 }

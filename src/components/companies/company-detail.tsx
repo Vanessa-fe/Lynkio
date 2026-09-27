@@ -35,11 +35,13 @@ import type {
   CompanySignalWithType,
   CompanyWithRelations,
   PipelineStage,
+  ReminderWithRelations,
 } from '@/types'
 import { CompanyScore, CompanyStageSelect } from './company-stage-select'
 import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
+import { RemindersList } from '@/components/reminders/reminders-list'
 
 interface CompanyDetailProps {
   company: CompanyWithRelations
@@ -48,6 +50,7 @@ interface CompanyDetailProps {
   signals: CompanySignalWithType[]
   interactions: CompanyInteractionWithContact[]
   qualification: CompanyQualification | null
+  reminders: ReminderWithRelations[]
 }
 
 export function CompanyDetail({
@@ -57,6 +60,7 @@ export function CompanyDetail({
   signals,
   interactions,
   qualification,
+  reminders,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -281,6 +285,16 @@ export function CompanyDetail({
       )}
 
       <CompanyContacts companyId={company.id} website={company.website} contacts={contacts} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Relances</CardTitle>
+          <CardDescription>Les rappels liés à cette entreprise</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RemindersList reminders={reminders} totalCount={reminders.length} companyId={company.id} />
+        </CardContent>
+      </Card>
 
       <CompanyInteractions companyId={company.id} contacts={contacts} interactions={interactions} />
     </div>

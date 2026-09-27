@@ -132,6 +132,7 @@ export type PaymentWithRelations = Payment & {
 export type ReminderWithRelations = Reminder & {
   contact?: Contact | null
   agency?: Agency | null
+  company?: Pick<Company, 'id' | 'name'> | null
 }
 
 export type CompanyWithRelations = Company & {

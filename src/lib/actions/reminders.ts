@@ -15,6 +15,30 @@ type ActionResult<T = unknown> = {
   error?: string
 }
 
+type ReminderTargets = {
+  contact_id?: string | null
+  agency_id?: string | null
+  company_id?: string | null
+}
+
+/**
+ * Rafraîchit les pages qui affichent la relance : liste, tableau de bord et fiche ciblée
+ */
+function revalidateReminderPages(targets: ReminderTargets) {
+  revalidatePath('/reminders')
+  revalidatePath('/dashboard')
+  if (targets.contact_id) {
+    revalidatePath(`/contacts/${targets.contact_id}`)
+  }
+  if (targets.agency_id) {
+    revalidatePath(`/agencies/${targets.agency_id}`)
+    revalidatePath('/agencies')
+  }
+  if (targets.company_id) {
+    revalidatePath(`/companies/${targets.company_id}`)
+  }
+}
+
 export async function createReminder(
   input: CreateReminderInput
 ): Promise<ActionResult<{ id: string }>> {
@@ -62,11 +86,26 @@ export async function createReminder(
       }
     }
 
+    // Si une entreprise est fournie, vérifier qu'elle appartient à l'utilisateur
+    if (validated.companyId) {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('id', validated.companyId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!company) {
+        return { success: false, error: 'Entreprise non trouvée' }
+      }
+    }
+
     // Préparer les données pour l'insertion
     const insertData = {
       user_id: user.id,
       contact_id: validated.contactId,
       agency_id: validated.agencyId,
+      company_id: validated.companyId,
       title: validated.title,
       due_at: validated.dueAt,
       priority: validated.priority,
@@ -83,14 +122,11 @@ export async function createReminder(
       return { success: false, error: 'Erreur lors de la création de la relance' }
     }
 
-    revalidatePath('/reminders')
-    if (validated.contactId) {
-      revalidatePath(`/contacts/${validated.contactId}`)
-    }
-    if (validated.agencyId) {
-      revalidatePath(`/agencies/${validated.agencyId}`)
-      revalidatePath('/agencies')
-    }
+    revalidateReminderPages({
+      contact_id: validated.contactId,
+      agency_id: validated.agencyId,
+      company_id: validated.companyId,
+    })
 
     return {
       success: true,
@@ -127,7 +163,7 @@ export async function updateReminder(
     // Vérifier que la relance appartient à l'utilisateur
     const { data: reminder } = await supabase
       .from('reminders')
-      .select('id, contact_id, agency_id')
+      .select('id, contact_id, agency_id, company_id')
       .eq('id', reminderId)
       .eq('user_id', user.id)
       .single()
@@ -164,11 +200,26 @@ export async function updateReminder(
       }
     }
 
+    // Si une entreprise est fournie, vérifier qu'elle appartient à l'utilisateur
+    if (validated.companyId) {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('id', validated.companyId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!company) {
+        return { success: false, error: 'Entreprise non trouvée' }
+      }
+    }
+
     // Préparer les données pour la mise à jour
     const updateData: Record<string, unknown> = {}
 
     if (validated.contactId !== undefined) updateData.contact_id = validated.contactId
     if (validated.agencyId !== undefined) updateData.agency_id = validated.agencyId
+    if (validated.companyId !== undefined) updateData.company_id = validated.companyId
     if (validated.title !== undefined) updateData.title = validated.title
     if (validated.dueAt !== undefined) updateData.due_at = validated.dueAt
     if (validated.priority !== undefined) updateData.priority = validated.priority
@@ -184,16 +235,7 @@ export async function updateReminder(
       return { success: false, error: 'Erreur lors de la mise à jour de la relance' }
     }
 
-    revalidatePath('/reminders')
-    const contactId = (reminder as { contact_id: string | null }).contact_id
-    if (contactId) {
-      revalidatePath(`/contacts/${contactId}`)
-    }
-    const agencyId = (reminder as { agency_id: string | null }).agency_id
-    if (agencyId) {
-      revalidatePath(`/agencies/${agencyId}`)
-      revalidatePath('/agencies')
-    }
+    revalidateReminderPages(reminder as ReminderTargets)
 
     return { success: true }
   } catch (error) {
@@ -221,7 +263,7 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
     // Vérifier que la relance appartient à l'utilisateur
     const { data: reminder } = await supabase
       .from('reminders')
-      .select('contact_id, agency_id')
+      .select('contact_id, agency_id, company_id')
       .eq('id', reminderId)
       .eq('user_id', user.id)
       .single()
@@ -241,16 +283,7 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
       return { success: false, error: 'Erreur lors du marquage de la relance' }
     }
 
-    revalidatePath('/reminders')
-    const contactId = (reminder as { contact_id: string | null }).contact_id
-    if (contactId) {
-      revalidatePath(`/contacts/${contactId}`)
-    }
-    const agencyId = (reminder as { agency_id: string | null }).agency_id
-    if (agencyId) {
-      revalidatePath(`/agencies/${agencyId}`)
-      revalidatePath('/agencies')
-    }
+    revalidateReminderPages(reminder as ReminderTargets)
 
     return { success: true }
   } catch (error) {
@@ -278,7 +311,7 @@ export async function uncompleteReminder(reminderId: string): Promise<ActionResu
     // Vérifier que la relance appartient à l'utilisateur
     const { data: reminder } = await supabase
       .from('reminders')
-      .select('contact_id, agency_id')
+      .select('contact_id, agency_id, company_id')
       .eq('id', reminderId)
       .eq('user_id', user.id)
       .single()
@@ -298,16 +331,7 @@ export async function uncompleteReminder(reminderId: string): Promise<ActionResu
       return { success: false, error: 'Erreur lors de la réouverture de la relance' }
     }
 
-    revalidatePath('/reminders')
-    const contactId = (reminder as { contact_id: string | null }).contact_id
-    if (contactId) {
-      revalidatePath(`/contacts/${contactId}`)
-    }
-    const agencyId = (reminder as { agency_id: string | null }).agency_id
-    if (agencyId) {
-      revalidatePath(`/agencies/${agencyId}`)
-      revalidatePath('/agencies')
-    }
+    revalidateReminderPages(reminder as ReminderTargets)
 
     return { success: true }
   } catch (error) {
@@ -335,7 +359,7 @@ export async function deleteReminder(reminderId: string): Promise<ActionResult> 
     // Vérifier que la relance appartient à l'utilisateur
     const { data: reminder } = await supabase
       .from('reminders')
-      .select('contact_id, agency_id')
+      .select('contact_id, agency_id, company_id')
       .eq('id', reminderId)
       .eq('user_id', user.id)
       .single()
@@ -355,16 +379,7 @@ export async function deleteReminder(reminderId: string): Promise<ActionResult> 
       return { success: false, error: 'Erreur lors de la suppression de la relance' }
     }
 
-    revalidatePath('/reminders')
-    const contactId = (reminder as { contact_id: string | null }).contact_id
-    if (contactId) {
-      revalidatePath(`/contacts/${contactId}`)
-    }
-    const agencyId = (reminder as { agency_id: string | null }).agency_id
-    if (agencyId) {
-      revalidatePath(`/agencies/${agencyId}`)
-      revalidatePath('/agencies')
-    }
+    revalidateReminderPages(reminder as ReminderTargets)
 
     return { success: true }
   } catch (error) {

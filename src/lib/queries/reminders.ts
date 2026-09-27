@@ -4,7 +4,8 @@ import type { ReminderPriority, ReminderWithRelations } from '@/types'
 const REMINDER_SELECT = `
   *,
   contact:contacts(*),
-  agency:agencies(*)
+  agency:agencies(*),
+  company:companies(id, name)
 `
 
 export async function getReminders(options?: {
@@ -12,6 +13,7 @@ export async function getReminders(options?: {
   offset?: number
   contactId?: string
   agencyId?: string
+  companyId?: string
   priority?: ReminderPriority
   includeCompleted?: boolean
 }): Promise<ReminderWithRelations[]> {
@@ -38,6 +40,10 @@ export async function getReminders(options?: {
 
   if (options?.agencyId) {
     query = query.eq('agency_id', options.agencyId)
+  }
+
+  if (options?.companyId) {
+    query = query.eq('company_id', options.companyId)
   }
 
   if (options?.priority) {
@@ -99,6 +105,13 @@ export async function getContactReminders(contactId: string): Promise<ReminderWi
 
 export async function getAgencyReminders(agencyId: string): Promise<ReminderWithRelations[]> {
   return getReminders({ agencyId })
+}
+
+/**
+ * Relances d'une entreprise, terminées comprises (la fiche montre l'historique)
+ */
+export async function getCompanyReminders(companyId: string): Promise<ReminderWithRelations[]> {
+  return getReminders({ companyId, includeCompleted: true })
 }
 
 export async function getRemindersCount(options?: {
