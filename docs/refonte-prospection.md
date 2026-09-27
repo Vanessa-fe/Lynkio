@@ -126,14 +126,16 @@ et de `user_profiles.business_type`, puis du code associé.
    « Lancer maintenant », planning (jours cochés + heure), départements, secteurs ignorés, nombre
    maximum d'entreprises par passage, historique des passages avec les raisons d'exclusion.
 2. ✅ **Détecteur « entreprises qui recrutent » (source principale, 00014)** : offres d'emploi France
-   Travail pour les métiers liés au métier de l'utilisateur (`profession_signals` → codes ROME, M1805
-   pour les développeur·ses), dans ses départements. Chaque offre devient un signal `job_posting_dev`
+   Travail pour les métiers liés au métier de l'utilisateur (`profession_signals` → codes ROME 4.0 :
+   M1855 développeur web, M1861 logiciel/application, M1805 informatique), dans ses départements. Chaque offre devient un signal `job_posting_dev`
    (intitulé, contrat, lieu, lien). Entreprise déjà suivie : le signal s'ajoute à sa fiche (elle
    recrute à nouveau) ; sinon elle est créée, avec son site quand l'offre le donne, et complétée par
    sa fiche officielle (SIREN, ancienneté, taille, dirigeants) retrouvée par nom exact dans le
    département : mieux vaut pas de fiche qu'une fiche d'une autre entreprise.
-   Écartés : offres sans nom d'entreprise, cabinets de recrutement et intérim (NAF 78), missions
-   d'intérim, secteurs ignorés, mots-clés exclus. Les offres sont lues des plus récentes aux plus
+   Écartés : offres sans nom d'entreprise, cabinets de recrutement et intérim (NAF 78), plateformes
+   freelance et cabinets connus (liste dans `rules.ts`), missions d'intérim, secteurs ignorés,
+   mots-clés exclus. Premier essai réel (Rhône, 27/09) : 42 offres, fiche officielle retrouvée pour
+   3 entreprises sur 5. Les offres sont lues des plus récentes aux plus
    anciennes depuis le passage précédent (`job_postings_cursor`).
    **Décision (27/09)** : l'ancienneté d'une entreprise est une information affichée (fiche et liste),
    pas un critère de sélection : une société qui vient de se créer a rarement le budget d'un freelance.

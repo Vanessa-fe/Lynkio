@@ -60,6 +60,31 @@ export function isNonDiffusible(value: string | null | undefined): boolean {
   return !!value && value.includes('NON-DIFFUSIBLE')
 }
 
+// Plateformes de mise en relation freelance et cabinets de recrutement connus :
+// l'entreprise affichée dans l'offre n'est pas le client final.
+// (Les agences d'intérim sont repérées par leur code NAF 78.)
+const INTERMEDIARY_NAMES = [
+  'collective work',
+  'free work',
+  'freelance informatique',
+  'malt',
+  'creme de la creme',
+  'comet',
+  'crew',
+  'hays',
+  'michael page',
+  'robert half',
+  'expectra',
+  'walters people',
+  'fed it',
+  'silkhom',
+]
+
+export function isIntermediary(name: string): boolean {
+  const normalized = normalizeCompanyName(name)
+  return INTERMEDIARY_NAMES.some((intermediary) => normalized === intermediary || normalized.startsWith(`${intermediary} `))
+}
+
 // Sociétés civiles (SCI, SCP, holdings patrimoniales…) : pas des clients pour un freelance
 export function isCivilCompany(legalForm: string | null | undefined): boolean {
   return !!legalForm && /soci[ée]t[ée] civile/i.test(legalForm)

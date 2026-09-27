@@ -18,6 +18,7 @@ import {
 import { fetchJobOffers, offerUrl, type JobOffer } from './france-travail.ts'
 import { searchRegistryByName, type RegistryCompany } from './sources.ts'
 import {
+  isIntermediary,
   isNonDiffusible,
   matchesExcludedKeyword,
   nafSectionFromDivision,
@@ -34,8 +35,14 @@ const MAX_OFFERS_PER_RUN = 600
 
 // Métiers recherchés dans les offres (codes ROME) pour chaque signal d'offre d'emploi.
 // Le métier de l'utilisateur (profession_signals) décide lesquels sont utilisés.
+// Codes du ROME 4.0 (2025) : le développement web a son propre code (M1855),
+// de loin le plus utilisé dans les offres de développeur.
 const JOB_SIGNAL_ROME_CODES: Record<string, string[]> = {
-  job_posting_dev: ['M1805'], // Études et développement informatique
+  job_posting_dev: [
+    'M1855', // Développeur / Développeuse web
+    'M1861', // Développeur / Développeuse logiciel ou d'application
+    'M1805', // Développeur / Développeuse informatique
+  ],
   job_posting_design: ['E1205'], // Réalisation de contenus multimédias
   job_posting_marketing: ['M1705'], // Marketing
 }
@@ -111,6 +118,10 @@ function groupByCompany(offers: JobOffer[], stats: SourceStats): OfferGroup[] {
     }
     if (offer.secteurActivite === RECRUITMENT_DIVISION) {
       skip(stats, 'Cabinet de recrutement ou intérim')
+      continue
+    }
+    if (isIntermediary(name)) {
+      skip(stats, 'Plateforme freelance ou cabinet intermédiaire')
       continue
     }
     if (offer.typeContrat === 'MIS') {
