@@ -28,6 +28,7 @@ export type CompanyInteraction = Database['public']['Tables']['company_interacti
 export type ProspectionSettings = Database['public']['Tables']['prospection_settings']['Row']
 export type PipelineRun = Database['public']['Tables']['pipeline_runs']['Row']
 export type UnidentifiedJobOffer = Database['public']['Tables']['unidentified_job_offers']['Row']
+export type CompanyQualification = Database['public']['Tables']['company_qualifications']['Row']
 
 // Types d'insertion
 export type InsertUserProfile = Database['public']['Tables']['user_profiles']['Insert']

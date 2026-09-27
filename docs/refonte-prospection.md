@@ -113,7 +113,7 @@ Dans cet ordre, une branche Git par point :
 4. **Paramètres** : étapes et sources sur `pipeline_stages` / `lead_sources` ; nouvel écran ICP.
 5. **Import / export, tableau de bord, relances** sur le nouveau modèle.
 
-### Étape 4 : supprimer l'ancien modèle (00015, « contract »)
+### Étape 4 : supprimer l'ancien modèle (00017, « contract »)
 
 Une fois plus aucun code ne référence les anciennes tables : suppression de `contacts`,
 `contact_*`, `interactions`, `appointments`, `payments`, `agencies`, `agency_*`,
@@ -146,9 +146,26 @@ et de `user_profiles.business_type`, puis du code associé.
    jusqu'à la date du passage précédent (`bodacc_cursor`).
    Les sources partagent le quota d'entreprises du passage, la plus utile en premier ; une source en
    panne n'empêche pas les autres (le passage n'échoue que si toutes échouent).
-4. Scoring par règles (`model = 'rules-v1'`) à partir de l'ICP et des poids de signaux.
-5. Qualification par IA en complément, sur les entreprises déjà filtrées par les règles.
-6. Hunter.io en dernier, uniquement sur les entreprises qualifiées (quota gratuit limité),
+4. ✅ **Missions freelance et offres anonymes (00015)** : une offre ouverte aux indépendants (contrat
+   freelance, intitulé, plateforme de mise en relation) devient un signal `freelance_mission` (poids 40).
+   Les plateformes ne sont plus écartées. Les offres sans nom d'entreprise, et celles des cabinets de
+   recrutement qui cachent leur client, sont gardées dans `unidentified_job_offers` : l'onglet
+   Prospection les liste avec leur lien, « Rattacher » (l'offre devient un signal sur l'entreprise) ou
+   « Ignorer ». Écartés : intérim, alternance.
+5. ✅ **Scoring par règles `rules-v1` (00016)**, calculé par la base (`compute_company_score`,
+   `score_company`) et recalculé automatiquement à chaque changement de signal, de contact, de fiche
+   ou d'ICP ; un job quotidien (`rescore-expired-signals`, 3 h 30) tient compte des signaux expirés.
+   Barème sur 100 :
+   - signaux valides, poids du métier ou surcharge de l'ICP (`signal_weights`) ; +5 par signal
+     supplémentaire du même type, au plus +10 ;
+   - fraîcheur : dernier signal de moins de 7 jours +10, de moins d'un mois +5 ;
+   - taille : préférée par l'ICP +15, acceptée +8 ;
+   - joignabilité : décideur identifié +5, e-mail +5, site connu +5 ;
+   - éliminatoires (score 0) : pays hors cible, mot-clé exclu.
+   Chaque calcul qui change le résultat est gardé dans `company_qualifications` avec ses raisons,
+   affichées sur la fiche (« Pourquoi ce score »).
+6. Qualification par IA en complément, sur les entreprises déjà filtrées par les règles.
+7. Hunter.io en dernier, uniquement sur les entreprises qualifiées (quota gratuit limité),
    à partir du nom du dirigeant fourni par l'API Recherche d'entreprises.
 
 **Exécution** (migrations 00012 et 00013, fonction `supabase/functions/prospection-run`) :

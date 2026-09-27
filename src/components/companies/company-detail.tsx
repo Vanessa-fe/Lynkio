@@ -31,6 +31,7 @@ import { useToast } from '@/lib/hooks/use-toast'
 import type {
   CompanyContact,
   CompanyInteractionWithContact,
+  CompanyQualification,
   CompanySignalWithType,
   CompanyWithRelations,
   PipelineStage,
@@ -38,6 +39,7 @@ import type {
 import { CompanyScore, CompanyStageSelect } from './company-stage-select'
 import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
+import { CompanyScoreCard } from './company-score-card'
 
 interface CompanyDetailProps {
   company: CompanyWithRelations
@@ -45,9 +47,17 @@ interface CompanyDetailProps {
   contacts: CompanyContact[]
   signals: CompanySignalWithType[]
   interactions: CompanyInteractionWithContact[]
+  qualification: CompanyQualification | null
 }
 
-export function CompanyDetail({ company, stages, contacts, signals, interactions }: CompanyDetailProps) {
+export function CompanyDetail({
+  company,
+  stages,
+  contacts,
+  signals,
+  interactions,
+  qualification,
+}: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isDeleting, setIsDeleting] = useState(false)
@@ -229,6 +239,8 @@ export function CompanyDetail({ company, stages, contacts, signals, interactions
           </div>
         </CardContent>
       </Card>
+
+      <CompanyScoreCard qualification={qualification} />
 
       {signals.length > 0 && (
         <Card>

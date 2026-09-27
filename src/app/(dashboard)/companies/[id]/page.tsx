@@ -5,6 +5,7 @@ import {
   getCompanyContacts,
   getCompanyInteractions,
   getCompanySignals,
+  getLatestQualification,
   getPipelineStages,
 } from '@/lib/queries/companies'
 
@@ -16,12 +17,13 @@ interface CompanyPageProps {
 
 export default async function CompanyPage({ params }: CompanyPageProps) {
   const { id } = await params
-  const [company, stages, contacts, signals, interactions] = await Promise.all([
+  const [company, stages, contacts, signals, interactions, qualification] = await Promise.all([
     getCompanyById(id),
     getPipelineStages(),
     getCompanyContacts(id),
     getCompanySignals(id),
     getCompanyInteractions(id),
+    getLatestQualification(id),
   ])
 
   if (!company) {
@@ -35,6 +37,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
       contacts={contacts}
       signals={signals}
       interactions={interactions}
+      qualification={qualification}
     />
   )
 }

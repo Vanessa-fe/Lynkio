@@ -1447,6 +1447,16 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: string[]
       }
+      compute_company_score: {
+        Args: { p_company_id: string }
+        Returns: {
+          elimination_reason: string
+          icp_profile_id: string
+          is_eliminated: boolean
+          reasons: Json
+          score: number
+        }[]
+      }
       compute_next_prospection_run: {
         Args: {
           p_after: string
@@ -1461,6 +1471,8 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      rescore_companies_with_expired_signals: { Args: never; Returns: number }
+      score_company: { Args: { p_company_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

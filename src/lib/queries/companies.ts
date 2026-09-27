@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type {
   CompanyContact,
+  CompanyQualification,
   CompanyInteractionWithContact,
   CompanySignalWithType,
   CompanyWithRelations,
@@ -176,6 +177,23 @@ export async function getLeadSources(): Promise<LeadSource[]> {
   if (error || !data) {
     return []
   }
+
+  return data
+}
+
+/**
+ * Dernier calcul de score de l'entreprise, avec ses raisons
+ */
+export async function getLatestQualification(companyId: string): Promise<CompanyQualification | null> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('company_qualifications')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
   return data
 }
