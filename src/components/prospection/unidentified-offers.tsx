@@ -19,13 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { dismissUnidentifiedOffer, linkUnidentifiedOffer } from '@/lib/actions/prospection'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { UnidentifiedJobOffer } from '@/types'
@@ -128,7 +121,10 @@ export function UnidentifiedOffers({ offers, companies }: UnidentifiedOffersProp
   )
 }
 
-const NEW_COMPANY = 'new'
+// Même comparaison que pour retrouver une entreprise : sans casse ni espaces superflus
+function sameName(a: string, b: string) {
+  return a.trim().toLocaleLowerCase('fr') === b.trim().toLocaleLowerCase('fr')
+}
 
 function LinkOfferDialog({
   offer,
@@ -141,16 +137,17 @@ function LinkOfferDialog({
 }) {
   const router = useRouter()
   const { toast } = useToast()
-  const [choice, setChoice] = useState<string>(NEW_COMPANY)
-  const [newName, setNewName] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+
+  const existing = companies.find((company) => sameName(company.name, name))
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError(null)
 
-    if (choice === NEW_COMPANY && !newName.trim()) {
+    if (!name.trim()) {
       setError('Indiquez le nom de l\'entreprise')
       return
     }
@@ -158,7 +155,7 @@ function LinkOfferDialog({
     setIsSaving(true)
     const result = await linkUnidentifiedOffer(
       offer.id,
-      choice === NEW_COMPANY ? { newCompanyName: newName.trim() } : { companyId: choice }
+      existing ? { companyId: existing.id } : { newCompanyName: name.trim() }
     )
     setIsSaving(false)
 
@@ -195,38 +192,30 @@ function LinkOfferDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="linkCompany">Entreprise</Label>
-            <Select value={choice} onValueChange={setChoice} disabled={isSaving}>
-              <SelectTrigger id="linkCompany">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NEW_COMPANY}>Nouvelle entreprise…</SelectItem>
-                {companies.map((company) => (
-                  <SelectItem key={company.id} value={company.id}>
-                    {company.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="linkCompanyName">Nom de l&apos;entreprise</Label>
+            <Input
+              id="linkCompanyName"
+              list="linkCompanySuggestions"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Trouvé dans l'annonce"
+              autoComplete="off"
+              disabled={isSaving}
+              autoFocus
+            />
+            <datalist id="linkCompanySuggestions">
+              {companies.map((company) => (
+                <option key={company.id} value={company.name} />
+              ))}
+            </datalist>
+            <p className="text-xs text-muted-foreground" aria-live="polite">
+              {!name.trim()
+                ? 'Vos entreprises vous sont proposées pendant la saisie.'
+                : existing
+                  ? `L'offre sera ajoutée à ${existing.name}, que vous suivez déjà.`
+                  : 'Nouvelle entreprise : vous pourrez compléter sa fiche (site, SIREN, contacts) ensuite.'}
+            </p>
           </div>
-
-          {choice === NEW_COMPANY && (
-            <div className="space-y-2">
-              <Label htmlFor="newCompanyName">Nom de l&apos;entreprise</Label>
-              <Input
-                id="newCompanyName"
-                value={newName}
-                onChange={(event) => setNewName(event.target.value)}
-                placeholder="Trouvé dans l'annonce"
-                disabled={isSaving}
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground">
-                Vous pourrez compléter sa fiche (site, SIREN, contacts) ensuite.
-              </p>
-            </div>
-          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
