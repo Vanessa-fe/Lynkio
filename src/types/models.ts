@@ -19,6 +19,12 @@ export type AgencySource = Database['public']['Tables']['agency_sources']['Row']
 export type Agency = Database['public']['Tables']['agencies']['Row']
 export type AgencyInteraction = Database['public']['Tables']['agency_interactions']['Row']
 export type Profession = Database['public']['Tables']['professions']['Row']
+export type PipelineStage = Database['public']['Tables']['pipeline_stages']['Row']
+export type LeadSource = Database['public']['Tables']['lead_sources']['Row']
+export type Company = Database['public']['Tables']['companies']['Row']
+export type CompanyContact = Database['public']['Tables']['company_contacts']['Row']
+export type CompanySignal = Database['public']['Tables']['company_signals']['Row']
+export type CompanyInteraction = Database['public']['Tables']['company_interactions']['Row']
 
 // Types d'insertion
 export type InsertUserProfile = Database['public']['Tables']['user_profiles']['Insert']
@@ -83,6 +89,18 @@ export type SignalType = 'job_posting_dev' | 'nextjs_portfolio' | 'ai_offer' | '
 export type PreferredChannel = 'email' | 'linkedin' | 'phone' | 'other'
 export type AgencyInteractionType = InteractionType
 export type AgencyInteractionDirection = InteractionDirection
+export type PipelineStageKind = 'open' | 'won' | 'lost' | 'excluded'
+export type CompanyOrigin = 'manual' | 'import' | 'detector'
+export type SizeCategory = 'solo' | 'tpe' | 'pme' | 'eti' | 'ge'
+export type EmailSource = 'manual' | 'hunter' | 'website' | 'other'
+export type CompanyInteractionType =
+  | 'email'
+  | 'linkedin_message'
+  | 'call'
+  | 'meeting'
+  | 'note'
+  | 'system_event'
+export type CompanyInteractionStatus = 'draft' | 'scheduled' | 'done'
 
 // Types composés pour les vues avec relations
 export type ContactWithRelations = Contact & {
@@ -107,6 +125,19 @@ export type PaymentWithRelations = Payment & {
 export type ReminderWithRelations = Reminder & {
   contact?: Contact | null
   agency?: Agency | null
+}
+
+export type CompanyWithRelations = Company & {
+  stage?: Pick<PipelineStage, 'id' | 'name' | 'color' | 'kind' | 'order'> | null
+  source?: Pick<LeadSource, 'id' | 'name' | 'icon'> | null
+}
+
+export type CompanySignalWithType = CompanySignal & {
+  type: { label: string; description: string | null } | null
+}
+
+export type CompanyInteractionWithContact = CompanyInteraction & {
+  contact: Pick<CompanyContact, 'id' | 'first_name' | 'last_name'> | null
 }
 
 export type AgencyWithRelations = Agency & {

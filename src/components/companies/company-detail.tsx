@@ -1,0 +1,291 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { format, formatDistanceToNow } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import {
+  ArrowLeft,
+  Building2,
+  Calendar,
+  Edit,
+  ExternalLink,
+  FileText,
+  Globe,
+  Hash,
+  MapPin,
+  MessageSquare,
+  Tag,
+  Trash2,
+  Users,
+  Zap,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { deleteCompany } from '@/lib/actions/companies'
+import { sizeCategoryLabels, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import { useToast } from '@/lib/hooks/use-toast'
+import type {
+  CompanyContact,
+  CompanyInteractionWithContact,
+  CompanySignalWithType,
+  CompanyWithRelations,
+  PipelineStage,
+} from '@/types'
+import { CompanyScore, CompanyStageSelect } from './company-stage-select'
+import { CompanyContacts } from './company-contacts'
+import { CompanyInteractions } from './company-interactions'
+
+interface CompanyDetailProps {
+  company: CompanyWithRelations
+  stages: PipelineStage[]
+  contacts: CompanyContact[]
+  signals: CompanySignalWithType[]
+  interactions: CompanyInteractionWithContact[]
+}
+
+export function CompanyDetail({ company, stages, contacts, signals, interactions }: CompanyDetailProps) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!confirm(`Supprimer ${company.name} ? Ses contacts, signaux et échanges seront aussi supprimés.`)) {
+      return
+    }
+
+    setIsDeleting(true)
+    const result = await deleteCompany(company.id)
+
+    if (result.success) {
+      toast({ title: 'Entreprise supprimée', description: company.name })
+      router.push('/companies')
+      router.refresh()
+    } else {
+      setIsDeleting(false)
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: result.error || 'Une erreur est survenue',
+      })
+    }
+  }
+
+  const location = [company.postal_code, company.city].filter(Boolean).join(' ')
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/companies">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Entreprises
+          </Link>
+        </Button>
+
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/companies/${company.id}/edit`}>
+              <Edit className="w-4 h-4 mr-2" />
+              Modifier
+            </Link>
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            aria-label={`Supprimer ${company.name}`}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="min-w-0">
+              <CardTitle className="text-3xl break-words">{company.name}</CardTitle>
+              {(company.sector || location) && (
+                <CardDescription className="text-base mt-1">
+                  {[company.sector, location].filter(Boolean).join(' · ')}
+                </CardDescription>
+              )}
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Score</p>
+                <CompanyScore score={company.score} />
+              </div>
+              <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {company.website && (
+              <InfoItem icon={<Globe className="w-5 h-5" />} label="Site web">
+                <a
+                  href={toWebsiteUrl(company.website)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium hover:underline inline-flex items-center gap-1"
+                >
+                  {toWebsiteDomain(company.website)}
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </InfoItem>
+            )}
+            {location && (
+              <InfoItem icon={<MapPin className="w-5 h-5" />} label="Adresse">
+                {location}
+              </InfoItem>
+            )}
+            {company.registration_id && (
+              <InfoItem icon={<Hash className="w-5 h-5" />} label="SIREN">
+                <a
+                  href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${company.registration_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium hover:underline inline-flex items-center gap-1"
+                >
+                  {company.registration_id.replace(/(\d{3})(?=\d)/g, '$1 ')}
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </InfoItem>
+            )}
+            {company.size_category && (
+              <InfoItem icon={<Users className="w-5 h-5" />} label="Taille">
+                {sizeCategoryLabels[company.size_category]}
+              </InfoItem>
+            )}
+            {company.source && (
+              <InfoItem icon={<Tag className="w-5 h-5" />} label="Source">
+                {company.source.name}
+              </InfoItem>
+            )}
+            {company.legal_form && (
+              <InfoItem icon={<Building2 className="w-5 h-5" />} label="Forme juridique">
+                {company.legal_form}
+              </InfoItem>
+            )}
+          </dl>
+
+          {company.detected_stack.length > 0 && (
+            <div>
+              <p className="font-semibold mb-2">Stack technique détectée</p>
+              <div className="flex flex-wrap gap-2">
+                {company.detected_stack.map((tech) => (
+                  <Badge key={tech} variant="secondary">
+                    {tech}
+                  </Badge>
+                ))}
+              </div>
+              {company.stack_detected_at && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Analysé le {format(new Date(company.stack_detected_at), 'dd MMMM yyyy', { locale: fr })}
+                </p>
+              )}
+            </div>
+          )}
+
+          {company.notes && (
+            <div>
+              <p className="font-semibold mb-2 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                Notes
+              </p>
+              <p className="text-muted-foreground whitespace-pre-wrap">{company.notes}</p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground border-t pt-4">
+            <span className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Ajoutée le {format(new Date(company.created_at), 'dd MMMM yyyy', { locale: fr })}
+              {company.origin === 'detector' && ' par Sophie'}
+              {company.origin === 'import' && ' par import'}
+            </span>
+            <span className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              {company.last_interaction_at
+                ? `Dernier échange ${formatDistanceToNow(new Date(company.last_interaction_at), {
+                    addSuffix: true,
+                    locale: fr,
+                  })}`
+                : 'Jamais contactée'}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {signals.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-500" />
+              Signaux d&apos;achat
+            </CardTitle>
+            <CardDescription>Ce qui laisse penser que cette entreprise a un besoin en ce moment</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {signals.map((signal) => (
+                <li key={signal.id} className="flex items-start justify-between gap-4 rounded-lg bg-muted p-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{signal.type?.label ?? signal.signal_type}</p>
+                    {signal.type?.description && (
+                      <p className="text-sm text-muted-foreground">{signal.type.description}</p>
+                    )}
+                    {signal.source_url && (
+                      <a
+                        href={signal.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm hover:underline inline-flex items-center gap-1 break-all"
+                      >
+                        Voir la source
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatDistanceToNow(new Date(signal.detected_at), { addSuffix: true, locale: fr })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      <CompanyContacts companyId={company.id} website={company.website} contacts={contacts} />
+
+      <CompanyInteractions companyId={company.id} contacts={contacts} interactions={interactions} />
+    </div>
+  )
+}
+
+function InfoItem({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <span className="text-muted-foreground shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <dt className="text-sm text-muted-foreground">{label}</dt>
+        <dd className="font-medium break-words">{children}</dd>
+      </div>
+    </div>
+  )
+}

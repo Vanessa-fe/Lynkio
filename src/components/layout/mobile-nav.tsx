@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Download, Calendar } from 'lucide-react'
+import { Home, Building2, Bell, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ThemeSelector } from '@/components/theme/theme-selector'
 
@@ -13,19 +13,19 @@ const navItems = [
     icon: Home,
   },
   {
-    href: '/contacts',
-    label: 'Contacts',
-    icon: Users,
+    href: '/companies',
+    label: 'Entreprises',
+    icon: Building2,
   },
   {
-    href: '/import-export',
-    label: 'Import',
-    icon: Download,
+    href: '/reminders',
+    label: 'Relances',
+    icon: Bell,
   },
   {
-    href: '/appointments',
-    label: 'Agenda',
-    icon: Calendar,
+    href: '/settings',
+    label: 'Réglages',
+    icon: Settings,
   },
 ]
 

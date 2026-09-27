@@ -11,14 +11,20 @@ import type { Database as GeneratedDatabase } from './database.generated'
 import type {
   AppointmentStatus,
   ChannelType,
+  CompanyInteractionStatus,
+  CompanyInteractionType,
+  CompanyOrigin,
+  EmailSource,
   InteractionDirection,
   InteractionType,
   PaymentMethod,
   PaymentStatus,
+  PipelineStageKind,
   PreferredChannel,
   ReminderPriority,
   RiskLevel,
   SignalType,
+  SizeCategory,
   SizeRange,
 } from './models'
 
@@ -50,6 +56,14 @@ export type Database = MergeDeep<
         agency_interactions: Columns<{
           type: InteractionType
           direction: InteractionDirection | null
+        }>
+        pipeline_stages: Columns<{ kind: PipelineStageKind }>
+        companies: Columns<{ origin: CompanyOrigin; size_category: SizeCategory | null }>
+        company_contacts: Columns<{ email_source: EmailSource | null }>
+        company_interactions: Columns<{
+          type: CompanyInteractionType
+          direction: InteractionDirection | null
+          status: CompanyInteractionStatus
         }>
       }
     }

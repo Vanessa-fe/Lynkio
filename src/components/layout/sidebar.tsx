@@ -2,22 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  Home,
-  Users,
-  Building2,
-  Calendar,
-  DollarSign,
-  Bell,
-  Download,
-  Settings,
-  LogOut,
-} from 'lucide-react'
+import { Home, Building2, Bell, Settings, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/button'
 import { logout } from '@/lib/actions/auth'
 import { ThemeSelector } from '@/components/theme/theme-selector'
 
+// Les modules contacts, rendez-vous, paiements et agences sortent du menu :
+// Entreprises les remplace (refonte prospection, étape 3.2). Leurs pages restent
+// accessibles jusqu'à la suppression de l'ancien modèle (étape 4).
 const navItems = [
   {
     href: '/dashboard',
@@ -25,34 +18,14 @@ const navItems = [
     icon: Home,
   },
   {
-    href: '/contacts',
-    label: 'Contacts',
-    icon: Users,
-  },
-  {
-    href: '/agencies',
-    label: 'Agences',
+    href: '/companies',
+    label: 'Entreprises',
     icon: Building2,
-  },
-  {
-    href: '/appointments',
-    label: 'Rendez-vous',
-    icon: Calendar,
-  },
-  {
-    href: '/payments',
-    label: 'Paiements',
-    icon: DollarSign,
   },
   {
     href: '/reminders',
     label: 'Relances',
     icon: Bell,
-  },
-  {
-    href: '/import-export',
-    label: 'Import / Export',
-    icon: Download,
   },
   {
     href: '/settings',

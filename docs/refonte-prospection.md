@@ -100,11 +100,14 @@ Tant qu'un seul métier est actif, l'onboarding le présélectionne.
 
 Dans cet ordre, une branche Git par point :
 
-1. **Onboarding** : choix du métier (`user_profiles.profession_key`), puis appel de
+1. ✅ **Onboarding** : choix du métier (`user_profiles.profession_key`), puis appel de
    `initialize_prospection_defaults()` (sans paramètre, sécurisée par la RLS).
-2. **Module Entreprises** : reprendre les composants `agencies/*` (liste, fiche, formulaire, timeline)
-   sur `companies`, `company_contacts` et `company_interactions`.
-3. **Détecteurs existants** :
+2. ✅ **Module Entreprises** : reprendre les composants `agencies/*` (liste, fiche, formulaire, timeline)
+   sur `companies`, `company_contacts` et `company_interactions`. Nouvelle navigation (voir plus bas) :
+   Contacts, Agences, Rendez-vous, Paiements et Import / export sortent du menu, leurs pages restent
+   accessibles jusqu'à l'étape 4. Les routes `/api/agencies/detect-stack` et `find-contact` sont
+   réutilisées telles quelles par les écrans Entreprises.
+3. **Détecteurs existants** (et déplacement de leurs routes hors de `/api/agencies`) :
    - `detect-stack` écrit `companies.detected_stack` et, si la stack correspond, un signal `tech_stack_match`.
    - `find-contact` lit les postes à cibler dans `professions.target_roles` au lieu de `TECH_LEAD_KEYWORDS`.
 4. **Paramètres** : étapes et sources sur `pipeline_stages` / `lead_sources` ; nouvel écran ICP.
@@ -119,10 +122,38 @@ et de `user_profiles.business_type`, puis du code associé.
 
 ### Étape 5 : le pipeline automatique (« Sophie »)
 
-1. Premier détecteur : API Recherche d'entreprises → signal `recently_created`.
-2. Scoring par règles (`model = 'rules-v1'`) à partir de l'ICP et des poids de signaux.
-3. Qualification par IA en complément, sur les entreprises déjà filtrées par les règles.
-4. Table `pipeline_runs` pour journaliser chaque exécution du cron.
+1. **Onglet Prospection v1** : état (« prochaine prospection : mardi 9 h »), bouton « Lancer
+   maintenant », planning (jours cochés + heure, ICP visé, nombre maximum d'entreprises par passage)
+   et historique des passages. Un formulaire plutôt que du texte libre : pas d'ambiguïté, rien à
+   interpréter. Le texte libre (« fais 2 fois par semaine une prospection ») pourra venir ensuite.
+2. Premier détecteur : API Recherche d'entreprises → signal `recently_created`.
+3. Deuxième détecteur : API Offres d'emploi France Travail → signal `job_posting_dev`
+   (filtrer les offres publiées par des ESN et cabinets de recrutement).
+4. Scoring par règles (`model = 'rules-v1'`) à partir de l'ICP et des poids de signaux.
+5. Qualification par IA en complément, sur les entreprises déjà filtrées par les règles.
+6. Hunter.io en dernier, uniquement sur les entreprises qualifiées (quota gratuit limité),
+   à partir du nom du dirigeant fourni par l'API Recherche d'entreprises.
+
+**Exécution** : sur Supabase. Une table `prospection_schedules` (le planning de chaque utilisateur :
+le modifier ne demande ni code ni déploiement), une table `pipeline_runs` (journal des passages),
+une tâche `pg_cron` toutes les heures qui appelle une Edge Function ; la fonction traite les
+plannings arrivés à échéance. « Lancer maintenant » appelle la même fonction immédiatement.
+Les clés France Travail et Hunter devront être enregistrées dans les secrets Supabase.
+
+**Point ouvert** : aucune API gouvernementale ne donne le site web de l'entreprise, indispensable
+pour Hunter, la détection de stack et PageSpeed. Pistes : site présent dans certaines offres
+France Travail, déduction à partir du nom avec vérification, saisie manuelle sur les retenues.
+
+## Navigation cible
+
+| Onglet | Rôle |
+|---|---|
+| Tableau de bord | Ce qui s'est passé depuis la dernière visite, relances du jour |
+| Prospection | Régler Sophie : planning, lancement, historique (étape 5) |
+| Entreprises | Le pipeline : ce que Sophie trouve arrive dans « À qualifier » |
+| Relances | Inchangé |
+| Références | Missions passées, citées dans les messages |
+| Paramètres | Profil, ICP, étapes du pipeline, sources |
 
 ## Avant la refonte : passer à Next.js 16
 
