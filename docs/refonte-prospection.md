@@ -110,7 +110,11 @@ Dans cet ordre, une branche Git par point :
 3. **Détecteurs existants** (et déplacement de leurs routes hors de `/api/agencies`) :
    - `detect-stack` écrit `companies.detected_stack` et, si la stack correspond, un signal `tech_stack_match`.
    - `find-contact` lit les postes à cibler dans `professions.target_roles` au lieu de `TECH_LEAD_KEYWORDS`.
-4. **Paramètres** : étapes et sources sur `pipeline_stages` / `lead_sources` ; nouvel écran ICP.
+4. **Paramètres** : étapes et sources sur `pipeline_stages` / `lead_sources`.
+   ✅ Écran « Client idéal » (`/settings/icp`) : tailles (idéale / acceptée / hors cible), points de
+   chaque signal (seuls les écarts avec les valeurs du métier sont enregistrés dans `signal_weights`),
+   mots-clés exclus. Les critères non gérés par l'écran (pays, télétravail) sont conservés.
+   L'enregistrement incrémente la version de l'ICP et la base recalcule tous les scores.
 5. **Import / export, tableau de bord, relances** sur le nouveau modèle.
 
 ### Étape 4 : supprimer l'ancien modèle (00017, « contract »)

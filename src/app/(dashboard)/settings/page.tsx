@@ -1,8 +1,16 @@
 import Link from 'next/link'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge, Tag, Palette, User, ChevronRight, Building2, Compass } from 'lucide-react'
+import { Badge, Tag, Palette, User, ChevronRight, Building2, Compass, Target } from 'lucide-react'
 
 const settingsCards = [
+  {
+    title: 'Client idéal',
+    description: 'Tailles, signaux et mots-clés qui font le score des entreprises',
+    icon: Target,
+    href: '/settings/icp',
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-500/10',
+  },
   {
     title: 'Statuts',
     description: 'Gérer les statuts de vos contacts',
