@@ -14,7 +14,7 @@ const navItems = [
   },
   {
     href: '/prospection',
-    label: 'Prospection',
+    label: 'Sophie',
     icon: Radar,
   },
   {
@@ -49,14 +49,14 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 py-2 text-xs transition-colors',
+                'flex min-w-0 flex-col items-center justify-center gap-1 py-2 text-[10px] leading-tight transition-colors',
                 isActive
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <Icon className="h-5 w-5" />
-              <span>{item.label}</span>
+              <span className="max-w-full truncate px-0.5">{item.label}</span>
             </Link>
           )
         })}
