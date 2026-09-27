@@ -19,6 +19,8 @@ import type {
   InteractionType,
   PaymentMethod,
   PaymentStatus,
+  PipelineRunStatus,
+  PipelineRunTrigger,
   PipelineStageKind,
   PreferredChannel,
   ReminderPriority,
@@ -65,6 +67,7 @@ export type Database = MergeDeep<
           direction: InteractionDirection | null
           status: CompanyInteractionStatus
         }>
+        pipeline_runs: Columns<{ triggered_by: PipelineRunTrigger; status: PipelineRunStatus }>
       }
     }
   }

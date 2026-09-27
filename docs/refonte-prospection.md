@@ -113,7 +113,7 @@ Dans cet ordre, une branche Git par point :
 4. **Paramètres** : étapes et sources sur `pipeline_stages` / `lead_sources` ; nouvel écran ICP.
 5. **Import / export, tableau de bord, relances** sur le nouveau modèle.
 
-### Étape 4 : supprimer l'ancien modèle (00012, « contract »)
+### Étape 4 : supprimer l'ancien modèle (00014, « contract »)
 
 Une fois plus aucun code ne référence les anciennes tables : suppression de `contacts`,
 `contact_*`, `interactions`, `appointments`, `payments`, `agencies`, `agency_*`,
@@ -122,11 +122,17 @@ et de `user_profiles.business_type`, puis du code associé.
 
 ### Étape 5 : le pipeline automatique (« Sophie »)
 
-1. **Onglet Prospection v1** : état (« prochaine prospection : mardi 9 h »), bouton « Lancer
-   maintenant », planning (jours cochés + heure, ICP visé, nombre maximum d'entreprises par passage)
-   et historique des passages. Un formulaire plutôt que du texte libre : pas d'ambiguïté, rien à
-   interpréter. Le texte libre (« fais 2 fois par semaine une prospection ») pourra venir ensuite.
-2. Premier détecteur : API Recherche d'entreprises → signal `recently_created`.
+1. ✅ **Onglet Prospection v1** : état (« prochaine prospection : lundi 28 septembre à 9h »), bouton
+   « Lancer maintenant », planning (jours cochés + heure), départements, secteurs ignorés, nombre
+   maximum d'entreprises par passage, historique des passages avec les raisons d'exclusion.
+2. ✅ **Premier détecteur, signal `recently_created`** : le BODACC (gratuit, sans clé) liste chaque jour
+   les immatriculations avec SIREN, département et activité déclarée ; l'API Recherche d'entreprises
+   complète avec le code NAF, la tranche d'effectif et les dirigeants (importés comme contacts
+   décideurs). Elle seule ne suffit pas : elle ne sait pas filtrer par date de création.
+   Écartés : entrepreneurs individuels, sociétés civiles (SCI…), secteurs ignorés, données non
+   diffusibles, mots-clés exclus de l'ICP, entreprises déjà connues.
+   Les créations sont lues de la plus récente à la plus ancienne, jusqu'à la date du passage
+   précédent : le signal vaut par sa fraîcheur, un surplus est laissé de côté plutôt qu'accumulé.
 3. Deuxième détecteur : API Offres d'emploi France Travail → signal `job_posting_dev`
    (filtrer les offres publiées par des ESN et cabinets de recrutement).
 4. Scoring par règles (`model = 'rules-v1'`) à partir de l'ICP et des poids de signaux.
@@ -134,11 +140,20 @@ et de `user_profiles.business_type`, puis du code associé.
 6. Hunter.io en dernier, uniquement sur les entreprises qualifiées (quota gratuit limité),
    à partir du nom du dirigeant fourni par l'API Recherche d'entreprises.
 
-**Exécution** : sur Supabase. Une table `prospection_schedules` (le planning de chaque utilisateur :
-le modifier ne demande ni code ni déploiement), une table `pipeline_runs` (journal des passages),
-une tâche `pg_cron` toutes les heures qui appelle une Edge Function ; la fonction traite les
-plannings arrivés à échéance. « Lancer maintenant » appelle la même fonction immédiatement.
-Les clés France Travail et Hunter devront être enregistrées dans les secrets Supabase.
+**Exécution** (migrations 00012 et 00013, fonction `supabase/functions/prospection-run`) :
+- `prospection_settings` : le planning et les critères de chaque utilisateur. `next_run_at` est
+  calculé par la base dans le fuseau de l'utilisateur (9 h reste 9 h au changement d'heure).
+- `pipeline_runs` : le journal des passages, en lecture seule pour l'utilisateur ; la base garantit
+  un seul passage en cours à la fois.
+- Un job `pg_cron` (`sophie-prospection`, toutes les heures à la minute 0) appelle la fonction en
+  mode `scheduled` ; `claim_due_prospection_runs()` réserve atomiquement les plannings échus.
+- « Lancer maintenant » appelle la même fonction en mode `manual` avec le jeton de l'utilisateur.
+- La fonction répond tout de suite (202) et travaille en arrière-plan (`EdgeRuntime.waitUntil`) :
+  l'hébergement Netlify coupe une action serveur au bout d'une dizaine de secondes.
+- Déploiement : `npx supabase@latest functions deploy prospection-run --use-api`.
+- Suspendre toutes les prospections automatiques : `select cron.unschedule('sophie-prospection');`
+- Les clés France Travail et Hunter devront être enregistrées dans les secrets Supabase quand leurs
+  détecteurs rejoindront la fonction.
 
 **Point ouvert** : aucune API gouvernementale ne donne le site web de l'entreprise, indispensable
 pour Hunter, la détection de stack et PageSpeed. Pistes : site présent dans certaines offres
@@ -149,7 +164,7 @@ France Travail, déduction à partir du nom avec vérification, saisie manuelle 
 | Onglet | Rôle |
 |---|---|
 | Tableau de bord | Ce qui s'est passé depuis la dernière visite, relances du jour |
-| Prospection | Régler Sophie : planning, lancement, historique (étape 5) |
+| Prospection | ✅ Régler Sophie : planning, lancement, historique (étape 5) |
 | Entreprises | Le pipeline : ce que Sophie trouve arrive dans « À qualifier » |
 | Relances | Inchangé |
 | Références | Missions passées, citées dans les messages |

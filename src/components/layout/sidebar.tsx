@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Building2, Bell, Settings, LogOut } from 'lucide-react'
+import { Home, Radar, Building2, Bell, Settings, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/button'
 import { logout } from '@/lib/actions/auth'
@@ -16,6 +16,11 @@ const navItems = [
     href: '/dashboard',
     label: 'Tableau de bord',
     icon: Home,
+  },
+  {
+    href: '/prospection',
+    label: 'Prospection',
+    icon: Radar,
   },
   {
     href: '/companies',

@@ -994,6 +994,48 @@ export type Database = {
           },
         ]
       }
+      pipeline_runs: {
+        Row: {
+          companies_created: number
+          companies_seen: number
+          companies_skipped: number
+          details: Json
+          error: string | null
+          finished_at: string | null
+          id: string
+          started_at: string
+          status: string
+          triggered_by: string
+          user_id: string
+        }
+        Insert: {
+          companies_created?: number
+          companies_seen?: number
+          companies_skipped?: number
+          details?: Json
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          triggered_by: string
+          user_id: string
+        }
+        Update: {
+          companies_created?: number
+          companies_seen?: number
+          companies_skipped?: number
+          details?: Json
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          triggered_by?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pipeline_stages: {
         Row: {
           color: string
@@ -1141,6 +1183,51 @@ export type Database = {
         }
         Relationships: []
       }
+      prospection_settings: {
+        Row: {
+          bodacc_cursor: string | null
+          created_at: string
+          days_of_week: number[]
+          departments: string[]
+          excluded_naf_sections: string[]
+          is_active: boolean
+          max_companies_per_run: number
+          next_run_at: string | null
+          run_hour: number
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bodacc_cursor?: string | null
+          created_at?: string
+          days_of_week?: number[]
+          departments?: string[]
+          excluded_naf_sections?: string[]
+          is_active?: boolean
+          max_companies_per_run?: number
+          next_run_at?: string | null
+          run_hour?: number
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bodacc_cursor?: string | null
+          created_at?: string
+          days_of_week?: number[]
+          departments?: string[]
+          excluded_naf_sections?: string[]
+          is_active?: boolean
+          max_companies_per_run?: number
+          next_run_at?: string | null
+          run_hour?: number
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           agency_id: string | null
@@ -1281,6 +1368,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_due_prospection_runs: {
+        Args: { p_limit?: number }
+        Returns: string[]
+      }
+      compute_next_prospection_run: {
+        Args: {
+          p_after: string
+          p_days: number[]
+          p_hour: number
+          p_tz: string
+        }
+        Returns: string
+      }
       initialize_prospection_defaults: { Args: never; Returns: undefined }
       initialize_user_defaults: {
         Args: { target_user_id: string }

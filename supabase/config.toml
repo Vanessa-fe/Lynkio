@@ -120,3 +120,8 @@ url = ""
 
 [analytics]
 enabled = false
+
+# Sophie : le mode manuel vérifie lui-même le jeton de l'utilisateur, le mode
+# planifié (appelé par pg_cron) ne traite que les passages arrivés à échéance.
+[functions.prospection-run]
+verify_jwt = false

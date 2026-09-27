@@ -25,6 +25,8 @@ export type Company = Database['public']['Tables']['companies']['Row']
 export type CompanyContact = Database['public']['Tables']['company_contacts']['Row']
 export type CompanySignal = Database['public']['Tables']['company_signals']['Row']
 export type CompanyInteraction = Database['public']['Tables']['company_interactions']['Row']
+export type ProspectionSettings = Database['public']['Tables']['prospection_settings']['Row']
+export type PipelineRun = Database['public']['Tables']['pipeline_runs']['Row']
 
 // Types d'insertion
 export type InsertUserProfile = Database['public']['Tables']['user_profiles']['Insert']
@@ -101,6 +103,8 @@ export type CompanyInteractionType =
   | 'note'
   | 'system_event'
 export type CompanyInteractionStatus = 'draft' | 'scheduled' | 'done'
+export type PipelineRunTrigger = 'manual' | 'schedule'
+export type PipelineRunStatus = 'running' | 'succeeded' | 'failed'
 
 // Types composés pour les vues avec relations
 export type ContactWithRelations = Contact & {

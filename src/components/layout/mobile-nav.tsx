@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Building2, Bell, Settings } from 'lucide-react'
+import { Home, Radar, Building2, Bell, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ThemeSelector } from '@/components/theme/theme-selector'
 
@@ -11,6 +11,11 @@ const navItems = [
     href: '/dashboard',
     label: 'Accueil',
     icon: Home,
+  },
+  {
+    href: '/prospection',
+    label: 'Prospection',
+    icon: Radar,
   },
   {
     href: '/companies',
@@ -34,7 +39,7 @@ export function MobileNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background md:hidden">
-      <div className="grid grid-cols-5 gap-1">
+      <div className="grid grid-cols-6 gap-1">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')

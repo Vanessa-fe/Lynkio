@@ -106,7 +106,7 @@ export function CompanyDetail({ company, stages, contacts, signals, interactions
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
             <div className="min-w-0">
               <CardTitle className="text-3xl break-words">{company.name}</CardTitle>
               {(company.sector || location) && (
