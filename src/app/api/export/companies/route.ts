@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatPhoneForDisplay, sizeCategoryLabels } from '@/lib/validations/company'
 import { COLUMN_LABELS } from '@/lib/validations/company-import'
 import type { SizeCategory } from '@/types'
+import { APP_TIME_ZONE } from '@/lib/utils/dates'
 
 type ExportedContact = {
   first_name: string | null
@@ -29,7 +30,7 @@ function safeCell(value: string | number | null | undefined): string {
 }
 
 function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString('fr-FR') : ''
+  return value ? new Date(value).toLocaleDateString('fr-FR', { timeZone: APP_TIME_ZONE }) : ''
 }
 
 /**

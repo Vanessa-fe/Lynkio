@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { format, formatDistanceStrict } from 'date-fns'
+import { formatDistanceStrict } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { PipelineRun } from '@/types'
+import { formatDate } from '@/lib/utils/dates'
 
 // Contenu de pipeline_runs.details écrit par la fonction prospection-run
 type SourceDetails = {
@@ -70,7 +71,7 @@ function RunItem({ run }: { run: PipelineRun }) {
         {run.status === 'succeeded' && <CheckCircle2 className="w-4 h-4 text-green-600" aria-hidden="true" />}
         {run.status === 'failed' && <AlertTriangle className="w-4 h-4 text-destructive" aria-hidden="true" />}
         <span className="font-medium">
-          {format(startedAt, "EEEE d MMMM 'à' HH:mm", { locale: fr })}
+          {formatDate(startedAt, "EEEE d MMMM 'à' HH:mm")}
         </span>
         <Badge variant="outline">{run.triggered_by === 'manual' ? 'Lancée par vous' : 'Planifiée'}</Badge>
         {run.finished_at && (

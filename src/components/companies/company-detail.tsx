@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { format, formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import {
   ArrowLeft,
@@ -45,6 +45,7 @@ import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
 import { RemindersList } from '@/components/reminders/reminders-list'
+import { formatDate } from '@/lib/utils/dates'
 
 interface CompanyDetailProps {
   company: CompanyWithRelations
@@ -237,7 +238,7 @@ export function CompanyDetail({
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground border-t pt-4">
             <span className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              Ajoutée le {format(new Date(company.created_at), 'dd MMMM yyyy', { locale: fr })}
+              Ajoutée le {formatDate(new Date(company.created_at), 'dd MMMM yyyy')}
               {company.origin === 'detector' && ' par Sophie'}
               {company.origin === 'import' && ' par import'}
             </span>
@@ -372,7 +373,7 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
       )}
       {company.stack_detected_at && (
         <p className="text-xs text-muted-foreground mt-2">
-          Analysé le {format(new Date(company.stack_detected_at), 'dd MMMM yyyy', { locale: fr })}
+          Analysé le {formatDate(new Date(company.stack_detected_at), 'dd MMMM yyyy')}
         </p>
       )}
     </div>

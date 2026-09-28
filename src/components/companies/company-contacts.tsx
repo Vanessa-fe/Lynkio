@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
 import { Mail, Phone, Plus, Pencil, Trash2, Ban, Undo2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +12,7 @@ import { contactDisplayName, formatPhoneForDisplay } from '@/lib/validations/com
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact } from '@/types'
 import { CompanyContactDialog } from './company-contact-dialog'
+import { formatDate } from '@/lib/utils/dates'
 
 interface CompanyContactsProps {
   companyId: string
@@ -161,7 +160,7 @@ export function CompanyContacts({ companyId, website, contacts }: CompanyContact
                       {optedOut && contact.opted_out_at && (
                         <p className="text-xs text-muted-foreground">
                           Opposition enregistrée le{' '}
-                          {format(new Date(contact.opted_out_at), 'dd MMMM yyyy', { locale: fr })}
+                          {formatDate(new Date(contact.opted_out_at), 'dd MMMM yyyy')}
                         </p>
                       )}
                     </div>

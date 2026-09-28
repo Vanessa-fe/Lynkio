@@ -1,8 +1,7 @@
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { CompanyQualification } from '@/types'
 import { CompanyScore } from './company-stage-select'
+import { formatDate } from '@/lib/utils/dates'
 
 // Une ligne du détail écrit par compute_company_score (colonne reasons)
 type ScoreReason = { code: string; label: string; points: number }
@@ -31,7 +30,7 @@ export function CompanyScoreCard({ qualification }: { qualification: CompanyQual
           <div>
             <CardTitle>Pourquoi ce score</CardTitle>
             <CardDescription>
-              Calculé le {format(new Date(qualification.created_at), "d MMMM 'à' HH:mm", { locale: fr })} selon
+              Calculé le {formatDate(new Date(qualification.created_at), "d MMMM 'à' HH:mm")} selon
               votre client idéal. Il se met à jour tout seul quand la fiche évolue.
             </CardDescription>
           </div>

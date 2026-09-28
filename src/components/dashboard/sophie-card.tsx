@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { format, formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Radar } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { PipelineRun } from '@/types'
+import { formatDate } from '@/lib/utils/dates'
 
 interface SophieCardProps {
   lastRun: PipelineRun | null
@@ -25,7 +26,7 @@ export function SophieCard({ lastRun, unidentifiedOffers, nextRunAt }: SophieCar
               <CardTitle>Sophie</CardTitle>
               <CardDescription>
                 {nextRunAt
-                  ? `Prochaine recherche le ${format(new Date(nextRunAt), "EEEE d MMMM 'à' H'h'", { locale: fr })}`
+                  ? `Prochaine recherche le ${formatDate(new Date(nextRunAt), "EEEE d MMMM 'à' H'h'")}`
                   : 'Recherche automatique désactivée'}
               </CardDescription>
             </div>

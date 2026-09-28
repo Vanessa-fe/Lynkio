@@ -25,9 +25,8 @@ import {
   isReminderOverdue,
 } from '@/lib/validations/reminder'
 import { Clock, Building2, Trash2, AlertCircle } from 'lucide-react'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
 import { ReminderFormDialog } from './reminder-form-dialog'
+import { formatDate } from '@/lib/utils/dates'
 
 interface RemindersListProps {
   reminders: ReminderWithRelations[]
@@ -231,7 +230,7 @@ export function RemindersList({
                               <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4" />
                                 <span className={isOverdue ? 'text-red-500 font-medium' : ''}>
-                                  {format(dueDate, 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                                  {formatDate(dueDate, 'dd MMMM yyyy à HH:mm')}
                                   {isOverdue && !isCompleted && ' - En retard'}
                                 </span>
                               </div>
@@ -252,9 +251,7 @@ export function RemindersList({
                                 <div className="flex items-center gap-2 text-green-600">
                                   <span>
                                     Terminé le{' '}
-                                    {format(new Date(reminder.completed_at), 'dd MMMM yyyy', {
-                                      locale: fr,
-                                    })}
+                                    {formatDate(new Date(reminder.completed_at), 'dd MMMM yyyy')}
                                   </span>
                                 </div>
                               )}

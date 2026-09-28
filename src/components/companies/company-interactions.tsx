@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { format, formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import {
   Activity,
@@ -50,6 +50,7 @@ import {
 import { createCompanyInteraction, deleteCompanyInteraction } from '@/lib/actions/company-interactions'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact, CompanyInteractionType, CompanyInteractionWithContact } from '@/types'
+import { formatDate } from '@/lib/utils/dates'
 
 const typeIcons: Record<CompanyInteractionType, React.ReactNode> = {
   email: <Mail className="w-5 h-5" />,
@@ -163,7 +164,7 @@ export function CompanyInteractions({ companyId, contacts, interactions }: Compa
                           <p className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-3 h-3" />
                             <time dateTime={interaction.occurred_at}>
-                              {format(occurredAt, 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                              {formatDate(occurredAt, 'dd MMMM yyyy à HH:mm')}
                             </time>
                             <span className="text-xs">
                               ({formatDistanceToNow(occurredAt, { addSuffix: true, locale: fr })})

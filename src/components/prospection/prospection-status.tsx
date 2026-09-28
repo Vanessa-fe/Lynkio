@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
 import { CalendarClock, Loader2, Play, Radar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +9,7 @@ import { launchProspection } from '@/lib/actions/prospection'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { PipelineRun, ProspectionSettings } from '@/types'
+import { formatDate } from '@/lib/utils/dates'
 
 // Rafraîchissement de la page tant qu'un passage est en cours
 const POLL_INTERVAL_MS = 3000
@@ -70,7 +69,7 @@ export function ProspectionStatus({ settings, runningRun }: ProspectionStatusPro
               <>
                 <p className="font-semibold">Sophie cherche des entreprises…</p>
                 <p className="text-sm text-muted-foreground">
-                  Commencé à {format(new Date(runningRun.started_at), 'HH:mm', { locale: fr })}. La page se met
+                  Commencé à {formatDate(new Date(runningRun.started_at), 'HH:mm')}. La page se met
                   à jour toute seule.
                 </p>
               </>
@@ -80,7 +79,7 @@ export function ProspectionStatus({ settings, runningRun }: ProspectionStatusPro
                 <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                   <CalendarClock className="w-4 h-4" />
                   Prochaine prospection le{' '}
-                  {format(new Date(settings.next_run_at), "EEEE d MMMM 'à' H'h'", { locale: fr })}
+                  {formatDate(new Date(settings.next_run_at), "EEEE d MMMM 'à' H'h'")}
                 </p>
               </>
             ) : (

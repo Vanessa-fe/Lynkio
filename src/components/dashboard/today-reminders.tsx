@@ -3,8 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { format, isToday } from 'date-fns'
-import { fr } from 'date-fns/locale'
 import { CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { completeReminder } from '@/lib/actions/reminders'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { ReminderWithRelations } from '@/types'
+import { formatDate, isSameParisDay } from '@/lib/utils/dates'
 
 function reminderTarget(reminder: ReminderWithRelations): { href: string; label: string } | null {
   if (reminder.company) return { href: `/companies/${reminder.company.id}`, label: reminder.company.name }
@@ -59,7 +58,7 @@ export function TodayReminders({ reminders }: { reminders: ReminderWithRelations
           <ul className="divide-y">
             {reminders.map((reminder) => {
               const due = new Date(reminder.due_at)
-              const overdue = !isToday(due) && due < new Date()
+              const overdue = !isSameParisDay(due, new Date()) && due < new Date()
               const target = reminderTarget(reminder)
 
               return (
@@ -84,8 +83,8 @@ export function TodayReminders({ reminders }: { reminders: ReminderWithRelations
                       )}
                       <span className={overdue ? 'text-destructive font-medium' : undefined}>
                         {overdue
-                          ? `En retard depuis le ${format(due, 'd MMMM', { locale: fr })}`
-                          : `Aujourd'hui à ${format(due, 'HH:mm', { locale: fr })}`}
+                          ? `En retard depuis le ${formatDate(due, 'd MMMM')}`
+                          : `Aujourd'hui à ${formatDate(due, 'HH:mm')}`}
                       </span>
                     </p>
                   </div>
