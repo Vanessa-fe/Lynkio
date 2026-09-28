@@ -30,12 +30,15 @@ Site en ligne : https://lynkio.netlify.app (mis à jour à chaque fusion dans `m
 | Import / export | CSV des entreprises avec aperçu, doublons, modèle à télécharger |
 | Ancien modèle | Contacts particuliers, rendez-vous, paiements et agences supprimés (code et base, 00018, 27/09) |
 | Site web | Bouton « Rechercher le site » sur les fiches qui n'en ont pas |
+| Ciblage (28/09) | Client idéal revu : TPE / PME en direct, 100 % à distance, projets complets. Signal « Recrute pour le web ou le digital » (00019) ; intermédiaires, ESN et régie repérés dans le texte des annonces |
 
 ## Ce qu'il reste à faire
 
 Par ordre de priorité proposé :
 
-1. **Sites web des entreprises.** France Travail donne rarement le site ; sans lui, pas d'analyse de
+1. **Sites web des entreprises** (étape 2 du nouveau ciblage), puis **analyse du site** : lent
+   (PageSpeed), daté (étape 3). Agences web en source secondaire (étape 5).
+   **Sites web des entreprises.** France Travail donne rarement le site ; sans lui, pas d'analyse de
    stack ni de recherche Hunter automatique. Pistes : site présent dans l'offre, déduction depuis le
    nom avec vérification, saisie manuelle.
 2. **Hunter automatique**, seulement sur les entreprises bien notées (quota gratuit limité).
