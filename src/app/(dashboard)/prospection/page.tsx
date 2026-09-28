@@ -23,8 +23,8 @@ export default async function ProspectionPage() {
       <div>
         <h1 className="text-3xl font-bold">Prospection</h1>
         <p className="text-muted-foreground mt-2">
-          Sophie cherche pour vous les entreprises qui recrutent un développeur. Celles qu&apos;elle
-          retient arrivent dans Entreprises, à l&apos;étape « À qualifier ».
+          Sophie cherche pour vous les entreprises qui investissent dans leur site ou leur digital.
+          Celles qu&apos;elle retient arrivent dans Entreprises, à l&apos;étape « À qualifier ».
         </p>
       </div>
 

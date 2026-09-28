@@ -60,17 +60,13 @@ export function isNonDiffusible(value: string | null | undefined): boolean {
   return !!value && value.includes('NON-DIFFUSIBLE')
 }
 
-// Plateformes de mise en relation freelance et cabinets de recrutement connus :
-// l'entreprise affichée dans l'offre n'est pas le client final.
-// (Les agences d'intérim sont repérées par leur code NAF 78.)
-const INTERMEDIARY_NAMES = [
-  'collective work',
-  'free work',
-  'freelance informatique',
-  'malt',
-  'creme de la creme',
-  'comet',
-  'crew',
+// Plateformes de mise en relation freelance : l'entreprise affichée dans l'offre
+// n'est pas le client final, mais les missions sont ouvertes aux indépendants.
+const FREELANCE_PLATFORMS = ['collective work', 'free work', 'freelance informatique', 'malt', 'creme de la creme', 'comet', 'crew']
+
+// Cabinets de recrutement et d'intérim connus : ils recrutent pour un client qu'ils ne nomment pas.
+// (Les agences d'intérim sont aussi repérées par leur code NAF 78.)
+const RECRUITER_NAMES = [
   'hays',
   'michael page',
   'robert half',
@@ -78,24 +74,87 @@ const INTERMEDIARY_NAMES = [
   'walters people',
   'fed it',
   'silkhom',
+  'le recruteur',
+  'externatic',
+  'asap work',
+  'randstad',
+  'fed group',
+  'ipepper',
 ]
 
+// ESN : elles placent leurs développeurs chez leurs clients (régie)
+const CONSULTING_FIRMS = ['act digital', 'blue soft', 'klanik', 'propulse it', 'viveris']
+
 // Mots qui trahissent un cabinet de recrutement dans le nom de l'entreprise
-const RECRUITMENT_WORDS = new Set(['recrutement', 'recruitment', 'talent', 'talents', 'interim', 'staffing', 'headhunting'])
+const RECRUITMENT_WORDS = new Set(['recrutement', 'recruitment', 'recruteur', 'talent', 'talents', 'interim', 'staffing', 'headhunting', 'rh', 'hr'])
+
+function nameMatches(name: string, list: string[]): boolean {
+  const normalized = normalizeCompanyName(name)
+  return list.some((entry) => normalized === entry || normalized.startsWith(`${entry} `))
+}
 
 /**
  * Cabinet de recrutement : il recrute pour un client qu'il ne nomme pas.
  * Son offre est traitée comme une offre anonyme (à identifier), pas comme un prospect.
  */
 export function isRecruitmentFirm(name: string): boolean {
-  return normalizeCompanyName(name)
-    .split(' ')
-    .some((word) => RECRUITMENT_WORDS.has(word))
+  return (
+    nameMatches(name, RECRUITER_NAMES) ||
+    normalizeCompanyName(name)
+      .split(' ')
+      .some((word) => RECRUITMENT_WORDS.has(word))
+  )
 }
 
-export function isIntermediary(name: string): boolean {
-  const normalized = normalizeCompanyName(name)
-  return INTERMEDIARY_NAMES.some((intermediary) => normalized === intermediary || normalized.startsWith(`${intermediary} `))
+export function isFreelancePlatform(name: string): boolean {
+  return nameMatches(name, FREELANCE_PLATFORMS)
+}
+
+export function isConsultingFirm(name: string): boolean {
+  return nameMatches(name, CONSULTING_FIRMS)
+}
+
+// Formules d'un cabinet qui recrute pour une entreprise qu'il ne nomme pas.
+// Un employeur direct parle de « notre équipe », pas de « notre client ».
+const HIDDEN_CLIENT_PATTERNS: RegExp[] = [
+  /\bnotre client\b/i,
+  /\b(pour|chez) (l'un|un) de nos clients\b/i,
+  /\bnotre partenaire,? (un|une|leader|acteur|sp[ée]cialis[ée])/i,
+  /\bpour le compte d(e|'un|'une)\b/i,
+  /\b(cabinet|agence) de recrutement\b/i,
+  /\bforums? de recrutement\b/i,
+  /\b(recherche|recrute) (son|sa) (futur|future)\b/i,
+  /\b(vous rejoindrez|tu rejoindras|rejoignez|rejoins) une (start-?up|scale-?up|soci[ée]t[ée]|entreprise|pme)\b/i,
+]
+
+// Sociétés de services qui placent des développeurs chez leurs clients (ESN,
+// régie) : le travail se fait dans l'équipe du client, avec ses réunions.
+const CONSULTING_PATTERNS: RegExp[] = [
+  /\bESN\b/,
+  /\bSSII\b/,
+  /\bintercontrat\b/i,
+  /\bnos consultants?\b/i,
+  /\ben r[ée]gie\b/i,
+  /\b(missions?|intervenir|interviendrez|intervention) (chez|aupr[èe]s de) (nos|des) clients\b/i,
+  /\bau sein de nos clients\b/i,
+]
+
+export type IntermediaryClue = { kind: 'hidden_client' | 'consulting'; clue: string }
+
+/**
+ * Intermédiaire repéré dans le texte d'une offre : cabinet qui cache son client
+ * (à identifier à la main) ou société de services qui place des développeurs (écartée)
+ */
+export function intermediaryFromText(text: string): IntermediaryClue | null {
+  for (const pattern of CONSULTING_PATTERNS) {
+    const match = text.match(pattern)
+    if (match) return { kind: 'consulting', clue: match[0] }
+  }
+  for (const pattern of HIDDEN_CLIENT_PATTERNS) {
+    const match = text.match(pattern)
+    if (match) return { kind: 'hidden_client', clue: match[0] }
+  }
+  return null
 }
 
 // Sociétés civiles (SCI, SCP, holdings patrimoniales…) : pas des clients pour un freelance

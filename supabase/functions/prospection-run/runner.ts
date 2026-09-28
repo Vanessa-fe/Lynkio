@@ -144,7 +144,7 @@ async function loadContext(admin: SupabaseClient, userId: string): Promise<Conte
       .maybeSingle(),
     admin
       .from('icp_profiles')
-      .select('criteria')
+      .select('criteria, signal_weights')
       .eq('user_id', userId)
       .eq('is_active', true)
       .order('created_at')
@@ -153,12 +153,22 @@ async function loadContext(admin: SupabaseClient, userId: string): Promise<Conte
   ])
 
   const keywords = icp.data?.criteria?.exclude_keywords
+  const sizes = icp.data?.criteria?.size_categories
+  const sizeCategories = [...(sizes?.preferred ?? []), ...(sizes?.accepted ?? [])].filter(
+    (size): size is string => typeof size === 'string'
+  )
+  const weights = icp.data?.signal_weights
   return {
     userId,
     professionKey: profile.data?.profession_key ?? null,
     stageId: stage.data?.id ?? null,
     sourceId: source.data?.id ?? null,
     excludedKeywords: Array.isArray(keywords) ? keywords.filter((k): k is string => typeof k === 'string') : [],
+    signalWeights:
+      weights && typeof weights === 'object'
+        ? Object.fromEntries(Object.entries(weights).filter((entry): entry is [string, number] => typeof entry[1] === 'number'))
+        : {},
+    sizeCategories: sizeCategories.length > 0 ? sizeCategories : null,
   }
 }
 

@@ -166,9 +166,9 @@ export const MAX_COMPANIES_OPTIONS = [5, 10, 20, 30, 50] as const
 export const PROSPECTION_SOURCES = [
   {
     key: 'job_postings',
-    label: 'Entreprises qui recrutent un développeur',
+    label: 'Entreprises qui recrutent pour leur site ou leur digital',
     description:
-      'Offres d\'emploi publiées sur France Travail. Une entreprise qui recrute a un besoin et un budget : elle peut préférer un freelance en attendant, ou en complément.',
+      'Offres d\'emploi publiées sur France Travail : webmaster, marketing digital, e-commerce, chef de projet web, et développeurs selon votre client idéal. Une entreprise qui recrute a un besoin et un budget. Les cabinets, ESN et missions en régie sont écartés.',
   },
   {
     key: 'recent_creations',

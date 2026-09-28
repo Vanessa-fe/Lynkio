@@ -17,6 +17,10 @@ export type Context = {
   stageId: string | null
   sourceId: string | null
   excludedKeywords: string[]
+  // Surcharge des poids des signaux par le client idéal (icp_profiles.signal_weights)
+  signalWeights: Record<string, number>
+  // Tailles idéales et acceptées du client idéal ; null = pas de préférence
+  sizeCategories: string[] | null
 }
 
 // Résultat d'un détecteur, enregistré dans pipeline_runs.details.sources

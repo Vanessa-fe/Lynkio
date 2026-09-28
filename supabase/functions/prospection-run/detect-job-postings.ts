@@ -18,12 +18,15 @@ import {
 import { fetchJobOffers, offerUrl, type JobOffer } from './france-travail.ts'
 import { searchRegistryByName, type RegistryCompany } from './sources.ts'
 import {
-  isIntermediary,
+  intermediaryFromText,
+  isConsultingFirm,
+  isFreelancePlatform,
   isNonDiffusible,
   isRecruitmentFirm,
   matchesExcludedKeyword,
   nafSectionFromDivision,
   normalizeCompanyName,
+  sizeCategoryFromHeadcount,
   summarizeActivity,
   toTitleCase,
   truncate,
@@ -34,6 +37,8 @@ import { findExistingCompany, insertCompany, insertDirectors, insertSignal } fro
 const FIRST_RUN_LOOKBACK_DAYS = 14
 // Garde-fou : nombre d'offres examinées au plus par passage
 const MAX_OFFERS_PER_RUN = 600
+// Offres à identifier à la main gardées au plus par passage : au-delà, la liste décourage
+const MAX_UNIDENTIFIED_PER_RUN = 10
 
 // Métiers recherchés dans les offres (codes ROME) pour chaque signal d'offre d'emploi.
 // Le métier de l'utilisateur (profession_signals) décide lesquels sont utilisés.
@@ -47,7 +52,19 @@ const JOB_SIGNAL_ROME_CODES: Record<string, string[]> = {
   ],
   job_posting_design: ['E1205'], // Réalisation de contenus multimédias
   job_posting_marketing: ['M1705'], // Marketing
+  // Entreprises qui investissent dans leur site, souvent sans équipe de développement
+  job_posting_digital: [
+    'M1834', // Administrateur / Administratrice de site internet (webmaster)
+    'M1718', // Chargé / Chargée de marketing digital
+    'E1113', // Responsable e-commerce
+    'D1438', // Assistant / Assistante e-commerce
+    'M1886', // Chef / Cheffe de projet web
+    'E1405', // Référenceur / Référenceuse web
+  ],
 }
+
+// Les codes « digital » renvoient aussi des postes commerciaux : l'intitulé doit parler du web
+const DIGITAL_TITLE = /web|site|digital|num[ée]rique|e-?commerce|en ligne|seo|r[ée]f[ée]renc|wordpress|shopify|cms|\bux\b|\bui\b/i
 
 // Division NAF 78 : agences d'intérim et cabinets de recrutement (ils recrutent pour d'autres)
 const RECRUITMENT_DIVISION = '78'
@@ -66,9 +83,9 @@ export async function detectJobPostings(
     : new Date(Date.now() - FIRST_RUN_LOOKBACK_DAYS * 86_400_000)
   stats.since = since.toISOString()
 
-  const signalTypes = await jobSignalTypes(admin, context.professionKey)
+  const signalWeights = await jobSignalWeights(admin, context)
   const romeToSignal = new Map(
-    signalTypes.flatMap((type) => (JOB_SIGNAL_ROME_CODES[type] ?? []).map((code) => [code, type] as const))
+    [...signalWeights.keys()].flatMap((type) => (JOB_SIGNAL_ROME_CODES[type] ?? []).map((code) => [code, type] as const))
   )
 
   const offers = await fetchJobOffers(settings.departments, [...romeToSignal.keys()], since, MAX_OFFERS_PER_RUN)
@@ -78,41 +95,63 @@ export async function detectJobPostings(
   )
   stats.until = newest
 
-  const { groups, anonymous } = groupByCompany(offers, stats)
+  const { groups, anonymous } = groupByCompany(offers, stats, romeToSignal)
+
+  // Le quota d'entreprises va d'abord aux signaux qui comptent le plus pour le client idéal
+  const priority = (group: OfferGroup) =>
+    Math.max(...group.offers.map((offer) => signalWeights.get(offerSignalType(offer, romeToSignal)) ?? 0))
+  groups.sort((a, b) => priority(b) - priority(a))
 
   for (const group of groups) {
     await processCompany(admin, settings, context, budget, stats, group, romeToSignal)
   }
 
-  stats.unidentified = await saveAnonymousOffers(admin, context.userId, anonymous, romeToSignal)
+  // Les plus utiles d'abord (web et digital avant les offres de développeur)
+  const weightOf = (offer: JobOffer) => signalWeights.get(offerSignalType(offer, romeToSignal)) ?? 0
+  const keptAnonymous = anonymous.sort((a, b) => weightOf(b) - weightOf(a)).slice(0, MAX_UNIDENTIFIED_PER_RUN)
+  for (let i = keptAnonymous.length; i < anonymous.length; i++) skip(stats, 'Offre à identifier non retenue (10 au plus)')
+
+  stats.unidentified = await saveAnonymousOffers(admin, context.userId, keptAnonymous, romeToSignal)
 
   return { stats, cursor: newest }
 }
 
 /**
- * Signaux d'offre d'emploi utiles au métier de l'utilisateur (développeur par défaut)
+ * Signaux d'offre d'emploi à chercher, avec leur poids : ceux du métier de l'utilisateur,
+ * pondérés par son client idéal. Un signal à 0 point n'est pas cherché du tout.
  */
-async function jobSignalTypes(admin: SupabaseClient, professionKey: string | null): Promise<string[]> {
-  if (professionKey) {
+async function jobSignalWeights(admin: SupabaseClient, context: Context): Promise<Map<string, number>> {
+  const weights = new Map<string, number>()
+
+  if (context.professionKey) {
     const { data, error } = await admin
       .from('profession_signals')
-      .select('signal_type')
-      .eq('profession_key', professionKey)
+      .select('signal_type, default_weight')
+      .eq('profession_key', context.professionKey)
       .in('signal_type', Object.keys(JOB_SIGNAL_ROME_CODES))
 
     if (error) throw error
-    const types = (data ?? []).map((row: { signal_type: string }) => row.signal_type)
-    if (types.length > 0) return types
+    for (const row of (data ?? []) as { signal_type: string; default_weight: number }[]) {
+      const weight = context.signalWeights[row.signal_type] ?? row.default_weight
+      if (weight > 0) weights.set(row.signal_type, weight)
+    }
   }
-  return ['job_posting_dev']
+
+  if (weights.size === 0) weights.set('job_posting_dev', 30)
+  return weights
 }
 
 /**
  * Regroupe les offres par entreprise (une entreprise peut publier plusieurs offres).
- * Les offres sans nom d'entreprise sont mises de côté pour être identifiées à la main ;
- * l'intérim est écarté (il recrute des salariés, pas des indépendants).
+ * Les offres sans nom d'entreprise, ou d'un cabinet qui cache son client, sont mises
+ * de côté pour être identifiées à la main ; l'intérim, les ESN et la régie sont écartés
+ * (le travail s'y fait dans l'équipe d'un client, avec ses réunions).
  */
-function groupByCompany(offers: JobOffer[], stats: SourceStats): { groups: OfferGroup[]; anonymous: JobOffer[] } {
+function groupByCompany(
+  offers: JobOffer[],
+  stats: SourceStats,
+  romeToSignal: Map<string, string>
+): { groups: OfferGroup[]; anonymous: JobOffer[] } {
   const groups = new Map<string, OfferGroup>()
   const anonymous: JobOffer[] = []
 
@@ -132,8 +171,25 @@ function groupByCompany(offers: JobOffer[], stats: SourceStats): { groups: Offer
       skip(stats, 'Contrat en alternance')
       continue
     }
+    const signalType = offer.romeCode ? romeToSignal.get(offer.romeCode) : undefined
+    if (!signalType && !isFreelanceOffer(offer)) {
+      skip(stats, 'Métier hors recherche')
+      continue
+    }
+    if (signalType === 'job_posting_digital' && !DIGITAL_TITLE.test(offer.intitule ?? '')) {
+      skip(stats, 'Poste sans lien avec le web')
+      continue
+    }
+
+    const intermediary = intermediaryFromText(`${offer.description ?? ''} ${offer.entreprise?.description ?? ''}`)
+    if ((name && isConsultingFirm(name)) || intermediary?.kind === 'consulting') {
+      skip(stats, 'ESN ou régie')
+      continue
+    }
+
     // Pas de nom, ou un cabinet qui cache son client : à identifier à la main
-    if (!name || (isRecruitmentFirm(name) && !isFreelanceOffer(offer))) {
+    const hidesClient = (name && isRecruitmentFirm(name)) || intermediary?.kind === 'hidden_client'
+    if (!name || (hidesClient && !isFreelanceOffer(offer))) {
       anonymous.push(offer)
       continue
     }
@@ -218,6 +274,13 @@ async function processCompany(
     }
   }
 
+  // Taille connue et hors du client idéal (ex. grand groupe) : pas un client direct
+  const size = sizeCategoryFromHeadcount(registry?.tranche_effectif_salarie ?? null)
+  if (size && context.sizeCategories && !context.sizeCategories.includes(size)) {
+    skipGroup(stats, group, 'Taille hors cible')
+    return
+  }
+
   const section = registry?.section_activite_principale ?? nafSectionFromDivision(group.offers[0]?.secteurActivite)
   if (section && settings.excluded_naf_sections.includes(section)) {
     skipGroup(stats, group, 'Secteur exclu')
@@ -233,7 +296,7 @@ async function processCompany(
 
   const firstOffer = group.offers[0]
   const description = group.offers.find((offer) => offer.entreprise?.description)?.entreprise?.description
-  const notes = isIntermediary(group.name)
+  const notes = isFreelancePlatform(group.name)
     ? 'Plateforme freelance ou cabinet : le client final n\'est pas nommé dans les offres. Les missions sont listées dans les signaux, avec leur lien.'
     : description
       ? `Présentation (offre France Travail) : ${summarizeActivity(description)}`
@@ -297,7 +360,7 @@ function isFreelanceOffer(offer: JobOffer): boolean {
   return (
     offer.typeContrat === 'LIB' ||
     /freelance|free-lance|ind[ée]pendant|portage salarial/i.test(offer.intitule ?? '') ||
-    isIntermediary(offer.entreprise?.nom ?? '')
+    isFreelancePlatform(offer.entreprise?.nom ?? '')
   )
 }
 
@@ -345,7 +408,9 @@ async function saveAnonymousOffers(
         signal_type: offerSignalType(offer, romeToSignal),
         title: offer.intitule ?? 'Offre sans intitulé',
         description: [
-          offer.entreprise?.nom ? `Publiée par ${offer.entreprise.nom} (cabinet de recrutement).` : null,
+          offer.entreprise?.nom
+            ? `Publiée par ${offer.entreprise.nom}, qui recrute pour une entreprise qu'il ne nomme pas.`
+            : null,
           offer.description ? truncate(offer.description, 2000) : null,
         ]
           .filter(Boolean)
