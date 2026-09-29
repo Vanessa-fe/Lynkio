@@ -3,7 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { companyContactSchema, type CompanyContactInput } from '@/lib/validations/company'
+import {
+  companyContactSchema,
+  normalizeLinkedinProfileUrl,
+  type CompanyContactInput,
+} from '@/lib/validations/company'
 import { getAuthUser } from '@/lib/supabase/auth'
 
 type ActionResult = {
@@ -24,7 +28,8 @@ function toRow(validated: ReturnType<typeof companyContactSchema.parse>) {
     email_source: validated.email ? (validated.emailSource ?? 'manual') : null,
     email_confidence: validated.email ? (validated.emailConfidence ?? null) : null,
     phone: validated.phone,
-    linkedin_url: validated.linkedinUrl,
+    // Profil LinkedIn remis au format standard (celui qu'attend Waalaxy)
+    linkedin_url: normalizeLinkedinProfileUrl(validated.linkedinUrl) ?? validated.linkedinUrl,
     notes: validated.notes,
   }
 }
@@ -149,5 +154,39 @@ export async function deleteCompanyContact(
     return { success: true }
   } catch (error) {
     return errorResult(error, 'Impossible de supprimer le contact')
+  }
+}
+
+/**
+ * Enregistre l'adresse du profil LinkedIn d'un contact (collée depuis LinkedIn),
+ * sans passer par le formulaire complet
+ */
+export async function setCompanyContactLinkedin(
+  contactId: string,
+  companyId: string,
+  url: string
+): Promise<ActionResult> {
+  const linkedinUrl = normalizeLinkedinProfileUrl(url)
+  if (!linkedinUrl) {
+    return {
+      success: false,
+      error: 'Collez l\'adresse d\'un profil LinkedIn, du type linkedin.com/in/prenom-nom',
+    }
+  }
+
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('company_contacts')
+      .update({ linkedin_url: linkedinUrl })
+      .eq('id', contactId)
+      .eq('company_id', companyId)
+
+    if (error) return errorResult(error, 'Impossible d\'enregistrer le profil LinkedIn')
+
+    revalidatePath(`/companies/${companyId}`)
+    return { success: true }
+  } catch (error) {
+    return errorResult(error, 'Impossible d\'enregistrer le profil LinkedIn')
   }
 }

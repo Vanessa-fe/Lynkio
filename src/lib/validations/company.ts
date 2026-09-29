@@ -234,3 +234,24 @@ export function formatEuros(amount: number): string {
   if (abs >= 10_000) return `${Math.round(amount / 1000).toLocaleString('fr-FR')} k€`
   return `${Math.round(amount).toLocaleString('fr-FR')} €`
 }
+
+/**
+ * Adresse d'un profil LinkedIn de personne, au format attendu par Waalaxy
+ * (https://www.linkedin.com/in/identifiant/), ou null si ce n'en est pas une
+ * (page entreprise, recherche, publication…)
+ */
+export function normalizeLinkedinProfileUrl(value: string | null | undefined): string | null {
+  const match = value
+    ?.trim()
+    .match(/^(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/([^/?#\s]+)\/?/i)
+  if (!match?.[1]) return null
+  return `https://www.linkedin.com/in/${decodeURIComponent(match[1]).replace(/\s+/g, '')}/`
+}
+
+/**
+ * Recherche LinkedIn de la personne : son nom et son entreprise
+ */
+export function linkedinPeopleSearchUrl(contact: { first_name: string | null; last_name: string | null }, companyName: string) {
+  const keywords = [contact.first_name, contact.last_name, companyName].filter(Boolean).join(' ')
+  return `https://www.linkedin.com/search/results/people/?${new URLSearchParams({ keywords })}`
+}

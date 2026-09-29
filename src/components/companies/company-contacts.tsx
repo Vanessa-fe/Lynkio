@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mail, Phone, Plus, Pencil, Trash2, Ban, Undo2, User } from 'lucide-react'
+import { Mail, Phone, Plus, Pencil, Trash2, Ban, Undo2, User, Search } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LinkedinIcon } from '@/components/ui/linkedin-icon'
-import { deleteCompanyContact, setCompanyContactOptOut } from '@/lib/actions/company-contacts'
-import { contactDisplayName, formatPhoneForDisplay } from '@/lib/validations/company'
+import { deleteCompanyContact, setCompanyContactLinkedin, setCompanyContactOptOut } from '@/lib/actions/company-contacts'
+import { CONNECTION_ERROR } from '@/lib/constants/errors'
+import { contactDisplayName, formatPhoneForDisplay, linkedinPeopleSearchUrl } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact } from '@/types'
 import { CompanyContactDialog } from './company-contact-dialog'
@@ -16,11 +18,13 @@ import { formatDate } from '@/lib/utils/dates'
 
 interface CompanyContactsProps {
   companyId: string
+  // Pour la recherche LinkedIn de la personne (nom + entreprise)
+  companyName: string
   website: string | null
   contacts: CompanyContact[]
 }
 
-export function CompanyContacts({ companyId, website, contacts }: CompanyContactsProps) {
+export function CompanyContacts({ companyId, companyName, website, contacts }: CompanyContactsProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [dialogContact, setDialogContact] = useState<CompanyContact | undefined>()
@@ -154,6 +158,10 @@ export function CompanyContacts({ companyId, website, contacts }: CompanyContact
                         )}
                       </div>
 
+                      {!contact.linkedin_url && !optedOut && (
+                        <LinkedinQuickAdd contact={contact} companyId={companyId} companyName={companyName} />
+                      )}
+
                       {contact.notes && (
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">{contact.notes}</p>
                       )}
@@ -218,5 +226,89 @@ export function CompanyContacts({ companyId, website, contacts }: CompanyContact
         />
       )}
     </Card>
+  )
+}
+
+/**
+ * Contact sans profil LinkedIn : recherche LinkedIn pré-remplie (nom + entreprise),
+ * puis champ pour coller l'adresse du profil trouvé (nécessaire pour Waalaxy)
+ */
+function LinkedinQuickAdd({
+  contact,
+  companyId,
+  companyName,
+}: {
+  contact: CompanyContact
+  companyId: string
+  companyName: string
+}) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isEditing, setIsEditing] = useState(false)
+  const [url, setUrl] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleSave = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setIsSaving(true)
+    let result: Awaited<ReturnType<typeof setCompanyContactLinkedin>>
+    try {
+      result = await setCompanyContactLinkedin(contact.id, companyId, url)
+    } catch {
+      toast({ variant: 'destructive', title: 'Profil non enregistré', description: CONNECTION_ERROR })
+      return
+    } finally {
+      setIsSaving(false)
+    }
+
+    if (result.success) {
+      toast({ title: 'Profil LinkedIn enregistré' })
+      setIsEditing(false)
+      setUrl('')
+      router.refresh()
+    } else {
+      toast({ variant: 'destructive', title: 'Profil non enregistré', description: result.error })
+    }
+  }
+
+  if (!isEditing) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        <a
+          href={linkedinPeopleSearchUrl(contact, companyName)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-primary hover:underline"
+        >
+          <Search className="w-3.5 h-3.5" />
+          Chercher sur LinkedIn
+        </a>
+        <button type="button" onClick={() => setIsEditing(true)} className="text-muted-foreground hover:underline">
+          Ajouter son profil
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSave} className="flex flex-col sm:flex-row gap-2 pt-1 sm:max-w-lg">
+      <Input
+        value={url}
+        onChange={(event) => setUrl(event.target.value)}
+        placeholder="https://www.linkedin.com/in/prenom-nom"
+        aria-label={`Profil LinkedIn de ${contactDisplayName(contact)}`}
+        className="h-9"
+        autoFocus
+        disabled={isSaving}
+      />
+      <div className="flex gap-2 shrink-0">
+        <Button type="submit" size="sm" disabled={isSaving || !url.trim()}>
+          {isSaving ? 'Enregistrement…' : 'Enregistrer'}
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>
+          Annuler
+        </Button>
+      </div>
+    </form>
   )
 }

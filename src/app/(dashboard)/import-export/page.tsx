@@ -1,9 +1,11 @@
 import { CompaniesImport } from '@/components/import/companies-import'
 import { CompaniesExport } from '@/components/import/companies-export'
+import { WaalaxyExport } from '@/components/import/waalaxy-export'
 import { getLeadSources } from '@/lib/queries/companies'
+import { countWaalaxyContacts } from '@/lib/queries/waalaxy'
 
 export default async function ImportExportPage() {
-  const sources = await getLeadSources()
+  const [sources, waalaxyCount] = await Promise.all([getLeadSources(), countWaalaxyContacts()])
 
   return (
     <div className="space-y-6">
@@ -16,6 +18,7 @@ export default async function ImportExportPage() {
 
       <CompaniesImport sources={sources} />
       <CompaniesExport />
+      <WaalaxyExport count={waalaxyCount} />
     </div>
   )
 }

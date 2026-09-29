@@ -331,7 +331,7 @@ export function CompanyDetail({
         </Card>
       )}
 
-      <CompanyContacts companyId={company.id} website={company.website} contacts={contacts} />
+      <CompanyContacts companyId={company.id} companyName={company.name} website={company.website} contacts={contacts} />
 
       <Card>
         <CardHeader>
