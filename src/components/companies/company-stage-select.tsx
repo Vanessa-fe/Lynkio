@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useOptimistic, useTransition } from 'react'
 import {
   Select,
   SelectContent,
@@ -10,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { updateCompanyStage } from '@/lib/actions/companies'
+import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { PipelineStage } from '@/types'
@@ -31,34 +31,46 @@ function StageOption({ stage }: { stage: Pick<PipelineStage, 'name' | 'color'> }
 }
 
 /**
- * Changement d'étape directement depuis la liste ou la fiche
+ * Changement d'étape directement depuis la liste ou la fiche.
+ * La nouvelle étape s'affiche tout de suite (affichage « optimiste ») ; l'action
+ * enregistre en arrière-plan et rafraîchit la page (revalidatePath). En cas
+ * d'échec, l'ancienne étape revient d'elle-même et un message l'explique.
  */
 export function CompanyStageSelect({ companyId, stageId, stages, className }: CompanyStageSelectProps) {
-  const router = useRouter()
   const { toast } = useToast()
-  const [isSaving, setIsSaving] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [displayedStageId, setDisplayedStageId] = useOptimistic(stageId)
 
-  const current = stages.find((stage) => stage.id === stageId)
+  const current = stages.find((stage) => stage.id === displayedStageId)
 
-  const handleChange = async (value: string) => {
-    setIsSaving(true)
-    const result = await updateCompanyStage(companyId, value === 'none' ? null : value)
-    setIsSaving(false)
-
-    if (result.success) {
-      router.refresh()
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: result.error || 'Impossible de changer l\'étape',
-      })
-    }
+  const handleChange = (value: string) => {
+    const nextStageId = value === 'none' ? null : value
+    startTransition(async () => {
+      setDisplayedStageId(nextStageId)
+      let result: Awaited<ReturnType<typeof updateCompanyStage>>
+      try {
+        result = await updateCompanyStage(companyId, nextStageId)
+      } catch {
+        toast({ variant: 'destructive', title: 'Étape non enregistrée', description: CONNECTION_ERROR })
+        return
+      }
+      if (!result.success) {
+        toast({
+          variant: 'destructive',
+          title: 'Étape non enregistrée',
+          description: result.error || 'Impossible de changer l\'étape',
+        })
+      }
+    })
   }
 
   return (
-    <Select value={stageId ?? 'none'} onValueChange={handleChange} disabled={isSaving}>
-      <SelectTrigger className={cn('h-9 w-[180px]', className)} aria-label="Étape du pipeline">
+    <Select value={displayedStageId ?? 'none'} onValueChange={handleChange}>
+      <SelectTrigger
+        className={cn('h-9 w-[180px] transition-opacity', isPending && 'opacity-70', className)}
+        aria-label="Étape du pipeline"
+        aria-busy={isPending}
+      >
         <SelectValue>
           {current ? (
             <StageOption stage={current} />
