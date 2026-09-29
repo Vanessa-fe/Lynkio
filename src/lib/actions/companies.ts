@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { StackDetectionError, detectStack } from '@/lib/detectors/stack'
+import { StackDetectionError, analyzeSite } from '@/lib/detectors/stack'
+import { findSirenOnSite } from '@/lib/detectors/legal-id'
+import { fetchRegistryRecord } from '@/lib/registry'
 import {
   createCompanySchema,
   updateCompanySchema,
@@ -269,9 +271,15 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
  * La base ajoute ou retire alors le signal « Stack technique compatible »
  * (trigger sync_tech_stack_on_company_change) et recalcule le score.
  */
+/**
+ * Analyse le site de l'entreprise : technologies utilisées, et SIREN lu dans ses
+ * mentions légales. Avec le SIREN, la fiche officielle complète ce qui manque
+ * (taille, secteur, ancienneté, chiffre d'affaires, dirigeants) sans écraser
+ * ce que l'utilisatrice a saisi.
+ */
 export async function analyzeCompanyWebsite(
   companyId: string
-): Promise<ActionResult<{ detected: string[] }>> {
+): Promise<ActionResult<{ detected: string[]; siren: string | null; completed: string[] }>> {
   try {
     const supabase = await createClient()
 
@@ -285,7 +293,7 @@ export async function analyzeCompanyWebsite(
 
     const { data: company } = await supabase
       .from('companies')
-      .select('website')
+      .select('website, registration_id, sector, naf_code, headcount_code, size_category, founded_on, city, postal_code')
       .eq('id', companyId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -293,22 +301,79 @@ export async function analyzeCompanyWebsite(
     if (!company) return { success: false, error: 'Entreprise introuvable' }
     if (!company.website) return { success: false, error: 'Renseignez d\'abord le site web de l\'entreprise' }
 
-    const result = await detectStack(company.website)
+    const site = await analyzeSite(company.website)
+    const update: CompanyUpdate = { detected_stack: site.detected, stack_detected_at: site.checkedAt }
+    const completed: string[] = []
 
-    const { error } = await supabase
-      .from('companies')
-      .update({ detected_stack: result.detected, stack_detected_at: result.checkedAt })
-      .eq('id', companyId)
-      .eq('user_id', user.id)
+    // SIREN : celui de la fiche, sinon celui des mentions légales du site
+    const siren = company.registration_id ?? (await findSirenOnSite(site.url, site.html))
+    const registry = siren ? await fetchRegistryRecord(siren) : null
+
+    if (registry && !registry.isNonDiffusible) {
+      if (!company.registration_id) {
+        update.registration_id = registry.siren
+        completed.push('SIREN')
+      }
+      if (!company.sector && registry.sector) update.sector = registry.sector
+      if (!company.naf_code && registry.nafCode) update.naf_code = registry.nafCode
+      if (!company.headcount_code && registry.headcountCode) update.headcount_code = registry.headcountCode
+      if (!company.size_category && registry.sizeCategory) {
+        update.size_category = registry.sizeCategory
+        completed.push('taille')
+      }
+      if (!company.founded_on && registry.foundedOn) {
+        update.founded_on = registry.foundedOn
+        completed.push('date de création')
+      }
+      if (!company.city && registry.city) update.city = registry.city
+      if (!company.postal_code && registry.postalCode) update.postal_code = registry.postalCode
+      // Les chiffres publiés sont toujours mis à jour : ce sont ceux du dernier exercice
+      if (registry.finances) {
+        update.revenue = registry.finances.revenue
+        update.net_income = registry.finances.netIncome != null ? Math.round(registry.finances.netIncome) : null
+        update.finances_year = registry.finances.year
+        completed.push('chiffre d\'affaires')
+      }
+    }
+
+    const { error } = await supabase.from('companies').update(update).eq('id', companyId).eq('user_id', user.id)
 
     if (error) {
+      if (error.code === UNIQUE_VIOLATION) {
+        return { success: false, error: 'Le SIREN trouvé sur ce site est déjà celui d\'une autre de vos entreprises' }
+      }
       console.error('Analyze company website error:', error)
       return { success: false, error: 'Impossible d\'enregistrer l\'analyse' }
     }
 
+    // Dirigeants ajoutés comme contacts, seulement si la fiche n'a encore aucun contact
+    if (registry && !registry.isNonDiffusible && registry.directors.length > 0) {
+      const { count } = await supabase
+        .from('company_contacts')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .eq('user_id', user.id)
+
+      if (count === 0) {
+        const { error: contactsError } = await supabase.from('company_contacts').insert(
+          registry.directors.map((director) => ({
+            user_id: user.id,
+            company_id: companyId,
+            first_name: director.firstName,
+            last_name: director.lastName,
+            role: director.role,
+            is_decision_maker: true,
+            data_source: 'recherche-entreprises',
+          }))
+        )
+        if (contactsError) console.error('Analyze company directors error:', contactsError)
+        else completed.push('dirigeants')
+      }
+    }
+
     revalidatePath(`/companies/${companyId}`)
     revalidatePath('/companies')
-    return { success: true, data: { detected: result.detected } }
+    return { success: true, data: { detected: site.detected, siren: registry?.siren ?? null, completed } }
   } catch (error) {
     if (error instanceof StackDetectionError) {
       return { success: false, error: error.message }

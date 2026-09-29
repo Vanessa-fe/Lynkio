@@ -32,6 +32,7 @@ import { analyzeCompanyWebsite, deleteCompany } from '@/lib/actions/companies'
 import { technologyLabel } from '@/lib/constants/technologies'
 import { companyAge, formatEuros, sizeCategoryLabels, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
 import { budgetFit, minimumRevenue } from '@/lib/validations/icp'
+import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type {
   CompanyContact,
@@ -358,8 +359,15 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true)
-    const result = await analyzeCompanyWebsite(company.id)
-    setIsAnalyzing(false)
+    let result: Awaited<ReturnType<typeof analyzeCompanyWebsite>>
+    try {
+      result = await analyzeCompanyWebsite(company.id)
+    } catch {
+      toast({ variant: 'destructive', title: 'Analyse impossible', description: CONNECTION_ERROR })
+      return
+    } finally {
+      setIsAnalyzing(false)
+    }
 
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Analyse impossible', description: result.error })
@@ -367,11 +375,21 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
     }
 
     const detected = result.data?.detected ?? []
+    const completed = result.data?.completed ?? []
     toast({
       title: 'Analyse terminée',
-      description: detected.length
-        ? `Technologies détectées : ${detected.map(technologyLabel).join(', ')}`
-        : 'Aucune technologie reconnue sur ce site',
+      description: [
+        detected.length
+          ? `Technologies détectées : ${detected.map(technologyLabel).join(', ')}.`
+          : 'Aucune technologie reconnue sur ce site.',
+        completed.length
+          ? `Fiche complétée grâce aux mentions légales : ${completed.join(', ')}.`
+          : result.data?.siren
+            ? null
+            : 'Aucun SIREN trouvé dans les mentions légales.',
+      ]
+        .filter(Boolean)
+        .join(' '),
     })
     router.refresh()
   }

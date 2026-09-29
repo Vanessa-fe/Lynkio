@@ -13,7 +13,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { UserFacingError, newSourceStats, skip, type Budget, type Context, type Settings, type SourceStats } from './context.ts'
 import { findCompaniesUsingTech, type TechCandidate } from './ai-research.ts'
 import { detectSiteStack } from './site-stack.ts'
-import { searchRegistryByName, type RegistryCompany } from './sources.ts'
+import { fetchRegistryCompany, searchRegistryByName, type RegistryCompany } from './sources.ts'
+import { findSirenOnSite } from './legal-id.ts'
 import {
   domainFromUrl,
   isConsultingFirm,
@@ -146,7 +147,9 @@ async function processCandidate(
     return
   }
 
-  const registry = await matchRegistry(candidate.name)
+  // Fiche officielle : par le SIREN des mentions légales (fiable), sinon par le nom exact
+  const legalSiren = await findSirenOnSite(site.finalUrl, site.html)
+  const registry = (legalSiren ? await fetchRegistryCompany(legalSiren) : null) ?? (await matchRegistry(candidate.name))
   if (registry) {
     if (await findExistingCompany(admin, context.userId, { siren: registry.siren })) {
       skip(stats, 'Déjà dans vos entreprises')
@@ -184,6 +187,7 @@ async function processCandidate(
   const labels = matched.map((technology) => TECHNOLOGY_LABELS[technology]).join(', ')
   const notes = [
     `Trouvée par la recherche par technologie : ${labels} confirmé sur son site.`,
+    legalSiren && registry?.siren === legalSiren ? 'SIREN lu dans les mentions légales du site.' : null,
     candidate.activity ? `Activité : ${candidate.activity}.` : null,
     candidate.evidence ? `Indice (recherche IA) : ${candidate.evidence}` : null,
     candidate.sourceUrl ? `Source : ${candidate.sourceUrl}` : null,

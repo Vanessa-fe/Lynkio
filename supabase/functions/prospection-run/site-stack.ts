@@ -48,10 +48,9 @@ async function readBounded(response: Response): Promise<string> {
 }
 
 /**
- * Technologies détectées sur le site, ou null s'il est injoignable.
- * finalUrl : l'adresse après redirections (celle à enregistrer).
+ * HTML d'une page publique (après redirections), ou null si elle est injoignable
  */
-export async function detectSiteStack(rawUrl: string): Promise<{ finalUrl: string; detected: string[] } | null> {
+export async function fetchPublicPage(rawUrl: string): Promise<{ finalUrl: string; html: string } | null> {
   let url: URL
   try {
     url = new URL(/^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`)
@@ -71,13 +70,25 @@ export async function detectSiteStack(rawUrl: string): Promise<{ finalUrl: strin
       await response.body?.cancel().catch(() => {})
       return null
     }
-
-    const html = await readBounded(response)
-    const detected = Object.entries(MARKERS)
-      .filter(([, matches]) => matches(html))
-      .map(([technology]) => technology)
-    return { finalUrl: `${finalUrl.origin}/`, detected }
+    return { finalUrl: finalUrl.toString(), html: await readBounded(response) }
   } catch {
     return null
   }
+}
+
+/**
+ * Technologies détectées sur la page d'accueil, ou null si le site est injoignable.
+ * finalUrl : l'adresse du site après redirections (celle à enregistrer) ;
+ * html : la page, réutilisée pour y chercher le SIREN.
+ */
+export async function detectSiteStack(
+  rawUrl: string
+): Promise<{ finalUrl: string; detected: string[]; html: string } | null> {
+  const page = await fetchPublicPage(rawUrl)
+  if (!page) return null
+
+  const detected = Object.entries(MARKERS)
+    .filter(([, matches]) => matches(page.html))
+    .map(([technology]) => technology)
+  return { finalUrl: `${new URL(page.finalUrl).origin}/`, detected, html: page.html }
 }

@@ -182,6 +182,28 @@ function detectFromHtml(html: string) {
 }
 
 export async function detectStack(rawUrl: string): Promise<StackDetectionResult> {
+  // Sans le HTML : ce résultat est renvoyé tel quel au navigateur (route detect-stack)
+  const { url, detected, evidence, checkedAt } = await analyzeSite(rawUrl)
+  return { url, detected, evidence, checkedAt }
+}
+
+/**
+ * HTML d'une page publique (mêmes garde-fous que l'analyse), ou null si elle est
+ * injoignable : sert à lire les pages de mentions légales
+ */
+export async function fetchPageHtml(rawUrl: string): Promise<string | null> {
+  try {
+    const { html } = await fetchHtml(new URL(rawUrl))
+    return html
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Analyse de la page d'accueil, avec son HTML (réutilisé pour y chercher le SIREN)
+ */
+export async function analyzeSite(rawUrl: string): Promise<StackDetectionResult & { html: string }> {
   // Une adresse sans protocole (« exemple.fr ») est complétée en https ;
   // un autre protocole explicite (ftp://, file://…) est refusé
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(rawUrl) && !/^https?:\/\//i.test(rawUrl)) {
@@ -196,5 +218,5 @@ export async function detectStack(rawUrl: string): Promise<StackDetectionResult>
   }
 
   const { finalUrl, html } = await fetchHtml(url)
-  return { url: finalUrl.toString(), ...detectFromHtml(html), checkedAt: new Date().toISOString() }
+  return { url: finalUrl.toString(), ...detectFromHtml(html), checkedAt: new Date().toISOString(), html }
 }
