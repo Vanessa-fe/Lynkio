@@ -17,6 +17,8 @@ import { fetchRegistryCompany, searchRegistryByName, type RegistryCompany } from
 import { findSirenOnSite } from './legal-id.ts'
 import {
   domainFromUrl,
+  hasTenEmployeesOrMore,
+  isSoleProprietor,
   isConsultingFirm,
   isFreelancePlatform,
   isNonDiffusible,
@@ -159,6 +161,16 @@ async function processCandidate(
       skip(stats, 'Données non diffusibles')
       return
     }
+  }
+
+  // Budget d'une mission : pas d'entrepreneur seul, au moins 10 salariés quand l'effectif est connu
+  if (registry && isSoleProprietor(registry.nature_juridique)) {
+    skip(stats, 'Entrepreneur individuel')
+    return
+  }
+  if (registry && hasTenEmployeesOrMore(registry.tranche_effectif_salarie) === false) {
+    skip(stats, 'Moins de 10 salariés')
+    return
   }
 
   const size = sizeCategoryFromHeadcount(registry?.tranche_effectif_salarie ?? null)

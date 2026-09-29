@@ -56,10 +56,10 @@ export function TechResearchCard({ techStack, isRunning }: TechResearchCardProps
           Recherche par technologie
         </CardTitle>
         <CardDescription>
-          L&apos;IA cherche sur le web des TPE et PME dont le site est fait avec vos technologies (études de cas
-          d&apos;agences, vitrines, articles). Sophie vérifie ensuite chaque site : une entreprise n&apos;est retenue
-          que si la technologie est confirmée dans son code, puis elle ajoute sa fiche officielle et son chiffre
-          d&apos;affaires.
+          L&apos;IA cherche sur le web des PME de 10 à 250 salariés dont le site est fait avec vos technologies
+          (études de cas d&apos;agences, vitrines, articles). Sophie vérifie ensuite chaque site : une entreprise
+          n&apos;est retenue que si la technologie est confirmée dans son code. Elle lit son SIREN dans les mentions
+          légales, ajoute sa fiche officielle et son chiffre d&apos;affaires, et écarte les indépendants.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

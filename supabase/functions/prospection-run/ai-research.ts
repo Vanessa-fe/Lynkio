@@ -56,7 +56,8 @@ function prompt(technologies: string[], count: number, excludedDomains: string[]
 Recherche sur le web jusqu'à ${count} entreprises françaises réelles dont le propre site internet est développé avec ${techList}.
 
 Entreprises recherchées :
-- TPE ou PME (moins de 250 salariés), en France ;
+- PME françaises de 10 à 250 salariés : elles ont le budget d'une mission freelance ;
+- jamais d'indépendants, d'auto-entrepreneurs, d'artisans ou de commerçants qui travaillent seuls, même si leur site convient ;
 - de préférence des entreprises dont le métier n'est pas le numérique (commerce, e-commerce, services, industrie, santé, tourisme, immobilier, associations…) : elles dépendent d'un prestataire pour faire évoluer leur site.
 
 À exclure absolument : agences web ou digitales, ESN, sociétés de conseil informatique, studios de développement, cabinets de recrutement, plateformes de freelances, éditeurs d'outils pour développeurs, grands groupes, filiales de grands groupes.

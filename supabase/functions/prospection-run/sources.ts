@@ -144,6 +144,8 @@ export type RegistryCompany = {
   activite_principale: string | null
   section_activite_principale: string | null
   tranche_effectif_salarie: string | null
+  // Catégorie juridique INSEE : 1000 = entrepreneur individuel, 5499 = SARL…
+  nature_juridique?: string | null
   etat_administratif: string | null
   dirigeants: CompanyDirector[]
   // Comptes publiés, par année : { "2024": { ca, resultat_net } } (0 ou null si confidentiels)

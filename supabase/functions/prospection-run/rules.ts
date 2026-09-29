@@ -54,6 +54,21 @@ export function sizeCategoryFromHeadcount(code: string | null): 'tpe' | 'pme' | 
   }
 }
 
+// Entrepreneur individuel (catégorie juridique 1xxx) : une personne seule, rarement
+// le budget d'une mission au tarif d'une freelance
+export function isSoleProprietor(natureJuridique: string | null | undefined): boolean {
+  return !!natureJuridique && natureJuridique.startsWith('1')
+}
+
+// Au moins 10 salariés d'après la tranche d'effectif INSEE (11 = 10 à 19 salariés…).
+// NN (non employeur) et 00 (aucun salarié) comptent comme « moins de 10 ».
+export function hasTenEmployeesOrMore(headcountCode: string | null | undefined): boolean | null {
+  if (!headcountCode) return null
+  if (headcountCode === 'NN' || headcountCode === '00') return false
+  const code = Number(headcountCode)
+  return Number.isInteger(code) ? code >= 11 : null
+}
+
 // Personnes et entreprises ayant refusé la diffusion de leurs données :
 // l'API les renvoie masquées, on ne les prospecte pas.
 export function isNonDiffusible(value: string | null | undefined): boolean {
