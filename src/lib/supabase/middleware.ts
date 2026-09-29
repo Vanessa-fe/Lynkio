@@ -37,13 +37,11 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Évite d'écrire une logique entre createServerClient et
-  // supabase.auth.getUser(). Un "hiccup" de réseau simple ou périodique
-  // pourrait suffire à faire échouer une requête, créant une mauvaise UX.
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // IMPORTANT : aucune logique entre createServerClient et getClaims().
+  // getClaims() rafraîchit la session si besoin, puis vérifie le jeton avec la clé
+  // publique du projet (ES256), sans appel réseau à chaque page (contrairement à getUser()).
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const user = claimsData?.claims ?? null
 
   // Compatibilité avec les anciens emails de récupération qui pointaient
   // directement vers une route inexistante.

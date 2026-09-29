@@ -1,12 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import type { PipelineRun, ProspectionSettings, UnidentifiedJobOffer } from '@/types'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 export async function getProspectionSettings(): Promise<ProspectionSettings | null> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return null
@@ -27,9 +26,7 @@ export async function getProspectionSettings(): Promise<ProspectionSettings | nu
 export async function getPipelineRuns(limit = 20): Promise<PipelineRun[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return []
@@ -51,9 +48,7 @@ export async function getPipelineRuns(limit = 20): Promise<PipelineRun[]> {
 export async function getUnidentifiedOffers(limit = 50): Promise<UnidentifiedJobOffer[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return []
@@ -76,9 +71,7 @@ export async function getUnidentifiedOffers(limit = 50): Promise<UnidentifiedJob
 export async function getCompanyChoices(): Promise<{ id: string; name: string }[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return []

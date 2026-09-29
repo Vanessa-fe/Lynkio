@@ -5,6 +5,7 @@ import { formatPhoneForDisplay, sizeCategoryLabels } from '@/lib/validations/com
 import { COLUMN_LABELS } from '@/lib/validations/company-import'
 import type { SizeCategory } from '@/types'
 import { APP_TIME_ZONE } from '@/lib/utils/dates'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type ExportedContact = {
   first_name: string | null
@@ -42,9 +43,7 @@ export async function GET() {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })

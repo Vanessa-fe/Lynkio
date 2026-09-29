@@ -7,6 +7,7 @@ import {
   companyInteractionSchema,
   type CompanyInteractionInput,
 } from '@/lib/validations/company'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type ActionResult = {
   success: boolean
@@ -24,9 +25,7 @@ export async function createCompanyInteraction(
     const validated = companyInteractionSchema.parse(input)
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }

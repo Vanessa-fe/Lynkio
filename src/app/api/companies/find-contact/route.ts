@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { toWebsiteDomain } from '@/lib/validations/company'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 const HUNTER_DOMAIN_SEARCH_URL = 'https://api.hunter.io/v2/domain-search'
 const HUNTER_EMAIL_FINDER_URL = 'https://api.hunter.io/v2/email-finder'
@@ -147,12 +148,9 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 

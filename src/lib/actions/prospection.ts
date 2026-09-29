@@ -9,6 +9,7 @@ import {
   type ProspectionSettingsInput,
 } from '@/lib/validations/prospection'
 import { createCompany } from '@/lib/actions/companies'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type ActionResult = {
   success: boolean
@@ -24,9 +25,7 @@ export async function saveProspectionSettings(input: ProspectionSettingsInput): 
     const validated = prospectionSettingsSchema.parse(input)
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }
@@ -80,9 +79,7 @@ async function invokeProspection(body: { mode: 'manual'; source?: 'tech_users' }
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }
@@ -141,9 +138,7 @@ export async function linkUnidentifiedOffer(
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }

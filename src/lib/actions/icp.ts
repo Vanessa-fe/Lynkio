@@ -9,6 +9,7 @@ import {
   type IcpCriteria,
   type IcpInput,
 } from '@/lib/validations/icp'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type ActionResult = {
   success: boolean
@@ -24,9 +25,7 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
     const validated = icpSchema.parse(input)
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }

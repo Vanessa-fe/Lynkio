@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { ReminderPriority, ReminderWithRelations } from '@/types'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 const REMINDER_SELECT = `
   *,
@@ -15,9 +16,7 @@ export async function getReminders(options?: {
 }): Promise<ReminderWithRelations[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return []
@@ -74,9 +73,7 @@ export async function getRemindersCount(options?: {
 }): Promise<number> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return 0

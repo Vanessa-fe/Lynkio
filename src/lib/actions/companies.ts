@@ -14,6 +14,7 @@ import {
   type UpdateCompanyInput,
 } from '@/lib/validations/company'
 import type { Database } from '@/types/database'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type CompanyUpdate = Database['public']['Tables']['companies']['Update']
 
@@ -80,9 +81,7 @@ export async function createCompany(
     const validated = createCompanySchema.parse(input)
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté pour ajouter une entreprise' }
@@ -157,9 +156,7 @@ export async function updateCompany(
     const validated = updateCompanySchema.parse(input)
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté pour modifier une entreprise' }
@@ -239,9 +236,7 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté pour supprimer une entreprise' }
@@ -283,9 +278,7 @@ export async function analyzeCompanyWebsite(
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }

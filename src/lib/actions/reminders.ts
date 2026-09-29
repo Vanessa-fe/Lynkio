@@ -8,6 +8,7 @@ import {
   type CreateReminderInput,
   type UpdateReminderInput,
 } from '@/lib/validations/reminder'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type ActionResult<T = unknown> = {
   success: boolean
@@ -37,12 +38,9 @@ export async function createReminder(
     const supabase = await createClient()
 
     // Vérifier l'authentification
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: 'Non authentifié' }
     }
 
@@ -107,12 +105,9 @@ export async function updateReminder(
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: 'Non authentifié' }
     }
 
@@ -180,12 +175,9 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: 'Non authentifié' }
     }
 
@@ -228,12 +220,9 @@ export async function uncompleteReminder(reminderId: string): Promise<ActionResu
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: 'Non authentifié' }
     }
 
@@ -276,12 +265,9 @@ export async function deleteReminder(reminderId: string): Promise<ActionResult> 
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: 'Non authentifié' }
     }
 

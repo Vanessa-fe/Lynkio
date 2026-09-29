@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { StackDetectionError, detectStack } from '@/lib/detectors/stack'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 /**
  * Analyse la stack d'un site avant l'enregistrement d'une entreprise (formulaire).
@@ -9,14 +9,9 @@ import { StackDetectionError, detectStack } from '@/lib/detectors/stack'
  */
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
+    const user = await getAuthUser()
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 

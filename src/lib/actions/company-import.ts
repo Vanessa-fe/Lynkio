@@ -12,6 +12,7 @@ import {
   mapRow,
   type CompanyImportRow,
 } from '@/lib/validations/company-import'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type ActionResult<T> = { success: boolean; error?: string; data?: T }
 
@@ -52,9 +53,7 @@ const INSERT_BATCH_SIZE = 200
  */
 async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedRow[] | { error: string }> {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) return { error: 'Vous devez être connecté' }
 
   if (rawRows.length === 0) return { error: 'Le fichier ne contient aucune ligne' }
@@ -166,9 +165,7 @@ export async function importCompanies(
     if ('error' in analyzed) return { success: false, error: analyzed.error }
 
     const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
     if (!user) return { success: false, error: 'Vous devez être connecté' }
 
     const [{ data: defaultStage }, { data: sources }] = await Promise.all([

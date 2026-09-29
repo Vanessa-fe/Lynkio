@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { PipelineRun, PipelineStage, PipelineStageKind, ReminderWithRelations } from '@/types'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 export type DashboardOpportunity = {
   id: string
@@ -38,9 +39,7 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 export async function getDashboardData(): Promise<DashboardData | null> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return null

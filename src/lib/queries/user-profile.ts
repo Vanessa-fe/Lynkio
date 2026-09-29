@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { UserProfile } from '@/types'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 /**
  * Récupérer le profil de l'utilisateur connecté
@@ -7,12 +8,9 @@ import type { UserProfile } from '@/types'
 export async function getUserProfile(): Promise<UserProfile | null> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
-  if (authError || !user) {
+  if (!user) {
     return null
   }
 

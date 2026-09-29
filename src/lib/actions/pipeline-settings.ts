@@ -10,6 +10,7 @@ import {
   type SourceInput,
   type StageInput,
 } from '@/lib/validations/pipeline-settings'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type ActionResult = {
   success: boolean
@@ -33,9 +34,7 @@ function failure(error: unknown, fallback: string): ActionResult {
 
 async function currentUserId() {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   return { supabase, userId: user?.id ?? null }
 }
 

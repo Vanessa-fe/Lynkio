@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
@@ -41,12 +41,63 @@ interface CompaniesListProps {
 
 const ALL = 'all'
 
+// Filtres gardés pour la session (onglet) : on les retrouve en revenant d'une fiche.
+// Stockage du navigateur, avec une copie en mémoire s'il est indisponible (navigation privée).
+const FILTERS_KEY = 'companies-list-filters'
+
+type Filters = { stage: string; source: string; search: string }
+const DEFAULT_FILTERS: Filters = { stage: ALL, source: ALL, search: '' }
+
+let memoryFilters = ''
+const filterListeners = new Set<() => void>()
+
+function subscribeFilters(listener: () => void) {
+  filterListeners.add(listener)
+  return () => {
+    filterListeners.delete(listener)
+  }
+}
+
+function readFilters(): string {
+  try {
+    return window.sessionStorage.getItem(FILTERS_KEY) ?? memoryFilters
+  } catch {
+    return memoryFilters
+  }
+}
+
+function writeFilters(filters: Filters) {
+  memoryFilters = JSON.stringify(filters)
+  try {
+    window.sessionStorage.setItem(FILTERS_KEY, memoryFilters)
+  } catch {
+    // stockage indisponible : la copie en mémoire suffit pour la visite
+  }
+  filterListeners.forEach((listener) => listener())
+}
+
+function parseFilters(raw: string): Filters {
+  try {
+    const saved = raw ? (JSON.parse(raw) as Partial<Filters>) : {}
+    return {
+      stage: typeof saved.stage === 'string' ? saved.stage : ALL,
+      source: typeof saved.source === 'string' ? saved.source : ALL,
+      search: typeof saved.search === 'string' ? saved.search : '',
+    }
+  } catch {
+    return DEFAULT_FILTERS
+  }
+}
+
 export function CompaniesList({ companies, stages, sources }: CompaniesListProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [search, setSearch] = useState('')
-  const [stageFilter, setStageFilter] = useState<string>(ALL)
-  const [sourceFilter, setSourceFilter] = useState<string>(ALL)
+  // Serveur : filtres par défaut ; navigateur : ceux de la session
+  const filters = parseFilters(useSyncExternalStore(subscribeFilters, readFilters, () => ''))
+  const { stage: stageFilter, source: sourceFilter, search } = filters
+  const setStageFilter = (stage: string) => writeFilters({ ...filters, stage })
+  const setSourceFilter = (source: string) => writeFilters({ ...filters, source })
+  const setSearch = (value: string) => writeFilters({ ...filters, search: value })
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Nombre d'entreprises par étape, pour la vue d'ensemble du pipeline

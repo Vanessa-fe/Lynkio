@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { companyContactSchema, type CompanyContactInput } from '@/lib/validations/company'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 type ActionResult = {
   success: boolean
@@ -41,9 +42,7 @@ export async function createCompanyContact(input: CompanyContactInput): Promise<
     const validated = companyContactSchema.parse(input)
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }

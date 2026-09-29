@@ -8,6 +8,7 @@ import type {
   LeadSource,
   PipelineStage,
 } from '@/types'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 const COMPANY_RELATIONS = `
   *,
@@ -22,9 +23,7 @@ const COMPANY_RELATIONS = `
 export async function getCompanies(limit = 200): Promise<CompanyWithRelations[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return []
@@ -48,9 +47,7 @@ export async function getCompanies(limit = 200): Promise<CompanyWithRelations[]>
 export async function getCompanyById(companyId: string): Promise<CompanyWithRelations | null> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return null
@@ -136,9 +133,7 @@ export async function getCompanyInteractions(
 export async function getPipelineStages(): Promise<PipelineStage[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return []
@@ -160,9 +155,7 @@ export async function getPipelineStages(): Promise<PipelineStage[]> {
 export async function getLeadSources(): Promise<LeadSource[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return []
@@ -207,9 +200,7 @@ export async function getPipelineUsage(): Promise<{
 }> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   const usage = { byStage: {} as Record<string, number>, bySource: {} as Record<string, number> }
   if (!user) return usage

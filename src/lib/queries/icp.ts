@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { IcpProfile } from '@/types'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 export type SignalWeightOption = {
   key: string
@@ -21,9 +22,7 @@ export async function getIcpSettings(): Promise<{
 } | null> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return null
@@ -78,9 +77,7 @@ export async function getIcpSettings(): Promise<{
 export async function getIcpBasics(): Promise<{ dayRate: number | null; techStack: string[] }> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return { dayRate: null, techStack: [] }

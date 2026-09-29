@@ -9,6 +9,7 @@ import {
   type OnboardingInput,
   type UpdateProfileInput,
 } from '@/lib/validations/user-profile'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 /**
  * Type de retour pour les actions de profil
@@ -29,12 +30,9 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
     const supabase = await createClient()
 
     // Récupérer l'utilisateur connecté
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
-    if (authError || !user) {
+    if (!user) {
       return {
         success: false,
         error: 'Vous devez être connecté pour compléter l\'onboarding',
@@ -115,12 +113,9 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
     const supabase = await createClient()
 
     // Récupérer l'utilisateur connecté
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
-    if (authError || !user) {
+    if (!user) {
       return {
         success: false,
         error: 'Vous devez être connecté pour mettre à jour votre profil',
