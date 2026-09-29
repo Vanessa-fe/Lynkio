@@ -2,6 +2,8 @@ import { ProspectionStatus } from '@/components/prospection/prospection-status'
 import { ProspectionSettingsForm } from '@/components/prospection/prospection-settings-form'
 import { PipelineRunsList } from '@/components/prospection/pipeline-runs-list'
 import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers'
+import { TechResearchCard } from '@/components/prospection/tech-research-card'
+import { getIcpBasics } from '@/lib/queries/icp'
 import {
   getCompanyChoices,
   getPipelineRuns,
@@ -10,11 +12,12 @@ import {
 } from '@/lib/queries/prospection'
 
 export default async function ProspectionPage() {
-  const [settings, runs, unidentifiedOffers, companyChoices] = await Promise.all([
+  const [settings, runs, unidentifiedOffers, companyChoices, icp] = await Promise.all([
     getProspectionSettings(),
     getPipelineRuns(),
     getUnidentifiedOffers(),
     getCompanyChoices(),
+    getIcpBasics(),
   ])
   const runningRun = runs.find((run) => run.status === 'running') ?? null
 
@@ -29,6 +32,7 @@ export default async function ProspectionPage() {
       </div>
 
       <ProspectionStatus settings={settings} runningRun={runningRun} />
+      <TechResearchCard techStack={icp.techStack} isRunning={!!runningRun} />
       <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />
       {/* Premier usage : les réglages d'abord, l'historique est encore vide */}
       {runs.length === 0 ? (

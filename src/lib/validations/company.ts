@@ -224,3 +224,13 @@ export function companyAge(foundedOn: string | null): { since: string; age: stri
     age: years < 1 ? 'moins d\'un an' : `${years} an${years > 1 ? 's' : ''}`,
   }
 }
+
+/**
+ * « 1,2 M€ », « 350 k€ », « 600 € » : montant lisible d'un coup d'œil
+ */
+export function formatEuros(amount: number): string {
+  const abs = Math.abs(amount)
+  if (abs >= 1_000_000) return `${(amount / 1_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} M€`
+  if (abs >= 10_000) return `${Math.round(amount / 1000).toLocaleString('fr-FR')} k€`
+  return `${Math.round(amount).toLocaleString('fr-FR')} €`
+}

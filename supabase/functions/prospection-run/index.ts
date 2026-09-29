@@ -3,6 +3,8 @@
 // Deux façons de l'appeler (POST, JSON) :
 // - { "mode": "manual" } depuis l'application (« Lancer maintenant »), avec le
 //   jeton de l'utilisateur connecté dans l'en-tête Authorization ;
+//   { "mode": "manual", "source": "tech_users" } lance seulement la recherche
+//   par technologie (recherche IA, à la demande) ;
 // - { "mode": "scheduled" } toutes les heures par pg_cron. Ce mode ne traite que
 //   les plannings arrivés à échéance (réservés atomiquement par la base) : un
 //   appel en trop ne déclenche donc rien de plus que ce qui était prévu.
@@ -33,7 +35,7 @@ Deno.serve(async (request) => {
     return json({ error: 'Méthode non autorisée' }, 405)
   }
 
-  let body: { mode?: string } = {}
+  let body: { mode?: string; source?: string } = {}
   try {
     body = await request.json()
   } catch {
@@ -57,7 +59,9 @@ Deno.serve(async (request) => {
       return json({ error: start.error }, 409)
     }
 
-    EdgeRuntime.waitUntil(runProspection(admin, data.user.id, start.runId))
+    // « Recherche par technologie » : seulement cette source, lancée à la demande
+    const only = body.source === 'tech_users' ? ['tech_users' as const] : undefined
+    EdgeRuntime.waitUntil(runProspection(admin, data.user.id, start.runId, only))
     return json({ runId: start.runId }, 202)
   }
 

@@ -64,6 +64,19 @@ export async function saveProspectionSettings(input: ProspectionSettingsInput): 
  * est créé et continue en arrière-plan : la page suit ensuite son avancement.
  */
 export async function launchProspection(): Promise<ActionResult> {
+  return invokeProspection({ mode: 'manual' })
+}
+
+/**
+ * Recherche par technologie : l'IA cherche des entreprises dont le site utilise
+ * les technologies du client idéal, Sophie vérifie chaque site. Lancée à la
+ * demande seulement (elle coûte une recherche IA).
+ */
+export async function launchTechResearch(): Promise<ActionResult> {
+  return invokeProspection({ mode: 'manual', source: 'tech_users' })
+}
+
+async function invokeProspection(body: { mode: 'manual'; source?: 'tech_users' }): Promise<ActionResult> {
   try {
     const supabase = await createClient()
 
@@ -75,9 +88,7 @@ export async function launchProspection(): Promise<ActionResult> {
       return { success: false, error: 'Vous devez être connecté' }
     }
 
-    const { error } = await supabase.functions.invoke('prospection-run', {
-      body: { mode: 'manual' },
-    })
+    const { error } = await supabase.functions.invoke('prospection-run', { body })
 
     if (error) {
       // Message métier renvoyé par la fonction (« déjà en cours », etc.)

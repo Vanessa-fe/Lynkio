@@ -13,6 +13,7 @@ import {
 } from './context.ts'
 import { detectJobPostings } from './detect-job-postings.ts'
 import { detectRecentCreations } from './detect-recent-creations.ts'
+import { detectTechUsers } from './detect-tech-users.ts'
 import { UNIQUE_VIOLATION } from './store.ts'
 
 // Au-delà, un passage bloqué (fonction interrompue) est considéré comme échoué
@@ -21,11 +22,18 @@ const STALE_RUN_MINUTES = 15
 // Ordre de passage : la source la plus utile consomme le quota en premier
 const DETECTORS: {
   key: SourceKey
-  cursorColumn: 'job_postings_cursor' | 'bodacc_cursor'
-  detect: typeof detectJobPostings
+  cursorColumn: 'job_postings_cursor' | 'bodacc_cursor' | null
+  detect: (
+    admin: SupabaseClient,
+    settings: Settings,
+    context: Context,
+    budget: Budget
+  ) => Promise<{ stats: SourceStats; cursor: string | null }>
 }[] = [
   { key: 'job_postings', cursorColumn: 'job_postings_cursor', detect: detectJobPostings },
   { key: 'recent_creations', cursorColumn: 'bodacc_cursor', detect: detectRecentCreations },
+  // À la demande seulement (voir SourceKey)
+  { key: 'tech_users', cursorColumn: null, detect: detectTechUsers },
 ]
 
 export type StartResult = { ok: true; runId: string } | { ok: false; error: string }
@@ -72,7 +80,13 @@ export async function startRun(
  * Déroule un passage : chaque source activée à tour de rôle. Une source en
  * panne n'empêche pas les autres ; le passage n'échoue que si toutes échouent.
  */
-export async function runProspection(admin: SupabaseClient, userId: string, runId: string) {
+export async function runProspection(
+  admin: SupabaseClient,
+  userId: string,
+  runId: string,
+  // Sources imposées (lancement « recherche par technologie ») ; sinon celles des réglages
+  only?: SourceKey[]
+) {
   const results: Partial<Record<SourceKey, SourceStats>> = {}
 
   try {
@@ -81,13 +95,15 @@ export async function runProspection(admin: SupabaseClient, userId: string, runI
     const budget: Budget = { remaining: settings.max_companies_per_run }
     const cursorUpdates: Record<string, string> = {}
 
+    const sources: SourceKey[] = only ?? settings.sources.filter((source) => source !== 'tech_users')
+
     for (const detector of DETECTORS) {
-      if (!settings.sources.includes(detector.key)) continue
+      if (!sources.includes(detector.key)) continue
 
       try {
         const { stats, cursor } = await detector.detect(admin, settings, context, budget)
         results[detector.key] = stats
-        if (cursor && cursor !== settings[detector.cursorColumn]) {
+        if (detector.cursorColumn && cursor && cursor !== settings[detector.cursorColumn]) {
           cursorUpdates[detector.cursorColumn] = cursor
         }
       } catch (error) {
@@ -157,6 +173,7 @@ async function loadContext(admin: SupabaseClient, userId: string): Promise<Conte
   const sizeCategories = [...(sizes?.preferred ?? []), ...(sizes?.accepted ?? [])].filter(
     (size): size is string => typeof size === 'string'
   )
+  const techStack = icp.data?.criteria?.tech_stack
   const weights = icp.data?.signal_weights
   return {
     userId,
@@ -169,6 +186,7 @@ async function loadContext(admin: SupabaseClient, userId: string): Promise<Conte
         ? Object.fromEntries(Object.entries(weights).filter((entry): entry is [string, number] => typeof entry[1] === 'number'))
         : {},
     sizeCategories: sizeCategories.length > 0 ? sizeCategories : null,
+    techStack: Array.isArray(techStack) ? techStack.filter((t): t is string => typeof t === 'string') : [],
   }
 }
 

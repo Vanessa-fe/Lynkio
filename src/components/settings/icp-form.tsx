@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   MAX_SIGNAL_WEIGHT,
+  MISSION_DAYS,
   SIZE_FIT_OPTIONS,
   icpSchema,
   sizeCategories,
@@ -51,6 +52,7 @@ function toFormValues(icp: IcpProfile, signals: SignalWeightOption[]): IcpInput 
       })
     ),
     excludeKeywords: criteria.exclude_keywords ?? [],
+    dayRate: typeof criteria.day_rate === 'number' ? criteria.day_rate : null,
     techStack: (criteria.tech_stack ?? []).filter((tech): tech is DetectableTechnology =>
       (DETECTABLE_TECHNOLOGIES as readonly string[]).includes(tech)
     ),
@@ -242,6 +244,30 @@ export function IcpForm({ icp, signals, companiesCount }: IcpFormProps) {
           {errors.signalWeights && (
             <p className="text-sm text-destructive">Vérifiez les points : entre 0 et {MAX_SIGNAL_WEIGHT}.</p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Votre tarif</CardTitle>
+          <CardDescription>
+            Sert à repérer les entreprises qui peuvent vous payer : une mission de {MISSION_DAYS} jours ne doit pas
+            peser plus de 4 % de leur chiffre d&apos;affaires publié.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 sm:max-w-xs">
+          <Label htmlFor="dayRate">Tarif journalier moyen (€ HT)</Label>
+          <Input
+            id="dayRate"
+            type="number"
+            inputMode="numeric"
+            min={50}
+            step={10}
+            placeholder="600"
+            disabled={isSaving}
+            {...register('dayRate', { setValueAs: (value) => (value === '' || value == null ? null : Number(value)) })}
+          />
+          {errors.dayRate && <p className="text-sm text-destructive">{errors.dayRate.message}</p>}
         </CardContent>
       </Card>
 

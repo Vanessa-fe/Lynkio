@@ -146,6 +146,8 @@ export type RegistryCompany = {
   tranche_effectif_salarie: string | null
   etat_administratif: string | null
   dirigeants: CompanyDirector[]
+  // Comptes publiés, par année : { "2024": { ca, resultat_net } } (0 ou null si confidentiels)
+  finances?: Record<string, { ca?: number | null; resultat_net?: number | null }> | null
   siege?: {
     code_postal?: string | null
     libelle_commune?: string | null

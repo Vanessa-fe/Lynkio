@@ -1,6 +1,8 @@
 // Types et outils partagés par l'orchestration et les détecteurs
 
-export type SourceKey = 'job_postings' | 'recent_creations'
+// tech_users (recherche par technologie) n'est lancée qu'à la demande : elle coûte
+// une recherche IA et ne fait pas partie des sources du planning
+export type SourceKey = 'job_postings' | 'recent_creations' | 'tech_users'
 
 export type Settings = {
   departments: string[]
@@ -21,6 +23,8 @@ export type Context = {
   signalWeights: Record<string, number>
   // Tailles idéales et acceptées du client idéal ; null = pas de préférence
   sizeCategories: string[] | null
+  // Technologies recherchées par le client idéal (criteria.tech_stack)
+  techStack: string[]
 }
 
 // Résultat d'un détecteur, enregistré dans pipeline_runs.details.sources

@@ -32,6 +32,13 @@ export const icpSchema = z.object({
       .min(0, 'Pas de points négatifs')
       .max(MAX_SIGNAL_WEIGHT, `Au plus ${MAX_SIGNAL_WEIGHT} points par signal`)
   ),
+  // Tarif journalier moyen : sert à juger si le chiffre d'affaires d'une entreprise suffit
+  dayRate: z
+    .number({ invalid_type_error: 'Indiquez un montant' })
+    .int('Un montant entier, en euros')
+    .min(50, 'Au moins 50 €')
+    .max(5000, 'Au plus 5 000 €')
+    .nullable(),
   // Technologies qui déclenchent le signal « Stack technique compatible »
   techStack: z.array(z.enum(DETECTABLE_TECHNOLOGIES)).transform((technologies) => [...new Set(technologies)]),
   excludeKeywords: z
@@ -48,7 +55,24 @@ export type IcpCriteria = {
   size_categories?: { preferred?: string[]; accepted?: string[] }
   exclude_keywords?: string[]
   tech_stack?: string[]
+  day_rate?: number
   [key: string]: Json | undefined
+}
+
+// Une mission type de 20 jours ne doit pas dépasser 4 % du chiffre d'affaires annuel :
+// au tarif de 600 €, il faut donc au moins 300 000 € de CA
+export const MISSION_DAYS = 20
+const MAX_SHARE_OF_REVENUE = 0.04
+
+export type BudgetFit = 'comfortable' | 'tight' | 'unknown'
+
+export function budgetFit(revenue: number | null | undefined, dayRate: number | null | undefined): BudgetFit {
+  if (!revenue || !dayRate) return 'unknown'
+  return dayRate * MISSION_DAYS <= revenue * MAX_SHARE_OF_REVENUE ? 'comfortable' : 'tight'
+}
+
+export function minimumRevenue(dayRate: number): number {
+  return (dayRate * MISSION_DAYS) / MAX_SHARE_OF_REVENUE
 }
 
 export function sizeFitFromCriteria(criteria: IcpCriteria): Record<SizeCategory, SizeFit> {

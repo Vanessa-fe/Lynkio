@@ -27,6 +27,7 @@ type RunDetails = {
 const SOURCE_LABELS: Record<string, string> = {
   job_postings: 'Offres d\'emploi',
   recent_creations: 'Créations récentes',
+  tech_users: 'Recherche par technologie',
 }
 
 function plural(count: number, singular: string, pluralForm: string) {

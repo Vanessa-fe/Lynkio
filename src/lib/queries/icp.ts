@@ -70,3 +70,36 @@ export async function getIcpSettings(): Promise<{
 
   return { icp, signals, companiesCount: count ?? 0 }
 }
+
+/**
+ * Tarif journalier et technologies du client idéal actif (budget des entreprises,
+ * recherche par technologie)
+ */
+export async function getIcpBasics(): Promise<{ dayRate: number | null; techStack: string[] }> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { dayRate: null, techStack: [] }
+  }
+
+  const { data } = await supabase
+    .from('icp_profiles')
+    .select('criteria')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .order('created_at')
+    .limit(1)
+    .maybeSingle()
+
+  const criteria = (data?.criteria ?? {}) as { day_rate?: unknown; tech_stack?: unknown }
+  return {
+    dayRate: typeof criteria.day_rate === 'number' ? criteria.day_rate : null,
+    techStack: Array.isArray(criteria.tech_stack)
+      ? criteria.tech_stack.filter((tech): tech is string => typeof tech === 'string')
+      : [],
+  }
+}

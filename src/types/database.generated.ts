@@ -46,6 +46,7 @@ export type Database = {
           country: string
           created_at: string
           detected_stack: string[]
+          finances_year: number | null
           founded_on: string | null
           headcount_code: string | null
           icp_profile_id: string | null
@@ -54,10 +55,12 @@ export type Database = {
           legal_form: string | null
           naf_code: string | null
           name: string
+          net_income: number | null
           notes: string | null
           origin: string
           postal_code: string | null
           registration_id: string | null
+          revenue: number | null
           score: number | null
           scored_at: string | null
           sector: string | null
@@ -76,6 +79,7 @@ export type Database = {
           country?: string
           created_at?: string
           detected_stack?: string[]
+          finances_year?: number | null
           founded_on?: string | null
           headcount_code?: string | null
           icp_profile_id?: string | null
@@ -84,10 +88,12 @@ export type Database = {
           legal_form?: string | null
           naf_code?: string | null
           name: string
+          net_income?: number | null
           notes?: string | null
           origin?: string
           postal_code?: string | null
           registration_id?: string | null
+          revenue?: number | null
           score?: number | null
           scored_at?: string | null
           sector?: string | null
@@ -106,6 +112,7 @@ export type Database = {
           country?: string
           created_at?: string
           detected_stack?: string[]
+          finances_year?: number | null
           founded_on?: string | null
           headcount_code?: string | null
           icp_profile_id?: string | null
@@ -114,10 +121,12 @@ export type Database = {
           legal_form?: string | null
           naf_code?: string | null
           name?: string
+          net_income?: number | null
           notes?: string | null
           origin?: string
           postal_code?: string | null
           registration_id?: string | null
+          revenue?: number | null
           score?: number | null
           scored_at?: string | null
           sector?: string | null

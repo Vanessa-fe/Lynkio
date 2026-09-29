@@ -27,6 +27,22 @@ export type CompanyDraft = {
   notes: string | null
   // Si la fiche officielle manque (ex. date de début d'activité au BODACC)
   foundedOn?: string | null
+  // Technologies repérées sur le site (crée le signal « stack compatible »)
+  detectedStack?: string[]
+}
+
+/**
+ * Dernier exercice publié avec un chiffre d'affaires : beaucoup de petites
+ * entreprises rendent leurs comptes confidentiels (CA à 0 ou absent)
+ */
+function latestFinances(registry: RegistryCompany | null) {
+  const years = Object.entries(registry?.finances ?? {})
+    .filter(([year, values]) => /^\d{4}$/.test(year) && (values?.ca ?? 0) > 0)
+    .sort(([a], [b]) => Number(b) - Number(a))
+  const [year, values] = years[0] ?? []
+  return year && values
+    ? { revenue: Math.round(values.ca ?? 0), netIncome: values.resultat_net ?? null, year: Number(year) }
+    : null
 }
 
 /**
@@ -86,6 +102,8 @@ export async function insertCompany(
 ): Promise<string | null> {
   const section = registry?.section_activite_principale
   const headquarters = registry?.siege
+  const finances = latestFinances(registry)
+  const detectedStack = draft.detectedStack ?? []
 
   const { data, error } = await admin
     .from('companies')
@@ -108,6 +126,11 @@ export async function insertCompany(
       city: headquarters?.libelle_commune ? toTitleCase(headquarters.libelle_commune) : draft.city,
       postal_code: headquarters?.code_postal ?? draft.postalCode,
       notes: draft.notes,
+      revenue: finances?.revenue ?? null,
+      net_income: finances?.netIncome != null ? Math.round(finances.netIncome) : null,
+      finances_year: finances?.year ?? null,
+      detected_stack: detectedStack,
+      stack_detected_at: detectedStack.length > 0 ? new Date().toISOString() : null,
     })
     .select('id')
     .single()

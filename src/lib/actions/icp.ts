@@ -63,7 +63,9 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
       size_categories: sizeCategoriesFromFit(validated.sizeFit),
       exclude_keywords: validated.excludeKeywords,
       tech_stack: validated.techStack,
+      ...(validated.dayRate ? { day_rate: validated.dayRate } : {}),
     }
+    if (!validated.dayRate) delete criteria.day_rate
 
     const { error } = await supabase
       .from('icp_profiles')

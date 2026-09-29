@@ -8,17 +8,18 @@ import { fr } from 'date-fns/locale'
 import {
   ArrowLeft,
   Building2,
-  Calendar,
   Cake,
+  Calendar,
   Edit,
+  Euro,
   ExternalLink,
   FileText,
   Globe,
   Hash,
   Loader2,
-  ScanSearch,
   MapPin,
   MessageSquare,
+  ScanSearch,
   Tag,
   Trash2,
   Users,
@@ -29,7 +30,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { analyzeCompanyWebsite, deleteCompany } from '@/lib/actions/companies'
 import { technologyLabel } from '@/lib/constants/technologies'
-import { companyAge, sizeCategoryLabels, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import { companyAge, formatEuros, sizeCategoryLabels, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import { budgetFit, minimumRevenue } from '@/lib/validations/icp'
 import { useToast } from '@/lib/hooks/use-toast'
 import type {
   CompanyContact,
@@ -55,6 +57,26 @@ interface CompanyDetailProps {
   interactions: CompanyInteractionWithContact[]
   qualification: CompanyQualification | null
   reminders: ReminderWithRelations[]
+  // Tarif journalier du client idéal : sert à juger le budget de l'entreprise
+  dayRate: number | null
+}
+
+/**
+ * Budget estimé au regard du tarif journalier : une mission de 20 jours ne doit
+ * pas peser plus de 4 % du chiffre d'affaires
+ */
+function BudgetBadge({ revenue, dayRate }: { revenue: number; dayRate: number | null }) {
+  const fit = budgetFit(revenue, dayRate)
+  if (fit === 'unknown' || !dayRate) return null
+  return (
+    <Badge
+      variant={fit === 'comfortable' ? 'secondary' : 'outline'}
+      className="ml-2 font-normal"
+      title={`Au tarif de ${formatEuros(dayRate)} par jour, il faut environ ${formatEuros(minimumRevenue(dayRate))} de chiffre d'affaires`}
+    >
+      {fit === 'comfortable' ? 'Budget confortable' : 'Budget serré'}
+    </Badge>
+  )
 }
 
 export function CompanyDetail({
@@ -65,6 +87,7 @@ export function CompanyDetail({
   interactions,
   qualification,
   reminders,
+  dayRate,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -204,6 +227,18 @@ export function CompanyDetail({
                 {age.since} · {age.age}
               </InfoItem>
             )}
+            <InfoItem icon={<Euro className="w-5 h-5" />} label="Chiffre d'affaires">
+              {company.revenue && company.finances_year ? (
+                <>
+                  {formatEuros(company.revenue)} en {company.finances_year}
+                  <BudgetBadge revenue={company.revenue} dayRate={dayRate} />
+                </>
+              ) : (
+                <span className="text-muted-foreground font-normal">
+                  Non publié{company.registration_id ? ' (comptes confidentiels ou non encore récupérés)' : ''}
+                </span>
+              )}
+            </InfoItem>
             {company.size_category && (
               <InfoItem icon={<Users className="w-5 h-5" />} label="Taille">
                 {sizeCategoryLabels[company.size_category]}
