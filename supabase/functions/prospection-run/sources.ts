@@ -162,7 +162,14 @@ async function searchRegistry(params: Record<string, string>): Promise<RegistryC
   for (let attempt = 0; attempt < 2; attempt++) {
     await sleep(RECHERCHE_ENTREPRISES_DELAY_MS * (attempt + 1))
 
-    const response = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+    let response: Response
+    try {
+      response = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+    } catch (error) {
+      // Coupure réseau passagère : un seul nouvel essai
+      if (attempt === 0) continue
+      throw error
+    }
 
     if (response.status === 429) {
       // Limite de débit : on patiente une seconde avant l'unique nouvel essai

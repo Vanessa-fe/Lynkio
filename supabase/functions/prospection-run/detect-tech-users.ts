@@ -61,7 +61,13 @@ export async function detectTechUsers(
 
   for (const candidate of candidates) {
     stats.seen++
-    await processCandidate(admin, settings, context, budget, stats, candidate, technologies)
+    try {
+      await processCandidate(admin, settings, context, budget, stats, candidate, technologies)
+    } catch (error) {
+      // Une vérification impossible (réseau, API) n'empêche pas de traiter les suivantes
+      console.error('tech candidate', candidate.name, error)
+      skip(stats, 'Vérification impossible (erreur réseau)')
+    }
   }
 
   return { stats, cursor: null }
