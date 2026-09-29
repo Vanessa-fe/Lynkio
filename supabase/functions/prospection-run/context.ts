@@ -59,7 +59,18 @@ export type Budget = { remaining: number }
 // Erreur dont le message peut être montré tel quel à l'utilisateur
 export class UserFacingError extends Error {}
 
+// Coupures réseau, délais dépassés : passagères, il suffit de relancer
+const NETWORK_ERROR = /error sending request|connection (reset|refused|error)|network|timed? ?out|fetch failed|dns/i
+
+/**
+ * Message montré dans l'historique : compréhensible, sans détail technique
+ * (le détail reste dans les journaux de la fonction)
+ */
 export function errorMessage(error: unknown): string {
   if (error instanceof UserFacingError) return error.message
-  return `Erreur technique : ${error instanceof Error ? error.message : String(error)}`
+  const detail = error instanceof Error ? `${error.name} ${error.message}` : String(error)
+  if (NETWORK_ERROR.test(detail)) {
+    return 'Un service en ligne n\'a pas répondu (coupure passagère) : relancez la recherche dans un instant'
+  }
+  return 'Erreur inattendue pendant la recherche : relancez-la, et prévenez-nous si elle se répète'
 }
