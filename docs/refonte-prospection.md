@@ -233,6 +233,21 @@ Validée le 27/09. Ordre de mise en ligne, pour ne jamais casser la production :
   la fonction : `npx supabase@latest secrets set FRANCE_TRAVAIL_CLIENT_ID=… FRANCE_TRAVAIL_CLIENT_SECRET=…`
   (la fonction les relit à chaque démarrage, pas besoin de la redéployer).
 
+**Messages** (migration 00022, fonction `supabase/functions/draft-message`) :
+- La fiche entreprise appelle la fonction **depuis le navigateur** (pas par une action serveur : la
+  rédaction dépasse souvent les dix secondes accordées par Netlify). La passerelle vérifie le jeton
+  (`verify_jwt = true`) et la fonction lit la base avec ce même jeton : les règles RLS s'appliquent.
+- L'IA (API Responses d'OpenAI, sans recherche web) reçoit la fiche, les signaux actifs, le texte de la
+  page d'accueil (extrait par le code), la présentation (`user_profiles.message_pitch`) et les
+  références, sans le nom des clients confidentiels ni les notes internes.
+- Le code vérifie ensuite le message (lien que l'IA n'a pas reçu, champ entre crochets, prix, longueur,
+  client confidentiel, entreprise déjà contactée) et ajoute la signature (`message_signature`).
+- Rien n'est enregistré par la fonction : le brouillon devient un `company_interactions` en `draft`,
+  puis `done` avec « Marquer comme envoyé » (le trigger met à jour `last_interaction_at`).
+- Déploiement : `npx supabase@latest functions deploy draft-message --use-api` (elle réutilise
+  `prospection-run/site-stack.ts` et `TECHNOLOGY_LABELS`). Origines autorisées (CORS) : lynkio.netlify.app,
+  ses aperçus de déploiement et localhost.
+
 **Point ouvert** : aucune API gouvernementale ne donne le site web de l'entreprise, indispensable
 pour Hunter, la détection de stack et PageSpeed. Pistes : site présent dans certaines offres
 France Travail, déduction à partir du nom avec vérification, saisie manuelle sur les retenues.

@@ -2,10 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import {
+  messageSettingsSchema,
   onboardingSchema,
   updateProfileSchema,
+  type MessageSettingsInput,
   type OnboardingInput,
   type UpdateProfileInput,
 } from '@/lib/validations/user-profile'
@@ -161,5 +164,40 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
       success: false,
       error: 'Une erreur est survenue lors de la mise à jour',
     }
+  }
+}
+
+/**
+ * Présentation et signature utilisées par Sophie pour rédiger les messages
+ */
+export async function saveMessageSettings(input: MessageSettingsInput): Promise<ActionResult> {
+  try {
+    const validated = messageSettingsSchema.parse(input)
+    const supabase = await createClient()
+
+    const user = await getAuthUser()
+
+    if (!user) {
+      return { success: false, error: 'Vous devez être connecté' }
+    }
+
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ message_pitch: validated.pitch, message_signature: validated.signature })
+      .eq('id', user.id)
+
+    if (error) {
+      console.error('Save message settings error:', error)
+      return { success: false, error: 'Impossible d\'enregistrer vos réglages' }
+    }
+
+    revalidatePath('/settings/messages')
+    return { success: true }
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return { success: false, error: error.errors[0]?.message ?? 'Réglages invalides' }
+    }
+    console.error('Save message settings error:', error)
+    return { success: false, error: 'Une erreur est survenue' }
   }
 }

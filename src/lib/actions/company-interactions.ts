@@ -86,3 +86,35 @@ export async function deleteCompanyInteraction(
     return { success: false, error: 'Une erreur est survenue' }
   }
 }
+
+/**
+ * Le brouillon a été envoyé : il devient un échange effectué, daté de maintenant.
+ * La base met alors à jour la date du dernier échange de l'entreprise (trigger).
+ */
+export async function markCompanyInteractionSent(
+  interactionId: string,
+  companyId: string
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('company_interactions')
+      .update({ status: 'done', occurred_at: new Date().toISOString() })
+      .eq('id', interactionId)
+      .eq('company_id', companyId)
+      .eq('status', 'draft')
+
+    if (error) {
+      console.error('Mark company interaction sent error:', error)
+      return { success: false, error: 'Impossible de marquer le message comme envoyé' }
+    }
+
+    revalidatePath(`/companies/${companyId}`)
+    revalidatePath('/companies')
+    return { success: true }
+  } catch (error) {
+    console.error('Mark company interaction sent error:', error)
+    return { success: false, error: 'Une erreur est survenue' }
+  }
+}

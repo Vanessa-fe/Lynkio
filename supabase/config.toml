@@ -125,3 +125,8 @@ enabled = false
 # planifié (appelé par pg_cron) ne traite que les passages arrivés à échéance.
 [functions.prospection-run]
 verify_jwt = false
+
+# Rédaction des messages : appelée depuis le navigateur avec le jeton de
+# l'utilisatrice, que la passerelle vérifie
+[functions.draft-message]
+verify_jwt = true

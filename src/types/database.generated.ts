@@ -863,6 +863,8 @@ export type Database = {
           created_at: string | null
           first_name: string | null
           id: string
+          message_pitch: string | null
+          message_signature: string | null
           onboarding_completed: boolean | null
           profession_key: string | null
           selected_theme: string | null
@@ -874,6 +876,8 @@ export type Database = {
           created_at?: string | null
           first_name?: string | null
           id: string
+          message_pitch?: string | null
+          message_signature?: string | null
           onboarding_completed?: boolean | null
           profession_key?: string | null
           selected_theme?: string | null
@@ -885,6 +889,8 @@ export type Database = {
           created_at?: string | null
           first_name?: string | null
           id?: string
+          message_pitch?: string | null
+          message_signature?: string | null
           onboarding_completed?: boolean | null
           profession_key?: string | null
           selected_theme?: string | null

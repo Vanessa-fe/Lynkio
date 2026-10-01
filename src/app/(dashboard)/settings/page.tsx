@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Palette, User, ChevronRight, Target, ListOrdered } from 'lucide-react'
+import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText } from 'lucide-react'
 
 const settingsCards = [
   {
@@ -18,6 +18,14 @@ const settingsCards = [
     href: '/settings/pipeline',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
+  },
+  {
+    title: 'Messages de Sophie',
+    description: 'Votre présentation et votre signature, pour les messages qu\'elle prépare',
+    icon: MessageSquareText,
+    href: '/settings/messages',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10',
   },
   {
     title: 'Thèmes',

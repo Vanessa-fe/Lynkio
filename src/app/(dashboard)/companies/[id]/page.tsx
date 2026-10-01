@@ -10,6 +10,7 @@ import {
 } from '@/lib/queries/companies'
 import { getCompanyReminders } from '@/lib/queries/reminders'
 import { getIcpBasics } from '@/lib/queries/icp'
+import { getUserProfile } from '@/lib/queries/user-profile'
 
 interface CompanyPageProps {
   params: Promise<{
@@ -19,7 +20,7 @@ interface CompanyPageProps {
 
 export default async function CompanyPage({ params }: CompanyPageProps) {
   const { id } = await params
-  const [company, stages, contacts, signals, interactions, qualification, reminders, icp] = await Promise.all([
+  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile] = await Promise.all([
     getCompanyById(id),
     getPipelineStages(),
     getCompanyContacts(id),
@@ -28,6 +29,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
     getLatestQualification(id),
     getCompanyReminders(id),
     getIcpBasics(),
+    getUserProfile(),
   ])
 
   if (!company) {
@@ -44,6 +46,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
       qualification={qualification}
       reminders={reminders}
       dayRate={icp.dayRate}
+      hasPitch={Boolean(profile?.message_pitch)}
     />
   )
 }

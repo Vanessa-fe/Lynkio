@@ -1,13 +1,13 @@
 # Avancement du projet
 
-Point au **27 septembre 2026**. Le détail technique de chaque étape (tables, règles, choix) est dans
+Point au **1er octobre 2026**. Le détail technique de chaque étape (tables, règles, choix) est dans
 [refonte-prospection.md](refonte-prospection.md) ; ce document-ci dit seulement où on en est.
 
 ## Le but
 
 Un outil de prospection B2B pour freelances. Sophie, l'agente automatique, repère les entreprises qui
 ont probablement besoin d'un freelance (signaux d'achat), les note selon le client idéal, puis
-préparera les messages. Premier métier : développeuse web.
+prépare les messages. Premier métier : développeuse web.
 
 Site en ligne : https://lynkio.netlify.app (mis à jour à chaque fusion dans `main`).
 
@@ -30,6 +30,7 @@ Site en ligne : https://lynkio.netlify.app (mis à jour à chaque fusion dans `m
 | Import / export | CSV des entreprises avec aperçu, doublons, modèle à télécharger |
 | Ancien modèle | Contacts particuliers, rendez-vous, paiements et agences supprimés (code et base, 00018, 27/09) |
 | Site web | Bouton « Rechercher le site » sur les fiches qui n'en ont pas |
+| Messages (01/10) | « Préparer un message » sur la fiche : Sophie rédige un premier e-mail ou message LinkedIn à partir des signaux, du site et de votre présentation ; le code vérifie (lien inconnu, champ à compléter, prix, longueur, client confidentiel) et ajoute la signature. Brouillon à copier puis « Marquer comme envoyé ». Réglages dans Paramètres, Messages de Sophie (00022, fonction `draft-message`) |
 | Ciblage (28/09) | Client idéal revu : TPE / PME en direct, 100 % à distance, projets complets. Signal « Recrute pour le web ou le digital » (00019) ; intermédiaires, ESN et régie repérés dans le texte des annonces |
 
 ## Ce qu'il reste à faire
@@ -43,9 +44,9 @@ Par ordre de priorité proposé :
    nom avec vérification, saisie manuelle.
 2. **Hunter automatique**, seulement sur les entreprises bien notées (quota gratuit limité).
 3. **Qualification par IA**, en complément des règles, sur les entreprises déjà filtrées.
-4. **Préparation des messages** par Sophie, à partir du signal et de tes références.
-5. **Onglet Références** : tes missions passées, citées dans les messages (la table existe, pas encore
-   l'écran).
+4. **Onglet Références** : tes missions passées, que Sophie cite déjà dans les messages si elles
+   existent (la table existe, pas encore l'écran).
+5. **Relances préparées par Sophie** : un second message qui tient compte du premier.
 6. **Autres métiers** : ajouter une ligne dans `professions`, sans déploiement.
 
 ## Petits chantiers
