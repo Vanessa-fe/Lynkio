@@ -8,6 +8,7 @@ import { completeOnboarding } from '@/lib/actions/user-profile'
 import { THEMES } from '@/lib/constants/themes'
 import { cn } from '@/lib/utils'
 import type { Profession } from '@/types'
+import { LogoutButton } from '@/components/layout/logout-button'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -31,9 +32,11 @@ interface OnboardingFormProps {
   defaultValues: Partial<OnboardingInput>
   /** Compte déjà configuré à qui il ne manque que le métier */
   isReturningUser: boolean
+  /** Compte connecté : on le montre pour qu'on puisse en changer si ce n'est pas le bon */
+  email: string | null
 }
 
-export function OnboardingForm({ professions, defaultValues, isReturningUser }: OnboardingFormProps) {
+export function OnboardingForm({ professions, defaultValues, isReturningUser, email }: OnboardingFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -217,6 +220,20 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser }: 
             </CardContent>
           </form>
         </Card>
+
+        <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground text-center">
+          <span>
+            {email ? (
+              <>
+                Connecté·e avec <span className="font-medium text-foreground break-all">{email}</span>.
+              </>
+            ) : (
+              'Vous êtes connecté·e.'
+            )}{' '}
+            Ce n&apos;est pas votre compte ?
+          </span>
+          <LogoutButton variant="link" className="h-auto p-0" />
+        </div>
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ import 'server-only'
 import { cache } from 'react'
 import { createClient } from './server'
 
-export type AuthUser = { id: string }
+export type AuthUser = { id: string; email: string | null }
 
 /**
  * Utilisateur connecté, ou null.
@@ -17,5 +17,6 @@ export const getAuthUser = cache(async (): Promise<AuthUser | null> => {
   const { data, error } = await supabase.auth.getClaims()
   const id = data?.claims?.sub
   if (error || typeof id !== 'string') return null
-  return { id }
+  const email = data?.claims?.email
+  return { id, email: typeof email === 'string' && email ? email : null }
 })
