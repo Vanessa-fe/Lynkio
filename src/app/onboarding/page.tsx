@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
 import { getUserProfile } from '@/lib/queries/user-profile'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { getActiveProfessions } from '@/lib/queries/professions'
 import { THEMES } from '@/lib/constants/themes'
 import { OnboardingForm } from '@/components/onboarding/onboarding-form'
 
 export default async function OnboardingPage() {
-  const [profile, professions] = await Promise.all([getUserProfile(), getActiveProfessions()])
+  const [profile, professions, user] = await Promise.all([getUserProfile(), getActiveProfessions(), getAuthUser()])
 
   if (!profile) {
     redirect('/login')
@@ -29,6 +30,7 @@ export default async function OnboardingPage() {
         selectedTheme: hasValidTheme && profile.selected_theme ? profile.selected_theme : undefined,
       }}
       isReturningUser={profile.onboarding_completed === true}
+      email={user?.email ?? null}
     />
   )
 }

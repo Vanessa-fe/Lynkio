@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginInput } from '@/lib/validations/auth'
 import { login } from '@/lib/actions/auth'
+import { SIGNUPS_OPEN } from '@/lib/constants/signup'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -105,12 +106,17 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? 'Connexion...' : 'Se connecter'}
           </Button>
-          <p className="text-sm text-center text-muted-foreground">
-            Pas encore de compte ?{' '}
-            <Link href="/signup" className="text-primary hover:underline">
-              Créer un compte
-            </Link>
-          </p>
+          {SIGNUPS_OPEN && (
+            <p className="text-sm text-center text-muted-foreground">
+              Pas encore de compte ?{' '}
+              <Link href="/signup" className="text-primary hover:underline">
+                Créer un compte
+              </Link>
+            </p>
+          )}
+          <Link href="/" className="text-sm text-center text-muted-foreground hover:underline">
+            Découvrir Prospect CRM
+          </Link>
         </CardFooter>
       </form>
     </Card>
