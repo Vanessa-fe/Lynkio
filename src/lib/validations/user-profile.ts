@@ -51,5 +51,27 @@ export const updateProfileSchema = z.object({
     .optional(),
 })
 
+/**
+ * Ce que Sophie sait de l'utilisateur pour rédiger ses messages
+ */
+export const messageSettingsSchema = z.object({
+  pitch: z
+    .string()
+    .trim()
+    .max(1500, 'La présentation est trop longue (1 500 caractères au plus)')
+    // Déjà transformé en null côté navigateur : le serveur revalide la même valeur
+    .nullable()
+    .optional()
+    .transform((value) => value || null),
+  signature: z
+    .string()
+    .trim()
+    .max(500, 'La signature est trop longue (500 caractères au plus)')
+    .nullable()
+    .optional()
+    .transform((value) => value || null),
+})
+
 export type OnboardingInput = z.infer<typeof onboardingSchema>
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
+export type MessageSettingsInput = z.input<typeof messageSettingsSchema>

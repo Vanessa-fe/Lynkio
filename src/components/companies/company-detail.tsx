@@ -60,6 +60,8 @@ interface CompanyDetailProps {
   reminders: ReminderWithRelations[]
   // Tarif journalier du client idéal : sert à juger le budget de l'entreprise
   dayRate: number | null
+  // Présentation remplie : Sophie peut personnaliser les messages qu'elle prépare
+  hasPitch: boolean
 }
 
 /**
@@ -89,6 +91,7 @@ export function CompanyDetail({
   qualification,
   reminders,
   dayRate,
+  hasPitch,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -343,7 +346,12 @@ export function CompanyDetail({
         </CardContent>
       </Card>
 
-      <CompanyInteractions companyId={company.id} contacts={contacts} interactions={interactions} />
+      <CompanyInteractions
+        companyId={company.id}
+        contacts={contacts}
+        interactions={interactions}
+        hasPitch={hasPitch}
+      />
     </div>
   )
 }

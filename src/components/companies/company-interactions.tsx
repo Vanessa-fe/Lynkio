@@ -9,12 +9,15 @@ import { fr } from 'date-fns/locale'
 import {
   Activity,
   CalendarDays,
+  Check,
   Clock,
+  Copy,
   FileText,
   Mail,
   MessageSquare,
   Phone,
   Plus,
+  Sparkles,
   Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -47,10 +50,16 @@ import {
   contactDisplayName,
   type CompanyInteractionInput,
 } from '@/lib/validations/company'
-import { createCompanyInteraction, deleteCompanyInteraction } from '@/lib/actions/company-interactions'
+import {
+  createCompanyInteraction,
+  deleteCompanyInteraction,
+  markCompanyInteractionSent,
+} from '@/lib/actions/company-interactions'
+import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact, CompanyInteractionType, CompanyInteractionWithContact } from '@/types'
 import { formatDate } from '@/lib/utils/dates'
+import { MessageDraftDialog } from './message-draft-dialog'
 
 const typeIcons: Record<CompanyInteractionType, React.ReactNode> = {
   email: <Mail className="w-5 h-5" />,
@@ -76,13 +85,46 @@ interface CompanyInteractionsProps {
   companyId: string
   contacts: CompanyContact[]
   interactions: CompanyInteractionWithContact[]
+  // L'utilisatrice a rempli sa présentation (Paramètres, Messages de Sophie)
+  hasPitch: boolean
 }
 
-export function CompanyInteractions({ companyId, contacts, interactions }: CompanyInteractionsProps) {
+export function CompanyInteractions({ companyId, contacts, interactions, hasPitch }: CompanyInteractionsProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isDraftDialogOpen, setIsDraftDialogOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [sendingId, setSendingId] = useState<string | null>(null)
+
+  const handleCopy = async (interaction: CompanyInteractionWithContact) => {
+    try {
+      await navigator.clipboard.writeText(interaction.content ?? '')
+      toast({ title: 'Message copié' })
+    } catch {
+      toast({ variant: 'destructive', title: 'Copie impossible', description: 'Sélectionnez le texte et copiez-le à la main.' })
+    }
+  }
+
+  const handleMarkSent = async (interaction: CompanyInteractionWithContact) => {
+    setSendingId(interaction.id)
+    let result: Awaited<ReturnType<typeof markCompanyInteractionSent>>
+    try {
+      result = await markCompanyInteractionSent(interaction.id, companyId)
+    } catch {
+      toast({ variant: 'destructive', title: 'Erreur', description: CONNECTION_ERROR })
+      return
+    } finally {
+      setSendingId(null)
+    }
+
+    if (result.success) {
+      toast({ title: 'Message marqué comme envoyé', description: 'Pensez à programmer une relance.' })
+      router.refresh()
+    } else {
+      toast({ variant: 'destructive', title: 'Erreur', description: result.error || 'Une erreur est survenue' })
+    }
+  }
 
   const handleDelete = async (interaction: CompanyInteractionWithContact) => {
     if (!confirm(`Supprimer cet échange (${companyInteractionTypeLabels[interaction.type]}) ?`)) return
@@ -114,17 +156,23 @@ export function CompanyInteractions({ companyId, contacts, interactions }: Compa
                 : `${interactions.length} échange${interactions.length > 1 ? 's' : ''}`}
             </CardDescription>
           </div>
-          <Button size="sm" onClick={() => setIsDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter un échange
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => setIsDraftDialogOpen(true)}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Préparer un message
+            </Button>
+            <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter un échange
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         {interactions.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">
             Notez ici chaque e-mail, message, appel ou rendez-vous : la date du dernier échange
-            vous aidera à savoir quand relancer.
+            vous aidera à savoir quand relancer. Sophie peut aussi préparer votre premier message.
           </p>
         ) : (
           <div className="relative">
@@ -146,7 +194,8 @@ export function CompanyInteractions({ companyId, contacts, interactions }: Compa
                         <div className="min-w-0 space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 className="font-semibold">{companyInteractionTypeLabels[interaction.type]}</h3>
-                            {interaction.direction && (
+                            {/* Un brouillon ou un échange prévu n'est encore ni envoyé ni reçu */}
+                            {interaction.direction && interaction.status === 'done' && (
                               <span className="text-sm text-muted-foreground">
                                 {interaction.direction === 'incoming' ? 'reçu' : 'envoyé'}
                               </span>
@@ -177,6 +226,23 @@ export function CompanyInteractions({ companyId, contacts, interactions }: Compa
                               <p className="text-sm whitespace-pre-wrap">{interaction.content}</p>
                             </div>
                           )}
+                          {/* Brouillon (préparé par Sophie ou à la main) : à copier, puis à marquer envoyé */}
+                          {interaction.status === 'draft' && interaction.content && (
+                            <div className="flex flex-wrap gap-2 pt-2">
+                              <Button variant="outline" size="sm" onClick={() => handleCopy(interaction)}>
+                                <Copy className="w-4 h-4 mr-2" />
+                                Copier
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleMarkSent(interaction)}
+                                disabled={sendingId === interaction.id}
+                              >
+                                <Check className="w-4 h-4 mr-2" />
+                                {sendingId === interaction.id ? 'Enregistrement...' : 'Marquer comme envoyé'}
+                              </Button>
+                            </div>
+                          )}
                         </div>
 
                         <Button
@@ -198,6 +264,16 @@ export function CompanyInteractions({ companyId, contacts, interactions }: Compa
           </div>
         )}
       </CardContent>
+
+      {isDraftDialogOpen && (
+        <MessageDraftDialog
+          companyId={companyId}
+          contacts={contacts}
+          hasPitch={hasPitch}
+          open={isDraftDialogOpen}
+          onOpenChange={setIsDraftDialogOpen}
+        />
+      )}
 
       {isDialogOpen && (
         <CompanyInteractionDialog
