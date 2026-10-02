@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 
 const features = [
   {
@@ -93,12 +94,14 @@ function Navbar() {
           </a>
         </nav>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant={SIGNUPS_OPEN ? 'ghost' : 'default'} size="sm" asChild>
             <Link href="/login">Se connecter</Link>
           </Button>
-          <Button size="sm" asChild className="hidden sm:inline-flex">
-            <Link href="/signup">Créer un compte</Link>
-          </Button>
+          {SIGNUPS_OPEN && (
+            <Button size="sm" asChild className="hidden sm:inline-flex">
+              <Link href="/signup">Créer un compte</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>
@@ -185,18 +188,31 @@ export function LandingPage() {
                 prépare votre premier message.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button size="lg" asChild>
-                  <Link href="/signup">
-                    Créer mon compte
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/login">J&apos;ai déjà un compte</Link>
-                </Button>
+                {SIGNUPS_OPEN ? (
+                  <>
+                    <Button size="lg" asChild>
+                      <Link href="/signup">
+                        Créer mon compte
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Link>
+                    </Button>
+                    <Button size="lg" variant="outline" asChild>
+                      <Link href="/login">J&apos;ai déjà un compte</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="lg" asChild>
+                    <Link href="/login">
+                      Se connecter
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">
-                Sources publiques, sites vérifiés, messages relus par vous.
+                {SIGNUPS_OPEN
+                  ? 'Sources publiques, sites vérifiés, messages relus par vous.'
+                  : `${SIGNUPS_CLOSED_MESSAGE} Prospect CRM est en test privé.`}
               </p>
             </div>
 
@@ -274,14 +290,21 @@ export function LandingPage() {
             </h2>
             <p className="mt-3 opacity-90">Réglez votre client idéal en quelques minutes : Sophie s&apos;occupe du reste.</p>
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/signup">Créer mon compte</Link>
-              </Button>
+              {SIGNUPS_OPEN && (
+                <Button size="lg" variant="secondary" asChild>
+                  <Link href="/signup">Créer mon compte</Link>
+                </Button>
+              )}
+              {/* Seul bouton quand les inscriptions sont fermées : il prend le style principal du bandeau */}
               <Button
                 size="lg"
-                variant="outline"
+                variant={SIGNUPS_OPEN ? 'outline' : 'secondary'}
                 asChild
-                className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                className={
+                  SIGNUPS_OPEN
+                    ? 'border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground'
+                    : undefined
+                }
               >
                 <Link href="/login">Se connecter</Link>
               </Button>
@@ -298,9 +321,11 @@ export function LandingPage() {
             <Link href="/login" className="hover:text-foreground">
               Se connecter
             </Link>
-            <Link href="/signup" className="hover:text-foreground">
-              Créer un compte
-            </Link>
+            {SIGNUPS_OPEN && (
+              <Link href="/signup" className="hover:text-foreground">
+                Créer un compte
+              </Link>
+            )}
           </div>
         </div>
       </footer>

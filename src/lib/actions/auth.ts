@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 import {
   loginSchema,
   signupSchema,
@@ -74,6 +75,10 @@ export async function login(data: LoginInput): Promise<ActionResult> {
  * Inscription d'un nouvel utilisateur
  */
 export async function signup(data: SignupInput): Promise<ActionResult> {
+  if (!SIGNUPS_OPEN) {
+    return { success: false, error: SIGNUPS_CLOSED_MESSAGE }
+  }
+
   try {
     // Validation
     const validated = signupSchema.parse(data)
