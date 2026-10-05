@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Building2, User } from 'lucide-react'
+import { Building2, ListPlus, User } from 'lucide-react'
 import { personSchema, type PersonInput } from '@/lib/validations/company'
 import { createPerson } from '@/lib/actions/people'
 import { Button } from '@/components/ui/button'
@@ -16,20 +17,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
-import type { OrganizationOption } from '@/lib/queries/people'
+import type { OrganizationOption, ProspectListWithCount } from '@/lib/queries/people'
 import type { PipelineStage } from '@/types'
 
 interface PersonFormProps {
   organizations: OrganizationOption[]
   stages: PipelineStage[]
+  lists: ProspectListWithCount[]
+  // Valeurs lues sur un profil LinkedIn par le bouton « + Lynkio »
+  initial?: {
+    firstName?: string
+    lastName?: string
+    role?: string
+    companyName?: string
+    linkedinUrl?: string
+    origin?: 'manual' | 'linkedin'
+  }
 }
 
 const NONE = 'none'
+// Dernière liste choisie, reproposée à l'ajout suivant (confort, propre à ce navigateur)
+const LAST_LIST_KEY = 'lynkio-last-person-list'
 
-export function PersonForm({ organizations, stages }: PersonFormProps) {
+export function PersonForm({ organizations, stages, lists, initial = {} }: PersonFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [error, setError] = useState<string | null>(null)
+  // Personne déjà suivie : lien vers sa fiche
+  const [existingId, setExistingId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const defaultStage = stages.find((stage) => stage.is_default) ?? stages[0]
 
@@ -42,13 +57,28 @@ export function PersonForm({ organizations, stages }: PersonFormProps) {
   } = useForm<PersonInput>({
     resolver: zodResolver(personSchema),
     defaultValues: {
-      companyMode: 'none',
-      companyName: '',
+      firstName: initial.firstName ?? '',
+      lastName: initial.lastName ?? '',
+      role: initial.role ?? '',
+      linkedinUrl: initial.linkedinUrl ?? '',
+      companyMode: initial.companyName ? 'new' : 'none',
+      companyName: initial.companyName ?? '',
       isIndependent: false,
       isDecisionMaker: true,
       stageId: defaultStage?.id ?? null,
+      listName: '',
+      origin: initial.origin ?? 'manual',
     },
   })
+
+  useEffect(() => {
+    try {
+      const lastList = window.localStorage.getItem(LAST_LIST_KEY)
+      if (lastList && lists.some((list) => list.name === lastList)) setValue('listName', lastList)
+    } catch {
+      // stockage indisponible (navigation privée) : pas de liste proposée
+    }
+  }, [lists, setValue])
 
   // Nom tapé : une entreprise déjà suivie (la personne la rejoint), une nouvelle, ou rien (personne seule)
   const companyName = (useWatch({ control, name: 'companyName' }) ?? '').trim()
@@ -58,6 +88,7 @@ export function PersonForm({ organizations, stages }: PersonFormProps) {
 
   const onSubmit = async (data: PersonInput) => {
     setError(null)
+    setExistingId(null)
     setIsLoading(true)
     let result: Awaited<ReturnType<typeof createPerson>>
     try {
@@ -71,7 +102,15 @@ export function PersonForm({ organizations, stages }: PersonFormProps) {
 
     if (!result.success || !result.data) {
       setError(result.error || 'Une erreur est survenue')
+      if (result.data?.companyId) setExistingId(result.data.companyId)
       return
+    }
+
+    try {
+      if (data.listName) window.localStorage.setItem(LAST_LIST_KEY, data.listName)
+      else window.localStorage.removeItem(LAST_LIST_KEY)
+    } catch {
+      // stockage indisponible : rien à retenir
     }
 
     toast({
@@ -89,6 +128,21 @@ export function PersonForm({ organizations, stages }: PersonFormProps) {
           {error && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md" role="alert">
               {error}
+              {existingId && (
+                <>
+                  {' '}
+                  <Link href={`/companies/${existingId}`} className="underline font-medium">
+                    Voir sa fiche
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+
+          {initial.origin === 'linkedin' && (
+            <div className="p-3 text-sm rounded-md bg-primary/10">
+              Pré-remplie depuis LinkedIn : vérifiez le prénom, le nom, le poste et l&apos;entreprise avant
+              d&apos;ajouter la personne.
             </div>
           )}
 
@@ -282,6 +336,28 @@ export function PersonForm({ organizations, stages }: PersonFormProps) {
               </div>
             </section>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="listName" className="flex items-center gap-2">
+              <ListPlus className="w-4 h-4" />
+              Ranger dans une liste (facultatif)
+            </Label>
+            <Input
+              id="listName"
+              list="person-list-options"
+              autoComplete="off"
+              placeholder="Une liste existante, ou le nom d'une nouvelle"
+              maxLength={100}
+              disabled={isLoading}
+              {...register('listName')}
+            />
+            <datalist id="person-list-options">
+              {lists.map((list) => (
+                <option key={list.id} value={list.name} />
+              ))}
+            </datalist>
+            {errors.listName && <p className="text-sm text-destructive">{errors.listName.message}</p>}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notes sur la personne</Label>

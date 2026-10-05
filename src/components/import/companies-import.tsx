@@ -8,6 +8,7 @@ import { AlertCircle, CheckCircle2, FileUp, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -24,6 +25,7 @@ import {
 import { MAX_IMPORT_ROWS } from '@/lib/validations/company-import'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { LeadSource } from '@/types'
+import type { ProspectListWithCount } from '@/lib/queries/people'
 
 type Step = 'upload' | 'preview' | 'done'
 
@@ -36,7 +38,7 @@ const statusBadges: Record<ImportPreview['rows'][number]['status'], { label: str
   invalid: { label: 'Erreur', variant: 'destructive' },
 }
 
-export function CompaniesImport({ sources }: { sources: LeadSource[] }) {
+export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lists: ProspectListWithCount[] }) {
   const router = useRouter()
   const { toast } = useToast()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -46,7 +48,8 @@ export function CompaniesImport({ sources }: { sources: LeadSource[] }) {
   const [rows, setRows] = useState<Record<string, string>[]>([])
   const [preview, setPreview] = useState<ImportPreview | null>(null)
   const [sourceId, setSourceId] = useState<string>(sources.find((source) => source.name === 'Autre')?.id ?? NO_SOURCE)
-  const [result, setResult] = useState<{ imported: number; contacts: number; skippedContacts: number } | null>(null)
+  const [listName, setListName] = useState('')
+  const [result, setResult] = useState<Awaited<ReturnType<typeof importCompanies>>['data'] | null>(null)
 
   const reset = () => {
     setStep('upload')
@@ -98,7 +101,10 @@ export function CompaniesImport({ sources }: { sources: LeadSource[] }) {
 
   const handleImport = async () => {
     setIsWorking(true)
-    const response = await importCompanies(rows, { sourceId: sourceId === NO_SOURCE ? null : sourceId })
+    const response = await importCompanies(rows, {
+      sourceId: sourceId === NO_SOURCE ? null : sourceId,
+      listName: listName.trim() || null,
+    })
     setIsWorking(false)
 
     if (!response.success || !response.data) {
@@ -224,12 +230,34 @@ export function CompaniesImport({ sources }: { sources: LeadSource[] }) {
               </p>
             </div>
 
+            <div className="space-y-2 sm:max-w-sm">
+              <Label htmlFor="importList">Ranger les personnes dans une liste (facultatif)</Label>
+              <Input
+                id="importList"
+                list="import-list-options"
+                autoComplete="off"
+                value={listName}
+                onChange={(event) => setListName(event.target.value)}
+                placeholder="Une liste existante, ou le nom d'une nouvelle"
+                maxLength={100}
+                disabled={isWorking}
+              />
+              <datalist id="import-list-options">
+                {lists.map((list) => (
+                  <option key={list.id} value={list.name} />
+                ))}
+              </datalist>
+              <p className="text-xs text-muted-foreground">
+                Pratique pour retrouver ce fichier dans la page Personnes, ou l&apos;exporter vers Waalaxy.
+              </p>
+            </div>
+
             <div className="flex flex-wrap gap-2">
               <Button onClick={handleImport} disabled={isWorking || preview.ready === 0}>
                 {isWorking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 {preview.ready === 0
                   ? 'Rien à importer'
-                  : `Importer ${preview.ready} entreprise${preview.ready > 1 ? 's' : ''}`}
+                  : `Importer ${preview.ready} ligne${preview.ready > 1 ? 's' : ''}`}
               </Button>
               <Button variant="outline" onClick={reset} disabled={isWorking}>
                 Choisir un autre fichier
@@ -242,7 +270,7 @@ export function CompaniesImport({ sources }: { sources: LeadSource[] }) {
           <div className="space-y-3">
             <p className="flex items-center gap-2 font-medium">
               <CheckCircle2 className="w-5 h-5 text-green-600" aria-hidden="true" />
-              {result.imported} entreprise{result.imported > 1 ? 's' : ''} importée{result.imported > 1 ? 's' : ''}
+              {result.imported} ligne{result.imported > 1 ? 's' : ''} importée{result.imported > 1 ? 's' : ''}
               {result.contacts > 0 && `, avec ${result.contacts} contact${result.contacts > 1 ? 's' : ''}`}.
             </p>
             {result.skippedContacts > 0 && (
@@ -250,6 +278,16 @@ export function CompaniesImport({ sources }: { sources: LeadSource[] }) {
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                 {result.skippedContacts} contact{result.skippedContacts > 1 ? 's' : ''} non importé
                 {result.skippedContacts > 1 ? 's' : ''} : leur e-mail est déjà utilisé par un autre contact.
+              </p>
+            )}
+            {result.list && (
+              <p className="text-sm">
+                {result.list.added} personne{result.list.added > 1 ? 's' : ''} rangée{result.list.added > 1 ? 's' : ''}{' '}
+                dans la liste{' '}
+                <Link href={`/people?list=${result.list.id}`} className="underline font-medium">
+                  « {result.list.name} »
+                </Link>
+                .
               </p>
             )}
             <p className="text-sm text-muted-foreground">
