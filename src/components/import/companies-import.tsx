@@ -95,6 +95,8 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
 
         setRows(parsed.data)
         setPreview(result.data)
+        // Export Waalaxy : sa liste devient la liste Lynkio proposée
+        if (result.data.waalaxy?.list) setListName((current) => current || result.data!.waalaxy!.list!)
         setStep('preview')
       },
       error: () => {
@@ -125,7 +127,8 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
   // Nouvelles fiches et personnes qui rejoignent une fiche ; les personnes déjà suivies
   // comptent seulement si une liste est choisie (elles y sont rangées)
   const toImport = preview ? preview.ready + preview.attach : 0
-  const actionable = toImport + (preview && listName.trim() ? preview.known : 0)
+  const withNews = preview?.rows.filter((row) => row.status === 'known' && row.activity && row.activity !== 'Rien de nouveau').length ?? 0
+  const actionable = toImport + (preview && listName.trim() ? preview.known : withNews)
 
   return (
     <Card>
@@ -190,6 +193,21 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
               </div>
             </div>
 
+            {preview.waalaxy && (
+              <p className="text-sm rounded-md bg-primary/10 p-3">
+                {preview.waalaxy.messages + preview.waalaxy.replies > 0 ? (
+                  <>
+                    Export Waalaxy reconnu : {preview.waalaxy.messages} message{preview.waalaxy.messages > 1 ? 's' : ''}{' '}
+                    envoyé{preview.waalaxy.messages > 1 ? 's' : ''} et {preview.waalaxy.replies} réponse
+                    {preview.waalaxy.replies > 1 ? 's' : ''} seront notés dans l&apos;historique des personnes. Leur
+                    statut et l&apos;étape de leur fiche suivront. Ce qui est déjà noté ne l&apos;est pas deux fois.
+                  </>
+                ) : (
+                  <>Export Waalaxy reconnu : aucun nouveau message ni nouvelle réponse, tout est déjà noté.</>
+                )}
+              </p>
+            )}
+
             <div className="max-h-80 overflow-auto rounded-lg border">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-muted">
@@ -197,6 +215,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
                     <th className="p-2 font-medium">Ligne</th>
                     <th className="p-2 font-medium">Entreprise</th>
                     <th className="p-2 font-medium hidden sm:table-cell">Contact</th>
+                    {preview.waalaxy && <th className="p-2 font-medium hidden md:table-cell">Waalaxy</th>}
                     <th className="p-2 font-medium">État</th>
                   </tr>
                 </thead>
@@ -210,6 +229,9 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
                         {row.message && <p className="text-xs text-muted-foreground">{row.message}</p>}
                       </td>
                       <td className="p-2 hidden sm:table-cell">{row.contact ?? '–'}</td>
+                      {preview.waalaxy && (
+                        <td className="p-2 hidden md:table-cell text-xs text-muted-foreground">{row.activity ?? '–'}</td>
+                      )}
                       <td className="p-2">
                         <Badge variant={statusBadges[row.status].variant}>{statusBadges[row.status].label}</Badge>
                       </td>
@@ -272,7 +294,9 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
                 {actionable === 0
                   ? 'Rien à importer'
                   : toImport === 0
-                    ? `Ranger ${preview.known} personne${preview.known > 1 ? 's' : ''} dans la liste`
+                    ? listName.trim()
+                      ? `Ranger ${preview.known} personne${preview.known > 1 ? 's' : ''} dans la liste`
+                      : 'Mettre à jour les personnes'
                     : `Importer ${toImport} ligne${toImport > 1 ? 's' : ''}`}
               </Button>
               <Button variant="outline" onClick={reset} disabled={isWorking}>
@@ -294,6 +318,17 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                 {result.skippedContacts} contact{result.skippedContacts > 1 ? 's' : ''} non importé
                 {result.skippedContacts > 1 ? 's' : ''} : leur e-mail est déjà utilisé par un autre contact.
+              </p>
+            )}
+            {result.waalaxy && (
+              <p className="text-sm">
+                Waalaxy : {result.waalaxy.exchanges} échange{result.waalaxy.exchanges > 1 ? 's' : ''} noté
+                {result.waalaxy.exchanges > 1 ? 's' : ''}
+                {result.waalaxy.enriched > 0 &&
+                  `, ${result.waalaxy.enriched} personne${result.waalaxy.enriched > 1 ? 's' : ''} complétée${result.waalaxy.enriched > 1 ? 's' : ''} (profil LinkedIn, e-mail, poste)`}
+                {result.waalaxy.lost > 0 &&
+                  `, ${result.waalaxy.lost} fiche${result.waalaxy.lost > 1 ? 's' : ''} passée${result.waalaxy.lost > 1 ? 's' : ''} en « Perdu » (pas intéressé·e)`}
+                .
               </p>
             )}
             {result.list && (

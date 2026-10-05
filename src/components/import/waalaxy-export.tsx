@@ -20,6 +20,8 @@ export function WaalaxyExport({ count }: { count: number }) {
           renseigné (bouton « Chercher sur LinkedIn » sur chaque fiche entreprise), avec leur e-mail s&apos;il est
           connu. Les contacts opposés à la prospection n&apos;y figurent jamais. Pour n&apos;exporter qu&apos;une partie
           d&apos;entre eux, regroupez-les dans une liste (page Personnes) et exportez la liste depuis là.
+          Pour le retour : exportez votre liste depuis Waalaxy (CSV) et importez-la plus haut. Les invitations,
+          messages et réponses sont notés dans l&apos;historique de chaque personne, sans doublon.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
