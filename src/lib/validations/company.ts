@@ -36,6 +36,34 @@ const optionalUrl = (message: string) =>
     'L\'adresse n\'est pas valide'
   )
 
+export const MAX_ESTIMATED_AMOUNT = 10_000_000
+
+/**
+ * Montant saisi librement (« 12 000 », « 12 000 € HT », « 4 500,50 », « 12k ») → euros entiers.
+ * Vide : null. Illisible : NaN, que la validation refuse.
+ */
+export function parseEuroAmount(value: string): number | null {
+  const compact = value
+    .replace(/[\s  ]/g, '')
+    .replace(/€|eur(os?)?|ht/gi, '')
+    .replace(',', '.')
+  if (!compact) return null
+  const thousands = /k$/i.test(compact)
+  const amount = Number(thousands ? compact.slice(0, -1) : compact)
+  return Number.isFinite(amount) ? Math.round(thousands ? amount * 1000 : amount) : NaN
+}
+
+const optionalAmount = z.preprocess(
+  (value) => (typeof value === 'string' ? parseEuroAmount(value) : value),
+  z
+    .number({ invalid_type_error: 'Le montant n\'est pas valide' })
+    .int()
+    .min(0, 'Le montant ne peut pas être négatif')
+    .max(MAX_ESTIMATED_AMOUNT, 'Le montant est trop élevé')
+    .nullable()
+    .optional()
+)
+
 /**
  * Schéma de création d'une entreprise
  */
@@ -61,6 +89,8 @@ export const createCompanySchema = z.object({
   stageId: z.string().uuid('L\'étape n\'est pas valide').optional().nullable(),
   sourceId: z.string().uuid('La source n\'est pas valide').optional().nullable(),
   notes: optionalText(5000, 'Les notes sont trop longues'),
+  estimatedAmount: optionalAmount,
+  nextAction: optionalText(300, 'La prochaine action est trop longue'),
   detectedStack: z.array(z.string()).optional(),
 })
 

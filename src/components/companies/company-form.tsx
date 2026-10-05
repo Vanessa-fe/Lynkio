@@ -74,6 +74,8 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
           stageId: company.stage_id,
           sourceId: company.source_id,
           notes: company.notes ?? '',
+          estimatedAmount: company.estimated_amount ?? '',
+          nextAction: company.next_action ?? '',
           detectedStack: company.detected_stack,
         }
       : {
@@ -367,6 +369,32 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
                     </Select>
                   )}
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="estimatedAmount">Montant estimé (€ HT)</Label>
+                <Input
+                  id="estimatedAmount"
+                  inputMode="decimal"
+                  placeholder="6 000"
+                  disabled={isLoading}
+                  {...register('estimatedAmount')}
+                />
+                {errors.estimatedAmount && (
+                  <p className="text-sm text-destructive">{errors.estimatedAmount.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nextAction">Prochaine action</Label>
+                <Input
+                  id="nextAction"
+                  placeholder="Envoyer le devis, appeler la gérante..."
+                  disabled={isLoading}
+                  {...register('nextAction')}
+                />
+                {errors.nextAction && <p className="text-sm text-destructive">{errors.nextAction.message}</p>}
               </div>
             </div>
 

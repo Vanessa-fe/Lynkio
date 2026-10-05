@@ -118,7 +118,7 @@ export function CompaniesImport({ sources }: { sources: LeadSource[] }) {
         <CardDescription>
           Un fichier CSV avec une entreprise par ligne, et si besoin un contact. Colonnes reconnues : Nom (ou
           Entreprise, Société), Site web, SIREN ou SIRET, Ville, Code postal, Secteur, Taille, Source, Notes,
-          Prénom, Nom du contact, Poste, E-mail, Téléphone, LinkedIn. Les autres colonnes sont ignorées.
+          Montant estimé, Prochaine action, Prénom, Nom du contact, Poste, E-mail, Téléphone, LinkedIn. Les autres colonnes sont ignorées.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

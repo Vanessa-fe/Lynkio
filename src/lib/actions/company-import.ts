@@ -192,6 +192,8 @@ export async function importCompanies(
       sector: row.sector,
       size_category: row.sizeCategory,
       notes: row.notes,
+      estimated_amount: row.estimatedAmount,
+      next_action: row.nextAction,
     }))
 
     for (let start = 0; start < companies.length; start += INSERT_BATCH_SIZE) {

@@ -125,6 +125,8 @@ export async function createCompany(
         stage_id: stageId,
         source_id: validated.sourceId ?? null,
         notes: validated.notes,
+        estimated_amount: validated.estimatedAmount ?? null,
+        next_action: validated.nextAction,
         detected_stack: validated.detectedStack ?? [],
         stack_detected_at: hasStack ? new Date().toISOString() : null,
       })
@@ -183,6 +185,8 @@ export async function updateCompany(
     if (validated.stageId !== undefined) update.stage_id = validated.stageId
     if (validated.sourceId !== undefined) update.source_id = validated.sourceId
     if (validated.notes !== undefined) update.notes = validated.notes
+    if (validated.estimatedAmount !== undefined) update.estimated_amount = validated.estimatedAmount
+    if (validated.nextAction !== undefined) update.next_action = validated.nextAction
     if (validated.detectedStack !== undefined) {
       update.detected_stack = validated.detectedStack
       update.stack_detected_at = new Date().toISOString()

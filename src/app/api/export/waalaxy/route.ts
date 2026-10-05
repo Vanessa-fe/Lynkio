@@ -34,7 +34,7 @@ export async function GET() {
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="prospect-waalaxy-${date}.csv"`,
+      'Content-Disposition': `attachment; filename="lynkio-waalaxy-${date}.csv"`,
       'Cache-Control': 'no-store',
     },
   })
