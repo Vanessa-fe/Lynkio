@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils'
 import type { PersonRow, ProspectListWithCount } from '@/lib/queries/people'
 import type { OutreachStatus, PipelineStage } from '@/types'
 import { AddToListDialog } from './add-to-list-dialog'
+import { ImportProspectsDialog } from './import-prospects-dialog'
 import { ListToolbar } from './list-toolbar'
 import { LogExchangeMenu } from './log-exchange-menu'
 import { OutreachBadge } from './outreach-badge'
@@ -123,12 +124,15 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
             aria-label="Rechercher une personne"
           />
         </div>
-        <Button asChild>
-          <Link href="/people/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter une personne
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <ImportProspectsDialog />
+          <Button asChild>
+            <Link href="/people/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter une personne
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">

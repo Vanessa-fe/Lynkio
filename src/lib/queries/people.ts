@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { contactDisplayName, normalizeLinkedinProfileUrl } from '@/lib/validations/company'
 import type { Company, CompanyContact, ContactOutreach, OutreachStatus, ProspectList } from '@/types'
 
 export type PersonRow = Pick<
@@ -137,4 +138,36 @@ export async function getOrganizationOptions(): Promise<OrganizationOption[]> {
 
   if (error) console.error('Organization options error:', error)
   return data ?? []
+}
+
+/**
+ * Personne déjà suivie avec ce profil LinkedIn (le profil est enregistré au format
+ * standard, voir normalizeLinkedinProfileUrl)
+ */
+export async function findContactByLinkedin(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  linkedinUrl: string | null | undefined
+): Promise<{ name: string; companyId: string } | null> {
+  const profile = normalizeLinkedinProfileUrl(linkedinUrl)
+  if (!profile) return null
+
+  const { data } = await supabase
+    .from('company_contacts')
+    .select('first_name, last_name, company_id')
+    .eq('user_id', userId)
+    .eq('linkedin_url', profile)
+    .limit(1)
+    .maybeSingle()
+
+  return data ? { name: contactDisplayName(data), companyId: data.company_id } : null
+}
+
+/**
+ * Pour la page « Ajouter une personne » pré-remplie depuis LinkedIn
+ */
+export async function getContactByLinkedin(linkedinUrl: string | null | undefined) {
+  const user = await getAuthUser()
+  if (!user) return null
+  return findContactByLinkedin(await createClient(), user.id, linkedinUrl)
 }

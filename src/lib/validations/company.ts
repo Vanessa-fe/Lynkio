@@ -184,6 +184,10 @@ export const personSchema = z
     stageId: z.string().uuid('L\'étape n\'est pas valide').optional().nullable(),
     nextAction: optionalText(300, 'La prochaine action est trop longue'),
     estimatedAmount: optionalAmount,
+    // Liste où ranger la personne (existante, ou créée à partir du nom)
+    listName: optionalText(100, 'Le nom de la liste est trop long'),
+    // linkedin : pré-remplie depuis un profil LinkedIn (bouton « + Lynkio »)
+    origin: z.enum(['manual', 'linkedin']).default('manual'),
   })
   .refine((data) => data.firstName || data.lastName, {
     message: 'Renseignez au moins le prénom ou le nom',

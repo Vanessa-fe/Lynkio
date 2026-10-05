@@ -14,6 +14,7 @@ import {
   type CompanyImportRow,
 } from '@/lib/validations/company-import'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { addContactsToList } from '@/lib/actions/prospect-lists'
 
 type ActionResult<T> = { success: boolean; error?: string; data?: T }
 
@@ -165,8 +166,16 @@ export async function previewCompaniesImport(
  */
 export async function importCompanies(
   rawRows: Record<string, string>[],
-  options: { sourceId: string | null }
-): Promise<ActionResult<{ imported: number; contacts: number; skippedContacts: number }>> {
+  // listName : liste où ranger les personnes importées (existante, ou créée à partir du nom)
+  options: { sourceId: string | null; listName?: string | null }
+): Promise<
+  ActionResult<{
+    imported: number
+    contacts: number
+    skippedContacts: number
+    list: { id: string; name: string; added: number } | null
+  }>
+> {
   try {
     const analyzed = await analyzeRows(rawRows)
     if ('error' in analyzed) return { success: false, error: analyzed.error }
@@ -252,18 +261,29 @@ export async function importCompanies(
         data_source: 'import',
       }))
 
-    let insertedContacts = 0
+    const insertedIds: string[] = []
     for (let start = 0; start < contacts.length; start += INSERT_BATCH_SIZE) {
       const batch = contacts.slice(start, start + INSERT_BATCH_SIZE)
-      const { error } = await supabase.from('company_contacts').insert(batch)
+      const { data: inserted, error } = await supabase.from('company_contacts').insert(batch).select('id')
       if (error) {
         console.error('Import contacts error:', error)
         break
       }
-      insertedContacts += batch.length
+      insertedIds.push(...(inserted ?? []).map((contact) => contact.id))
+    }
+    const insertedContacts = insertedIds.length
+
+    // Les entreprises et personnes sont importées même si le rangement dans la liste échoue
+    let list: { id: string; name: string; added: number } | null = null
+    const listName = options.listName?.trim()
+    if (listName && insertedIds.length > 0) {
+      const listed = await addContactsToList({ listName }, insertedIds)
+      if (listed.success && listed.data) list = { id: listed.data.listId, name: listName, added: listed.data.added }
+      else console.error('Import list error:', listed.error)
     }
 
     revalidatePath('/companies')
+    revalidatePath('/people')
     revalidatePath('/dashboard')
     return {
       success: true,
@@ -271,6 +291,7 @@ export async function importCompanies(
         imported: companies.length,
         contacts: insertedContacts,
         skippedContacts: withContact.length - insertedContacts,
+        list,
       },
     }
   } catch (error) {
