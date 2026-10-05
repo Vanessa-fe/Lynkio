@@ -36,6 +36,8 @@ export type InteractionDirection = 'incoming' | 'outgoing'
 export type ReminderPriority = 'low' | 'medium' | 'high'
 export type PipelineStageKind = 'open' | 'won' | 'lost' | 'excluded'
 export type CompanyOrigin = 'manual' | 'import' | 'detector'
+// organization : entreprise ; individual : personne seule (indépendant ou entreprise inconnue)
+export type CompanyKind = 'organization' | 'individual'
 export type SizeCategory = 'solo' | 'tpe' | 'pme' | 'eti' | 'ge'
 export type EmailSource = 'manual' | 'hunter' | 'website' | 'other'
 export type CompanyInteractionType =

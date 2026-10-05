@@ -11,6 +11,7 @@ import type { Database as GeneratedDatabase } from './database.generated'
 import type {
   CompanyInteractionStatus,
   CompanyInteractionType,
+  CompanyKind,
   CompanyOrigin,
   EmailSource,
   InteractionDirection,
@@ -34,7 +35,7 @@ export type Database = MergeDeep<
       Tables: {
         reminders: Columns<{ priority: ReminderPriority | null }>
         pipeline_stages: Columns<{ kind: PipelineStageKind }>
-        companies: Columns<{ origin: CompanyOrigin; size_category: SizeCategory | null }>
+        companies: Columns<{ origin: CompanyOrigin; kind: CompanyKind; size_category: SizeCategory | null }>
         company_contacts: Columns<{ email_source: EmailSource | null }>
         company_interactions: Columns<{
           type: CompanyInteractionType

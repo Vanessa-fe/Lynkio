@@ -9,6 +9,7 @@ import {
   MAX_IMPORT_ROWS,
   companyImportRowSchema,
   hasContact,
+  importRowFiche,
   mapRow,
   type CompanyImportRow,
 } from '@/lib/validations/company-import'
@@ -75,7 +76,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
   }
   // Valeur = message affiché si une ligne correspond
   for (const company of existing ?? []) {
-    const message = `Déjà dans vos entreprises : ${company.name}`
+    const message = `Déjà dans Lynkio : ${company.name}`
     if (company.registration_id) known.sirens.set(company.registration_id, message)
     if (company.website_domain) known.domains.set(company.website_domain, message)
     known.names.set(company.name.trim().toLowerCase(), message)
@@ -83,7 +84,8 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
 
   return rawRows.map((raw, index) => {
     const line = index + FIRST_DATA_LINE
-    const parsed = companyImportRowSchema.safeParse(mapRow(raw))
+    const mapped = mapRow(raw)
+    const parsed = companyImportRowSchema.safeParse(mapped)
 
     if (!parsed.success) {
       return {
@@ -91,28 +93,33 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
         status: 'invalid',
         message: [...new Set(parsed.error.errors.map((issue) => issue.message))].join(', '),
         row: null,
-        name: mapRow(raw).name?.trim() || '(sans nom)',
+        name:
+          mapped.name?.trim() ||
+          [mapped.contactFirstName, mapped.contactLastName].filter(Boolean).join(' ').trim() ||
+          '(sans nom)',
       }
     }
 
     const row = parsed.data
+    const fiche = importRowFiche(row)
+    const name = fiche.kind === 'individual' ? `${fiche.name} (personne seule)` : fiche.name
     const domain = toWebsiteDomain(row.website)
     const duplicateOf =
       (row.registrationId && known.sirens.get(row.registrationId)) ||
       (domain && known.domains.get(domain)) ||
-      known.names.get(row.name.toLowerCase())
+      known.names.get(fiche.name.toLowerCase())
 
     if (duplicateOf) {
-      return { line, status: 'duplicate', message: duplicateOf, row: null, name: row.name }
+      return { line, status: 'duplicate', message: duplicateOf, row: null, name }
     }
 
     // Les lignes suivantes du fichier verront celle-ci comme déjà présente
     const inFile = `Déjà plus haut dans le fichier (ligne ${line})`
     if (row.registrationId) known.sirens.set(row.registrationId, inFile)
     if (domain) known.domains.set(domain, inFile)
-    known.names.set(row.name.toLowerCase(), inFile)
+    known.names.set(fiche.name.toLowerCase(), inFile)
 
-    return { line, status: 'ready', message: null, row, name: row.name }
+    return { line, status: 'ready', message: null, row, name }
   })
 }
 
@@ -182,9 +189,10 @@ export async function importCompanies(
       id: randomUUID(),
       user_id: user.id,
       origin: 'import' as const,
+      kind: importRowFiche(row).kind,
       stage_id: defaultStage?.id ?? null,
       source_id: (row.source && sourceByName.get(row.source.toLowerCase())) || fallbackSourceId,
-      name: row.name,
+      name: importRowFiche(row).name,
       website: row.website,
       registration_id: row.registrationId,
       city: row.city,

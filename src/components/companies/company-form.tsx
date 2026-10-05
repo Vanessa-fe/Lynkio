@@ -51,6 +51,8 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
   const [hasAnalyzed, setHasAnalyzed] = useState(false)
 
   const isEditing = !!company
+  // Personne seule : son nom suit celui de son contact (synchronisé par la base)
+  const isIndividual = company?.kind === 'individual'
   const defaultStage = stages.find((stage) => stage.is_default) ?? stages[0]
 
   const {
@@ -189,9 +191,20 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="name">
-                Nom de l&apos;entreprise <span className="text-destructive">*</span>
+                {isIndividual ? 'Nom' : <>Nom de l&apos;entreprise</>} <span className="text-destructive">*</span>
               </Label>
-              <Input id="name" placeholder="Atelier Dupont" disabled={isLoading} {...register('name')} />
+              <Input
+                id="name"
+                placeholder="Atelier Dupont"
+                disabled={isLoading}
+                readOnly={isIndividual}
+                {...register('name')}
+              />
+              {isIndividual && (
+                <p className="text-xs text-muted-foreground">
+                  Le nom suit celui de la personne : modifiez-le dans ses coordonnées, sur la fiche.
+                </p>
+              )}
               {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 

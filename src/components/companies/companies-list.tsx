@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { deleteCompany } from '@/lib/actions/companies'
-import { companyAge, formatEuros, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import { companyAge, formatEuros, individualLabel, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
@@ -261,7 +261,12 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
                       {company.name}
                     </Link>
                     <p className="text-sm text-muted-foreground">
-                      {[company.city, company.sector, companyAge(company.founded_on)?.age]
+                      {[
+                        company.kind === 'individual' && individualLabel(company),
+                        company.city,
+                        company.sector,
+                        companyAge(company.founded_on)?.age,
+                      ]
                         .filter(Boolean)
                         .join(' · ') || '-'}
                     </p>

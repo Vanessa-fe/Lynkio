@@ -58,6 +58,7 @@ const HEADER_ALIASES: Record<string, ImportField> = {
   'raison sociale': 'name',
   company: 'name',
   'company name': 'name',
+  companyname: 'name',
   name: 'name',
   site: 'website',
   'site web': 'website',
@@ -112,6 +113,8 @@ const HEADER_ALIASES: Record<string, ImportField> = {
   fonction: 'contactRole',
   role: 'contactRole',
   'job title': 'contactRole',
+  jobtitle: 'contactRole',
+  occupation: 'contactRole',
   'contact e mail': 'contactEmail',
   'contact email': 'contactEmail',
   email: 'contactEmail',
@@ -127,6 +130,10 @@ const HEADER_ALIASES: Record<string, ImportField> = {
   'contact linkedin': 'contactLinkedin',
   linkedin: 'contactLinkedin',
   'profil linkedin': 'contactLinkedin',
+  'linkedin url': 'contactLinkedin',
+  linkedinurl: 'contactLinkedin',
+  'profile url': 'contactLinkedin',
+  profileurl: 'contactLinkedin',
 }
 
 export function normalizeHeader(header: string): string {
@@ -170,7 +177,13 @@ const text = (max: number) =>
 
 export const companyImportRowSchema = z
   .object({
-    name: z.string({ required_error: 'Nom manquant' }).trim().min(1, 'Nom manquant').max(200, 'Nom trop long'),
+    // Vide : la ligne décrit une personne seule (son nom vient alors des colonnes du contact)
+    name: z
+      .string()
+      .trim()
+      .max(200, 'Nom trop long')
+      .optional()
+      .transform((value) => value || null),
     website: text(500),
     // SIREN, ou SIRET (on garde alors les 9 premiers chiffres)
     registrationId: z
@@ -209,20 +222,35 @@ export const companyImportRowSchema = z
     contactPhone: text(30),
     contactLinkedin: text(500),
   })
+  .refine((row) => row.name || row.contactFirstName || row.contactLastName, {
+    message: 'Nom manquant (entreprise ou personne)',
+    path: ['name'],
+  })
 
 export type CompanyImportRow = z.output<typeof companyImportRowSchema>
+
+/**
+ * Fiche créée par une ligne : l'entreprise nommée, ou à défaut la personne seule du contact
+ */
+export function importRowFiche(row: CompanyImportRow): { name: string; kind: 'organization' | 'individual' } {
+  if (row.name) return { name: row.name, kind: 'organization' }
+  return { name: [row.contactFirstName, row.contactLastName].filter(Boolean).join(' '), kind: 'individual' }
+}
 
 // Intitulés qui désignent sans ambiguïté l'entreprise
 const EXPLICIT_COMPANY_HEADERS = new Set(['entreprise', 'societe', 'nom entreprise', 'raison sociale', 'company', 'company name'])
 
 /**
  * Ligne du fichier (clés = intitulés d'origine) → champs reconnus.
- * Si une colonne désigne explicitement l'entreprise (« Entreprise », « Société »…),
- * une colonne « Nom » est lue comme le nom de famille du contact.
+ * Si une colonne désigne explicitement l'entreprise (« Entreprise », « Société »…) ou s'il y a
+ * une colonne « Prénom », une colonne « Nom » est lue comme le nom de famille du contact.
  */
 export function mapRow(raw: Record<string, string>): Partial<Record<ImportField, string>> {
   const headers = Object.keys(raw).map(normalizeHeader)
   const hasExplicitCompany = headers.some((header) => EXPLICIT_COMPANY_HEADERS.has(header))
+  // Avec une colonne « Prénom », le fichier décrit des personnes : « Nom » est leur nom de famille
+  const hasFirstName = headers.some((header) => fieldForHeader(header) === 'contactFirstName')
+  const nameIsPerson = hasExplicitCompany || hasFirstName
 
   const mapped: Partial<Record<ImportField, string>> = {}
   for (const [header, rawValue] of Object.entries(raw)) {
@@ -230,7 +258,7 @@ export function mapRow(raw: Record<string, string>): Partial<Record<ImportField,
     const value = typeof rawValue === 'string' ? rawValue.replace(/^'(?=[=+\-@])/, '') : rawValue
     const normalized = normalizeHeader(header)
     const field =
-      hasExplicitCompany && (normalized === 'nom' || normalized === 'name') ? 'contactLastName' : fieldForHeader(header)
+      nameIsPerson && (normalized === 'nom' || normalized === 'name') ? 'contactLastName' : fieldForHeader(header)
     // Première colonne reconnue gagnante : une colonne « Nom » suivie de « Name » ne s'écrase pas
     if (field && mapped[field] === undefined) mapped[field] = value
   }

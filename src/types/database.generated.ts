@@ -52,6 +52,7 @@ export type Database = {
           headcount_code: string | null
           icp_profile_id: string | null
           id: string
+          kind: string
           last_interaction_at: string | null
           legal_form: string | null
           naf_code: string | null
@@ -87,6 +88,7 @@ export type Database = {
           headcount_code?: string | null
           icp_profile_id?: string | null
           id?: string
+          kind?: string
           last_interaction_at?: string | null
           legal_form?: string | null
           naf_code?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           headcount_code?: string | null
           icp_profile_id?: string | null
           id?: string
+          kind?: string
           last_interaction_at?: string | null
           legal_form?: string | null
           naf_code?: string | null
@@ -917,6 +920,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      attach_individual_to_company: {
+        Args: { p_company_id: string; p_individual_id: string }
+        Returns: undefined
+      }
       claim_due_prospection_runs: {
         Args: { p_limit?: number }
         Returns: string[]

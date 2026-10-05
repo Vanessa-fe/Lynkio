@@ -40,6 +40,8 @@ export type MessageContext = {
   references: ReferenceForMessage[]
   company: {
     name: string
+    // Personne seule (indépendant, ou entreprise inconnue) : le message s'adresse à elle, pas à une entreprise
+    isIndividual: boolean
     sector: string | null
     city: string | null
     size: string | null
@@ -141,8 +143,10 @@ function contextPrompt(context: MessageContext): string {
         return `- ${reference.title}${about ? ` (${about})` : ''} : ${reference.summary}${reference.url ? ` ${reference.url}` : ''}`
       })
     ),
-    section("L'entreprise", [
-      `Nom : ${company.name}`,
+    section(company.isIndividual ? 'Son activité' : "L'entreprise", [
+      company.isIndividual
+        ? "Personne seule, sans entreprise connue : écris-lui directement, à elle et à son activité, jamais à « votre entreprise »."
+        : `Nom : ${company.name}`,
       company.sector && `Activité : ${company.sector}`,
       company.city && `Ville : ${company.city}`,
       company.size && `Taille : ${company.size}`,
