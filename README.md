@@ -25,7 +25,7 @@ et les range dans un pipeline. Premier métier pris en charge : développeuse we
 
 ```bash
 git clone <repository-url>
-cd prospect
+cd Lynkio
 npm install
 cp .env.local.example .env.local
 ```
@@ -67,7 +67,7 @@ npm run supabase:generate-types         # régénérer les types TypeScript
 ## Structure
 
 ```
-prospect/
+Lynkio/
 ├── src/
 │   ├── app/              # Pages et routes (App Router)
 │   ├── components/       # Composants React
