@@ -1,4 +1,4 @@
-# Prospect CRM
+# Lynkio
 
 Outil de prospection B2B pour freelances. Sophie, l'agente automatique, repère les entreprises qui
 ont probablement besoin d'un freelance (offres d'emploi, missions), les note selon le client idéal

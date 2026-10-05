@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/theme/theme-provider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Prospect CRM',
+  title: 'Lynkio',
   description: 'L\'outil de prospection des freelances : Sophie repère les entreprises qui ont besoin de vous et prépare vos messages.',
 }
 

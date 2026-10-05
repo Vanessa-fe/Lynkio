@@ -1,4 +1,4 @@
-# Configuration de Prospect CRM
+# Configuration de Lynkio
 
 ## ✅ Ce qui est fait
 

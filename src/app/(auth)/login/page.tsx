@@ -115,7 +115,7 @@ export default function LoginPage() {
             </p>
           )}
           <Link href="/" className="text-sm text-center text-muted-foreground hover:underline">
-            Découvrir Prospect CRM
+            Découvrir Lynkio
           </Link>
         </CardFooter>
       </form>
