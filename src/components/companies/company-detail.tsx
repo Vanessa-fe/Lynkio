@@ -47,6 +47,7 @@ import { CompanyScore, CompanyStageSelect } from './company-stage-select'
 import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
+import { CompanyNextStep } from './company-next-step'
 import { RemindersList } from '@/components/reminders/reminders-list'
 import { formatDate } from '@/lib/utils/dates'
 
@@ -173,6 +174,8 @@ export function CompanyDetail({
         </CardHeader>
 
         <CardContent className="space-y-6">
+          <CompanyNextStep company={company} />
+
           <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {company.website && (
               <InfoItem icon={<Globe className="w-5 h-5" />} label="Site web">

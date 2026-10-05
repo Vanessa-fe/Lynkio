@@ -46,6 +46,7 @@ export type Database = {
           country: string
           created_at: string
           detected_stack: string[]
+          estimated_amount: number | null
           finances_year: number | null
           founded_on: string | null
           headcount_code: string | null
@@ -56,6 +57,7 @@ export type Database = {
           naf_code: string | null
           name: string
           net_income: number | null
+          next_action: string | null
           notes: string | null
           origin: string
           postal_code: string | null
@@ -79,6 +81,7 @@ export type Database = {
           country?: string
           created_at?: string
           detected_stack?: string[]
+          estimated_amount?: number | null
           finances_year?: number | null
           founded_on?: string | null
           headcount_code?: string | null
@@ -89,6 +92,7 @@ export type Database = {
           naf_code?: string | null
           name: string
           net_income?: number | null
+          next_action?: string | null
           notes?: string | null
           origin?: string
           postal_code?: string | null
@@ -112,6 +116,7 @@ export type Database = {
           country?: string
           created_at?: string
           detected_stack?: string[]
+          estimated_amount?: number | null
           finances_year?: number | null
           founded_on?: string | null
           headcount_code?: string | null
@@ -122,6 +127,7 @@ export type Database = {
           naf_code?: string | null
           name?: string
           net_income?: number | null
+          next_action?: string | null
           notes?: string | null
           origin?: string
           postal_code?: string | null

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { SizeCategory } from '@/types'
+import { MAX_ESTIMATED_AMOUNT, parseEuroAmount } from './company'
 
 /**
  * Import et export CSV des entreprises. Les colonnes de l'export sont
@@ -18,6 +19,8 @@ export type ImportField =
   | 'sizeCategory'
   | 'notes'
   | 'source'
+  | 'estimatedAmount'
+  | 'nextAction'
   | 'contactFirstName'
   | 'contactLastName'
   | 'contactRole'
@@ -36,6 +39,8 @@ export const COLUMN_LABELS: Record<ImportField, string> = {
   sizeCategory: 'Taille',
   notes: 'Notes',
   source: 'Source',
+  estimatedAmount: 'Montant estimé HT',
+  nextAction: 'Prochaine action',
   contactFirstName: 'Contact prénom',
   contactLastName: 'Contact nom',
   contactRole: 'Contact poste',
@@ -85,6 +90,14 @@ const HEADER_ALIASES: Record<string, ImportField> = {
   commentaires: 'notes',
   source: 'source',
   origine: 'source',
+  montant: 'estimatedAmount',
+  'montant estime': 'estimatedAmount',
+  'montant ht': 'estimatedAmount',
+  budget: 'estimatedAmount',
+  'budget ht': 'estimatedAmount',
+  'prochaine action': 'nextAction',
+  'next action': 'nextAction',
+  'next step': 'nextAction',
   'contact prenom': 'contactFirstName',
   prenom: 'contactFirstName',
   'first name': 'contactFirstName',
@@ -175,6 +188,16 @@ export const companyImportRowSchema = z
     sizeCategory: z.string().optional().transform(parseSizeCategory),
     notes: text(5000),
     source: text(50),
+    // « 6 000 € », « 6k »… ; une cellule illisible rend la ligne invalide plutôt que d'être ignorée
+    estimatedAmount: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseEuroAmount(value) : null))
+      .refine(
+        (value) => value === null || (Number.isInteger(value) && value >= 0 && value <= MAX_ESTIMATED_AMOUNT),
+        'Montant estimé invalide'
+      ),
+    nextAction: text(300),
     contactFirstName: text(100),
     contactLastName: text(100),
     contactRole: text(200),

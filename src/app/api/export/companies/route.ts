@@ -53,6 +53,7 @@ export async function GET() {
       .from('companies')
       .select(
         `name, website, registration_id, city, postal_code, sector, size_category, founded_on, notes, score,
+         estimated_amount, next_action,
          origin, created_at, last_interaction_at,
          stage:pipeline_stages(name), source:lead_sources(name),
          contacts:company_contacts(first_name, last_name, role, email, phone, linkedin_url, is_decision_maker, opted_out_at),
@@ -92,6 +93,8 @@ export async function GET() {
         Création: formatDate(company.founded_on),
         Étape: safeCell((company.stage as { name: string } | null)?.name),
         Score: company.score ?? '',
+        [COLUMN_LABELS.estimatedAmount]: company.estimated_amount ?? '',
+        [COLUMN_LABELS.nextAction]: safeCell(company.next_action),
         [COLUMN_LABELS.source]: safeCell((company.source as { name: string } | null)?.name),
         'Signaux en cours': safeCell([...new Set(signals)].join(', ')),
         'Dernier échange': formatDate(company.last_interaction_at),
@@ -113,7 +116,7 @@ export async function GET() {
     return new NextResponse(`﻿${csv}`, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="prospect-entreprises-${date}.csv"`,
+        'Content-Disposition': `attachment; filename="lynkio-entreprises-${date}.csv"`,
         'Cache-Control': 'no-store',
       },
     })

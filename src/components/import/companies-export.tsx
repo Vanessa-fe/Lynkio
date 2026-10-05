@@ -17,6 +17,8 @@ const TEMPLATE_EXAMPLE: Record<ImportField, string> = {
   sizeCategory: 'TPE',
   notes: 'Rencontrée au salon',
   source: 'Réseau',
+  estimatedAmount: '6000',
+  nextAction: 'Envoyer le devis',
   contactFirstName: 'Camille',
   contactLastName: 'Martin',
   contactRole: 'Gérante',

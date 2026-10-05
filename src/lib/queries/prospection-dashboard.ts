@@ -25,7 +25,8 @@ export type DashboardData = {
   }
   todayReminders: ReminderWithRelations[]
   opportunities: DashboardOpportunity[]
-  pipeline: { stage: Pick<PipelineStage, 'id' | 'name' | 'color' | 'kind'> | null; count: number }[]
+  // amount : somme des montants estimés (€ HT) des entreprises de l'étape
+  pipeline: { stage: Pick<PipelineStage, 'id' | 'name' | 'color' | 'kind'> | null; count: number; amount: number }[]
   lastRun: PipelineRun | null
   unidentifiedOffers: number
   nextRunAt: string | null
@@ -52,7 +53,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
     await Promise.all([
       supabase
         .from('companies')
-        .select('id, name, score, stage_id, origin, city, sector, created_at, last_interaction_at')
+        .select('id, name, score, stage_id, origin, city, sector, created_at, last_interaction_at, estimated_amount')
         .eq('user_id', user.id),
       supabase.from('pipeline_stages').select('id, name, color, kind').eq('user_id', user.id).order('order'),
       supabase
@@ -115,13 +116,19 @@ export async function getDashboardData(): Promise<DashboardData | null> {
   }
 
   const countByStage = new Map<string | null, number>()
+  const amountByStage = new Map<string | null, number>()
   for (const company of companies) {
     countByStage.set(company.stage_id, (countByStage.get(company.stage_id) ?? 0) + 1)
+    amountByStage.set(company.stage_id, (amountByStage.get(company.stage_id) ?? 0) + (company.estimated_amount ?? 0))
   }
 
-  const pipeline: DashboardData['pipeline'] = stages.map((stage) => ({ stage, count: countByStage.get(stage.id) ?? 0 }))
+  const pipeline: DashboardData['pipeline'] = stages.map((stage) => ({
+    stage,
+    count: countByStage.get(stage.id) ?? 0,
+    amount: amountByStage.get(stage.id) ?? 0,
+  }))
   const withoutStage = countByStage.get(null) ?? 0
-  if (withoutStage > 0) pipeline.push({ stage: null, count: withoutStage })
+  if (withoutStage > 0) pipeline.push({ stage: null, count: withoutStage, amount: amountByStage.get(null) ?? 0 })
 
   return {
     stats: {

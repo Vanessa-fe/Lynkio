@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { deleteCompany } from '@/lib/actions/companies'
-import { companyAge, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import { companyAge, formatEuros, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
@@ -114,7 +114,7 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
     const term = search.trim().toLowerCase()
     const matchesSearch =
       !term ||
-      [company.name, company.website, company.city, company.sector, company.registration_id]
+      [company.name, company.website, company.city, company.sector, company.registration_id, company.next_action]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term))
 
@@ -246,6 +246,7 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
                 <TableHead>Entreprise</TableHead>
                 <TableHead>Étape</TableHead>
                 <TableHead className="text-center">Score</TableHead>
+                <TableHead className="hidden md:table-cell">Prochaine action</TableHead>
                 <TableHead className="hidden lg:table-cell">Site web</TableHead>
                 <TableHead className="hidden xl:table-cell">Stack</TableHead>
                 <TableHead className="hidden md:table-cell">Dernier échange</TableHead>
@@ -274,6 +275,18 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
                   </TableCell>
                   <TableCell className="text-center">
                     <CompanyScore score={company.score} />
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell max-w-[16rem]">
+                    {company.next_action ? (
+                      <p className="text-sm truncate" title={company.next_action}>
+                        {company.next_action}
+                      </p>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">-</span>
+                    )}
+                    {company.estimated_amount != null && (
+                      <p className="text-xs text-muted-foreground">{formatEuros(company.estimated_amount)} HT</p>
+                    )}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     {company.website ? (
