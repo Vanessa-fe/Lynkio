@@ -103,7 +103,7 @@ Deno.serve(async (request) => {
     const [company, signals, contact, profile, icp, references, lastOutgoing] = await Promise.all([
       supabase
         .from('companies')
-        .select('name, sector, city, size_category, website, detected_stack')
+        .select('name, kind, sector, city, size_category, website, detected_stack')
         .eq('id', companyId)
         .maybeSingle(),
       supabase
@@ -201,6 +201,7 @@ Deno.serve(async (request) => {
       })),
       company: {
         name: company.data.name,
+        isIndividual: company.data.kind === 'individual',
         sector: company.data.sector,
         city: company.data.city,
         size: company.data.size_category ? (SIZE_LABELS[company.data.size_category] ?? null) : null,

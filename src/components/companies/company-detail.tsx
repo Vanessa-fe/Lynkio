@@ -30,7 +30,14 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { analyzeCompanyWebsite, deleteCompany } from '@/lib/actions/companies'
 import { technologyLabel } from '@/lib/constants/technologies'
-import { companyAge, formatEuros, sizeCategoryLabels, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import {
+  companyAge,
+  formatEuros,
+  individualLabel,
+  sizeCategoryLabels,
+  toWebsiteDomain,
+  toWebsiteUrl,
+} from '@/lib/validations/company'
 import { budgetFit, minimumRevenue } from '@/lib/validations/icp'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
@@ -48,6 +55,8 @@ import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
 import { CompanyNextStep } from './company-next-step'
+import { AttachToCompanyDialog } from '@/components/people/attach-to-company-dialog'
+import type { OrganizationOption } from '@/lib/queries/people'
 import { RemindersList } from '@/components/reminders/reminders-list'
 import { formatDate } from '@/lib/utils/dates'
 
@@ -63,6 +72,8 @@ interface CompanyDetailProps {
   dayRate: number | null
   // Présentation remplie : Sophie peut personnaliser les messages qu'elle prépare
   hasPitch: boolean
+  // Personne seule : entreprises auxquelles la rattacher
+  organizations: OrganizationOption[]
 }
 
 /**
@@ -93,13 +104,20 @@ export function CompanyDetail({
   reminders,
   dayRate,
   hasPitch,
+  organizations,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Personne seule (indépendant, ou entreprise inconnue) : sa fiche tient lieu d'entreprise
+  const isIndividual = company.kind === 'individual'
+
   const handleDelete = async () => {
-    if (!confirm(`Supprimer ${company.name} ? Ses contacts, signaux et échanges seront aussi supprimés.`)) {
+    const consequence = isIndividual
+      ? 'Ses coordonnées, échanges et relances seront aussi supprimés.'
+      : 'Ses contacts, signaux et échanges seront aussi supprimés.'
+    if (!confirm(`Supprimer ${company.name} ? ${consequence}`)) {
       return
     }
 
@@ -107,8 +125,8 @@ export function CompanyDetail({
     const result = await deleteCompany(company.id)
 
     if (result.success) {
-      toast({ title: 'Entreprise supprimée', description: company.name })
-      router.push('/companies')
+      toast({ title: isIndividual ? 'Personne supprimée' : 'Entreprise supprimée', description: company.name })
+      router.push(isIndividual ? '/people' : '/companies')
       router.refresh()
     } else {
       setIsDeleting(false)
@@ -127,13 +145,20 @@ export function CompanyDetail({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/companies">
+          <Link href={isIndividual ? '/people' : '/companies'}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Entreprises
+            {isIndividual ? 'Personnes' : 'Entreprises'}
           </Link>
         </Button>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          {isIndividual && (
+            <AttachToCompanyDialog
+              individualId={company.id}
+              personName={company.name}
+              organizations={organizations}
+            />
+          )}
           <Button variant="outline" size="sm" asChild>
             <Link href={`/companies/${company.id}/edit`}>
               <Edit className="w-4 h-4 mr-2" />
@@ -157,9 +182,9 @@ export function CompanyDetail({
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
             <div className="min-w-0">
               <CardTitle className="text-3xl break-words">{company.name}</CardTitle>
-              {(company.sector || location) && (
+              {(isIndividual || company.sector || location) && (
                 <CardDescription className="text-base mt-1">
-                  {[company.sector, location].filter(Boolean).join(' · ')}
+                  {[isIndividual && individualLabel(company), company.sector, location].filter(Boolean).join(' · ')}
                 </CardDescription>
               )}
             </div>
@@ -234,18 +259,20 @@ export function CompanyDetail({
                 {age.since} · {age.age}
               </InfoItem>
             )}
-            <InfoItem icon={<Euro className="w-5 h-5" />} label="Chiffre d'affaires">
-              {company.revenue && company.finances_year ? (
-                <>
-                  {formatEuros(company.revenue)} en {company.finances_year}
-                  <BudgetBadge revenue={company.revenue} dayRate={dayRate} />
-                </>
-              ) : (
-                <span className="text-muted-foreground font-normal">
-                  Non publié{company.registration_id ? ' (comptes confidentiels ou non encore récupérés)' : ''}
-                </span>
-              )}
-            </InfoItem>
+            {(!isIndividual || company.revenue) && (
+              <InfoItem icon={<Euro className="w-5 h-5" />} label="Chiffre d'affaires">
+                {company.revenue && company.finances_year ? (
+                  <>
+                    {formatEuros(company.revenue)} en {company.finances_year}
+                    <BudgetBadge revenue={company.revenue} dayRate={dayRate} />
+                  </>
+                ) : (
+                  <span className="text-muted-foreground font-normal">
+                    Non publié{company.registration_id ? ' (comptes confidentiels ou non encore récupérés)' : ''}
+                  </span>
+                )}
+              </InfoItem>
+            )}
             {company.size_category && (
               <InfoItem icon={<Users className="w-5 h-5" />} label="Taille">
                 {sizeCategoryLabels[company.size_category]}
@@ -337,12 +364,20 @@ export function CompanyDetail({
         </Card>
       )}
 
-      <CompanyContacts companyId={company.id} companyName={company.name} website={company.website} contacts={contacts} />
+      <CompanyContacts
+        companyId={company.id}
+        companyName={company.name}
+        website={company.website}
+        contacts={contacts}
+        isIndividual={isIndividual}
+      />
 
       <Card>
         <CardHeader>
           <CardTitle>Relances</CardTitle>
-          <CardDescription>Les rappels liés à cette entreprise</CardDescription>
+          <CardDescription>
+            {isIndividual ? 'Les rappels liés à cette personne' : 'Les rappels liés à cette entreprise'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <RemindersList reminders={reminders} totalCount={reminders.length} companyId={company.id} />

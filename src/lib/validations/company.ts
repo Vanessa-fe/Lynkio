@@ -125,34 +125,38 @@ export function toWebsiteUrl(website: string): string {
 /**
  * Contacts d'une entreprise
  */
+const contactFields = {
+  firstName: optionalText(100, 'Le prénom est trop long'),
+  lastName: optionalText(100, 'Le nom est trop long'),
+  role: optionalText(200, 'Le poste est trop long'),
+  isDecisionMaker: z.boolean().default(false),
+  email: z
+    .string()
+    .trim()
+    .max(255, 'L\'e-mail est trop long')
+    .optional()
+    .nullable()
+    .transform((value) => (value ? value.toLowerCase() : null))
+    .refine((value) => !value || z.string().email().safeParse(value).success, 'L\'e-mail n\'est pas valide'),
+  emailSource: z.enum(['manual', 'hunter', 'website', 'other']).optional().nullable(),
+  emailConfidence: z.number().int().min(0).max(100).optional().nullable(),
+  phone: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((value) => {
+      if (!value || value.trim() === '') return null
+      // France par défaut : « 06 12 34 56 78 » devient « +33612345678 »
+      return parsePhoneNumberFromString(value, 'FR')?.format('E.164') ?? value.trim()
+    }),
+  linkedinUrl: optionalUrl('L\'URL LinkedIn est trop longue'),
+  notes: optionalText(2000, 'Les notes sont trop longues'),
+}
+
 export const companyContactSchema = z
   .object({
     companyId: z.string().uuid('L\'entreprise n\'est pas valide'),
-    firstName: optionalText(100, 'Le prénom est trop long'),
-    lastName: optionalText(100, 'Le nom est trop long'),
-    role: optionalText(200, 'Le poste est trop long'),
-    isDecisionMaker: z.boolean().default(false),
-    email: z
-      .string()
-      .trim()
-      .max(255, 'L\'e-mail est trop long')
-      .optional()
-      .nullable()
-      .transform((value) => (value ? value.toLowerCase() : null))
-      .refine((value) => !value || z.string().email().safeParse(value).success, 'L\'e-mail n\'est pas valide'),
-    emailSource: z.enum(['manual', 'hunter', 'website', 'other']).optional().nullable(),
-    emailConfidence: z.number().int().min(0).max(100).optional().nullable(),
-    phone: z
-      .string()
-      .optional()
-      .nullable()
-      .transform((value) => {
-        if (!value || value.trim() === '') return null
-        // France par défaut : « 06 12 34 56 78 » devient « +33612345678 »
-        return parsePhoneNumberFromString(value, 'FR')?.format('E.164') ?? value.trim()
-      }),
-    linkedinUrl: optionalUrl('L\'URL LinkedIn est trop longue'),
-    notes: optionalText(2000, 'Les notes sont trop longues'),
+    ...contactFields,
   })
   .refine((data) => data.firstName || data.lastName || data.email || data.linkedinUrl, {
     message: 'Renseignez au moins un nom, un e-mail ou un profil LinkedIn',
@@ -160,6 +164,49 @@ export const companyContactSchema = z
   })
 
 export type CompanyContactInput = z.input<typeof companyContactSchema>
+
+/**
+ * Personne ajoutée depuis la page Personnes. Son entreprise est au choix :
+ * - none : personne seule (indépendant, ou entreprise inconnue), qui a sa propre fiche ;
+ * - existing : une entreprise déjà suivie ;
+ * - new : une entreprise à créer (ou retrouvée si le même nom existe déjà).
+ * Étape, prochaine action et montant ne servent qu'à une fiche créée ici.
+ */
+export const personCompanyModes = ['none', 'existing', 'new'] as const
+
+export const personSchema = z
+  .object({
+    ...contactFields,
+    companyMode: z.enum(personCompanyModes),
+    companyId: z.string().uuid('Choisissez l\'entreprise').optional().nullable(),
+    companyName: optionalText(200, 'Le nom de l\'entreprise est trop long'),
+    isIndependent: z.boolean().default(false),
+    stageId: z.string().uuid('L\'étape n\'est pas valide').optional().nullable(),
+    nextAction: optionalText(300, 'La prochaine action est trop longue'),
+    estimatedAmount: optionalAmount,
+  })
+  .refine((data) => data.firstName || data.lastName, {
+    message: 'Renseignez au moins le prénom ou le nom',
+    path: ['lastName'],
+  })
+  .refine((data) => data.companyMode !== 'existing' || !!data.companyId, {
+    message: 'Choisissez l\'entreprise',
+    path: ['companyId'],
+  })
+  .refine((data) => data.companyMode !== 'new' || !!data.companyName, {
+    message: 'Indiquez le nom de l\'entreprise',
+    path: ['companyName'],
+  })
+
+export type PersonInput = z.input<typeof personSchema>
+
+/**
+ * « Indépendant » ou « Personne seule » : ce qu'on affiche à la place d'une
+ * entreprise pour une fiche de personne
+ */
+export function individualLabel(company: { size_category: string | null }): string {
+  return company.size_category === 'solo' ? 'Indépendant' : 'Personne seule'
+}
 
 export function contactDisplayName(contact: {
   first_name: string | null

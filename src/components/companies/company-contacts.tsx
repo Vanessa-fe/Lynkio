@@ -22,9 +22,11 @@ interface CompanyContactsProps {
   companyName: string
   website: string | null
   contacts: CompanyContact[]
+  // Fiche d'une personne seule : un seul contact, elle-même
+  isIndividual?: boolean
 }
 
-export function CompanyContacts({ companyId, companyName, website, contacts }: CompanyContactsProps) {
+export function CompanyContacts({ companyId, companyName, website, contacts, isIndividual = false }: CompanyContactsProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [dialogContact, setDialogContact] = useState<CompanyContact | undefined>()
@@ -82,13 +84,17 @@ export function CompanyContacts({ companyId, companyName, website, contacts }: C
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle>Contacts</CardTitle>
-            <CardDescription>Les personnes à qui écrire dans cette entreprise</CardDescription>
+            <CardTitle>{isIndividual ? 'Coordonnées' : 'Contacts'}</CardTitle>
+            <CardDescription>
+              {isIndividual ? 'Pour joindre cette personne' : 'Les personnes à qui écrire dans cette entreprise'}
+            </CardDescription>
           </div>
-          <Button size="sm" onClick={() => openDialog()}>
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter un contact
-          </Button>
+          {(!isIndividual || contacts.length === 0) && (
+            <Button size="sm" onClick={() => openDialog()}>
+              <Plus className="w-4 h-4 mr-2" />
+              {isIndividual ? 'Ajouter ses coordonnées' : 'Ajouter un contact'}
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -159,7 +165,11 @@ export function CompanyContacts({ companyId, companyName, website, contacts }: C
                       </div>
 
                       {!contact.linkedin_url && !optedOut && (
-                        <LinkedinQuickAdd contact={contact} companyId={companyId} companyName={companyName} />
+                        <LinkedinQuickAdd
+                          contact={contact}
+                          companyId={companyId}
+                          companyName={isIndividual ? '' : companyName}
+                        />
                       )}
 
                       {contact.notes && (
@@ -197,15 +207,18 @@ export function CompanyContacts({ companyId, companyName, website, contacts }: C
                       >
                         {optedOut ? <Undo2 className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(contact)}
-                        disabled={busyId === contact.id}
-                        aria-label={`Supprimer ${contactDisplayName(contact)}`}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+                      {/* Personne seule : on supprime sa fiche, pas seulement ses coordonnées */}
+                      {!isIndividual && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(contact)}
+                          disabled={busyId === contact.id}
+                          aria-label={`Supprimer ${contactDisplayName(contact)}`}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </li>

@@ -33,17 +33,19 @@ Site en ligne : https://lynkio.netlify.app (mis à jour à chaque fusion dans `m
 | Messages (01/10) | « Préparer un message » sur la fiche : Sophie rédige un premier e-mail ou message LinkedIn à partir des signaux, du site et de votre présentation ; le code vérifie (lien inconnu, champ à compléter, prix, longueur, client confidentiel) et ajoute la signature. Brouillon à copier puis « Marquer comme envoyé ». Réglages dans Paramètres, Messages de Sophie (00022, fonction `draft-message`) |
 | Ciblage (28/09) | Client idéal revu : TPE / PME en direct, 100 % à distance, projets complets. Signal « Recrute pour le web ou le digital » (00019) ; intermédiaires, ESN et régie repérés dans le texte des annonces |
 | Suivi commercial (05/10) | « Prochaine action » et « Montant estimé » sur chaque entreprise, modifiables sur la fiche ; colonne dans la liste, montant par étape sur le tableau de bord, colonnes de l'import / export CSV (00023). Remplace la base Notion « Prospection » |
+| Personnes (05/10) | Une fiche peut être une personne seule (indépendant, ou entreprise inconnue) avec étape, échanges, relances et messages de Sophie ; page Personnes ; « Ajouter une personne » seule ou avec son entreprise (retrouvée par son nom) ; « Rattacher à une entreprise » déplace tout sur la fiche de l'entreprise ; import CSV de personnes (00024) |
 
 ## Ce qu'il reste à faire
 
 **Nouveau cap (05/10) : un CRM complet jusqu'au client signé**, pour ne plus jongler entre Lynkio,
 Notion et Waalaxy. Les projets, devis et factures restent hors de Lynkio.
 
-- **Contacts et listes** : vue par personne, listes de prospects, statut de chaque contact
-  (à contacter, contacté, a répondu, relancé).
+- **Listes et statuts** : listes de prospects, statut de chaque contact (à contacter, contacté,
+  a répondu, relancé). La vue par personne est faite (page Personnes).
 - **Fenêtre « Importer des prospects »** : CSV, saisie, profil LinkedIn en un clic (extension Chrome),
   recherches de Sophie.
-- **LinkedIn** : aller-retour avec Waalaxy, puis module d'envoi prudent (profils choisis, quotas bas)
+- **LinkedIn** : aller-retour avec Waalaxy (à l'import, regrouper les personnes d'une même entreprise
+  au lieu d'écarter les suivantes comme doublons), puis module d'envoi prudent (profils choisis, quotas bas)
   avant la fin de l'essai Waalaxy.
 
 Suite de la prospection, par ordre de priorité proposé :

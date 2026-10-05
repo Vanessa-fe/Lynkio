@@ -11,6 +11,7 @@ import {
 import { getCompanyReminders } from '@/lib/queries/reminders'
 import { getIcpBasics } from '@/lib/queries/icp'
 import { getUserProfile } from '@/lib/queries/user-profile'
+import { getOrganizationOptions } from '@/lib/queries/people'
 
 interface CompanyPageProps {
   params: Promise<{
@@ -36,6 +37,9 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
     notFound()
   }
 
+  // Personne seule : les entreprises auxquelles on peut la rattacher
+  const organizations = company.kind === 'individual' ? await getOrganizationOptions() : []
+
   return (
     <CompanyDetail
       company={company}
@@ -47,6 +51,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
       reminders={reminders}
       dayRate={icp.dayRate}
       hasPitch={Boolean(profile?.message_pitch)}
+      organizations={organizations}
     />
   )
 }

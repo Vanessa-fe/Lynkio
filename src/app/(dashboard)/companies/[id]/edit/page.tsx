@@ -23,7 +23,9 @@ export default async function EditCompanyPage({ params }: EditCompanyPageProps) 
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold">Modifier l&apos;entreprise</h1>
+        <h1 className="text-3xl font-bold">
+          {company.kind === 'individual' ? 'Modifier la fiche' : <>Modifier l&apos;entreprise</>}
+        </h1>
         <p className="text-muted-foreground mt-2">{company.name}</p>
       </div>
       <CompanyForm company={company} stages={stages} sources={sources} />
