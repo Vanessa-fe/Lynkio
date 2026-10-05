@@ -88,6 +88,61 @@ export async function deleteCompanyInteraction(
 }
 
 /**
+ * Note en un clic un envoi ou une réponse avec une personne, daté de maintenant.
+ * La base en déduit son statut (vue contact_outreach) et fait avancer l'étape de sa
+ * fiche (trigger advance_stage_on_exchange).
+ */
+export async function logContactExchange(
+  contactId: string,
+  exchange: { type: 'linkedin_message' | 'email'; direction: 'outgoing' | 'incoming' }
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    const user = await getAuthUser()
+
+    if (!user) {
+      return { success: false, error: 'Vous devez être connecté' }
+    }
+
+    const { data: contact } = await supabase
+      .from('company_contacts')
+      .select('company_id, opted_out_at')
+      .eq('id', contactId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!contact) return { success: false, error: 'Personne introuvable' }
+    if (contact.opted_out_at && exchange.direction === 'outgoing') {
+      return { success: false, error: 'Cette personne ne souhaite plus être contactée' }
+    }
+
+    const { error } = await supabase.from('company_interactions').insert({
+      user_id: user.id,
+      company_id: contact.company_id,
+      contact_id: contactId,
+      type: exchange.type,
+      direction: exchange.direction,
+      status: 'done',
+      occurred_at: new Date().toISOString(),
+    })
+
+    if (error) {
+      console.error('Log contact exchange error:', error)
+      return { success: false, error: 'Impossible d\'enregistrer l\'échange' }
+    }
+
+    revalidatePath('/people')
+    revalidatePath('/companies')
+    revalidatePath(`/companies/${contact.company_id}`)
+    revalidatePath('/dashboard')
+    return { success: true }
+  } catch (error) {
+    console.error('Log contact exchange error:', error)
+    return { success: false, error: 'Une erreur est survenue' }
+  }
+}
+
+/**
  * Le brouillon a été envoyé : il devient un échange effectué, daté de maintenant.
  * La base met alors à jour la date du dernier échange de l'entreprise (trigger).
  */

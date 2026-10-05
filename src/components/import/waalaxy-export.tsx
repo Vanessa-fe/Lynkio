@@ -18,7 +18,8 @@ export function WaalaxyExport({ count }: { count: number }) {
           Waalaxy importe des personnes, pas des entreprises : chaque ligne doit contenir l&apos;adresse d&apos;un
           profil LinkedIn. Ce fichier contient les contacts de vos entreprises en cours dont le profil est
           renseigné (bouton « Chercher sur LinkedIn » sur chaque fiche entreprise), avec leur e-mail s&apos;il est
-          connu. Les contacts opposés à la prospection n&apos;y figurent jamais.
+          connu. Les contacts opposés à la prospection n&apos;y figurent jamais. Pour n&apos;exporter qu&apos;une partie
+          d&apos;entre eux, regroupez-les dans une liste (page Personnes) et exportez la liste depuis là.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">

@@ -14,6 +14,8 @@ import { contactDisplayName, formatPhoneForDisplay, linkedinPeopleSearchUrl } fr
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact } from '@/types'
 import { CompanyContactDialog } from './company-contact-dialog'
+import { OutreachBadge } from '@/components/people/outreach-badge'
+import type { PersonRow } from '@/lib/queries/people'
 import { formatDate } from '@/lib/utils/dates'
 
 interface CompanyContactsProps {
@@ -24,9 +26,18 @@ interface CompanyContactsProps {
   contacts: CompanyContact[]
   // Fiche d'une personne seule : un seul contact, elle-même
   isIndividual?: boolean
+  // Statut de prospection de chaque contact (déduit des échanges)
+  outreach?: Record<string, PersonRow['outreach']>
 }
 
-export function CompanyContacts({ companyId, companyName, website, contacts, isIndividual = false }: CompanyContactsProps) {
+export function CompanyContacts({
+  companyId,
+  companyName,
+  website,
+  contacts,
+  isIndividual = false,
+  outreach = {},
+}: CompanyContactsProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [dialogContact, setDialogContact] = useState<CompanyContact | undefined>()
@@ -107,6 +118,7 @@ export function CompanyContacts({ companyId, companyName, website, contacts, isI
           <ul className="divide-y">
             {contacts.map((contact) => {
               const optedOut = !!contact.opted_out_at
+              const status = outreach[contact.id]
 
               return (
                 <li key={contact.id} className="py-4 first:pt-0 last:pb-0">
@@ -118,10 +130,18 @@ export function CompanyContacts({ companyId, companyName, website, contacts, isI
                           {contactDisplayName(contact)}
                         </span>
                         {contact.is_decision_maker && <Badge variant="secondary">Décideur</Badge>}
-                        {optedOut && (
+                        {optedOut ? (
                           <Badge variant="destructive">
                             Ne pas contacter
                           </Badge>
+                        ) : (
+                          status && (
+                            <OutreachBadge
+                              status={status.status}
+                              lastSentAt={status.lastSentAt}
+                              lastReplyAt={status.lastReplyAt}
+                            />
+                          )
                         )}
                       </div>
                       {contact.role && <p className="text-sm text-muted-foreground">{contact.role}</p>}

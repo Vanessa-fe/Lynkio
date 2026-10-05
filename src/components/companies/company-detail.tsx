@@ -56,7 +56,7 @@ import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
 import { CompanyNextStep } from './company-next-step'
 import { AttachToCompanyDialog } from '@/components/people/attach-to-company-dialog'
-import type { OrganizationOption } from '@/lib/queries/people'
+import type { OrganizationOption, PersonRow } from '@/lib/queries/people'
 import { RemindersList } from '@/components/reminders/reminders-list'
 import { formatDate } from '@/lib/utils/dates'
 
@@ -74,6 +74,8 @@ interface CompanyDetailProps {
   hasPitch: boolean
   // Personne seule : entreprises auxquelles la rattacher
   organizations: OrganizationOption[]
+  // Statut de prospection de chaque contact, par identifiant
+  outreach: Record<string, PersonRow['outreach']>
 }
 
 /**
@@ -105,6 +107,7 @@ export function CompanyDetail({
   dayRate,
   hasPitch,
   organizations,
+  outreach,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -370,6 +373,7 @@ export function CompanyDetail({
         website={company.website}
         contacts={contacts}
         isIndividual={isIndividual}
+        outreach={outreach}
       />
 
       <Card>

@@ -539,6 +539,7 @@ export type Database = {
           kind: string
           name: string
           order: number
+          role: string | null
           user_id: string
         }
         Insert: {
@@ -549,6 +550,7 @@ export type Database = {
           kind?: string
           name: string
           order: number
+          role: string | null
           user_id: string
         }
         Update: {
@@ -559,6 +561,7 @@ export type Database = {
           kind?: string
           name?: string
           order?: number
+          role?: string | null
           user_id?: string
         }
         Relationships: []
@@ -674,6 +677,66 @@ export type Database = {
           label?: string
           order?: number
           target_roles?: string[]
+        }
+        Relationships: []
+      }
+      prospect_list_members: {
+        Row: {
+          added_at: string
+          contact_id: string
+          list_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          contact_id: string
+          list_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          contact_id?: string
+          list_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_list_members_contact_id_user_id_fkey"
+            columns: ["contact_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "company_contacts"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "prospect_list_members_list_id_user_id_fkey"
+            columns: ["list_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_lists"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      prospect_lists: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -917,7 +980,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      contact_outreach: {
+        Row: {
+          company_id: string | null
+          contact_id: string | null
+          last_reply_at: string | null
+          last_sent_at: string | null
+          sent_count: number | null
+          status: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       attach_individual_to_company: {
