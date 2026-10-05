@@ -36,15 +36,15 @@ Site en ligne : https://lynkio.netlify.app (mis à jour à chaque fusion dans `m
 | Personnes (05/10) | Une fiche peut être une personne seule (indépendant, ou entreprise inconnue) avec étape, échanges, relances et messages de Sophie ; page Personnes ; « Ajouter une personne » seule ou avec son entreprise (retrouvée par son nom) ; « Rattacher à une entreprise » déplace tout sur la fiche de l'entreprise ; import CSV de personnes (00024) |
 | Listes et statuts (05/10) | Listes de personnes (page Personnes : cocher, « Ajouter à une liste », export Waalaxy d'une liste). Statut de chaque personne déduit de ses échanges (À contacter, Contacté, Relancé, A répondu, Ne pas contacter) ; bouton « Noter » pour un envoi ou une réponse en un clic ; l'étape de la fiche avance toute seule, vers l'avant seulement (00025) |
 | Fenêtre d'import (05/10) | « Importer des prospects » sur la page Personnes : profil LinkedIn, CSV, saisie d'une personne ou d'une entreprise, recherches de Sophie. Bouton « + Lynkio » à glisser dans les favoris : sur un profil LinkedIn, ouvre « Ajouter une personne » pré-rempli (source LinkedIn, doublon signalé). Personne ajoutée ou import CSV rangés directement dans une liste |
+| Retour Waalaxy (05/10) | L'export CSV de Waalaxy s'importe tel quel : personnes reconnues (profil LinkedIn, e-mail, nom d'une personne seule), plusieurs personnes d'une même entreprise réunies sur sa fiche ; invitations, messages et réponses (avec leur texte) notés dans l'historique, sans doublon ; « pas intéressé » → Perdu, « intéressé plus tard » → prochaine action ; liste Waalaxy reprise comme liste Lynkio |
 
 ## Ce qu'il reste à faire
 
 **Nouveau cap (05/10) : un CRM complet jusqu'au client signé**, pour ne plus jongler entre Lynkio,
 Notion et Waalaxy. Les projets, devis et factures restent hors de Lynkio.
 
-- **LinkedIn** : aller-retour avec Waalaxy (à l'import, regrouper les personnes d'une même entreprise
-  au lieu d'écarter les suivantes comme doublons), puis module d'envoi prudent (profils choisis, quotas bas)
-  avant la fin de l'essai Waalaxy.
+- **LinkedIn** : module d'envoi prudent (profils choisis, quotas bas), si l'abonnement Waalaxy ne vaut
+  pas le coût après l'essai.
 
 Suite de la prospection, par ordre de priorité proposé :
 

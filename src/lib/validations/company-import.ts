@@ -61,6 +61,7 @@ const HEADER_ALIASES: Record<string, ImportField> = {
   companyname: 'name',
   name: 'name',
   site: 'website',
+  'company website': 'website',
   'site web': 'website',
   'site internet': 'website',
   siteweb: 'website',
@@ -120,12 +121,15 @@ const HEADER_ALIASES: Record<string, ImportField> = {
   email: 'contactEmail',
   'e mail': 'contactEmail',
   mail: 'contactEmail',
+  proemail: 'contactEmail',
+  linkedinemail: 'contactEmail',
   courriel: 'contactEmail',
   'contact telephone': 'contactPhone',
   telephone: 'contactPhone',
   tel: 'contactPhone',
   phone: 'contactPhone',
   mobile: 'contactPhone',
+  phonenumbers: 'contactPhone',
   portable: 'contactPhone',
   'contact linkedin': 'contactLinkedin',
   linkedin: 'contactLinkedin',
@@ -259,12 +263,128 @@ export function mapRow(raw: Record<string, string>): Partial<Record<ImportField,
     const normalized = normalizeHeader(header)
     const field =
       nameIsPerson && (normalized === 'nom' || normalized === 'name') ? 'contactLastName' : fieldForHeader(header)
-    // Première colonne reconnue gagnante : une colonne « Nom » suivie de « Name » ne s'écrase pas
-    if (field && mapped[field] === undefined) mapped[field] = value
+    // Première colonne remplie gagnante : une colonne « Nom » suivie de « Name » ne s'écrase pas,
+    // mais un « linkedinEmail » vide laisse la place au « proEmail » de Waalaxy
+    if (field && !mapped[field]?.trim()) mapped[field] = value
   }
   return mapped
 }
 
 export function hasContact(row: CompanyImportRow): boolean {
   return !!(row.contactFirstName || row.contactLastName || row.contactEmail || row.contactLinkedin)
+}
+
+/**
+ * Export de Waalaxy : en plus de la personne et de son entreprise, chaque ligne dit ce
+ * qui s'est passé sur LinkedIn et par e-mail (dates au format AAAA-MM-JJ). On en tire
+ * les échanges à noter dans Lynkio, d'où le statut de la personne et l'étape de sa fiche.
+ */
+export type WaalaxyState = 'interested' | 'not_interested' | 'later_interested'
+
+export type WaalaxyActivity = {
+  invitedAt: string | null
+  connectedAt: string | null
+  firstMessageAt: string | null
+  lastMessageAt: string | null
+  linkedinReplyAt: string | null
+  emailSentAt: string | null
+  emailReplyAt: string | null
+  // Texte de la dernière réponse détectée, et sa date
+  replyText: string | null
+  replyAt: string | null
+  state: WaalaxyState | null
+  // Liste Waalaxy d'où vient la personne (« prospectList »)
+  list: string | null
+}
+
+const WAALAXY_COLUMNS = ['connectionRequestDate', 'firstMessageAt', 'messageSent', 'prospectList']
+
+export function isWaalaxyFile(headers: string[]): boolean {
+  return WAALAXY_COLUMNS.filter((column) => headers.includes(column)).length >= 3
+}
+
+const waalaxyDate = (value: string | undefined) => {
+  const date = value?.trim().slice(0, 10)
+  return date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null
+}
+
+export function readWaalaxyActivity(raw: Record<string, string>): WaalaxyActivity {
+  const state = raw.state?.trim()
+  return {
+    invitedAt: waalaxyDate(raw.connectionRequestDate),
+    connectedAt: waalaxyDate(raw.connectedAt),
+    firstMessageAt: waalaxyDate(raw.firstMessageAt),
+    lastMessageAt: waalaxyDate(raw.lastLinkedinMessageSentDate),
+    linkedinReplyAt: waalaxyDate(raw.lastLinkedinReplyDate),
+    emailSentAt: waalaxyDate(raw.lastEmailSentDate),
+    emailReplyAt: waalaxyDate(raw.lastEmailReplyDate),
+    replyText: raw.lastReplyDetected?.trim().slice(0, 5000) || null,
+    replyAt: waalaxyDate(raw.lastReplyDetectedDate),
+    state: state === 'interested' || state === 'not_interested' || state === 'later_interested' ? state : null,
+    list: raw.prospectList?.trim().slice(0, 100) || null,
+  }
+}
+
+export type PlannedExchange = {
+  type: 'linkedin_message' | 'email' | 'system_event'
+  direction: 'outgoing' | 'incoming' | null
+  date: string
+  subject: string
+  content: string | null
+}
+
+/**
+ * Échanges à noter pour une ligne Waalaxy. Waalaxy ne donne que le premier et le dernier
+ * message : s'ils diffèrent, le dernier est une relance. L'invitation et son acceptation
+ * sont des événements : elles ne comptent pas comme un message (statut « À contacter »).
+ */
+export function waalaxyExchanges(activity: WaalaxyActivity): PlannedExchange[] {
+  const exchanges: PlannedExchange[] = []
+  const add = (exchange: Omit<PlannedExchange, 'date'>, date: string | null) => {
+    if (date) exchanges.push({ ...exchange, date })
+  }
+
+  add({ type: 'system_event', direction: null, subject: 'Invitation LinkedIn envoyée (Waalaxy)', content: null }, activity.invitedAt)
+  add({ type: 'system_event', direction: null, subject: 'Invitation LinkedIn acceptée (Waalaxy)', content: null }, activity.connectedAt)
+  add({ type: 'linkedin_message', direction: 'outgoing', subject: 'Message LinkedIn (Waalaxy)', content: null }, activity.firstMessageAt)
+  if (activity.lastMessageAt && activity.lastMessageAt !== activity.firstMessageAt) {
+    add({ type: 'linkedin_message', direction: 'outgoing', subject: 'Relance LinkedIn (Waalaxy)', content: null }, activity.lastMessageAt)
+  }
+  add(
+    {
+      type: 'linkedin_message',
+      direction: 'incoming',
+      subject: 'Réponse LinkedIn (Waalaxy)',
+      // Le texte de la dernière réponse, quand c'est bien celle-ci
+      content: activity.replyAt === activity.linkedinReplyAt ? activity.replyText : null,
+    },
+    activity.linkedinReplyAt
+  )
+  add({ type: 'email', direction: 'outgoing', subject: 'E-mail (Waalaxy)', content: null }, activity.emailSentAt)
+  add(
+    {
+      type: 'email',
+      direction: 'incoming',
+      subject: 'Réponse par e-mail (Waalaxy)',
+      content: activity.replyAt === activity.emailReplyAt && activity.replyAt !== activity.linkedinReplyAt ? activity.replyText : null,
+    },
+    activity.emailReplyAt
+  )
+  return exchanges
+}
+
+/**
+ * Même échange déjà noté (à la main ou par un import précédent) : même type, même sens,
+ * même jour. C'est ce qui rend l'import d'un export Waalaxy rejouable sans doublon.
+ */
+export function exchangeKey(exchange: { type: string; direction: string | null; date: string; subject?: string | null }) {
+  return exchange.type === 'system_event'
+    ? `${exchange.type}|${exchange.subject ?? ''}`
+    : `${exchange.type}|${exchange.direction ?? ''}|${exchange.date}`
+}
+
+export const waalaxyStateLabels: Record<WaalaxyState, string> = {
+  interested: 'Intéressé·e',
+  not_interested: 'Pas intéressé·e',
+  later_interested: 'Intéressé·e plus tard',
 }
