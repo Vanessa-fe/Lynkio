@@ -9,12 +9,33 @@ export type WaalaxyContact = { linkedin_url: string | null; email: string | null
 /**
  * Contacts exportables vers Waalaxy : profil LinkedIn renseigné, pas d'opposition
  * à la prospection, entreprise dans une étape en cours (ni gagnée, ni perdue,
- * ni hors cible) ou sans étape
+ * ni hors cible) ou sans étape.
+ * Avec une liste : toutes les personnes de la liste (profil renseigné, pas d'opposition),
+ * quelle que soit l'étape, puisqu'on les a choisies une à une.
  */
 export async function getWaalaxyContacts(
   supabase: SupabaseClient<Database>,
-  userId: string
+  userId: string,
+  listId?: string
 ): Promise<WaalaxyContact[]> {
+  if (listId) {
+    const { data, error } = await supabase
+      .from('prospect_list_members')
+      .select('contact:company_contacts!inner(linkedin_url, email, opted_out_at)')
+      .eq('user_id', userId)
+      .eq('list_id', listId)
+
+    if (error) {
+      console.error('Waalaxy list contacts error:', error)
+      return []
+    }
+
+    return (data ?? [])
+      .map((member) => member.contact as unknown as WaalaxyContact & { opted_out_at: string | null })
+      .filter((contact) => contact.linkedin_url && !contact.opted_out_at)
+      .map(({ linkedin_url, email }) => ({ linkedin_url, email }))
+  }
+
   const { data, error } = await supabase
     .from('company_contacts')
     .select('linkedin_url, email, company:companies!inner(stage:pipeline_stages(kind))')

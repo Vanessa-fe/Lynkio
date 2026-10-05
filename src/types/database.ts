@@ -15,9 +15,11 @@ import type {
   CompanyOrigin,
   EmailSource,
   InteractionDirection,
+  OutreachStatus,
   PipelineRunStatus,
   PipelineRunTrigger,
   PipelineStageKind,
+  PipelineStageRole,
   ReminderPriority,
   SizeCategory,
 } from './models'
@@ -34,7 +36,7 @@ export type Database = MergeDeep<
     public: {
       Tables: {
         reminders: Columns<{ priority: ReminderPriority | null }>
-        pipeline_stages: Columns<{ kind: PipelineStageKind }>
+        pipeline_stages: Columns<{ kind: PipelineStageKind; role: PipelineStageRole | null }>
         companies: Columns<{ origin: CompanyOrigin; kind: CompanyKind; size_category: SizeCategory | null }>
         company_contacts: Columns<{ email_source: EmailSource | null }>
         company_interactions: Columns<{
@@ -43,6 +45,9 @@ export type Database = MergeDeep<
           status: CompanyInteractionStatus
         }>
         pipeline_runs: Columns<{ triggered_by: PipelineRunTrigger; status: PipelineRunStatus }>
+      }
+      Views: {
+        contact_outreach: { Row: { status: OutreachStatus | null } }
       }
     }
   }

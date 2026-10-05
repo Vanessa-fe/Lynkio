@@ -19,6 +19,8 @@ export type ProspectionSettings = Database['public']['Tables']['prospection_sett
 export type PipelineRun = Database['public']['Tables']['pipeline_runs']['Row']
 export type UnidentifiedJobOffer = Database['public']['Tables']['unidentified_job_offers']['Row']
 export type CompanyQualification = Database['public']['Tables']['company_qualifications']['Row']
+export type ProspectList = Database['public']['Tables']['prospect_lists']['Row']
+export type ContactOutreach = Database['public']['Views']['contact_outreach']['Row']
 
 // Types d'insertion
 export type InsertUserProfile = Database['public']['Tables']['user_profiles']['Insert']
@@ -35,6 +37,10 @@ export type UpdateReminder = Database['public']['Tables']['reminders']['Update']
 export type InteractionDirection = 'incoming' | 'outgoing'
 export type ReminderPriority = 'low' | 'medium' | 'high'
 export type PipelineStageKind = 'open' | 'won' | 'lost' | 'excluded'
+// Étapes vers lesquelles une fiche avance toute seule quand on note un envoi ou une réponse
+export type PipelineStageRole = 'to_contact' | 'contacted' | 'followed_up' | 'in_discussion'
+// Statut de prospection d'une personne, déduit de ses échanges (vue contact_outreach)
+export type OutreachStatus = 'to_contact' | 'contacted' | 'followed_up' | 'replied' | 'do_not_contact'
 export type CompanyOrigin = 'manual' | 'import' | 'detector'
 // organization : entreprise ; individual : personne seule (indépendant ou entreprise inconnue)
 export type CompanyKind = 'organization' | 'individual'
