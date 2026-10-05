@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
 import { createClient } from '@/lib/supabase/server'
-import { toWebsiteDomain } from '@/lib/validations/company'
+import { contactDisplayName, normalizeLinkedinProfileUrl, toWebsiteDomain } from '@/lib/validations/company'
 import {
   MAX_IMPORT_ROWS,
   companyImportRowSchema,
@@ -18,39 +18,97 @@ import { addContactsToList } from '@/lib/actions/prospect-lists'
 
 type ActionResult<T> = { success: boolean; error?: string; data?: T }
 
+/**
+ * Ce que deviendra chaque ligne :
+ * - ready : nouvelle fiche (entreprise, ou personne seule), avec son contact s'il y en a un ;
+ * - attach : la personne rejoint une entreprise déjà suivie, ou créée par une ligne plus haut ;
+ * - known : la personne est déjà dans Lynkio (même profil LinkedIn ou même e-mail) ;
+ * - duplicate : rien de nouveau (entreprise sans contact déjà suivie, ligne répétée) ;
+ * - invalid : erreur dans la ligne.
+ */
+export type ImportRowStatus = 'ready' | 'attach' | 'known' | 'duplicate' | 'invalid'
+
 export type ImportPreviewRow = {
   line: number
   name: string
   city: string | null
   contact: string | null
-  status: 'ready' | 'duplicate' | 'invalid'
-  // Erreurs de validation, ou entreprise déjà présente
+  status: ImportRowStatus
+  // Erreurs de validation, fiche rejointe, personne ou entreprise déjà présente
   message: string | null
 }
 
 export type ImportPreview = {
   total: number
   ready: number
+  attach: number
+  known: number
   duplicates: number
   invalid: number
   rows: ImportPreviewRow[]
 }
 
+// Fiche rejointe : déjà dans Lynkio, ou créée par une ligne plus haut dans le fichier
+type FicheRef = { companyId: string } | { line: number }
+
 type AnalyzedRow = {
   line: number
-  status: ImportPreviewRow['status']
+  status: ImportRowStatus
   message: string | null
   row: CompanyImportRow | null
   name: string
+  target?: FicheRef
+  // Personne déjà suivie : rangée dans la liste choisie, s'il y en a une
+  knownContactId?: string
 }
 
 // Lignes de données : la ligne 1 du fichier est celle des intitulés
 const FIRST_DATA_LINE = 2
 const INSERT_BATCH_SIZE = 200
+// Valeurs par requête « in » : l'adresse de la requête reste courte
+const LOOKUP_CHUNK_SIZE = 100
+
+type Supabase = Awaited<ReturnType<typeof createClient>>
+type ExistingContact = {
+  id: string
+  company_id: string
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  linkedin_url: string | null
+}
+
+function chunks<T>(values: T[], size = LOOKUP_CHUNK_SIZE): T[][] {
+  const result: T[][] = []
+  for (let start = 0; start < values.length; start += size) result.push(values.slice(start, start + size))
+  return result
+}
+
+async function contactsWhere(
+  supabase: Supabase,
+  userId: string,
+  column: 'linkedin_url' | 'email' | 'company_id',
+  values: string[]
+): Promise<ExistingContact[]> {
+  const found: ExistingContact[] = []
+  for (const part of chunks([...new Set(values)])) {
+    const { data } = await supabase
+      .from('company_contacts')
+      .select('id, company_id, first_name, last_name, email, linkedin_url')
+      .eq('user_id', userId)
+      .in(column, part)
+    found.push(...(data ?? []))
+  }
+  return found
+}
+
+const personKey = (firstName: string | null, lastName: string | null) =>
+  [firstName, lastName].filter(Boolean).join(' ').trim().toLowerCase()
 
 /**
- * Valide chaque ligne et repère les doublons : entreprises déjà suivies (SIREN,
- * domaine du site ou nom identique) et lignes répétées dans le fichier.
+ * Valide chaque ligne et décide de ce qu'elle deviendra (voir ImportRowStatus).
+ * Une personne est reconnue à son profil LinkedIn ou à son e-mail ; une entreprise à
+ * son SIREN, au domaine de son site ou à son nom.
  * Utilisée par l'aperçu ET par l'import, qui ne fait pas confiance à l'aperçu.
  */
 async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedRow[] | { error: string }> {
@@ -63,30 +121,66 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
     return { error: `Au plus ${MAX_IMPORT_ROWS} lignes par import : découpez le fichier` }
   }
 
-  const { data: existing, error } = await supabase
-    .from('companies')
-    .select('name, registration_id, website_domain')
-    .eq('user_id', user.id)
+  const parsedRows = rawRows.map((raw) => {
+    const mapped = mapRow(raw)
+    return { mapped, parsed: companyImportRowSchema.safeParse(mapped) }
+  })
+  const validRows = parsedRows.flatMap(({ parsed }) => (parsed.success ? [parsed.data] : []))
+
+  // Personnes déjà suivies, cherchées seulement parmi les profils et e-mails du fichier
+  const linkedinValues = validRows.flatMap((row) => {
+    const profile = normalizeLinkedinProfileUrl(row.contactLinkedin)
+    return [profile, row.contactLinkedin].filter((value): value is string => !!value)
+  })
+  const emails = validRows.map((row) => row.contactEmail).filter((email): email is string => !!email)
+
+  const [{ data: existing, error }, byLinkedin, byEmail] = await Promise.all([
+    supabase.from('companies').select('id, name, kind, registration_id, website_domain').eq('user_id', user.id),
+    contactsWhere(supabase, user.id, 'linkedin_url', linkedinValues),
+    contactsWhere(supabase, user.id, 'email', emails),
+  ])
 
   if (error) return { error: 'Impossible de lire vos entreprises' }
 
-  const known = {
-    sirens: new Map<string, string>(),
-    domains: new Map<string, string>(),
-    names: new Map<string, string>(),
-  }
-  // Valeur = message affiché si une ligne correspond
-  for (const company of existing ?? []) {
-    const message = `Déjà dans Lynkio : ${company.name}`
-    if (company.registration_id) known.sirens.set(company.registration_id, message)
-    if (company.website_domain) known.domains.set(company.website_domain, message)
-    known.names.set(company.name.trim().toLowerCase(), message)
+  const companyNames = new Map((existing ?? []).map((company) => [company.id, company.name]))
+  const knownContact = (contact: ExistingContact) => {
+    const person = contactDisplayName(contact)
+    const fiche = companyNames.get(contact.company_id)
+    return `Déjà dans Lynkio : ${person}${fiche && fiche !== person ? ` (${fiche})` : ''}`
   }
 
-  return rawRows.map((raw, index) => {
+  const people = {
+    linkedin: new Map<string, { contactId?: string; message: string }>(),
+    email: new Map<string, { contactId?: string; message: string }>(),
+  }
+  for (const contact of [...byLinkedin, ...byEmail]) {
+    const value = { contactId: contact.id, message: knownContact(contact) }
+    const profile = normalizeLinkedinProfileUrl(contact.linkedin_url)
+    if (profile) people.linkedin.set(profile, value)
+    if (contact.email) people.email.set(contact.email.toLowerCase(), value)
+  }
+
+  // Entreprises (et personnes seules, à part) : fiche existante ou ligne qui la crée
+  type Known = { ref: FicheRef; name: string }
+  const fiches = {
+    sirens: new Map<string, Known>(),
+    domains: new Map<string, Known>(),
+    organizations: new Map<string, Known>(),
+    individuals: new Map<string, Known>(),
+  }
+  for (const company of existing ?? []) {
+    const known: Known = { ref: { companyId: company.id }, name: company.name }
+    if (company.registration_id) fiches.sirens.set(company.registration_id, known)
+    if (company.website_domain) fiches.domains.set(company.website_domain, known)
+    const names = company.kind === 'individual' ? fiches.individuals : fiches.organizations
+    names.set(company.name.trim().toLowerCase(), known)
+  }
+
+  // Personnes rattachées à chaque fiche créée par le fichier (pour repérer les répétitions)
+  const namesByLine = new Map<number, Set<string>>()
+
+  const analyzed: AnalyzedRow[] = parsedRows.map(({ mapped, parsed }, index) => {
     const line = index + FIRST_DATA_LINE
-    const mapped = mapRow(raw)
-    const parsed = companyImportRowSchema.safeParse(mapped)
 
     if (!parsed.success) {
       return {
@@ -104,24 +198,86 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
     const row = parsed.data
     const fiche = importRowFiche(row)
     const name = fiche.kind === 'individual' ? `${fiche.name} (personne seule)` : fiche.name
-    const domain = toWebsiteDomain(row.website)
-    const duplicateOf =
-      (row.registrationId && known.sirens.get(row.registrationId)) ||
-      (domain && known.domains.get(domain)) ||
-      known.names.get(fiche.name.toLowerCase())
+    const profile = normalizeLinkedinProfileUrl(row.contactLinkedin)
 
-    if (duplicateOf) {
-      return { line, status: 'duplicate', message: duplicateOf, row: null, name }
+    // 1. La personne est-elle déjà connue (Lynkio ou plus haut dans le fichier) ?
+    const person = (profile && people.linkedin.get(profile)) || (row.contactEmail && people.email.get(row.contactEmail))
+    if (person) {
+      return person.contactId
+        ? { line, status: 'known', message: person.message, row, name, knownContactId: person.contactId }
+        : { line, status: 'duplicate', message: person.message, row: null, name }
+    }
+    const inFilePerson = { message: `Déjà plus haut dans le fichier (ligne ${line})` }
+    if (profile) people.linkedin.set(profile, inFilePerson)
+    if (row.contactEmail) people.email.set(row.contactEmail, inFilePerson)
+
+    // 2. Sa fiche existe-t-elle déjà ?
+    const domain = toWebsiteDomain(row.website)
+    const match =
+      fiche.kind === 'individual'
+        ? fiches.individuals.get(fiche.name.toLowerCase())
+        : (row.registrationId && fiches.sirens.get(row.registrationId)) ||
+          (domain && fiches.domains.get(domain)) ||
+          fiches.organizations.get(fiche.name.toLowerCase())
+
+    if (match) {
+      // Personne seule déjà suivie, ou entreprise sans personne à ajouter
+      if (fiche.kind === 'individual' || !hasContact(row)) {
+        const message = 'line' in match.ref ? `Déjà plus haut dans le fichier (ligne ${match.ref.line})` : `Déjà dans Lynkio : ${match.name}`
+        return { line, status: 'duplicate', message, row: null, name }
+      }
+      if ('line' in match.ref) {
+        const names = namesByLine.get(match.ref.line)
+        const key = personKey(row.contactFirstName, row.contactLastName)
+        if (key && names?.has(key)) {
+          return { line, status: 'duplicate', message: `Déjà plus haut dans le fichier (ligne ${match.ref.line})`, row: null, name }
+        }
+        if (key) names?.add(key)
+      }
+      const where = 'line' in match.ref ? `créée ligne ${match.ref.line}` : 'déjà dans Lynkio'
+      return { line, status: 'attach', message: `Rejoint la fiche ${match.name} (${where})`, row, name, target: match.ref }
     }
 
-    // Les lignes suivantes du fichier verront celle-ci comme déjà présente
-    const inFile = `Déjà plus haut dans le fichier (ligne ${line})`
-    if (row.registrationId) known.sirens.set(row.registrationId, inFile)
-    if (domain) known.domains.set(domain, inFile)
-    known.names.set(fiche.name.toLowerCase(), inFile)
+    // 3. Nouvelle fiche : les lignes suivantes pourront la rejoindre
+    const created: Known = { ref: { line }, name: fiche.name }
+    if (row.registrationId) fiches.sirens.set(row.registrationId, created)
+    if (domain) fiches.domains.set(domain, created)
+    const names = fiche.kind === 'individual' ? fiches.individuals : fiches.organizations
+    names.set(fiche.name.toLowerCase(), created)
+    namesByLine.set(line, new Set([personKey(row.contactFirstName, row.contactLastName)].filter(Boolean)))
 
     return { line, status: 'ready', message: null, row, name }
   })
+
+  // Une personne qui rejoint une entreprise déjà suivie, où quelqu'un porte déjà son nom :
+  // c'est sans doute elle (fichier sans profil LinkedIn ni e-mail)
+  const attachedToExisting = analyzed.filter(
+    (row) => row.status === 'attach' && row.target && 'companyId' in row.target
+  )
+  if (attachedToExisting.length > 0) {
+    const companyIds = attachedToExisting.map((row) => (row.target as { companyId: string }).companyId)
+    const members = await contactsWhere(supabase, user.id, 'company_id', companyIds)
+    const membersByCompany = new Map<string, Map<string, string>>()
+    for (const member of members) {
+      const key = personKey(member.first_name, member.last_name)
+      if (!key) continue
+      const byName = membersByCompany.get(member.company_id) ?? new Map<string, string>()
+      byName.set(key, member.id)
+      membersByCompany.set(member.company_id, byName)
+    }
+    for (const row of attachedToExisting) {
+      const companyId = (row.target as { companyId: string }).companyId
+      const memberId = membersByCompany.get(companyId)?.get(personKey(row.row!.contactFirstName, row.row!.contactLastName))
+      if (memberId) {
+        row.status = 'known'
+        row.message = `Déjà dans Lynkio : ${[row.row!.contactFirstName, row.row!.contactLastName].filter(Boolean).join(' ')} (${companyNames.get(companyId)})`
+        row.knownContactId = memberId
+        row.target = undefined
+      }
+    }
+  }
+
+  return analyzed
 }
 
 function contactLabel(row: CompanyImportRow | null): string | null {
@@ -136,13 +292,17 @@ export async function previewCompaniesImport(
     const analyzed = await analyzeRows(rawRows)
     if ('error' in analyzed) return { success: false, error: analyzed.error }
 
+    const count = (status: ImportRowStatus) => analyzed.filter((row) => row.status === status).length
+
     return {
       success: true,
       data: {
         total: analyzed.length,
-        ready: analyzed.filter((row) => row.status === 'ready').length,
-        duplicates: analyzed.filter((row) => row.status === 'duplicate').length,
-        invalid: analyzed.filter((row) => row.status === 'invalid').length,
+        ready: count('ready'),
+        attach: count('attach'),
+        known: count('known'),
+        duplicates: count('duplicate'),
+        invalid: count('invalid'),
         rows: analyzed.map((row) => ({
           line: row.line,
           name: row.name,
@@ -160,9 +320,11 @@ export async function previewCompaniesImport(
 }
 
 /**
- * Importe les lignes valides et nouvelles. Les entreprises arrivent dans l'étape
- * par défaut ; la source est celle de la ligne si elle existe, sinon celle choisie.
- * Les scores sont calculés par la base à l'insertion.
+ * Importe les nouvelles fiches et les personnes qui rejoignent une fiche. Les fiches
+ * arrivent dans l'étape par défaut ; la source est celle de la ligne si elle existe,
+ * sinon celle choisie. Les scores sont calculés par la base à l'insertion.
+ * Les personnes déjà suivies ne sont pas modifiées : elles sont seulement rangées
+ * dans la liste choisie.
  */
 export async function importCompanies(
   rawRows: Record<string, string>[],
@@ -191,11 +353,14 @@ export async function importCompanies(
     const sourceByName = new Map((sources ?? []).map((source) => [source.name.trim().toLowerCase(), source.id]))
     const fallbackSourceId = sources?.some((source) => source.id === options.sourceId) ? options.sourceId : null
 
-    const ready = analyzed.filter((row): row is AnalyzedRow & { row: CompanyImportRow } => row.status === 'ready' && !!row.row)
+    type WithRow = AnalyzedRow & { row: CompanyImportRow }
+    const ready = analyzed.filter((row): row is WithRow => row.status === 'ready' && !!row.row)
+    const attach = analyzed.filter((row): row is WithRow => row.status === 'attach' && !!row.row)
 
-    // Identifiants choisis ici : ils relient chaque contact à son entreprise sans relire la base
-    const companies = ready.map(({ row }) => ({
-      id: randomUUID(),
+    // Identifiants choisis ici : ils relient chaque contact à sa fiche sans relire la base
+    const idByLine = new Map(ready.map(({ line }) => [line, randomUUID()]))
+    const companies = ready.map(({ line, row }) => ({
+      id: idByLine.get(line)!,
       user_id: user.id,
       origin: 'import' as const,
       kind: importRowFiche(row).kind,
@@ -221,17 +386,22 @@ export async function importCompanies(
           success: false,
           error:
             start === 0
-              ? 'Import impossible : aucune entreprise n\'a été ajoutée'
-              : `Import interrompu : ${start} entreprises ajoutées, les suivantes non`,
+              ? 'Import impossible : aucune ligne n\'a été ajoutée'
+              : `Import interrompu : ${start} fiches ajoutées, les suivantes non`,
         }
       }
     }
 
-    // Contacts : un e-mail déjà utilisé par un autre contact n'est pas réimporté
-    const withContact = ready
-      .map(({ row }, index) => ({ row, companyId: companies[index]!.id }))
-      .filter(({ row }) => hasContact(row))
+    // Contacts des nouvelles fiches, et personnes qui rejoignent une fiche
+    const withContact = [
+      ...ready.filter(({ row }) => hasContact(row)).map(({ line, row }) => ({ row, companyId: idByLine.get(line) })),
+      ...attach.map(({ row, target }) => ({
+        row,
+        companyId: target && ('companyId' in target ? target.companyId : idByLine.get(target.line)),
+      })),
+    ].filter((item): item is { row: CompanyImportRow; companyId: string } => !!item.companyId)
 
+    // Un e-mail déjà utilisé par un autre contact n'est pas réimporté
     const emails = withContact.map(({ row }) => row.contactEmail).filter((email): email is string => !!email)
     const { data: existingEmails } = emails.length
       ? await supabase.from('company_contacts').select('email').eq('user_id', user.id).in('email', emails)
@@ -256,7 +426,8 @@ export async function importCompanies(
         phone: row.contactPhone
           ? (parsePhoneNumberFromString(row.contactPhone, 'FR')?.format('E.164') ?? row.contactPhone)
           : null,
-        linkedin_url: row.contactLinkedin,
+        // Profil au format standard : c'est par lui qu'on reconnaît la personne au prochain import
+        linkedin_url: normalizeLinkedinProfileUrl(row.contactLinkedin) ?? row.contactLinkedin,
         // RGPD : origine de la donnée (la date de collecte est celle de l'import)
         data_source: 'import',
       }))
@@ -273,11 +444,14 @@ export async function importCompanies(
     }
     const insertedContacts = insertedIds.length
 
-    // Les entreprises et personnes sont importées même si le rangement dans la liste échoue
+    // Les fiches et personnes sont importées même si le rangement dans la liste échoue.
+    // Les personnes déjà suivies y sont rangées aussi.
     let list: { id: string; name: string; added: number } | null = null
     const listName = options.listName?.trim()
-    if (listName && insertedIds.length > 0) {
-      const listed = await addContactsToList({ listName }, insertedIds)
+    const knownIds = analyzed.flatMap((row) => (row.status === 'known' && row.knownContactId ? [row.knownContactId] : []))
+    const toList = [...insertedIds, ...knownIds]
+    if (listName && toList.length > 0) {
+      const listed = await addContactsToList({ listName }, toList)
       if (listed.success && listed.data) list = { id: listed.data.listId, name: listName, added: listed.data.added }
       else console.error('Import list error:', listed.error)
     }

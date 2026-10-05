@@ -32,9 +32,14 @@ type Step = 'upload' | 'preview' | 'done'
 const NO_SOURCE = 'none'
 const PREVIEW_LIMIT = 50
 
-const statusBadges: Record<ImportPreview['rows'][number]['status'], { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {
-  ready: { label: 'Prête', variant: 'default' },
-  duplicate: { label: 'Doublon', variant: 'secondary' },
+const statusBadges: Record<
+  ImportPreview['rows'][number]['status'],
+  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+> = {
+  ready: { label: 'Nouvelle', variant: 'default' },
+  attach: { label: 'Rejoint une fiche', variant: 'default' },
+  known: { label: 'Déjà là', variant: 'secondary' },
+  duplicate: { label: 'Doublon', variant: 'outline' },
   invalid: { label: 'Erreur', variant: 'destructive' },
 }
 
@@ -117,6 +122,11 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
     router.refresh()
   }
 
+  // Nouvelles fiches et personnes qui rejoignent une fiche ; les personnes déjà suivies
+  // comptent seulement si une liste est choisie (elles y sont rangées)
+  const toImport = preview ? preview.ready + preview.attach : 0
+  const actionable = toImport + (preview && listName.trim() ? preview.known : 0)
+
   return (
     <Card>
       <CardHeader>
@@ -161,14 +171,18 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
             <p className="text-sm">
               <strong>{fileName}</strong> : {preview.total} ligne{preview.total > 1 ? 's' : ''}
             </p>
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
               <div className="rounded-lg border p-3">
                 <p className="text-2xl font-bold text-green-600">{preview.ready}</p>
-                <p className="text-xs text-muted-foreground">à importer</p>
+                <p className="text-xs text-muted-foreground">nouvelles fiches</p>
               </div>
               <div className="rounded-lg border p-3">
-                <p className="text-2xl font-bold">{preview.duplicates}</p>
-                <p className="text-xs text-muted-foreground">déjà suivies</p>
+                <p className="text-2xl font-bold text-green-600">{preview.attach}</p>
+                <p className="text-xs text-muted-foreground">rejoignent une fiche</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-2xl font-bold">{preview.known + preview.duplicates}</p>
+                <p className="text-xs text-muted-foreground">déjà dans Lynkio</p>
               </div>
               <div className="rounded-lg border p-3">
                 <p className="text-2xl font-bold text-destructive">{preview.invalid}</p>
@@ -253,11 +267,13 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={handleImport} disabled={isWorking || preview.ready === 0}>
+              <Button onClick={handleImport} disabled={isWorking || actionable === 0}>
                 {isWorking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                {preview.ready === 0
+                {actionable === 0
                   ? 'Rien à importer'
-                  : `Importer ${preview.ready} ligne${preview.ready > 1 ? 's' : ''}`}
+                  : toImport === 0
+                    ? `Ranger ${preview.known} personne${preview.known > 1 ? 's' : ''} dans la liste`
+                    : `Importer ${toImport} ligne${toImport > 1 ? 's' : ''}`}
               </Button>
               <Button variant="outline" onClick={reset} disabled={isWorking}>
                 Choisir un autre fichier
@@ -270,8 +286,8 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
           <div className="space-y-3">
             <p className="flex items-center gap-2 font-medium">
               <CheckCircle2 className="w-5 h-5 text-green-600" aria-hidden="true" />
-              {result.imported} ligne{result.imported > 1 ? 's' : ''} importée{result.imported > 1 ? 's' : ''}
-              {result.contacts > 0 && `, avec ${result.contacts} contact${result.contacts > 1 ? 's' : ''}`}.
+              {result.imported} fiche{result.imported > 1 ? 's' : ''} créée{result.imported > 1 ? 's' : ''},{' '}
+              {result.contacts} personne{result.contacts > 1 ? 's' : ''} ajoutée{result.contacts > 1 ? 's' : ''}.
             </p>
             {result.skippedContacts > 0 && (
               <p className="flex items-start gap-2 text-sm text-muted-foreground">
