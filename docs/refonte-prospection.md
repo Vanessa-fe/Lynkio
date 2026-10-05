@@ -4,7 +4,7 @@
 
 ## Objectif
 
-Transformer Prospect CRM en outil de prospection B2B pour freelances, quel que soit leur métier.
+Transformer Lynkio en outil de prospection B2B pour freelances, quel que soit leur métier.
 Le module contacts B2C (rendez-vous, paiements, niveau de risque) sort du produit.
 Les agences deviennent un ICP parmi d'autres, et non plus un pipeline à part.
 

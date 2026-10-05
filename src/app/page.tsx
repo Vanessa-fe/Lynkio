@@ -4,7 +4,7 @@ import { getAuthUser } from '@/lib/supabase/auth'
 import { LandingPage } from '@/components/landing/landing-page'
 
 export const metadata: Metadata = {
-  title: 'Prospect CRM : trouvez les entreprises qui ont besoin d\'un freelance',
+  title: 'Lynkio : trouvez les entreprises qui ont besoin d\'un freelance',
   description:
     'Sophie repère les entreprises qui recrutent pour leur site, publient une mission ou utilisent votre technologie, les note selon votre client idéal et prépare votre premier message.',
 }

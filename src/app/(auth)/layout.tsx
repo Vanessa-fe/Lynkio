@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Connexion - Prospect CRM',
-  description: 'Connectez-vous à votre compte Prospect CRM',
+  title: 'Connexion - Lynkio',
+  description: 'Connectez-vous à votre compte Lynkio',
 }
 
 export default function AuthLayout({

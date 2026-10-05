@@ -3,7 +3,7 @@
 
 const FETCH_TIMEOUT_MS = 8000
 const MAX_HTML_BYTES = 1_500_000
-const USER_AGENT = 'ProspectCRM-StackDetector/1.0'
+const USER_AGENT = 'Lynkio-StackDetector/1.0'
 
 const MARKERS: Record<string, (html: string) => boolean> = {
   nextjs: (html) => ['/_next/static/', '__NEXT_DATA__', 'self.__next_f'].some((marker) => html.includes(marker)),

@@ -76,11 +76,11 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-3xl font-bold text-center">
-              {isReturningUser ? 'Quel est votre métier ?' : 'Bienvenue sur Prospect CRM'}
+              {isReturningUser ? 'Quel est votre métier ?' : 'Bienvenue sur Lynkio'}
             </CardTitle>
             <CardDescription className="text-center">
               {isReturningUser
-                ? 'Prospect CRM s\'adapte maintenant à votre métier : choisissez-le pour continuer'
+                ? 'Lynkio s\'adapte maintenant à votre métier : choisissez-le pour continuer'
                 : 'Quelques informations pour personnaliser votre expérience'}
             </CardDescription>
           </CardHeader>
@@ -215,7 +215,7 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
                   ? 'Configuration...'
                   : isReturningUser
                     ? 'Continuer'
-                    : 'Commencer à utiliser Prospect CRM'}
+                    : 'Commencer à utiliser Lynkio'}
               </Button>
             </CardContent>
           </form>

@@ -75,7 +75,7 @@ function Logo() {
       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
         <Radar className="h-5 w-5" />
       </span>
-      Prospect CRM
+      Lynkio
     </Link>
   )
 }
@@ -212,7 +212,7 @@ export function LandingPage() {
               <p className="text-sm text-muted-foreground">
                 {SIGNUPS_OPEN
                   ? 'Sources publiques, sites vérifiés, messages relus par vous.'
-                  : `${SIGNUPS_CLOSED_MESSAGE} Prospect CRM est en test privé.`}
+                  : `${SIGNUPS_CLOSED_MESSAGE} Lynkio est en test privé.`}
               </p>
             </div>
 
