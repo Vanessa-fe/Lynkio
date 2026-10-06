@@ -22,6 +22,8 @@ import {
 } from '@/lib/validations/company-import'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { addContactsToList } from '@/lib/actions/prospect-lists'
+import { SEGMENTS } from '@/lib/constants/segments'
+import type { CompanySegment } from '@/types'
 
 type ActionResult<T> = { success: boolean; error?: string; data?: T }
 
@@ -579,7 +581,8 @@ async function applyWaalaxyActivity(
 export async function importCompanies(
   rawRows: Record<string, string>[],
   // listName : liste où ranger les personnes importées (existante, ou créée à partir du nom)
-  options: { sourceId: string | null; listName?: string | null }
+  // segment : segment des nouvelles fiches ; sans lui, la base le devine
+  options: { sourceId: string | null; listName?: string | null; segment?: CompanySegment | null }
 ): Promise<
   ActionResult<{
     imported: number
@@ -605,6 +608,7 @@ export async function importCompanies(
     const defaultStage = stages?.find((stage) => stage.is_default)
     const sourceByName = new Map((sources ?? []).map((source) => [source.name.trim().toLowerCase(), source.id]))
     const fallbackSourceId = sources?.some((source) => source.id === options.sourceId) ? options.sourceId : null
+    const segment = options.segment && (SEGMENTS as readonly string[]).includes(options.segment) ? options.segment : null
 
     type WithRow = AnalyzedRow & { row: CompanyImportRow }
     const ready = analyzed.filter((row): row is WithRow => row.status === 'ready' && !!row.row)
@@ -629,6 +633,7 @@ export async function importCompanies(
       notes: row.notes,
       estimated_amount: row.estimatedAmount,
       next_action: row.nextAction,
+      ...(segment ? { segment, segment_set_by: 'manual' as const } : {}),
     }))
 
     for (let start = 0; start < companies.length; start += INSERT_BATCH_SIZE) {

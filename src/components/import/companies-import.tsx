@@ -26,10 +26,13 @@ import { MAX_IMPORT_ROWS } from '@/lib/validations/company-import'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { LeadSource } from '@/types'
 import type { ProspectListWithCount } from '@/lib/queries/people'
+import { SEGMENTS, segmentDescriptions, segmentLabels } from '@/lib/constants/segments'
+import type { CompanySegment } from '@/types'
 
 type Step = 'upload' | 'preview' | 'done'
 
 const NO_SOURCE = 'none'
+const AUTO_SEGMENT = 'auto'
 const PREVIEW_LIMIT = 50
 
 const statusBadges: Record<
@@ -54,6 +57,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
   const [preview, setPreview] = useState<ImportPreview | null>(null)
   const [sourceId, setSourceId] = useState<string>(sources.find((source) => source.name === 'Autre')?.id ?? NO_SOURCE)
   const [listName, setListName] = useState('')
+  const [segment, setSegment] = useState<string>(AUTO_SEGMENT)
   const [result, setResult] = useState<Awaited<ReturnType<typeof importCompanies>>['data'] | null>(null)
 
   const reset = () => {
@@ -111,6 +115,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
     const response = await importCompanies(rows, {
       sourceId: sourceId === NO_SOURCE ? null : sourceId,
       listName: listName.trim() || null,
+      segment: segment === AUTO_SEGMENT ? null : (segment as CompanySegment),
     })
     setIsWorking(false)
 
@@ -263,6 +268,28 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
               </Select>
               <p className="text-xs text-muted-foreground">
                 Utilisée quand la ligne n&apos;indique pas une de vos sources dans sa colonne « Source ».
+              </p>
+            </div>
+
+            <div className="space-y-2 sm:max-w-sm">
+              <Label htmlFor="importSegment">Segment des nouvelles fiches</Label>
+              <Select value={segment} onValueChange={setSegment} disabled={isWorking}>
+                <SelectTrigger id="importSegment">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={AUTO_SEGMENT}>Deviné par Lynkio</SelectItem>
+                  {SEGMENTS.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {segmentLabels[value]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {segment === AUTO_SEGMENT
+                  ? 'Lynkio le devine d\'après le nom et le code d\'activité. Choisissez-le si tout le fichier est du même type, comme une liste d\'agences.'
+                  : segmentDescriptions[segment as CompanySegment]}
               </p>
             </div>
 

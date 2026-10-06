@@ -14,6 +14,8 @@ import {
   type UpdateCompanyInput,
 } from '@/lib/validations/company'
 import type { Database } from '@/types/database'
+import type { CompanySegment } from '@/types'
+import { SEGMENTS } from '@/lib/constants/segments'
 import { getAuthUser } from '@/lib/supabase/auth'
 
 type CompanyUpdate = Database['public']['Tables']['companies']['Update']
@@ -230,6 +232,48 @@ export async function updateCompanyStage(
   stageId: string | null
 ): Promise<ActionResult> {
   return updateCompany(companyId, { stageId })
+}
+
+/**
+ * Segment choisi à la main, ou « auto » pour le laisser deviner par la base
+ * (trigger set_company_segment)
+ */
+export async function updateCompanySegment(
+  companyId: string,
+  segment: CompanySegment | null | 'auto'
+): Promise<ActionResult> {
+  try {
+    if (segment !== 'auto' && segment !== null && !(SEGMENTS as readonly string[]).includes(segment)) {
+      return { success: false, error: 'Segment inconnu' }
+    }
+    const supabase = await createClient()
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+
+    const update: CompanyUpdate =
+      segment === 'auto' ? { segment_set_by: 'auto' } : { segment, segment_set_by: 'manual' }
+
+    const { data, error } = await supabase
+      .from('companies')
+      .update(update)
+      .eq('id', companyId)
+      .eq('user_id', user.id)
+      .select('id')
+      .maybeSingle()
+
+    if (error || !data) {
+      if (error) console.error('Update company segment error:', error)
+      return { success: false, error: 'Impossible de changer le segment' }
+    }
+
+    revalidatePath('/companies')
+    revalidatePath(`/companies/${companyId}`)
+    revalidatePath('/people')
+    return { success: true }
+  } catch (error) {
+    console.error('Update company segment error:', error)
+    return { success: false, error: 'Une erreur est survenue' }
+  }
 }
 
 /**

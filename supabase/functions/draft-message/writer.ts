@@ -42,6 +42,8 @@ export type MessageContext = {
     name: string
     // Personne seule (indépendant, ou entreprise inconnue) : le message s'adresse à elle, pas à une entreprise
     isIndividual: boolean
+    // agency, startup, smb, ou null si inconnu
+    segment: string | null
     sector: string | null
     city: string | null
     size: string | null
@@ -77,6 +79,12 @@ const schema = {
   },
 }
 
+const SEGMENT_LABELS: Record<string, string> = {
+  agency: 'agence (web, digitale, de communication) ou studio',
+  startup: 'startup ou éditeur de logiciel',
+  smb: 'TPE/PME dont le métier n\'est pas le numérique',
+}
+
 const RULES = `Tu es Sophie, l'assistante de prospection d'une freelance. Tu rédiges en français le premier message qu'elle enverra à une entreprise qu'elle ne connaît pas encore.
 
 Ce qui fait un bon premier message :
@@ -88,9 +96,14 @@ Ce qui fait un bon premier message :
 - chaque phrase apporte quelque chose : aucune phrase générique qui pourrait s'adresser à n'importe quelle entreprise ;
 - si la freelance donne des consignes pour ce message, applique-les en priorité et de façon visible.
 
-Adapte-toi à l'entreprise : une petite entreprise dont le métier n'est pas le numérique n'a pas d'équipe technique et ne connaît pas le vocabulaire des développeurs. Parle-lui de son site et de ses clients, pas de technique, et ne propose pas de « renfort d'équipe ».
+Adapte-toi à l'entreprise, d'après son segment :
+- TPE/PME dont le métier n'est pas le numérique : elle n'a pas d'équipe technique et ne connaît pas le vocabulaire des développeurs. Parle-lui de son site et de ses clients, pas de technique, et ne propose pas de « renfort d'équipe » ;
+- agence (web, digitale, de communication) ou studio : elle a ses propres clients et achète déjà du travail freelance. Propose un renfort sur ses projets (refonte, migration, pic de charge), en autonomie. Ne lui parle pas de son propre site ;
+- startup ou éditeur de logiciel : propose un renfort sur son produit, pour avancer plus vite, en autonomie ;
+- segment inconnu : déduis-le de ce que tu sais, sans l'affirmer.
 
 Selon le signal :
+- agence ou startup qui recrute un développeur : elle a plus de travail que d'équipe. Ne postule pas : propose un renfort freelance pendant qu'elle recrute, ou sur un projet précis ;
 - offre d'emploi salariée : ne postule pas. Propose une aide freelance à distance sur un projet précis, en attendant le bon profil ;
 - mission ouverte aux freelances : réponds directement à la mission ;
 - stack technique compatible : ne fais pas un cours sur la technologie. Dis simplement que son site est fait avec une technologie que la freelance connaît bien, ce qui lui permet de le faire évoluer sans repartir de zéro ;
@@ -147,6 +160,7 @@ function contextPrompt(context: MessageContext): string {
       company.isIndividual
         ? "Personne seule, sans entreprise connue : écris-lui directement, à elle et à son activité, jamais à « votre entreprise »."
         : `Nom : ${company.name}`,
+      company.segment && `Segment : ${SEGMENT_LABELS[company.segment] ?? company.segment}`,
       company.sector && `Activité : ${company.sector}`,
       company.city && `Ville : ${company.city}`,
       company.size && `Taille : ${company.size}`,

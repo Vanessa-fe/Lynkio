@@ -37,6 +37,7 @@ Site en ligne : https://lynkio.netlify.app (mis à jour à chaque fusion dans `m
 | Listes et statuts (05/10) | Listes de personnes (page Personnes : cocher, « Ajouter à une liste », export Waalaxy d'une liste). Statut de chaque personne déduit de ses échanges (À contacter, Contacté, Relancé, A répondu, Ne pas contacter) ; bouton « Noter » pour un envoi ou une réponse en un clic ; l'étape de la fiche avance toute seule, vers l'avant seulement (00025) |
 | Fenêtre d'import (05/10) | « Importer des prospects » sur la page Personnes : profil LinkedIn, CSV, saisie d'une personne ou d'une entreprise, recherches de Sophie. Bouton « + Lynkio » à glisser dans les favoris : sur un profil LinkedIn, ouvre « Ajouter une personne » pré-rempli (source LinkedIn, doublon signalé). Personne ajoutée ou import CSV rangés directement dans une liste |
 | Retour Waalaxy (05/10) | L'export CSV de Waalaxy s'importe tel quel : personnes reconnues (profil LinkedIn, e-mail, nom d'une personne seule), plusieurs personnes d'une même entreprise réunies sur sa fiche ; invitations, messages et réponses (avec leur texte) notés dans l'historique, sans doublon ; « pas intéressé » → Perdu, « intéressé plus tard » → prochaine action ; liste Waalaxy reprise comme liste Lynkio |
+| Segments (06/10) | Trois cibles : Agence (renfort), TPE/PME (site, outil), Startup/SaaS (renfort produit). Segment deviné (code d'activité, nom, taille) ou choisi sur la fiche, filtres dans les listes, choix à l'import. Nouveau signal « Agence ou startup qui recrute un développeur » : Sophie reprend les offres de développeur des agences, studios et éditeurs, et écarte celles des entreprises qui montent une équipe. Messages de Sophie adaptés au segment (00026) |
 
 ## Ce qu'il reste à faire
 
@@ -45,6 +46,10 @@ Notion et Waalaxy. Les projets, devis et factures restent hors de Lynkio.
 
 - **LinkedIn** : module d'envoi prudent (profils choisis, quotas bas), si l'abonnement Waalaxy ne vaut
   pas le coût après l'essai.
+
+- **Recherche d'agences francophones** : une source de Sophie dédiée aux agences web et studios
+  (France, Belgique, Suisse, Luxembourg, Québec), la recherche par technologie visant les clients
+  directs dont le site est en Next.js, ce qui n'est plus un critère.
 
 Suite de la prospection, par ordre de priorité proposé :
 

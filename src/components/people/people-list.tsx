@@ -13,6 +13,8 @@ import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { CompanyStageSelect } from '@/components/companies/company-stage-select'
+import { SegmentBadge } from '@/components/companies/company-segment'
+import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
 import { removeContactsFromList } from '@/lib/actions/prospect-lists'
 import { OUTREACH_STATUSES, outreachStatusLabels } from '@/lib/constants/outreach'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
@@ -48,6 +50,8 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
   const { toast } = useToast()
   const [search, setSearch] = useState('')
   const [scope, setScope] = useState<Scope>('all')
+  // Segment de la fiche de la personne : 'all', un segment, ou 'none' (non classée)
+  const [segment, setSegment] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [isAddingToList, setIsAddingToList] = useState(false)
@@ -60,6 +64,7 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
   const term = search.trim().toLowerCase()
   const scoped = inList.filter((person) => {
     if (scope !== 'all' && person.company.kind !== scope) return false
+    if (segment !== 'all' && (person.company.segment ?? 'none') !== segment) return false
     if (!term) return true
     return [person.first_name, person.last_name, person.role, person.email, person.company.name]
       .filter(Boolean)
@@ -141,18 +146,34 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
           activeList={activeList}
           exportableCount={inList.filter((person) => person.linkedin_url && !person.opted_out_at).length}
         />
-        <Select value={scope} onValueChange={(value) => setScope(value as Scope)}>
-          <SelectTrigger className="w-full sm:w-[230px]" aria-label="Filtrer par type de personne">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SCOPES.map(({ value, label }) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Select value={segment} onValueChange={setSegment}>
+            <SelectTrigger className="w-full sm:w-[190px]" aria-label="Filtrer par segment">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les segments</SelectItem>
+              {SEGMENTS.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {segmentLabels[value]}
+                </SelectItem>
+              ))}
+              <SelectItem value="none">Non classées</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={scope} onValueChange={(value) => setScope(value as Scope)}>
+            <SelectTrigger className="w-full sm:w-[230px]" aria-label="Filtrer par type de personne">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SCOPES.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Statuts déduits des échanges : un clic filtre */}
@@ -288,6 +309,7 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
                           {company.name}
                         </Link>
                       )}
+                      <SegmentBadge segment={company.segment} className="ml-2" />
                     </TableCell>
                     <TableCell>
                       <OutreachBadge

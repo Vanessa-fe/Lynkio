@@ -67,6 +67,8 @@ export type Database = {
           score: number | null
           scored_at: string | null
           sector: string | null
+          segment: string | null
+          segment_set_by: string
           size_category: string | null
           source_id: string | null
           stack_detected_at: string | null
@@ -103,6 +105,8 @@ export type Database = {
           score?: number | null
           scored_at?: string | null
           sector?: string | null
+          segment?: string | null
+          segment_set_by?: string
           size_category?: string | null
           source_id?: string | null
           stack_detected_at?: string | null
@@ -139,6 +143,8 @@ export type Database = {
           score?: number | null
           scored_at?: string | null
           sector?: string | null
+          segment?: string | null
+          segment_set_by?: string
           size_category?: string | null
           source_id?: string | null
           stack_detected_at?: string | null
@@ -1018,6 +1024,16 @@ export type Database = {
           p_days: number[]
           p_hour: number
           p_tz: string
+        }
+        Returns: string
+      }
+      infer_company_segment: {
+        Args: {
+          p_kind: string
+          p_name: string
+          p_naf: string
+          p_notes: string
+          p_size: string
         }
         Returns: string
       }

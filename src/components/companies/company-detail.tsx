@@ -55,6 +55,7 @@ import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
 import { CompanyNextStep } from './company-next-step'
+import { CompanySegmentSelect } from './company-segment'
 import { AttachToCompanyDialog } from '@/components/people/attach-to-company-dialog'
 import type { OrganizationOption, PersonRow } from '@/lib/queries/people'
 import { RemindersList } from '@/components/reminders/reminders-list'
@@ -196,7 +197,10 @@ export function CompanyDetail({
                 <p className="text-xs text-muted-foreground mb-1">Score</p>
                 <CompanyScore score={company.score} />
               </div>
-              <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
+              <div className="flex flex-col gap-2">
+                <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
+                <CompanySegmentSelect companyId={company.id} segment={company.segment} setBy={company.segment_set_by} />
+              </div>
             </div>
           </div>
         </CardHeader>

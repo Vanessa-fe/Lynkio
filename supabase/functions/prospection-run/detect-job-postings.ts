@@ -44,12 +44,16 @@ const MAX_UNIDENTIFIED_PER_RUN = 10
 // Le métier de l'utilisateur (profession_signals) décide lesquels sont utilisés.
 // Codes du ROME 4.0 (2025) : le développement web a son propre code (M1855),
 // de loin le plus utilisé dans les offres de développeur.
-const JOB_SIGNAL_ROME_CODES: Record<string, string[]> = {
-  job_posting_dev: [
+const DEV_ROME_CODES = [
     'M1855', // Développeur / Développeuse web
     'M1861', // Développeur / Développeuse logiciel ou d'application
     'M1805', // Développeur / Développeuse informatique
-  ],
+]
+
+const JOB_SIGNAL_ROME_CODES: Record<string, string[]> = {
+  job_posting_dev: DEV_ROME_CODES,
+  // Même métier, autre lecture : chez une agence ou une startup, c'est un besoin de renfort
+  dev_hiring_reinforcement: DEV_ROME_CODES,
   job_posting_design: ['E1205'], // Réalisation de contenus multimédias
   job_posting_marketing: ['M1705'], // Marketing
   // Entreprises qui investissent dans leur site, souvent sans équipe de développement
@@ -68,6 +72,11 @@ const DIGITAL_TITLE = /web|site|digital|num[ée]rique|e-?commerce|en ligne|seo|r
 
 // Division NAF 78 : agences d'intérim et cabinets de recrutement (ils recrutent pour d'autres)
 const RECRUITMENT_DIVISION = '78'
+
+// Divisions NAF des agences, studios et éditeurs (donnée par France Travail pour chaque offre) :
+// 58 édition (dont logiciels), 62 programmation et conseil informatique, 63 services d'information,
+// 73 publicité, 74 design. Les ESN de la division 62 sont écartées plus tôt (nom, texte de l'offre).
+const AGENCY_STARTUP_DIVISIONS = new Set(['58', '62', '63', '73', '74'])
 
 type OfferGroup = { key: string; name: string; offers: JobOffer[] }
 
@@ -95,7 +104,7 @@ export async function detectJobPostings(
   )
   stats.until = newest
 
-  const { groups, anonymous } = groupByCompany(offers, stats, romeToSignal)
+  const { groups, anonymous } = groupByCompany(offers, stats, romeToSignal, signalWeights)
 
   // Le quota d'entreprises va d'abord aux signaux qui comptent le plus pour le client idéal
   const priority = (group: OfferGroup) =>
@@ -150,7 +159,8 @@ async function jobSignalWeights(admin: SupabaseClient, context: Context): Promis
 function groupByCompany(
   offers: JobOffer[],
   stats: SourceStats,
-  romeToSignal: Map<string, string>
+  romeToSignal: Map<string, string>,
+  signalWeights: Map<string, number>
 ): { groups: OfferGroup[]; anonymous: JobOffer[] } {
   const groups = new Map<string, OfferGroup>()
   const anonymous: JobOffer[] = []
@@ -178,6 +188,12 @@ function groupByCompany(
     }
     if (signalType === 'job_posting_digital' && !DIGITAL_TITLE.test(offer.intitule ?? '')) {
       skip(stats, 'Poste sans lien avec le web')
+      continue
+    }
+    // Offre de développeur : gardée seulement si sa lecture (renfort d'agence ou de startup,
+    // ou embauche dans l'équipe) compte pour le client idéal
+    if (!isFreelanceOffer(offer) && !signalWeights.has(offerSignalType(offer, romeToSignal))) {
+      skip(stats, 'Recrute un développeur pour son équipe (hors agence et startup)')
       continue
     }
 
@@ -366,7 +382,13 @@ function isFreelanceOffer(offer: JobOffer): boolean {
 
 function offerSignalType(offer: JobOffer, romeToSignal: Map<string, string>): string {
   if (isFreelanceOffer(offer)) return 'freelance_mission'
-  return (offer.romeCode && romeToSignal.get(offer.romeCode)) || 'job_posting_dev'
+  const type = (offer.romeCode && romeToSignal.get(offer.romeCode)) || 'job_posting_dev'
+  if (type === 'job_posting_dev' || type === 'dev_hiring_reinforcement') {
+    return offer.secteurActivite && AGENCY_STARTUP_DIVISIONS.has(offer.secteurActivite)
+      ? 'dev_hiring_reinforcement'
+      : 'job_posting_dev'
+  }
+  return type
 }
 
 function offerSignal(offer: JobOffer, romeToSignal: Map<string, string>) {
