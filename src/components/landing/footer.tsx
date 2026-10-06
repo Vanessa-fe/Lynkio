@@ -20,14 +20,18 @@ export function Footer() {
           )}
         </div>
       </div>
-      <FadeIn y={80} className="pointer-events-none select-none px-4 md:px-6">
+      <FadeIn y={60} className="pointer-events-none select-none px-4 md:px-6">
         <p
           aria-hidden
-          className="-mb-[0.22em] text-center font-display text-[24vw] font-bold leading-none tracking-[-0.07em] text-brand-100 lg:text-[19rem]"
+          className="pb-[0.12em] text-center font-display text-[22vw] font-bold leading-[0.95] tracking-[-0.07em] text-brand-100 lg:text-[17rem]"
         >
           lynkio
         </p>
       </FadeIn>
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 border-t border-ink/[0.07] px-4 py-6 text-xs text-ink/45 sm:flex-row md:px-6">
+        <p>© {new Date().getFullYear()} Lynkio</p>
+        <p>Sources publiques · Messages relus par vous</p>
+      </div>
     </footer>
   )
 }

@@ -119,6 +119,17 @@ const config = {
           from: { opacity: '0', transform: 'translateY(var(--fade-up-from, 20px))' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        // Radar : un point s'allume au passage du faisceau puis s'estompe
+        blip: {
+          '0%': { opacity: '1', transform: 'scale(1.8)' },
+          '12%': { opacity: '1', transform: 'scale(1)' },
+          '70%, 100%': { opacity: '0.3', transform: 'scale(1)' },
+        },
+        'blip-label': {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '6%, 50%': { opacity: '1', transform: 'translateY(0)' },
+          '65%, 100%': { opacity: '0', transform: 'translateY(0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -129,6 +140,9 @@ const config = {
         'spin-slow': 'spin 4s linear infinite',
         'reveal-up': 'reveal-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both',
         'fade-up': 'fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both',
+        sweep: 'spin 5s linear infinite',
+        blip: 'blip 5s ease-out infinite',
+        'blip-label': 'blip-label 5s ease-out infinite',
       },
     },
   },

@@ -200,7 +200,7 @@ export function Features() {
     <section id="fonctionnalites" className="px-4 py-24 md:px-6 md:py-32">
       <div className="mx-auto max-w-6xl">
         <div className="max-w-3xl">
-          <SectionLabel index="02" label="Fonctionnalités" className="text-brand-700" />
+          <SectionLabel label="Fonctionnalités" />
           <RevealWords
             text="Prospecter sans y passer *vos journées.*"
             accentClassName="text-brand-600"

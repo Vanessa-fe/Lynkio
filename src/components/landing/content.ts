@@ -1,7 +1,10 @@
 import {
   Bell,
+  Briefcase,
   Building2,
   Code2,
+  Globe,
+  Landmark,
   Rocket,
   ScanSearch,
   Sparkles,
@@ -83,18 +86,42 @@ export const examples: Example[] = [
   },
 ]
 
-export const signalsBand = [
-  'Offres France Travail',
-  'Missions freelance',
-  'Agences qui recrutent',
-  'Stack technique',
-  'Score sur 100',
-  'Message prêt à relire',
-  'Relances du jour',
+/** Sources surveillées par Sophie (section radar) */
+export const sources = [
+  { icon: Briefcase, title: 'Offres d’emploi France Travail', text: 'Recrutements web et digital' },
+  { icon: Sparkles, title: 'Missions freelance', text: 'Projets ouverts aux indépendants' },
+  { icon: Landmark, title: 'Registre des entreprises', text: 'Sociétés tout juste créées' },
+  { icon: Globe, title: 'Sites web analysés', text: 'La technologie vérifiée dans le code' },
 ]
 
-export const manifesto =
-  'Prospecter à froid, c’est écrire au hasard à des gens qui n’ont besoin de rien. Sophie attend *un signal* : une offre publiée, une mission ouverte, un site fait avec votre technologie. Vous écrivez *au bon moment,* avec une vraie raison.'
+/** Points du radar : angle en degrés (sens horaire depuis le haut), distance au centre (0 à 1) */
+export const radarBlips = [
+  { angle: 38, distance: 0.58, label: 'Recrute · Lyon' },
+  { angle: 118, distance: 0.78, label: 'Mission · Nantes' },
+  { angle: 215, distance: 0.38 },
+  { angle: 252, distance: 0.72, label: 'Agence · Lille' },
+  { angle: 318, distance: 0.62 },
+]
+
+export const beforeAfter = {
+  title: 'Prospecter à froid, c’est écrire au hasard. *Sophie attend un signal.*',
+  before: {
+    label: 'À l’aveugle',
+    items: [
+      'Des listes d’entreprises prises au hasard',
+      'Le même message envoyé à tout le monde',
+      'Des relances oubliées, des pistes qui refroidissent',
+    ],
+  },
+  after: {
+    label: 'Avec Sophie',
+    items: [
+      'Des entreprises qui recrutent ou publient une mission maintenant',
+      'Un premier message qui part d’un fait précis',
+      'Les relances du jour, au bon moment',
+    ],
+  },
+}
 
 export type Feature = { icon: LucideIcon; title: string; text: string }
 

@@ -51,15 +51,15 @@ function TypedText({ text, className }: { text: string; className?: string }) {
 
 function ScoreRing({ score }: { score: number }) {
   return (
-    <div className="relative size-16 shrink-0">
-      <svg viewBox="0 0 64 64" className="size-full -rotate-90" aria-hidden>
-        <circle cx="32" cy="32" r="27" fill="none" strokeWidth="6" className="stroke-brand-100" />
+    <div className="relative size-[76px] shrink-0">
+      <svg viewBox="0 0 76 76" className="size-full -rotate-90" aria-hidden>
+        <circle cx="38" cy="38" r="34" fill="none" strokeWidth="4.5" className="stroke-brand-100" />
         <motion.circle
-          cx="32"
-          cy="32"
-          r="27"
+          cx="38"
+          cy="38"
+          r="34"
           fill="none"
-          strokeWidth="6"
+          strokeWidth="4.5"
           strokeLinecap="round"
           className="stroke-brand-500"
           initial={{ pathLength: 0 }}
@@ -68,8 +68,8 @@ function ScoreRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <Counter to={score} play delay={0.25} duration={1.4} className="font-display text-lg font-bold tabular-nums" />
-        <span className="mt-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">score</span>
+        <Counter to={score} play delay={0.25} duration={1.4} className="font-display text-xl font-bold tabular-nums" />
+        <span className="mt-1 text-[10px] font-medium text-muted-foreground">/100</span>
       </div>
     </div>
   )

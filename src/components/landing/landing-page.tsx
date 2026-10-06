@@ -1,12 +1,12 @@
 import { SmoothScroll } from '@/components/motion/smooth-scroll'
+import { BeforeAfter } from './before-after'
 import { Features } from './features'
 import { FinalCta } from './final-cta'
 import { Footer } from './footer'
 import { Hero } from './hero'
-import { Manifesto } from './manifesto'
 import { Nav } from './nav'
+import { Radar } from './radar'
 import { Safeguards } from './safeguards'
-import { SignalsBand } from './signals-band'
 import { Steps } from './steps'
 
 export function LandingPage() {
@@ -16,8 +16,8 @@ export function LandingPage() {
         <Nav />
         <main>
           <Hero />
-          <SignalsBand />
-          <Manifesto />
+          <BeforeAfter />
+          <Radar />
           <Features />
           <Steps />
           <Safeguards />

@@ -64,7 +64,7 @@ export function Steps() {
     <section id="comment-ca-marche" className="px-4 py-24 md:px-6 md:py-32">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-14 lg:grid-cols-[1fr_1.3fr] lg:gap-20">
         <div className="lg:sticky lg:top-32 lg:self-start">
-          <SectionLabel index="03" label="Comment ça marche" className="text-brand-700" />
+          <SectionLabel label="Comment ça marche" />
           <RevealWords
             text="Trois étapes, et Sophie *s’occupe du reste.*"
             accentClassName="text-brand-600"

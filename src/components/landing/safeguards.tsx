@@ -38,7 +38,7 @@ export function Safeguards() {
         />
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
           <div>
-            <SectionLabel index="04" label="Fiabilité" className="text-brand-300" />
+            <SectionLabel label="Fiabilité" tone="dark" />
             <RevealWords
               text="L’IA propose, *le code vérifie.*"
               accentClassName="text-brand-300"
