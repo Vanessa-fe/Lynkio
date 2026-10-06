@@ -44,6 +44,9 @@ export type OutreachStatus = 'to_contact' | 'contacted' | 'followed_up' | 'repli
 export type CompanyOrigin = 'manual' | 'import' | 'detector'
 // organization : entreprise ; individual : personne seule (indépendant ou entreprise inconnue)
 export type CompanyKind = 'organization' | 'individual'
+// agency : agence, studio ; startup : startup, éditeur de logiciel ; smb : TPE/PME hors numérique
+export type CompanySegment = 'agency' | 'startup' | 'smb'
+export type CompanySegmentSetBy = 'auto' | 'manual'
 export type SizeCategory = 'solo' | 'tpe' | 'pme' | 'eti' | 'ge'
 export type EmailSource = 'manual' | 'hunter' | 'website' | 'other'
 export type CompanyInteractionType =

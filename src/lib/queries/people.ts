@@ -10,7 +10,7 @@ export type PersonRow = Pick<
   // Sa fiche : celle de son entreprise, ou la sienne si elle est seule
   company: Pick<
     Company,
-    'id' | 'name' | 'kind' | 'size_category' | 'city' | 'stage_id' | 'next_action' | 'last_interaction_at'
+    'id' | 'name' | 'kind' | 'size_category' | 'city' | 'stage_id' | 'next_action' | 'last_interaction_at' | 'segment'
   >
   // Statut déduit de ses échanges
   outreach: { status: OutreachStatus; lastSentAt: string | null; lastReplyAt: string | null }
@@ -36,7 +36,7 @@ export async function getPeople(limit = 500): Promise<PersonRow[]> {
       .from('company_contacts')
       .select(
         `id, first_name, last_name, role, email, linkedin_url, is_decision_maker, opted_out_at, created_at,
-         company:companies!inner(id, name, kind, size_category, city, stage_id, next_action, last_interaction_at)`
+         company:companies!inner(id, name, kind, size_category, city, stage_id, next_action, last_interaction_at, segment)`
       )
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })

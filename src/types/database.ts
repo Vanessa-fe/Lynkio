@@ -12,6 +12,8 @@ import type {
   CompanyInteractionStatus,
   CompanyInteractionType,
   CompanyKind,
+  CompanySegment,
+  CompanySegmentSetBy,
   CompanyOrigin,
   EmailSource,
   InteractionDirection,
@@ -37,7 +39,13 @@ export type Database = MergeDeep<
       Tables: {
         reminders: Columns<{ priority: ReminderPriority | null }>
         pipeline_stages: Columns<{ kind: PipelineStageKind; role: PipelineStageRole | null }>
-        companies: Columns<{ origin: CompanyOrigin; kind: CompanyKind; size_category: SizeCategory | null }>
+        companies: Columns<{
+          origin: CompanyOrigin
+          kind: CompanyKind
+          size_category: SizeCategory | null
+          segment: CompanySegment | null
+          segment_set_by: CompanySegmentSetBy
+        }>
         company_contacts: Columns<{ email_source: EmailSource | null }>
         company_interactions: Columns<{
           type: CompanyInteractionType

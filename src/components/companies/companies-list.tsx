@@ -32,6 +32,8 @@ import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
 import { CompanyScore, CompanyStageSelect } from './company-stage-select'
+import { SegmentBadge } from './company-segment'
+import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
 
 interface CompaniesListProps {
   companies: CompanyWithRelations[]
@@ -45,8 +47,8 @@ const ALL = 'all'
 // Stockage du navigateur, avec une copie en mémoire s'il est indisponible (navigation privée).
 const FILTERS_KEY = 'companies-list-filters'
 
-type Filters = { stage: string; source: string; search: string }
-const DEFAULT_FILTERS: Filters = { stage: ALL, source: ALL, search: '' }
+type Filters = { stage: string; source: string; segment: string; search: string }
+const DEFAULT_FILTERS: Filters = { stage: ALL, source: ALL, segment: ALL, search: '' }
 
 let memoryFilters = ''
 const filterListeners = new Set<() => void>()
@@ -82,6 +84,7 @@ function parseFilters(raw: string): Filters {
     return {
       stage: typeof saved.stage === 'string' ? saved.stage : ALL,
       source: typeof saved.source === 'string' ? saved.source : ALL,
+      segment: typeof saved.segment === 'string' ? saved.segment : ALL,
       search: typeof saved.search === 'string' ? saved.search : '',
     }
   } catch {
@@ -94,9 +97,10 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
   const { toast } = useToast()
   // Serveur : filtres par défaut ; navigateur : ceux de la session
   const filters = parseFilters(useSyncExternalStore(subscribeFilters, readFilters, () => ''))
-  const { stage: stageFilter, source: sourceFilter, search } = filters
+  const { stage: stageFilter, source: sourceFilter, segment: segmentFilter, search } = filters
   const setStageFilter = (stage: string) => writeFilters({ ...filters, stage })
   const setSourceFilter = (source: string) => writeFilters({ ...filters, source })
+  const setSegmentFilter = (segment: string) => writeFilters({ ...filters, segment })
   const setSearch = (value: string) => writeFilters({ ...filters, search: value })
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -120,8 +124,9 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
 
     const matchesStage = stageFilter === ALL || (company.stage_id ?? 'none') === stageFilter
     const matchesSource = sourceFilter === ALL || company.source_id === sourceFilter
+    const matchesSegment = segmentFilter === ALL || (company.segment ?? 'none') === segmentFilter
 
-    return matchesSearch && matchesStage && matchesSource
+    return matchesSearch && matchesStage && matchesSource && matchesSegment
   })
 
   const handleDelete = async (company: CompanyWithRelations) => {
@@ -206,19 +211,35 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
           {filteredCompanies.length} entreprise{filteredCompanies.length !== 1 ? 's' : ''}
           {filteredCompanies.length !== companies.length && ` sur ${companies.length}`}
         </p>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="sm:w-[220px]" aria-label="Filtrer par source">
-            <SelectValue placeholder="Toutes les sources" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Toutes les sources</SelectItem>
-            {sources.map((source) => (
-              <SelectItem key={source.id} value={source.id}>
-                {source.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Select value={segmentFilter} onValueChange={setSegmentFilter}>
+            <SelectTrigger className="sm:w-[200px]" aria-label="Filtrer par segment">
+              <SelectValue placeholder="Tous les segments" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Tous les segments</SelectItem>
+              {SEGMENTS.map((segment) => (
+                <SelectItem key={segment} value={segment}>
+                  {segmentLabels[segment]}
+                </SelectItem>
+              ))}
+              <SelectItem value="none">Non classées</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="sm:w-[220px]" aria-label="Filtrer par source">
+              <SelectValue placeholder="Toutes les sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Toutes les sources</SelectItem>
+              {sources.map((source) => (
+                <SelectItem key={source.id} value={source.id}>
+                  {source.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {companies.length === 0 ? (
@@ -257,9 +278,12 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
               {filteredCompanies.map((company) => (
                 <TableRow key={company.id}>
                   <TableCell>
-                    <Link href={`/companies/${company.id}`} className="font-medium hover:underline">
-                      {company.name}
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link href={`/companies/${company.id}`} className="font-medium hover:underline">
+                        {company.name}
+                      </Link>
+                      <SegmentBadge segment={company.segment} />
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {[
                         company.kind === 'individual' && individualLabel(company),
