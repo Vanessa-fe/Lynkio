@@ -78,6 +78,11 @@ const RECRUITMENT_DIVISION = '78'
 // 73 publicité, 74 design. Les ESN de la division 62 sont écartées plus tôt (nom, texte de l'offre).
 const AGENCY_STARTUP_DIVISIONS = new Set(['58', '62', '63', '73', '74'])
 
+// Conseil en informatique (62.02) et gestion d'installations (62.03) : surtout des ESN, qui
+// recrutent pour placer leurs développeurs chez des clients. Le code complet n'est connu
+// qu'avec la fiche officielle de l'employeur : son offre redevient alors une simple embauche.
+const CONSULTING_NAF = /^62\.0[23]/
+
 type OfferGroup = { key: string; name: string; offers: JobOffer[] }
 
 export async function detectJobPostings(
@@ -112,7 +117,7 @@ export async function detectJobPostings(
   groups.sort((a, b) => priority(b) - priority(a))
 
   for (const group of groups) {
-    await processCompany(admin, settings, context, budget, stats, group, romeToSignal)
+    await processCompany(admin, settings, context, budget, stats, group, romeToSignal, signalWeights)
   }
 
   // Les plus utiles d'abord (web et digital avant les offres de développeur)
@@ -261,13 +266,14 @@ async function processCompany(
   budget: Budget,
   stats: SourceStats,
   group: OfferGroup,
-  romeToSignal: Map<string, string>
+  romeToSignal: Map<string, string>,
+  signalWeights: Map<string, number>
 ) {
   const website = group.offers.find((offer) => offer.entreprise?.url)?.entreprise?.url ?? null
 
   const existing = await findExistingCompany(admin, context.userId, { website, name: group.name })
   if (existing) {
-    await addSignals(admin, context, stats, existing.id, group, romeToSignal)
+    await addSignals(admin, context, stats, existing.id, group, romeToSignal, existing.naf_code)
     return
   }
 
@@ -281,13 +287,22 @@ async function processCompany(
   if (registry) {
     const known = await findExistingCompany(admin, context.userId, { siren: registry.siren })
     if (known) {
-      await addSignals(admin, context, stats, known.id, group, romeToSignal)
+      await addSignals(admin, context, stats, known.id, group, romeToSignal, known.naf_code ?? registry.activite_principale)
       return
     }
     if (isNonDiffusible(registry.nom_complet)) {
       skipGroup(stats, group, 'Données non diffusibles')
       return
     }
+  }
+
+  // Avec le code d'activité complet, une ESN (62.02, 62.03) qui recrute un développeur
+  // n'est plus lue comme une agence en renfort : sans autre signal qui compte, on l'écarte
+  const naf = registry?.activite_principale ?? null
+  const counts = (offer: JobOffer) => isFreelanceOffer(offer) || signalWeights.has(offerSignalType(offer, romeToSignal, naf))
+  if (!group.offers.some(counts)) {
+    skipGroup(stats, group, 'Conseil en informatique (ESN probable)')
+    return
   }
 
   // Taille connue et hors du client idéal (ex. grand groupe) : pas un client direct
@@ -345,7 +360,7 @@ async function processCompany(
 
   await insertDirectors(admin, context.userId, companyId, registry)
   for (const offer of group.offers) {
-    await insertSignal(admin, context.userId, companyId, offerSignal(offer, romeToSignal))
+    await insertSignal(admin, context.userId, companyId, offerSignal(offer, romeToSignal, naf))
   }
 }
 
@@ -355,11 +370,12 @@ async function addSignals(
   stats: SourceStats,
   companyId: string,
   group: OfferGroup,
-  romeToSignal: Map<string, string>
+  romeToSignal: Map<string, string>,
+  nafCode: string | null
 ) {
   let added = 0
   for (const offer of group.offers) {
-    if (await insertSignal(admin, context.userId, companyId, offerSignal(offer, romeToSignal))) added++
+    if (await insertSignal(admin, context.userId, companyId, offerSignal(offer, romeToSignal, nafCode))) added++
   }
 
   stats.signalsAdded += added
@@ -380,20 +396,24 @@ function isFreelanceOffer(offer: JobOffer): boolean {
   )
 }
 
-function offerSignalType(offer: JobOffer, romeToSignal: Map<string, string>): string {
+/**
+ * Signal d'une offre. Une offre de développeur se lit « renfort » chez une agence, un studio
+ * ou un éditeur (division NAF de l'employeur), « embauche » ailleurs ; nafCode, quand la
+ * fiche officielle le donne, permet de reconnaître une ESN de la division 62.
+ */
+function offerSignalType(offer: JobOffer, romeToSignal: Map<string, string>, nafCode?: string | null): string {
   if (isFreelanceOffer(offer)) return 'freelance_mission'
   const type = (offer.romeCode && romeToSignal.get(offer.romeCode)) || 'job_posting_dev'
   if (type === 'job_posting_dev' || type === 'dev_hiring_reinforcement') {
-    return offer.secteurActivite && AGENCY_STARTUP_DIVISIONS.has(offer.secteurActivite)
-      ? 'dev_hiring_reinforcement'
-      : 'job_posting_dev'
+    const agencyOrStartup = !!offer.secteurActivite && AGENCY_STARTUP_DIVISIONS.has(offer.secteurActivite)
+    return agencyOrStartup && !(nafCode && CONSULTING_NAF.test(nafCode)) ? 'dev_hiring_reinforcement' : 'job_posting_dev'
   }
   return type
 }
 
-function offerSignal(offer: JobOffer, romeToSignal: Map<string, string>) {
+function offerSignal(offer: JobOffer, romeToSignal: Map<string, string>, nafCode?: string | null) {
   return {
-    type: offerSignalType(offer, romeToSignal),
+    type: offerSignalType(offer, romeToSignal, nafCode),
     dedupeKey: `francetravail:${offer.id}`,
     sourceUrl: offerUrl(offer),
     evidence: {

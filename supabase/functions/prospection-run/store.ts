@@ -70,7 +70,7 @@ export async function findExistingCompany(
   admin: SupabaseClient,
   userId: string,
   { siren, website, name }: { siren?: string | null; website?: string | null; name?: string | null }
-): Promise<{ id: string; name: string } | null> {
+): Promise<{ id: string; name: string; naf_code: string | null } | null> {
   const domain = domainFromUrl(website)
   const lookups: [string, string, 'eq' | 'ilike'][] = []
   if (siren) lookups.push(['registration_id', siren, 'eq'])
@@ -79,7 +79,7 @@ export async function findExistingCompany(
   if (name) lookups.push(['name', name.replace(/[\\%_]/g, (char) => `\\${char}`), 'ilike'])
 
   for (const [column, value, operator] of lookups) {
-    const query = admin.from('companies').select('id, name').eq('user_id', userId)
+    const query = admin.from('companies').select('id, name, naf_code').eq('user_id', userId)
     const { data, error } = await (operator === 'eq' ? query.eq(column, value) : query.ilike(column, value))
       .limit(1)
       .maybeSingle()
