@@ -6,6 +6,7 @@ import { useRef } from 'react'
 import { Magnetic } from '@/components/motion/magnetic'
 import { easeOutExpo, RevealWords } from '@/components/motion/reveal'
 import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
+import { cn } from '@/lib/utils/cn'
 import { hero } from './content'
 import { CtaLink } from './cta-link'
 import { SophiePreview } from './sophie-preview'
@@ -29,16 +30,12 @@ const blobs = [
   },
 ]
 
+/** Entrée en CSS : le premier écran reste lisible même si le JavaScript tarde. */
 function Appear({ children, delay, className }: { children: React.ReactNode; delay: number; className?: string }) {
   return (
-    <motion.div
-      className={className}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.9, ease: easeOutExpo, delay }}
-    >
+    <div className={cn('animate-fade-up', className)} style={{ animationDelay: `${delay}s` }}>
       {children}
-    </motion.div>
+    </div>
   )
 }
 
@@ -105,7 +102,7 @@ export function Hero() {
           <RevealWords
             as="h1"
             text={hero.title}
-            show
+            immediate
             delay={0.15}
             stagger={0.045}
             accentClassName="text-brand-600"
@@ -147,13 +144,9 @@ export function Hero() {
           </Appear>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 40, rotate: 2 }}
-          animate={{ opacity: 1, y: 0, rotate: 0 }}
-          transition={{ duration: 1.2, ease: easeOutExpo, delay: 0.4 }}
-        >
+        <Appear delay={0.4} className="[--fade-up-from:40px] [animation-duration:1.2s]">
           <SophiePreview />
-        </motion.div>
+        </Appear>
       </motion.div>
     </section>
   )

@@ -110,6 +110,15 @@ const config = {
           '0%': { boxShadow: '0 0 0 0 rgb(221 90 66 / 0.55)' },
           '100%': { boxShadow: '0 0 0 10px rgb(221 90 66 / 0)' },
         },
+        // Entrées du premier écran, en CSS : elles jouent même si le JavaScript tarde
+        'reveal-up': {
+          from: { transform: 'translateY(115%)' },
+          to: { transform: 'translateY(0)' },
+        },
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(var(--fade-up-from, 20px))' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -118,6 +127,8 @@ const config = {
         bob: 'bob 5s ease-in-out infinite',
         'pulse-dot': 'pulse-dot 2s ease-out infinite',
         'spin-slow': 'spin 4s linear infinite',
+        'reveal-up': 'reveal-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'fade-up': 'fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
     },
   },

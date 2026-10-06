@@ -42,7 +42,7 @@ export function RevealWords({
   accentClassName = 'text-primary',
   delay = 0,
   stagger = 0.05,
-  show,
+  immediate = false,
 }: {
   text: string
   as?: ElementType
@@ -50,13 +50,21 @@ export function RevealWords({
   accentClassName?: string
   delay?: number
   stagger?: number
-  /** Contrôle externe (sinon : à l'entrée dans l'écran) */
-  show?: boolean
+  /**
+   * Joue l'animation dès l'affichage, en CSS (premier écran) : le titre apparaît
+   * même si le JavaScript tarde. Sinon : à l'entrée dans l'écran, avec Motion.
+   */
+  immediate?: boolean
 }) {
   const ref = useRef<HTMLElement>(null)
   const inView = useInView(ref, { once: true, margin: '0px 0px -10% 0px' })
-  const visible = show ?? inView
   const words = splitWords(text)
+  const parts = (word: WordPart[]) =>
+    word.map((part, j) => (
+      <span key={j} className={part.accent ? cn('accent-serif', accentClassName) : undefined}>
+        {part.text}
+      </span>
+    ))
 
   return (
     <Tag ref={ref} className={className}>
@@ -64,18 +72,23 @@ export function RevealWords({
       {words.map((word, i) => (
         <span key={i} aria-hidden>
           <span className="-mb-[0.14em] inline-block overflow-hidden px-[0.04em] pb-[0.14em] align-top">
-            <motion.span
-              className="inline-block will-change-transform"
-              initial={{ y: '115%' }}
-              animate={{ y: visible ? '0%' : '115%' }}
-              transition={{ duration: 0.9, ease: easeOutExpo, delay: delay + i * stagger }}
-            >
-              {word.map((part, j) => (
-                <span key={j} className={part.accent ? cn('accent-serif', accentClassName) : undefined}>
-                  {part.text}
-                </span>
-              ))}
-            </motion.span>
+            {immediate ? (
+              <span
+                className="inline-block animate-reveal-up"
+                style={{ animationDelay: `${delay + i * stagger}s` }}
+              >
+                {parts(word)}
+              </span>
+            ) : (
+              <motion.span
+                className="inline-block will-change-transform"
+                initial={{ y: '115%' }}
+                animate={{ y: inView ? '0%' : '115%' }}
+                transition={{ duration: 0.9, ease: easeOutExpo, delay: delay + i * stagger }}
+              >
+                {parts(word)}
+              </motion.span>
+            )}
           </span>
           {i < words.length - 1 ? ' ' : null}
         </span>

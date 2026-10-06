@@ -42,14 +42,15 @@ export function Nav() {
     <>
       <motion.header
         className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-6 md:pt-4"
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: hidden && !open ? -100 : 0, opacity: 1 }}
+        initial={false}
+        animate={{ y: hidden && !open ? -100 : 0 }}
         transition={{ duration: 0.7, ease: easeOutExpo }}
       >
         <nav
           aria-label="Navigation principale"
           className={cn(
-            'mx-auto flex max-w-6xl items-center justify-between rounded-full border py-2 pl-4 pr-2 transition-[background-color,border-color,box-shadow] duration-500',
+            // Entrée en CSS sur la barre elle-même : l'en-tête garde sa position animée par Motion (masquée au scroll)
+            'mx-auto flex max-w-6xl animate-fade-up items-center justify-between rounded-full border py-2 pl-4 pr-2 transition-[background-color,border-color,box-shadow] duration-500 [--fade-up-from:-24px]',
             scrolled || open
               ? 'border-ink/10 bg-cream/80 shadow-soft backdrop-blur-xl'
               : 'border-transparent bg-transparent'
