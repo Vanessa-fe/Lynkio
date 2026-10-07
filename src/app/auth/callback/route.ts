@@ -16,7 +16,9 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('Error exchanging code for session:', error)
-      return NextResponse.redirect(`${requestUrl.origin}/login?error=verification_failed`)
+      // Lien expiré, déjà utilisé ou ouvert dans un autre navigateur : on propose d'en redemander un
+      const fallback = destination === '/update-password' ? '/reset-password?lien=expire' : '/login?lien=expire'
+      return NextResponse.redirect(new URL(fallback, requestUrl.origin))
     }
   }
 

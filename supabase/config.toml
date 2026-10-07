@@ -87,7 +87,9 @@ double_confirm_changes = true
 enable_confirmations = false
 
 # E-mails en français aux couleurs de Lynkio (à recopier aussi dans le tableau de bord Supabase,
-# Authentication > Emails : ce fichier ne règle que la base locale)
+# Authentication > Emails : ce fichier ne règle que la base locale).
+# Le bouton pointe vers {{ .SiteURL }}/auth/confirm (jeton à usage unique) : le « Site URL »
+# du projet doit donc être l'adresse en ligne de Lynkio.
 [auth.email.template.recovery]
 subject = "Réinitialisez votre mot de passe Lynkio"
 content_path = "./supabase/templates/recovery.html"
