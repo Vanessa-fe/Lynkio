@@ -40,7 +40,8 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
     try {
       const result = await login(data)
 
-      if (!result.success && result.error) {
+      // Action réussie : le serveur redirige et ne renvoie rien (la navigation est déjà en cours)
+      if (result && !result.success && result.error) {
         setError(result.error)
       }
     } catch (err) {

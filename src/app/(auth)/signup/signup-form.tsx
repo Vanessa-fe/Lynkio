@@ -39,9 +39,10 @@ export function SignupForm() {
     try {
       const result = await signup(data)
 
-      if (result.success) {
+      // Compte créé avec session : le serveur redirige et ne renvoie rien
+      if (result?.success) {
         setSuccess(true)
-      } else if (result.error) {
+      } else if (result?.error) {
         setError(result.error)
       }
     } catch (err) {
