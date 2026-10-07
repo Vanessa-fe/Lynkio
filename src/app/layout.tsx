@@ -3,6 +3,7 @@ import { Fraunces, Inter, Sora } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { MotionProvider } from '@/components/motion/motion-provider'
+import { OPEN_GRAPH_BASE, SITE_URL } from '@/lib/site'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const sora = Sora({ subsets: ['latin'], variable: '--font-display' })
@@ -14,8 +15,11 @@ const fraunces = Fraunces({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'Lynkio',
   description: 'L\'outil de prospection des freelances : Sophie repère les entreprises qui ont besoin de vous et prépare vos messages.',
+  applicationName: 'Lynkio',
+  openGraph: OPEN_GRAPH_BASE,
 }
 
 export const viewport: Viewport = {

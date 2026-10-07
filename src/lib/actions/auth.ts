@@ -1,9 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
+import { SITE_URL, toOrigin } from '@/lib/site'
 import {
   loginSchema,
   signupSchema,
@@ -21,6 +23,22 @@ import {
 type ActionResult = {
   success: boolean
   error?: string
+}
+
+/**
+ * Adresse du site depuis lequel la demande est faite : les liens des e-mails (inscription,
+ * mot de passe oublié) ramènent au même endroit, en ligne comme en local.
+ * Supabase n'accepte ces adresses que si elles figurent dans ses « Redirect URLs ».
+ */
+async function requestOrigin(): Promise<string> {
+  const requestHeaders = await headers()
+  const forwardedHost = requestHeaders.get('x-forwarded-host')
+  const forwardedProto = requestHeaders.get('x-forwarded-proto') ?? 'https'
+  return (
+    toOrigin(requestHeaders.get('origin')) ??
+    (forwardedHost ? toOrigin(`${forwardedProto}://${forwardedHost}`) : null) ??
+    SITE_URL
+  )
 }
 
 /**
@@ -89,7 +107,7 @@ export async function signup(data: SignupInput): Promise<ActionResult> {
       email: validated.email,
       password: validated.password,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+        emailRedirectTo: `${await requestOrigin()}/auth/callback`,
       },
     })
 
@@ -165,7 +183,7 @@ export async function resetPassword(data: ResetPasswordInput): Promise<ActionRes
     const supabase = await createClient()
 
     const { error } = await supabase.auth.resetPasswordForEmail(validated.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/update-password`,
+      redirectTo: `${await requestOrigin()}/auth/callback?next=/update-password`,
     })
 
     if (error) {

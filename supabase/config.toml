@@ -86,6 +86,16 @@ double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 
+# E-mails en français aux couleurs de Lynkio (à recopier aussi dans le tableau de bord Supabase,
+# Authentication > Emails : ce fichier ne règle que la base locale)
+[auth.email.template.recovery]
+subject = "Réinitialisez votre mot de passe Lynkio"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.confirmation]
+subject = "Confirmez votre adresse e-mail Lynkio"
+content_path = "./supabase/templates/confirmation.html"
+
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = true
