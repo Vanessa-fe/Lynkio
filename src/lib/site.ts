@@ -1,5 +1,22 @@
+const PRODUCTION_URL = 'https://lynkio.netlify.app'
+
+/**
+ * Origine (https://hôte) d'une adresse, ou null si elle est vide ou invalide.
+ * Accepte une adresse sans protocole (« lynkio.netlify.app ») : une variable d'environnement
+ * mal saisie ne doit ni faire échouer le build, ni casser les liens des e-mails.
+ */
+export function toOrigin(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+  try {
+    return new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`).origin
+  } catch {
+    return null
+  }
+}
+
 /** Adresse publique du site (balises de partage, plan du site, données structurées) */
-export const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://lynkio.netlify.app').replace(/\/$/, '')
+export const SITE_URL = toOrigin(process.env.NEXT_PUBLIC_APP_URL) ?? PRODUCTION_URL
 
 /** Partie commune des balises de partage (une page qui définit `openGraph` remplace celle du layout) */
 export const OPEN_GRAPH_BASE = { siteName: 'Lynkio', locale: 'fr_FR', type: 'website' } as const
