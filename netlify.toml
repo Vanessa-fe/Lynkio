@@ -6,3 +6,16 @@
   to = "https://filonea.fr/:splat"
   status = 301
   force = true
+
+# Mêmes redirections pour filonea.com (les pages passent d'abord par src/proxy.ts, qui redirige aussi)
+[[redirects]]
+  from = "https://filonea.com/*"
+  to = "https://filonea.fr/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.filonea.com/*"
+  to = "https://filonea.fr/:splat"
+  status = 301
+  force = true
