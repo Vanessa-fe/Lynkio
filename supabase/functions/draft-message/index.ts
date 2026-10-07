@@ -21,8 +21,13 @@ const MAX_INSTRUCTIONS_LENGTH = 500
 const MAX_SIGNALS = 5
 const MAX_REFERENCES = 10
 
-// Le site en production (et ses aperçus de déploiement Netlify), et le développement local
-const ALLOWED_ORIGINS = [/^https:\/\/([a-z0-9-]+--)?lynkio\.netlify\.app$/, /^http:\/\/localhost:\d+$/]
+// Le site en production (filonea.fr, filonea.com, et l'adresse Netlify avec ses aperçus de déploiement),
+// et le développement local
+const ALLOWED_ORIGINS = [
+  /^https:\/\/(www\.)?filonea\.(fr|com)$/,
+  /^https:\/\/([a-z0-9-]+--)?lynkio\.netlify\.app$/,
+  /^http:\/\/(localhost|127\.0\.0\.1):\d+$/,
+]
 
 const SIZE_LABELS: Record<string, string> = {
   solo: 'indépendant, sans salarié',

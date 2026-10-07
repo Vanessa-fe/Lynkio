@@ -71,7 +71,7 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
     if (duplicate) {
       return {
         success: false,
-        error: `${duplicate.name} est déjà dans Lynkio`,
+        error: `${duplicate.name} est déjà dans Filonea`,
         data: { companyId: duplicate.companyId },
       }
     }

@@ -1,6 +1,6 @@
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "lynkio"
+project_id = "filonea"
 
 [api]
 enabled = true
@@ -86,16 +86,16 @@ double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 
-# E-mails en français aux couleurs de Lynkio (à recopier aussi dans le tableau de bord Supabase,
+# E-mails en français aux couleurs de Filonea (à recopier aussi dans le tableau de bord Supabase,
 # Authentication > Emails : ce fichier ne règle que la base locale).
 # Le bouton pointe vers {{ .SiteURL }}/auth/confirm (jeton à usage unique) : le « Site URL »
-# du projet doit donc être l'adresse en ligne de Lynkio.
+# du projet doit donc être l'adresse en ligne de Filonea.
 [auth.email.template.recovery]
-subject = "Réinitialisez votre mot de passe Lynkio"
+subject = "Réinitialisez votre mot de passe Filonea"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.confirmation]
-subject = "Confirmez votre adresse e-mail Lynkio"
+subject = "Confirmez votre adresse e-mail Filonea"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.sms]

@@ -20,7 +20,7 @@ export default function SignupPage() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Inscriptions fermées</CardTitle>
         <CardDescription>
-          {SIGNUPS_CLOSED_MESSAGE} Lynkio est en test privé. Vous avez déjà un compte ? Connectez-vous.
+          {SIGNUPS_CLOSED_MESSAGE} Filonea est en test privé. Vous avez déjà un compte ? Connectez-vous.
         </CardDescription>
       </CardHeader>
       <CardFooter className="flex flex-col gap-2">

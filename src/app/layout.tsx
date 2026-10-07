@@ -16,9 +16,9 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Lynkio',
+  title: 'Filonea',
   description: 'L\'outil de prospection des freelances : Sophie repère les entreprises qui ont besoin de vous et prépare vos messages.',
-  applicationName: 'Lynkio',
+  applicationName: 'Filonea',
   openGraph: OPEN_GRAPH_BASE,
 }
 

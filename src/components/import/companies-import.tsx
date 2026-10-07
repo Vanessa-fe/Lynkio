@@ -99,7 +99,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
 
         setRows(parsed.data)
         setPreview(result.data)
-        // Export Waalaxy : sa liste devient la liste Lynkio proposée
+        // Export Waalaxy : sa liste devient la liste Filonea proposée
         if (result.data.waalaxy?.list) setListName((current) => current || result.data!.waalaxy!.list!)
         setStep('preview')
       },
@@ -190,7 +190,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
               </div>
               <div className="rounded-lg border p-3">
                 <p className="text-2xl font-bold">{preview.known + preview.duplicates}</p>
-                <p className="text-xs text-muted-foreground">déjà dans Lynkio</p>
+                <p className="text-xs text-muted-foreground">déjà dans Filonea</p>
               </div>
               <div className="rounded-lg border p-3">
                 <p className="text-2xl font-bold text-destructive">{preview.invalid}</p>
@@ -278,7 +278,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={AUTO_SEGMENT}>Deviné par Lynkio</SelectItem>
+                  <SelectItem value={AUTO_SEGMENT}>Deviné par Filonea</SelectItem>
                   {SEGMENTS.map((value) => (
                     <SelectItem key={value} value={value}>
                       {segmentLabels[value]}
@@ -288,7 +288,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
               </Select>
               <p className="text-xs text-muted-foreground">
                 {segment === AUTO_SEGMENT
-                  ? 'Lynkio le devine d\'après le nom et le code d\'activité. Choisissez-le si tout le fichier est du même type, comme une liste d\'agences.'
+                  ? 'Filonea le devine d\'après le nom et le code d\'activité. Choisissez-le si tout le fichier est du même type, comme une liste d\'agences.'
                   : segmentDescriptions[segment as CompanySegment]}
               </p>
             </div>

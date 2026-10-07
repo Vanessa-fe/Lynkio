@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="lynkio-waalaxy${slug}-${date}.csv"`,
+      'Content-Disposition': `attachment; filename="filonea-waalaxy${slug}-${date}.csv"`,
       'Cache-Control': 'no-store',
     },
   })

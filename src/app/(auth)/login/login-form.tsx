@@ -117,7 +117,7 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
             </p>
           )}
           <Link href="/" className="text-sm text-center text-muted-foreground hover:underline">
-            Découvrir Lynkio
+            Découvrir Filonea
           </Link>
         </CardFooter>
       </form>

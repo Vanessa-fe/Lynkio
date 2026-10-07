@@ -14,7 +14,7 @@ export function Faq() {
         <div className="lg:sticky lg:top-32 lg:self-start">
           <SectionLabel label="Questions fréquentes" />
           <RevealWords
-            text="Tout savoir sur *Lynkio.*"
+            text="Tout savoir sur *Filonea.*"
             accentClassName="text-brand-600"
             className="mt-6 font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-bold leading-[1.02] tracking-[-0.045em]"
           />

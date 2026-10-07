@@ -23,10 +23,10 @@ export const navLinks = [
 
 /** Nom et définition de la marque : les mêmes partout (page, balises, données structurées) */
 export const brand = {
-  name: 'Lynkio',
+  name: 'Filonea',
   category: 'Outil de prospection pour les freelances',
   definition:
-    'Lynkio est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui montrent un besoin, les note sur 100 selon votre client idéal et prépare un premier message.',
+    'Filonea est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui montrent un besoin, les note sur 100 selon votre client idéal et prépare un premier message.',
 }
 
 export const hero = {
@@ -203,12 +203,12 @@ export const safeguards = [
  */
 export const faq = [
   {
-    question: 'Qu’est-ce que Lynkio ?',
+    question: 'Qu’est-ce que Filonea ?',
     answer:
-      'Lynkio est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui montrent un besoin (une offre d’emploi, une mission, un profil proche de votre client idéal), les note sur 100 et prépare un premier message. Lynkio suit ensuite vos échanges et vos relances, jusqu’au client signé.',
+      'Filonea est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui montrent un besoin (une offre d’emploi, une mission, un profil proche de votre client idéal), les note sur 100 et prépare un premier message. Filonea suit ensuite vos échanges et vos relances, jusqu’au client signé.',
   },
   {
-    question: 'À quels freelances s’adresse Lynkio ?',
+    question: 'À quels freelances s’adresse Filonea ?',
     answer:
       'Aux freelances qui vendent leurs services aux entreprises : développement, design, marketing, communication, rédaction… Le développement web est le premier métier disponible ; les signaux propres aux autres métiers arrivent ensuite.',
   },
@@ -233,7 +233,7 @@ export const faq = [
       'Non. Sophie rédige un premier e-mail ou message LinkedIn à partir du signal et du site de l’entreprise. Le code le vérifie (lien inconnu, champ à compléter, prix), puis vous le relisez et l’envoyez vous-même. Un clic suffit ensuite pour le noter dans l’historique.',
   },
   {
-    question: 'Quelles entreprises Lynkio cible-t-il ?',
+    question: 'Quelles entreprises Filonea cible-t-il ?',
     answer:
       'Des entreprises en France, de trois types : les agences qui ont besoin de renfort, les TPE et PME qui veulent confier un projet, et les startups qui renforcent leur équipe. Vous réglez la taille, les outils et les départements visés.',
   },
@@ -248,9 +248,9 @@ export const faq = [
 export const faqItems = [
   ...faq,
   {
-    question: 'Comment accéder à Lynkio ?',
+    question: 'Comment accéder à Filonea ?',
     answer: SIGNUPS_OPEN
       ? 'Créez votre compte, choisissez votre métier puis réglez votre client idéal en quelques minutes. Sophie lance ensuite ses recherches aux jours et à l’heure que vous choisissez.'
-      : `Lynkio est en test privé. ${SIGNUPS_CLOSED_MESSAGE}`,
+      : `Filonea est en test privé. ${SIGNUPS_CLOSED_MESSAGE}`,
   },
 ]

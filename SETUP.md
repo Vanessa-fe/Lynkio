@@ -1,4 +1,4 @@
-# Configuration de Lynkio
+# Configuration de Filonea
 
 ## ✅ Ce qui est fait
 

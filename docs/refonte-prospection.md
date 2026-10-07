@@ -4,7 +4,7 @@
 
 ## Objectif
 
-Transformer Lynkio en outil de prospection B2B pour freelances, quel que soit leur métier.
+Transformer Filonea en outil de prospection B2B pour freelances, quel que soit leur métier.
 Le module contacts B2C (rendez-vous, paiements, niveau de risque) sort du produit.
 Les agences deviennent un ICP parmi d'autres, et non plus un pipeline à part.
 
@@ -245,7 +245,7 @@ Validée le 27/09. Ordre de mise en ligne, pour ne jamais casser la production :
 - Rien n'est enregistré par la fonction : le brouillon devient un `company_interactions` en `draft`,
   puis `done` avec « Marquer comme envoyé » (le trigger met à jour `last_interaction_at`).
 - Déploiement : `npx supabase@latest functions deploy draft-message --use-api` (elle réutilise
-  `prospection-run/site-stack.ts` et `TECHNOLOGY_LABELS`). Origines autorisées (CORS) : lynkio.netlify.app,
+  `prospection-run/site-stack.ts` et `TECHNOLOGY_LABELS`). Origines autorisées (CORS) : filonea.fr, filonea.com, lynkio.netlify.app,
   ses aperçus de déploiement et localhost.
 
 **Point ouvert** : aucune API gouvernementale ne donne le site web de l'entreprise, indispensable

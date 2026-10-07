@@ -4,7 +4,7 @@ import { getPipelineStages } from '@/lib/queries/companies'
 import { getContactByLinkedin, getOrganizationOptions, getProspectLists } from '@/lib/queries/people'
 
 interface NewPersonPageProps {
-  // Envoyés par le bouton « + Lynkio » depuis un profil LinkedIn
+  // Envoyés par le bouton « + Filonea » depuis un profil LinkedIn
   searchParams: Promise<{
     firstName?: string
     lastName?: string
@@ -35,7 +35,7 @@ export default async function NewPersonPage({ searchParams }: NewPersonPageProps
 
       {existing && (
         <div className="p-4 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-          {existing.name} est déjà dans Lynkio, avec ce profil LinkedIn.{' '}
+          {existing.name} est déjà dans Filonea, avec ce profil LinkedIn.{' '}
           <Link href={`/companies/${existing.companyId}`} className="underline font-medium">
             Voir sa fiche
           </Link>

@@ -7,7 +7,7 @@ const OTP_TYPES: EmailOtpType[] = ['recovery', 'email', 'signup', 'invite', 'mag
 
 /**
  * Lien des e-mails Supabase (mot de passe oublié, confirmation d'inscription).
- * Le bouton du mail pointe ici, sur le domaine de Lynkio, avec un jeton à usage unique :
+ * Le bouton du mail pointe ici, sur le domaine de Filonea, avec un jeton à usage unique :
  * contrairement au lien « code » (PKCE), il marche aussi dans un autre navigateur
  * que celui de la demande, par exemple sur téléphone.
  */

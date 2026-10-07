@@ -186,7 +186,7 @@ export const personSchema = z
     estimatedAmount: optionalAmount,
     // Liste où ranger la personne (existante, ou créée à partir du nom)
     listName: optionalText(100, 'Le nom de la liste est trop long'),
-    // linkedin : pré-remplie depuis un profil LinkedIn (bouton « + Lynkio »)
+    // linkedin : pré-remplie depuis un profil LinkedIn (bouton « + Filonea »)
     origin: z.enum(['manual', 'linkedin']).default('manual'),
   })
   .refine((data) => data.firstName || data.lastName, {

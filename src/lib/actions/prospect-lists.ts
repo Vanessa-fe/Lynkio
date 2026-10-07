@@ -139,7 +139,7 @@ export async function renameProspectList(listId: string, newName: string): Promi
 }
 
 /**
- * Supprime la liste ; les personnes restent dans Lynkio
+ * Supprime la liste ; les personnes restent dans Filonea
  */
 export async function deleteProspectList(listId: string): Promise<ActionResult> {
   try {

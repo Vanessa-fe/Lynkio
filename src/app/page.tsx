@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 }
 
 /**
- * Données structurées : disent aux moteurs et aux IA ce qu'est Lynkio (le site, le logiciel)
+ * Données structurées : disent aux moteurs et aux IA ce qu'est Filonea (le site, le logiciel)
  * et reprennent mot pour mot les questions fréquentes affichées sur la page.
  */
 const jsonLd = {

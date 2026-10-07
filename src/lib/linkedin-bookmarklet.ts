@@ -1,7 +1,7 @@
 /**
- * Bouton « + Lynkio » à glisser dans la barre de favoris (un « bookmarklet ») :
+ * Bouton « + Filonea » à glisser dans la barre de favoris (un « bookmarklet ») :
  * sur un profil LinkedIn, il lit ce qui est affiché (nom, titre du profil, adresse)
- * et ouvre « Ajouter une personne » pré-rempli dans Lynkio. Rien n'est enregistré
+ * et ouvre « Ajouter une personne » pré-rempli dans Filonea. Rien n'est enregistré
  * sans que l'utilisatrice vérifie et valide le formulaire.
  *
  * Profil par profil, au rythme d'une personne : c'est ce qui le distingue de
@@ -13,7 +13,7 @@
  * changent : le nom a une solution de repli (titre de l'onglet), et tous les
  * champs restent modifiables dans le formulaire.
  *
- * Paramètres : o = adresse de Lynkio, h = adresse de la page (location.href).
+ * Paramètres : o = adresse de Filonea, h = adresse de la page (location.href).
  */
 export const LINKEDIN_CAPTURE_SOURCE = String.raw`(function (o, h) {
   var u = h.split(/[?#]/)[0];
@@ -41,7 +41,7 @@ export const LINKEDIN_CAPTURE_SOURCE = String.raw`(function (o, h) {
 })`
 
 /**
- * Lien du bookmarklet pour cette adresse de Lynkio (production, aperçu ou local).
+ * Lien du bookmarklet pour cette adresse de Filonea (production, aperçu ou local).
  * Encodé : dans une adresse « javascript: », un « # » couperait le code.
  */
 export function linkedinBookmarklet(origin: string): string {
