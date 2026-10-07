@@ -18,9 +18,9 @@ export async function GET(request: Request) {
       console.error('Error exchanging code for session:', error)
       // Lien expiré, déjà utilisé ou ouvert dans un autre navigateur : on propose d'en redemander un
       const fallback = destination === '/update-password' ? '/reset-password?lien=expire' : '/login?lien=expire'
-      return redirectToPath(fallback)
+      return redirectToPath(request, fallback)
     }
   }
 
-  return redirectToPath(destination)
+  return redirectToPath(request, destination)
 }

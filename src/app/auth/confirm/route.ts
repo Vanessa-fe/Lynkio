@@ -22,12 +22,12 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash })
     if (!error) {
-      return redirectToPath(next)
+      return redirectToPath(request, next)
     }
     console.error('Lien e-mail refusé :', error.message)
   }
 
   // Lien expiré ou déjà utilisé : on propose d'en redemander un
   const fallback = type === 'recovery' ? '/reset-password?lien=expire' : '/login?lien=expire'
-  return redirectToPath(fallback)
+  return redirectToPath(request, fallback)
 }
