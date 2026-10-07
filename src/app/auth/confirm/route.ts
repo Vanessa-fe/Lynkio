@@ -1,6 +1,7 @@
 import type { EmailOtpType } from '@supabase/supabase-js'
-import { NextResponse, type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { redirectToPath } from '@/lib/utils/redirect'
 
 const OTP_TYPES: EmailOtpType[] = ['recovery', 'email', 'signup', 'invite', 'magiclink', 'email_change']
 
@@ -11,7 +12,7 @@ const OTP_TYPES: EmailOtpType[] = ['recovery', 'email', 'signup', 'invite', 'mag
  * que celui de la demande, par exemple sur téléphone.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type') as EmailOtpType | null
   const requested = searchParams.get('next')
@@ -21,12 +22,12 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash })
     if (!error) {
-      return NextResponse.redirect(new URL(next, origin))
+      return redirectToPath(next)
     }
     console.error('Lien e-mail refusé :', error.message)
   }
 
   // Lien expiré ou déjà utilisé : on propose d'en redemander un
   const fallback = type === 'recovery' ? '/reset-password?lien=expire' : '/login?lien=expire'
-  return NextResponse.redirect(new URL(fallback, origin))
+  return redirectToPath(fallback)
 }

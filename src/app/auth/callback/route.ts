@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { redirectToPath } from '@/lib/utils/redirect'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -18,9 +18,9 @@ export async function GET(request: Request) {
       console.error('Error exchanging code for session:', error)
       // Lien expiré, déjà utilisé ou ouvert dans un autre navigateur : on propose d'en redemander un
       const fallback = destination === '/update-password' ? '/reset-password?lien=expire' : '/login?lien=expire'
-      return NextResponse.redirect(new URL(fallback, requestUrl.origin))
+      return redirectToPath(fallback)
     }
   }
 
-  return NextResponse.redirect(new URL(destination, requestUrl.origin))
+  return redirectToPath(destination)
 }
