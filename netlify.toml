@@ -1,0 +1,8 @@
+# L'ancienne adresse Netlify renvoie vers le domaine de Filonea, en gardant le chemin et les paramètres
+# (anciens liens, bouton « + Lynkio » de LinkedIn). Les aperçus de déploiement
+# (deploy-preview-N--lynkio.netlify.app) ne sont pas concernés.
+[[redirects]]
+  from = "https://lynkio.netlify.app/*"
+  to = "https://filonea.fr/:splat"
+  status = 301
+  force = true
