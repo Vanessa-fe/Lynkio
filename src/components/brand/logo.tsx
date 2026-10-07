@@ -35,7 +35,12 @@ export function Logo({
   onClick?: () => void
 }) {
   return (
-    <Link href={href} onClick={onClick} className={cn('flex items-center gap-2.5 font-display text-xl font-bold tracking-[-0.04em]', className)}>
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-label="Lynkio"
+      className={cn('flex items-center gap-2.5 font-display text-xl font-bold tracking-[-0.04em]', className)}
+    >
       <LogoMark ping={ping} />
       lynkio
     </Link>

@@ -13,18 +13,28 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
+import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 
 export const navLinks = [
   { href: '#fonctionnalites', label: 'Fonctionnalités' },
   { href: '#comment-ca-marche', label: 'Comment ça marche' },
   { href: '#fiabilite', label: 'Fiabilité' },
+  { href: '#questions', label: 'Questions' },
 ]
 
+/** Nom et définition de la marque : les mêmes partout (page, balises, données structurées) */
+export const brand = {
+  name: 'Lynkio',
+  category: 'Outil de prospection pour les développeurs et développeuses web freelance',
+  definition:
+    'Lynkio est un outil de prospection B2B pour les freelances, pensé d’abord pour les développeurs et développeuses web. Son assistante, Sophie, repère les entreprises qui montrent un besoin, les note sur 100 selon votre client idéal et prépare un premier message.',
+}
+
 export const hero = {
-  eyebrow: 'Pour les développeurs et développeuses web freelance',
+  eyebrow: 'Outil de prospection pour les développeurs et développeuses web freelance',
   title: 'Trouvez les entreprises qui ont besoin de vous, *au bon moment.*',
   intro:
-    'Sophie, votre assistante de prospection, repère les entreprises qui recrutent pour leur site, publient une mission ou utilisent votre technologie. Elle les note selon votre client idéal et prépare votre premier message.',
+    'Sophie, l’assistante de prospection de Lynkio, repère les entreprises qui recrutent pour leur site, publient une mission ou utilisent votre technologie. Elle les note selon votre client idéal et prépare votre premier message.',
   reassurance: 'Sources publiques, sites vérifiés, messages relus par vous.',
 }
 
@@ -90,7 +100,7 @@ export const examples: Example[] = [
 export const sources = [
   { icon: Briefcase, title: 'Offres d’emploi France Travail', text: 'Recrutements web et digital' },
   { icon: Sparkles, title: 'Missions freelance', text: 'Projets ouverts aux indépendants' },
-  { icon: Landmark, title: 'Registre des entreprises', text: 'Sociétés tout juste créées' },
+  { icon: Landmark, title: 'Registre des entreprises', text: 'Sociétés tout juste créées, en option' },
   { icon: Globe, title: 'Sites web analysés', text: 'La technologie vérifiée dans le code' },
 ]
 
@@ -139,7 +149,7 @@ export const features: Record<'signals' | 'tech' | 'score' | 'records' | 'messag
   score: {
     icon: Target,
     title: 'Un score selon votre client idéal',
-    text: 'Taille, signaux récents, budget au regard de votre tarif journalier : chaque entreprise reçoit une note sur 100, avec le détail du calcul.',
+    text: 'Taille de l’entreprise, nature et fraîcheur des signaux, décideur identifié : chaque entreprise reçoit une note sur 100, avec le détail du calcul. Son budget est estimé au regard de votre tarif journalier.',
   },
   records: {
     icon: Building2,
@@ -154,7 +164,7 @@ export const features: Record<'signals' | 'tech' | 'score' | 'records' | 'messag
   pipeline: {
     icon: Bell,
     title: 'Pipeline et relances',
-    text: 'Étapes, échanges et relances du jour : vous savez toujours qui recontacter, et quand.',
+    text: 'Étapes, échanges, listes de prospects et relances du jour : vous savez toujours qui recontacter, et quand. Import CSV, profils LinkedIn et retour des campagnes Waalaxy inclus.',
   },
 }
 
@@ -176,7 +186,7 @@ export const steps = [
 export const safeguards = [
   {
     title: 'Des sources publiques',
-    text: 'Chaque entreprise vient d’une source vérifiable : offres France Travail, registre officiel des entreprises.',
+    text: 'Chaque piste s’appuie sur une source vérifiable : une offre France Travail, le registre officiel des entreprises ou le code du site lui-même.',
   },
   {
     title: 'Des sites analysés',
@@ -185,5 +195,58 @@ export const safeguards = [
   {
     title: 'Des messages contrôlés',
     text: 'Lien inconnu, champ à compléter, prix : chaque message est vérifié, puis relu par vous avant l’envoi.',
+  },
+]
+
+/**
+ * Questions fréquentes : affichées sur la page et reprises telles quelles dans les données
+ * structurées (FAQPage). Réponses autonomes et factuelles, pour être citables par les moteurs.
+ */
+export const faq = [
+  {
+    question: 'Qu’est-ce que Lynkio ?',
+    answer:
+      'Lynkio est un outil de prospection B2B pour les freelances, pensé d’abord pour les développeurs et développeuses web. Son assistante, Sophie, repère les entreprises qui montrent un besoin (une offre d’emploi, une mission, une technologie), les note sur 100 selon votre client idéal et prépare un premier message. Lynkio suit ensuite vos échanges et vos relances, jusqu’au client signé.',
+  },
+  {
+    question: 'Qu’est-ce qu’un signal d’achat ?',
+    answer:
+      'C’est un fait public qui laisse penser qu’une entreprise a besoin de vous maintenant : une offre d’emploi web ou digital publiée sur France Travail, une mission ouverte aux freelances, une agence ou une startup qui recrute un développeur, une société tout juste créée, ou un site fait avec la technologie que vous maîtrisez.',
+  },
+  {
+    question: 'D’où viennent les entreprises proposées ?',
+    answer:
+      'De sources publiques : les offres d’emploi France Travail, le registre officiel des entreprises (en option) et une recherche par technologie dont chaque résultat est vérifié dans le code du site. Chaque fiche réunit ensuite le SIREN, les dirigeants, le chiffre d’affaires publié et les contacts trouvés.',
+  },
+  {
+    question: 'Comment est calculé le score sur 100 ?',
+    answer:
+      'Selon votre client idéal : taille de l’entreprise, nature et fraîcheur des signaux, décideur identifié, moyen de contact connu. Le détail du calcul est affiché sur chaque fiche. Le budget de l’entreprise est estimé à part, au regard de votre tarif journalier.',
+  },
+  {
+    question: 'Sophie envoie-t-elle les messages à ma place ?',
+    answer:
+      'Non. Sophie rédige un premier e-mail ou message LinkedIn à partir du signal et du site de l’entreprise. Le code le vérifie (lien inconnu, champ à compléter, prix), puis vous le relisez et l’envoyez vous-même. Un clic suffit ensuite pour le noter dans l’historique.',
+  },
+  {
+    question: 'Quelles entreprises Lynkio cible-t-il ?',
+    answer:
+      'Des entreprises en France, de trois types : les agences web qui ont besoin de renfort, les TPE et PME qui veulent un site ou un outil, et les startups ou éditeurs SaaS qui renforcent leur équipe produit. Vous réglez la taille, les technologies et les départements visés.',
+  },
+  {
+    question: 'Puis-je importer mes prospects existants ?',
+    answer:
+      'Oui : import CSV d’entreprises ou de personnes, ajout d’un profil LinkedIn depuis votre navigateur, et import de l’export Waalaxy pour retrouver invitations, messages et réponses dans l’historique de chaque personne.',
+  },
+]
+
+/** Toutes les questions, avec l'accès qui dépend de l'ouverture des inscriptions */
+export const faqItems = [
+  ...faq,
+  {
+    question: 'Comment accéder à Lynkio ?',
+    answer: SIGNUPS_OPEN
+      ? 'Créez votre compte, choisissez votre métier puis réglez votre client idéal en quelques minutes. Sophie lance ensuite ses recherches aux jours et à l’heure que vous choisissez.'
+      : `Lynkio est en test privé. ${SIGNUPS_CLOSED_MESSAGE}`,
   },
 ]

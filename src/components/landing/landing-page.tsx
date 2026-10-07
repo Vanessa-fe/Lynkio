@@ -1,5 +1,6 @@
 import { SmoothScroll } from '@/components/motion/smooth-scroll'
 import { BeforeAfter } from './before-after'
+import { Faq } from './faq'
 import { Features } from './features'
 import { FinalCta } from './final-cta'
 import { Footer } from './footer'
@@ -21,6 +22,7 @@ export function LandingPage() {
           <Features />
           <Steps />
           <Safeguards />
+          <Faq />
           <FinalCta />
         </main>
         <Footer />
