@@ -62,7 +62,8 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = authRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   )
-  const isAuthCallback = request.nextUrl.pathname === '/auth/callback'
+  // Liens des e-mails : la personne n'est pas encore connectée en arrivant
+  const isAuthCallback = ['/auth/callback', '/auth/confirm'].includes(request.nextUrl.pathname)
   const isPublicRoute = isAuthRoute || isAuthCallback
 
   // Redirection si non authentifié et accès à une route protégée
