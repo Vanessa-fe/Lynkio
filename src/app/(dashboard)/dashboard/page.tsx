@@ -17,7 +17,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Bonjour {profile.first_name || ''}</h1>
+        <h1 className="text-3xl font-bold md:text-4xl">
+          Bonjour{profile.first_name ? ' ' : ''}
+          {profile.first_name && <span className="accent-serif text-primary">{profile.first_name}</span>}
+        </h1>
         <p className="text-muted-foreground mt-2">Où en est votre prospection</p>
       </div>
 

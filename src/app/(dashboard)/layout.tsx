@@ -23,7 +23,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-background">
       <Sidebar />
       <div className="md:pl-64">
-        <main className="p-4 md:p-8 pb-20 md:pb-8">
+        <main className="mx-auto max-w-7xl p-4 pb-24 md:p-8 md:pb-10">
           {children}
         </main>
       </div>
