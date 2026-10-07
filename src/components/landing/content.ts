@@ -2,7 +2,6 @@ import {
   Bell,
   Briefcase,
   Building2,
-  Code2,
   Globe,
   Landmark,
   Rocket,
@@ -25,16 +24,16 @@ export const navLinks = [
 /** Nom et définition de la marque : les mêmes partout (page, balises, données structurées) */
 export const brand = {
   name: 'Lynkio',
-  category: 'Outil de prospection pour les développeurs et développeuses web freelance',
+  category: 'Outil de prospection pour les freelances',
   definition:
-    'Lynkio est un outil de prospection B2B pour les freelances, pensé d’abord pour les développeurs et développeuses web. Son assistante, Sophie, repère les entreprises qui montrent un besoin, les note sur 100 selon votre client idéal et prépare un premier message.',
+    'Lynkio est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui montrent un besoin, les note sur 100 selon votre client idéal et prépare un premier message.',
 }
 
 export const hero = {
-  eyebrow: 'Outil de prospection pour les développeurs et développeuses web freelance',
+  eyebrow: 'L’outil de prospection des freelances',
   title: 'Trouvez les entreprises qui ont besoin de vous, *au bon moment.*',
   intro:
-    'Sophie, l’assistante de prospection de Lynkio, repère les entreprises qui recrutent pour leur site, publient une mission ou utilisent votre technologie. Elle les note selon votre client idéal et prépare votre premier message.',
+    'Sophie, votre assistante de prospection, repère les entreprises qui recrutent, publient une mission ou correspondent à votre client idéal. Elle les note sur 100 et prépare votre premier message.',
   reassurance: 'Sources publiques, sites vérifiés, messages relus par vous.',
 }
 
@@ -59,12 +58,12 @@ export const examples: Example[] = [
     segmentIcon: Building2,
     score: 82,
     signals: [
-      { icon: Zap, title: 'Recrute pour le web ou le digital', detail: '« Chargé·e de projet web » · il y a 2 jours' },
-      { icon: Code2, title: 'Stack technique compatible', detail: 'Site fait avec Next.js' },
+      { icon: Zap, title: 'Recrute sur votre métier', detail: '« Chargé·e de communication » · il y a 2 jours' },
+      { icon: Globe, title: 'Utilise vos outils', detail: 'Boutique en ligne faite avec WordPress' },
     ],
     badges: ['CA 1,8 M€', 'Budget confortable', 'Décideur identifié'],
     message:
-      'Bonjour Claire, j’ai vu que vous recrutez un·e chargé·e de projet web pour faire évoluer votre boutique en ligne. En attendant le bon profil, je peux prendre en main un projet précis, à distance…',
+      'Bonjour Claire, j’ai vu que vous recrutez un·e chargé·e de communication. En attendant le bon profil, je peux prendre en main un projet précis, à distance…',
   },
   {
     company: 'Studio Brume',
@@ -73,12 +72,12 @@ export const examples: Example[] = [
     segmentIcon: Users,
     score: 76,
     signals: [
-      { icon: Users, title: 'Agence ou startup qui recrute un développeur', detail: '« Développeur·se React » · hier' },
-      { icon: Code2, title: 'Stack technique compatible', detail: 'Projets en React et Node.js' },
+      { icon: Users, title: 'Agence qui cherche du renfort', detail: '« Designer UI/UX » · hier' },
+      { icon: Globe, title: 'Utilise vos outils', detail: 'Sites clients faits avec Webflow' },
     ],
     badges: ['12 salariés', 'Renfort possible', 'Contact trouvé'],
     message:
-      'Bonjour Hugo, vous cherchez un·e développeur·se React. Le temps de recruter, je peux renforcer l’équipe sur un projet en cours, à distance et sans période d’adaptation…',
+      'Bonjour Hugo, vous cherchez un·e designer UI/UX. Le temps de recruter, je peux renforcer l’équipe sur un projet en cours, à distance et sans période d’adaptation…',
   },
   {
     company: 'Kalia',
@@ -87,21 +86,21 @@ export const examples: Example[] = [
     segmentIcon: Rocket,
     score: 88,
     signals: [
-      { icon: Sparkles, title: 'Mission ouverte aux freelances', detail: '« Refonte du tableau de bord » · il y a 3 jours' },
-      { icon: Code2, title: 'Stack technique compatible', detail: 'Application en React' },
+      { icon: Sparkles, title: 'Mission ouverte aux freelances', detail: '« Stratégie de contenu et SEO » · il y a 3 jours' },
+      { icon: Target, title: 'Proche de votre client idéal', detail: 'Startup de 18 personnes, équipe marketing' },
     ],
-    badges: ['18 salariés', 'Renfort produit', 'Décideur identifié'],
+    badges: ['Budget confortable', 'Décideur identifié', 'E-mail trouvé'],
     message:
-      'Bonjour Inès, j’ai vu votre mission sur la refonte du tableau de bord de Kalia. Je travaille en React au quotidien et je peux démarrer rapidement ; voici comment je m’y prendrais…',
+      'Bonjour Inès, j’ai vu votre mission sur la stratégie de contenu de Kalia. Je peux démarrer rapidement ; voici comment je m’y prendrais…',
   },
 ]
 
 /** Sources surveillées par Sophie (section radar) */
 export const sources = [
-  { icon: Briefcase, title: 'Offres d’emploi France Travail', text: 'Recrutements web et digital' },
+  { icon: Briefcase, title: 'Offres d’emploi France Travail', text: 'Recrutements liés à votre métier' },
   { icon: Sparkles, title: 'Missions freelance', text: 'Projets ouverts aux indépendants' },
   { icon: Landmark, title: 'Registre des entreprises', text: 'Sociétés tout juste créées, en option' },
-  { icon: Globe, title: 'Sites web analysés', text: 'La technologie vérifiée dans le code' },
+  { icon: Globe, title: 'Sites web analysés', text: 'Les outils du site vérifiés dans le code' },
 ]
 
 /** Points du radar : angle en degrés (sens horaire depuis le haut), distance au centre (0 à 1) */
@@ -139,12 +138,12 @@ export const features: Record<'signals' | 'tech' | 'score' | 'records' | 'messag
   signals: {
     icon: Zap,
     title: 'Des signaux d’achat, pas des listes',
-    text: 'Offres d’emploi web et digital publiées sur France Travail, missions ouvertes aux freelances, entreprises tout juste créées : Sophie repère celles qui ont un besoin maintenant.',
+    text: 'Offres d’emploi liées à votre métier sur France Travail, missions ouvertes aux freelances, entreprises tout juste créées : Sophie repère celles qui ont un besoin maintenant.',
   },
   tech: {
     icon: ScanSearch,
-    title: 'Recherche par technologie',
-    text: 'L’IA cherche des entreprises dont le site est fait avec votre stack. Sophie analyse ensuite chaque site : sans la technologie dans son code, l’entreprise est écartée.',
+    title: 'Recherche par outil',
+    text: 'L’IA cherche des entreprises dont le site utilise les outils que vous maîtrisez, comme WordPress ou Webflow. Sophie analyse ensuite chaque site : sans l’outil dans son code, l’entreprise est écartée.',
   },
   score: {
     icon: Target,
@@ -154,7 +153,7 @@ export const features: Record<'signals' | 'tech' | 'score' | 'records' | 'messag
   records: {
     icon: Building2,
     title: 'Des fiches complètes',
-    text: 'SIREN, dirigeants, chiffre d’affaires, technologies du site, contacts et profils LinkedIn, réunis au même endroit.',
+    text: 'SIREN, dirigeants, chiffre d’affaires, outils du site, contacts et profils LinkedIn, réunis au même endroit.',
   },
   messages: {
     icon: Sparkles,
@@ -171,7 +170,7 @@ export const features: Record<'signals' | 'tech' | 'score' | 'records' | 'messag
 export const steps = [
   {
     title: 'Décrivez votre client idéal',
-    text: 'Taille d’entreprise, technologies, tarif journalier, départements : quelques réglages suffisent.',
+    text: 'Métier, taille d’entreprise, outils, tarif journalier, départements : quelques réglages suffisent.',
   },
   {
     title: 'Sophie cherche pour vous',
@@ -190,7 +189,7 @@ export const safeguards = [
   },
   {
     title: 'Des sites analysés',
-    text: 'Chaque site est analysé avant qu’une technologie soit retenue.',
+    text: 'Chaque site est analysé avant qu’un outil soit retenu.',
   },
   {
     title: 'Des messages contrôlés',
@@ -206,17 +205,22 @@ export const faq = [
   {
     question: 'Qu’est-ce que Lynkio ?',
     answer:
-      'Lynkio est un outil de prospection B2B pour les freelances, pensé d’abord pour les développeurs et développeuses web. Son assistante, Sophie, repère les entreprises qui montrent un besoin (une offre d’emploi, une mission, une technologie), les note sur 100 selon votre client idéal et prépare un premier message. Lynkio suit ensuite vos échanges et vos relances, jusqu’au client signé.',
+      'Lynkio est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui montrent un besoin (une offre d’emploi, une mission, un profil proche de votre client idéal), les note sur 100 et prépare un premier message. Lynkio suit ensuite vos échanges et vos relances, jusqu’au client signé.',
+  },
+  {
+    question: 'À quels freelances s’adresse Lynkio ?',
+    answer:
+      'Aux freelances qui vendent leurs services aux entreprises : développement, design, marketing, communication, rédaction… Le développement web est le premier métier disponible ; les signaux propres aux autres métiers arrivent ensuite.',
   },
   {
     question: 'Qu’est-ce qu’un signal d’achat ?',
     answer:
-      'C’est un fait public qui laisse penser qu’une entreprise a besoin de vous maintenant : une offre d’emploi web ou digital publiée sur France Travail, une mission ouverte aux freelances, une agence ou une startup qui recrute un développeur, une société tout juste créée, ou un site fait avec la technologie que vous maîtrisez.',
+      'C’est un fait public qui laisse penser qu’une entreprise a besoin de vous maintenant : une offre d’emploi liée à votre métier publiée sur France Travail, une mission ouverte aux freelances, une agence qui cherche du renfort, une société tout juste créée, ou un site fait avec un outil que vous maîtrisez.',
   },
   {
     question: 'D’où viennent les entreprises proposées ?',
     answer:
-      'De sources publiques : les offres d’emploi France Travail, le registre officiel des entreprises (en option) et une recherche par technologie dont chaque résultat est vérifié dans le code du site. Chaque fiche réunit ensuite le SIREN, les dirigeants, le chiffre d’affaires publié et les contacts trouvés.',
+      'De sources publiques : les offres d’emploi France Travail, le registre officiel des entreprises (en option) et une recherche par outil dont chaque résultat est vérifié dans le code du site. Chaque fiche réunit ensuite le SIREN, les dirigeants, le chiffre d’affaires publié et les contacts trouvés.',
   },
   {
     question: 'Comment est calculé le score sur 100 ?',
@@ -231,7 +235,7 @@ export const faq = [
   {
     question: 'Quelles entreprises Lynkio cible-t-il ?',
     answer:
-      'Des entreprises en France, de trois types : les agences web qui ont besoin de renfort, les TPE et PME qui veulent un site ou un outil, et les startups ou éditeurs SaaS qui renforcent leur équipe produit. Vous réglez la taille, les technologies et les départements visés.',
+      'Des entreprises en France, de trois types : les agences qui ont besoin de renfort, les TPE et PME qui veulent confier un projet, et les startups qui renforcent leur équipe. Vous réglez la taille, les outils et les départements visés.',
   },
   {
     question: 'Puis-je importer mes prospects existants ?',

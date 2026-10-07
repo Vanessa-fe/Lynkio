@@ -41,8 +41,8 @@ function FeatureCard({ feature, className, children }: { feature: Feature; class
 }
 
 const liveSignals = [
-  { label: 'Offre publiée', detail: '« Chargé·e de projet web »' },
-  { label: 'Mission freelance', detail: '« Refonte du site vitrine »' },
+  { label: 'Offre publiée', detail: '« Chargé·e de communication »' },
+  { label: 'Mission freelance', detail: '« Refonte de l’identité visuelle »' },
   { label: 'Entreprise créée', detail: 'il y a 5 jours · Rennes' },
 ]
 
@@ -67,13 +67,14 @@ function SignalsVisual() {
   )
 }
 
-const stack = ['WordPress', 'Next.js', 'Shopify', 'Vue', 'React']
+// Les outils que l'analyse de site sait reconnaître (voir constants/technologies.ts)
+const stack = ['Webflow', 'WordPress', 'Next.js', 'React']
 
 function TechVisual() {
   return (
     <div className="flex flex-wrap gap-2">
       {stack.map((tech, i) => {
-        const match = tech === 'Next.js'
+        const match = tech === 'WordPress'
         return (
           <motion.span
             key={tech}
@@ -118,7 +119,7 @@ function ScoreVisual() {
 const recordRows = [
   ['SIREN', '123 456 789'],
   ['Dirigeante', 'Claire M.'],
-  ['Site', 'Next.js'],
+  ['Site', 'WordPress'],
 ]
 
 function RecordsVisual() {
@@ -171,8 +172,8 @@ function MessagesVisual() {
     <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.4fr_1fr] md:items-center">
       <div className="rounded-2xl border border-ink/[0.06] bg-cream p-4 text-sm leading-relaxed text-ink/70">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-700">Brouillon · LinkedIn</p>
-        Bonjour Claire, j&apos;ai vu que vous recrutez un·e chargé·e de projet web pour faire évoluer votre boutique en
-        ligne. En attendant le bon profil, je peux prendre en main un projet précis, à distance…
+        Bonjour Claire, j&apos;ai vu que vous recrutez un·e chargé·e de communication. En attendant le bon profil, je peux
+        prendre en main un projet précis, à distance…
       </div>
       <ul className="space-y-2">
         {checks.map((check, i) => (

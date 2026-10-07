@@ -48,7 +48,7 @@ const jsonLd = {
       inLanguage: 'fr-FR',
       audience: {
         '@type': 'Audience',
-        audienceType: 'Développeurs et développeuses web freelance',
+        audienceType: 'Freelances qui vendent leurs services aux entreprises',
         geographicArea: { '@type': 'Country', name: 'France' },
       },
       featureList: Object.values(features).map((feature) => feature.title),

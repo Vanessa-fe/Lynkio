@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-export const alt = 'Lynkio, l’outil de prospection des développeurs web freelance'
+export const alt = 'Lynkio, l’outil de prospection des freelances'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -45,7 +45,7 @@ export default async function Image() {
             <span style={{ color: '#c9432f' }}>au bon moment.</span>
           </div>
           <div style={{ display: 'flex', fontSize: 32, marginTop: 28, color: '#6d5a55' }}>
-            L’outil de prospection des développeurs web freelance
+            L’outil de prospection des freelances
           </div>
         </div>
       </div>

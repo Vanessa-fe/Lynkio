@@ -5,6 +5,6 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://lynkio.netl
 export const OPEN_GRAPH_BASE = { siteName: 'Lynkio', locale: 'fr_FR', type: 'website' } as const
 
 /** Titre et description de la page d'accueil, repris dans les balises de partage */
-export const HOME_TITLE = 'Lynkio, l’outil de prospection des développeurs web freelance'
+export const HOME_TITLE = 'Lynkio, l’outil de prospection des freelances'
 export const HOME_DESCRIPTION =
-  'Lynkio repère les entreprises qui recrutent pour leur site, publient une mission ou utilisent votre stack, les note sur 100 et prépare un premier message.'
+  'Lynkio repère les entreprises qui recrutent, publient une mission ou correspondent à votre client idéal, les note sur 100 et prépare votre premier message.'
