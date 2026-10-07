@@ -9,6 +9,9 @@ import { NextResponse } from 'next/server'
 export function redirectToPath(request: Request, path: string) {
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
-  const location = host ? `${proto.split(',')[0]?.trim() || 'https'}://${host}${path}` : path
+  // Netlify recopie les paramètres de la requête (le jeton du lien) dans une redirection
+  // qui n'en a pas : un paramètre neutre garde l'adresse d'arrivée propre
+  const target = path.includes('?') ? path : `${path}?depuis=email`
+  const location = host ? `${proto.split(',')[0]?.trim() || 'https'}://${host}${target}` : target
   return new NextResponse(null, { status: 307, headers: { Location: location } })
 }
