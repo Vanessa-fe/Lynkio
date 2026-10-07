@@ -3,8 +3,8 @@ import { Check } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
 
 export const metadata: Metadata = {
-  title: 'Connexion - Lynkio',
-  description: 'Connectez-vous à votre compte Lynkio',
+  title: 'Connexion - Filonea',
+  description: 'Connectez-vous à votre compte Filonea',
 }
 
 const promises = [

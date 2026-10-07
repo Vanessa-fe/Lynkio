@@ -1,4 +1,4 @@
-# Lynkio
+# Filonea
 
 Outil de prospection B2B pour freelances. Sophie, l'agente automatique, repère les entreprises qui
 ont probablement besoin d'un freelance (offres d'emploi, missions), les note selon le client idéal
@@ -25,7 +25,7 @@ et les range dans un pipeline. Premier métier pris en charge : développeuse we
 
 ```bash
 git clone <repository-url>
-cd Lynkio
+cd Filonea
 npm install
 cp .env.local.example .env.local
 ```
@@ -67,7 +67,7 @@ npm run supabase:generate-types         # régénérer les types TypeScript
 ## Structure
 
 ```
-Lynkio/
+Filonea/
 ├── src/
 │   ├── app/              # Pages et routes (App Router)
 │   ├── components/       # Composants React
@@ -102,7 +102,7 @@ Lynkio/
 
 ## Déploiement
 
-Netlify déploie automatiquement la branche `main` (https://lynkio.netlify.app).
+Netlify déploie automatiquement la branche `main` sur https://filonea.fr (adresse Netlify : https://lynkio.netlify.app).
 
 ## Licence
 

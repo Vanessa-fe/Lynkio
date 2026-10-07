@@ -32,7 +32,7 @@ const NONE = 'none'
 const AUTO = 'auto'
 
 /**
- * Choix du segment sur la fiche. « Deviné par Lynkio » rend la main à la base,
+ * Choix du segment sur la fiche. « Deviné par Filonea » rend la main à la base,
  * qui le recalcule d'après le code d'activité, le nom et la taille.
  */
 export function CompanySegmentSelect({
@@ -96,7 +96,7 @@ export function CompanySegmentSelect({
         </SelectItem>
         {displayed.setBy === 'manual' && (
           <SelectItem value={AUTO}>
-            <span className="text-muted-foreground">Laisser Lynkio deviner</span>
+            <span className="text-muted-foreground">Laisser Filonea deviner</span>
           </SelectItem>
         )}
       </SelectContent>

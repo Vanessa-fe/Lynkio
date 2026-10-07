@@ -78,7 +78,7 @@ export function ListToolbar({ lists, activeList, exportableCount }: ListToolbarP
 
   const handleDelete = async () => {
     if (!activeList) return
-    if (!confirm(`Supprimer la liste « ${activeList.name} » ? Les personnes restent dans Lynkio.`)) return
+    if (!confirm(`Supprimer la liste « ${activeList.name} » ? Les personnes restent dans Filonea.`)) return
     let result: Awaited<ReturnType<typeof deleteProspectList>>
     try {
       result = await deleteProspectList(activeList.id)

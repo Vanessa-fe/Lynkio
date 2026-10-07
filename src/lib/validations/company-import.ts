@@ -277,7 +277,7 @@ export function hasContact(row: CompanyImportRow): boolean {
 /**
  * Export de Waalaxy : en plus de la personne et de son entreprise, chaque ligne dit ce
  * qui s'est passé sur LinkedIn et par e-mail (dates au format AAAA-MM-JJ). On en tire
- * les échanges à noter dans Lynkio, d'où le statut de la personne et l'étape de sa fiche.
+ * les échanges à noter dans Filonea, d'où le statut de la personne et l'étape de sa fiche.
  */
 export type WaalaxyState = 'interested' | 'not_interested' | 'later_interested'
 

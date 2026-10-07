@@ -24,7 +24,7 @@ interface PersonFormProps {
   organizations: OrganizationOption[]
   stages: PipelineStage[]
   lists: ProspectListWithCount[]
-  // Valeurs lues sur un profil LinkedIn par le bouton « + Lynkio »
+  // Valeurs lues sur un profil LinkedIn par le bouton « + Filonea »
   initial?: {
     firstName?: string
     lastName?: string
@@ -37,6 +37,7 @@ interface PersonFormProps {
 
 const NONE = 'none'
 // Dernière liste choisie, reproposée à l'ajout suivant (confort, propre à ce navigateur)
+// Clé d'avant le changement de nom (Lynkio), gardée pour ne pas perdre la préférence enregistrée
 const LAST_LIST_KEY = 'lynkio-last-person-list'
 
 export function PersonForm({ organizations, stages, lists, initial = {} }: PersonFormProps) {

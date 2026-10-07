@@ -139,7 +139,7 @@ export function Hero() {
           <Appear delay={0.9}>
             <p className="mt-6 flex items-center gap-2 text-sm text-ink/60">
               <ShieldCheck className="size-4 shrink-0 text-brand-600" />
-              {SIGNUPS_OPEN ? hero.reassurance : `${SIGNUPS_CLOSED_MESSAGE} Lynkio est en test privé.`}
+              {SIGNUPS_OPEN ? hero.reassurance : `${SIGNUPS_CLOSED_MESSAGE} Filonea est en test privé.`}
             </p>
           </Appear>
         </div>

@@ -18,7 +18,7 @@ type View = 'menu' | 'linkedin'
 
 /**
  * « Importer des prospects » : toutes les façons de faire entrer des personnes et des
- * entreprises dans Lynkio, au même endroit (sur le modèle de la fenêtre de Waalaxy)
+ * entreprises dans Filonea, au même endroit (sur le modèle de la fenêtre de Waalaxy)
  */
 export function ImportProspectsDialog() {
   const [open, setOpen] = useState(false)
@@ -49,7 +49,7 @@ export function ImportProspectsDialog() {
                 <Choice
                   icon={<LinkedinIcon className="w-5 h-5" />}
                   title="Depuis un profil LinkedIn"
-                  description="Un clic sur le profil que vous regardez : la personne arrive pré-remplie dans Lynkio."
+                  description="Un clic sur le profil que vous regardez : la personne arrive pré-remplie dans Filonea."
                   onClick={() => setView('linkedin')}
                 />
               </Section>
@@ -147,7 +147,7 @@ function Choice({
 }
 
 /**
- * Installation du bouton « + Lynkio » : à glisser dans la barre de favoris
+ * Installation du bouton « + Filonea » : à glisser dans la barre de favoris
  */
 function LinkedinInstructions({ onBack }: { onBack: () => void }) {
   const linkRef = useRef<HTMLAnchorElement>(null)
@@ -167,7 +167,7 @@ function LinkedinInstructions({ onBack }: { onBack: () => void }) {
         </Button>
         <DialogTitle>Ajouter depuis un profil LinkedIn</DialogTitle>
         <DialogDescription>
-          Un bouton dans votre barre de favoris : sur le profil d&apos;une personne, un clic l&apos;ajoute à Lynkio.
+          Un bouton dans votre barre de favoris : sur le profil d&apos;une personne, un clic l&apos;ajoute à Filonea.
         </DialogDescription>
       </DialogHeader>
 
@@ -184,22 +184,22 @@ function LinkedinInstructions({ onBack }: { onBack: () => void }) {
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground shadow cursor-grab"
             title="Glissez-moi dans la barre de favoris"
           >
-            + Lynkio
+            + Filonea
           </a>
         </li>
         <li>
           <span className="font-medium">2.</span> Ouvrez le profil LinkedIn d&apos;une personne, puis cliquez sur
-          « + Lynkio » dans vos favoris.
+          « + Filonea » dans vos favoris.
         </li>
         <li>
-          <span className="font-medium">3.</span> Lynkio s&apos;ouvre avec la personne pré-remplie : vérifiez le prénom,
+          <span className="font-medium">3.</span> Filonea s&apos;ouvre avec la personne pré-remplie : vérifiez le prénom,
           le nom et l&apos;entreprise, choisissez une liste si vous voulez, puis « Ajouter la personne ».
         </li>
       </ol>
 
       <p className="text-xs text-muted-foreground">
         Le bouton lit seulement le profil affiché, quand vous cliquez : rien n&apos;est aspiré en masse, et rien
-        n&apos;est enregistré sans votre validation. Si la personne est déjà dans Lynkio, Lynkio vous le signale.
+        n&apos;est enregistré sans votre validation. Si la personne est déjà dans Filonea, Filonea vous le signale.
       </p>
     </div>
   )

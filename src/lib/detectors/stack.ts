@@ -12,7 +12,7 @@ import type { DetectableTechnology } from '@/lib/constants/technologies'
 const FETCH_TIMEOUT_MS = 5000
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024 // ~2 Mo
 const MAX_REDIRECTS = 3
-const USER_AGENT = 'Lynkio-StackDetector/1.0'
+const USER_AGENT = 'Filonea-StackDetector/1.0'
 
 const STACK_MARKERS: Record<string, string[]> = {
   nextjs: ['/_next/static/', '__NEXT_DATA__', 'self.__next_f'],

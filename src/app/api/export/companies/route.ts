@@ -116,7 +116,7 @@ export async function GET() {
     return new NextResponse(`﻿${csv}`, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="lynkio-entreprises-${date}.csv"`,
+        'Content-Disposition': `attachment; filename="filonea-entreprises-${date}.csv"`,
         'Cache-Control': 'no-store',
       },
     })

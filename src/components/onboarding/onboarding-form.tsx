@@ -76,11 +76,11 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-3xl font-bold text-center">
-              {isReturningUser ? 'Quel est votre métier ?' : 'Bienvenue sur Lynkio'}
+              {isReturningUser ? 'Quel est votre métier ?' : 'Bienvenue sur Filonea'}
             </CardTitle>
             <CardDescription className="text-center">
               {isReturningUser
-                ? 'Lynkio s\'adapte maintenant à votre métier : choisissez-le pour continuer'
+                ? 'Filonea s\'adapte maintenant à votre métier : choisissez-le pour continuer'
                 : 'Quelques informations pour personnaliser votre expérience'}
             </CardDescription>
           </CardHeader>
@@ -215,7 +215,7 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
                   ? 'Configuration...'
                   : isReturningUser
                     ? 'Continuer'
-                    : 'Commencer à utiliser Lynkio'}
+                    : 'Commencer à utiliser Filonea'}
               </Button>
             </CardContent>
           </form>

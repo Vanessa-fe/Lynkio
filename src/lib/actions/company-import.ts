@@ -31,7 +31,7 @@ type ActionResult<T> = { success: boolean; error?: string; data?: T }
  * Ce que deviendra chaque ligne :
  * - ready : nouvelle fiche (entreprise, ou personne seule), avec son contact s'il y en a un ;
  * - attach : la personne rejoint une entreprise déjà suivie, ou créée par une ligne plus haut ;
- * - known : la personne est déjà dans Lynkio (même profil LinkedIn ou même e-mail) ;
+ * - known : la personne est déjà dans Filonea (même profil LinkedIn ou même e-mail) ;
  * - duplicate : rien de nouveau (entreprise sans contact déjà suivie, ligne répétée) ;
  * - invalid : erreur dans la ligne.
  */
@@ -61,7 +61,7 @@ export type ImportPreview = {
   waalaxy: { messages: number; replies: number; list: string | null } | null
 }
 
-// Fiche rejointe : déjà dans Lynkio, ou créée par une ligne plus haut dans le fichier
+// Fiche rejointe : déjà dans Filonea, ou créée par une ligne plus haut dans le fichier
 type FicheRef = { companyId: string } | { line: number }
 
 type AnalyzedRow = {
@@ -169,7 +169,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
   const knownContact = (contact: ExistingContact) => {
     const person = contactDisplayName(contact)
     const fiche = companyNames.get(contact.company_id)
-    return `Déjà dans Lynkio : ${person}${fiche && fiche !== person ? ` (${fiche})` : ''}`
+    return `Déjà dans Filonea : ${person}${fiche && fiche !== person ? ` (${fiche})` : ''}`
   }
 
   type KnownPerson = { contactId?: string; companyId?: string; message: string }
@@ -227,7 +227,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
     const profile = normalizeLinkedinProfileUrl(row.contactLinkedin)
     const base = { line, row, name, activity, exchanges: [] as PlannedExchange[] }
 
-    // 1. La personne est-elle déjà connue (Lynkio ou plus haut dans le fichier) ?
+    // 1. La personne est-elle déjà connue (Filonea ou plus haut dans le fichier) ?
     const person = (profile && people.linkedin.get(profile)) || (row.contactEmail && people.email.get(row.contactEmail))
     if (person) {
       return person.contactId
@@ -243,7 +243,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
       return {
         ...base,
         status: 'known',
-        message: `Déjà dans Lynkio : ${alone.name} (personne seule)${hint}`,
+        message: `Déjà dans Filonea : ${alone.name} (personne seule)${hint}`,
         knownCompanyId: alone.ref.companyId,
       }
     }
@@ -264,7 +264,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
     if (match) {
       // Personne seule déjà dans le fichier, ou entreprise sans personne à ajouter
       if (fiche.kind === 'individual' || !hasContact(row)) {
-        const message = 'line' in match.ref ? `Déjà plus haut dans le fichier (ligne ${match.ref.line})` : `Déjà dans Lynkio : ${match.name}`
+        const message = 'line' in match.ref ? `Déjà plus haut dans le fichier (ligne ${match.ref.line})` : `Déjà dans Filonea : ${match.name}`
         return { ...base, status: 'duplicate', message, row: null, activity: null }
       }
       if ('line' in match.ref) {
@@ -280,7 +280,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
         }
         if (personName) names?.add(personName)
       }
-      const where = 'line' in match.ref ? `créée ligne ${match.ref.line}` : 'déjà dans Lynkio'
+      const where = 'line' in match.ref ? `créée ligne ${match.ref.line}` : 'déjà dans Filonea'
       return { ...base, status: 'attach', message: `Rejoint la fiche ${match.name} (${where})`, target: match.ref }
     }
 
@@ -326,7 +326,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
       const memberId = membersByCompany.get(companyId)?.get(personKey(row.row!.contactFirstName, row.row!.contactLastName))
       if (memberId) {
         row.status = 'known'
-        row.message = `Déjà dans Lynkio : ${[row.row!.contactFirstName, row.row!.contactLastName].filter(Boolean).join(' ')} (${companyNames.get(companyId)})`
+        row.message = `Déjà dans Filonea : ${[row.row!.contactFirstName, row.row!.contactLastName].filter(Boolean).join(' ')} (${companyNames.get(companyId)})`
         row.knownContactId = memberId
         row.knownCompanyId = companyId
         row.target = undefined
@@ -413,7 +413,7 @@ function waalaxySummary(analyzed: AnalyzedRow[]): ImportPreview['waalaxy'] {
   const withActivity = analyzed.filter((row) => row.activity)
   if (withActivity.length === 0) return null
   const exchanges = withActivity.flatMap((row) => row.exchanges)
-  // Liste Waalaxy la plus fréquente : proposée comme liste Lynkio
+  // Liste Waalaxy la plus fréquente : proposée comme liste Filonea
   const counts = new Map<string, number>()
   for (const row of withActivity) {
     if (row.activity?.list) counts.set(row.activity.list, (counts.get(row.activity.list) ?? 0) + 1)
