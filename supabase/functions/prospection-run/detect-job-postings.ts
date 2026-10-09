@@ -39,6 +39,8 @@ const FIRST_RUN_LOOKBACK_DAYS = 14
 const MAX_OFFERS_PER_RUN = 600
 // Offres à identifier à la main gardées au plus par passage : au-delà, la liste décourage
 const MAX_UNIDENTIFIED_PER_RUN = 10
+// Texte de l'offre gardé avec le signal, pour que Sophie s'en serve dans le message
+const MAX_DESCRIPTION_LENGTH = 4000
 
 // Métiers recherchés dans les offres (codes ROME) pour chaque signal d'offre d'emploi.
 // Le métier de l'utilisateur (profession_signals) décide lesquels sont utilisés.
@@ -424,6 +426,7 @@ function offerSignal(offer: JobOffer, romeToSignal: Map<string, string>, nafCode
       lieu: offer.lieuTravail?.libelle ?? null,
       date_publication: offer.dateCreation ?? null,
       metier: offer.romeLibelle ?? null,
+      description: offer.description ? truncate(offer.description, MAX_DESCRIPTION_LENGTH) : null,
     },
   }
 }
