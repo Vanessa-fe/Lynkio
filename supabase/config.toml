@@ -142,3 +142,8 @@ verify_jwt = false
 # l'utilisatrice, que la passerelle vérifie
 [functions.draft-message]
 verify_jwt = true
+
+# Connexion de l'extension Chrome : appelée depuis la page Paramètres avec le
+# jeton de l'utilisatrice, que la passerelle vérifie
+[functions.extension-connect]
+verify_jwt = true

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText } from 'lucide-react'
+import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle } from 'lucide-react'
 
 const settingsCards = [
   {
@@ -26,6 +26,14 @@ const settingsCards = [
     href: '/settings/messages',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10',
+  },
+  {
+    title: 'Extension LinkedIn',
+    description: 'Le bouton « + Filonea » sur les profils LinkedIn, et bientôt vos envois',
+    icon: Puzzle,
+    href: '/settings/extension',
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-500/10',
   },
   {
     title: 'Thèmes',
