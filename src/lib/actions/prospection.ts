@@ -191,6 +191,7 @@ export async function linkUnidentifiedOffer(
         type_contrat: offer.contract_type,
         lieu: offer.location,
         date_publication: offer.published_at,
+        description: offer.description,
         identifiee_manuellement: true,
       },
     })

@@ -20,6 +20,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_INSTRUCTIONS_LENGTH = 500
 const MAX_SIGNALS = 5
 const MAX_REFERENCES = 10
+const MAX_JOB_AD_LENGTH = 3000
 
 // Le site en production (filonea.fr, filonea.com, et l'adresse Netlify avec ses aperçus de déploiement),
 // et le développement local
@@ -168,15 +169,23 @@ Deno.serve(async (request) => {
     }
 
     const now = Date.now()
-    const activeSignals: SignalForMessage[] = (signals.data ?? [])
+    const active = (signals.data ?? [])
       .filter((signal) => !signal.expires_at || new Date(signal.expires_at).getTime() > now)
       .slice(0, MAX_SIGNALS)
-      .map((signal) => ({
-        id: signal.id,
-        label: (signal.type as { label?: string } | null)?.label ?? 'Signal',
-        details: signalDetails((signal.evidence ?? {}) as Record<string, unknown>),
-        detectedAt: signal.detected_at,
-      }))
+    const activeSignals: SignalForMessage[] = active.map((signal) => ({
+      id: signal.id,
+      label: (signal.type as { label?: string } | null)?.label ?? 'Signal',
+      details: signalDetails((signal.evidence ?? {}) as Record<string, unknown>),
+      detectedAt: signal.detected_at,
+    }))
+
+    // Texte de l'offre d'emploi la plus récente : de quoi parler du vrai besoin de l'entreprise
+    const adText = (signal: (typeof active)[number]) => {
+      const description = (signal.evidence as Record<string, unknown> | null)?.description
+      return typeof description === 'string' ? description.trim().slice(0, MAX_JOB_AD_LENGTH) : ''
+    }
+    const adSignal = active.find((signal) => adText(signal) !== '')
+    const jobAd = adSignal ? { signalId: adSignal.id, text: adText(adSignal) } : null
 
     const criteria = (icp.data?.criteria ?? {}) as { tech_stack?: string[]; remote?: string }
     const senderProfile = profile.data
@@ -215,6 +224,7 @@ Deno.serve(async (request) => {
       },
       siteText,
       signals: activeSignals,
+      jobAd,
       recipient: contact.data
         ? { firstName: contact.data.first_name, lastName: contact.data.last_name, role: contact.data.role }
         : null,
@@ -236,7 +246,12 @@ Deno.serve(async (request) => {
         knownUrls: [website, ...referenceRows.map((reference) => reference.url)].filter(
           (url): url is string => typeof url === 'string' && url !== ''
         ),
-        knownTexts: [senderProfile?.message_pitch ?? null, senderProfile?.message_signature ?? null, instructions],
+        knownTexts: [
+          senderProfile?.message_pitch ?? null,
+          senderProfile?.message_signature ?? null,
+          instructions,
+          jobAd?.text ?? null,
+        ],
         confidentialClients: referenceRows
           .filter((reference) => !reference.is_client_name_public && reference.client_name?.trim())
           .map((reference) => reference.client_name!.trim()),
