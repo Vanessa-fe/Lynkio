@@ -133,9 +133,9 @@ export function isConsultingFirm(name: string): boolean {
 // Un employeur direct parle de « notre équipe », pas de « notre client ».
 const HIDDEN_CLIENT_PATTERNS: RegExp[] = [
   /\bnotre client\b/i,
-  /\b(pour|chez) (l'un|un) de nos clients\b/i,
+  /\b(pour|chez) (l['’]un|un) de nos clients\b/i,
   /\bnotre partenaire,? (un|une|leader|acteur|sp[ée]cialis[ée])/i,
-  /\bpour le compte d(e|'un|'une)\b/i,
+  /\bpour le compte d(e|['’]un|['’]une)\b/i,
   /\b(cabinet|agence) de recrutement\b/i,
   /\bforums? de recrutement\b/i,
   /\b(recherche|recrute) (son|sa) (futur|future)\b/i,
@@ -144,13 +144,20 @@ const HIDDEN_CLIENT_PATTERNS: RegExp[] = [
 
 // Sociétés de services qui placent des développeurs chez leurs clients (ESN,
 // régie) : le travail se fait dans l'équipe du client, avec ses réunions.
+// Pas « clients grands comptes » seul : une agence web peut l'écrire aussi.
 const CONSULTING_PATTERNS: RegExp[] = [
   /\bESN\b/,
   /\bSSII\b/,
+  /\bentreprises? de services? (du |en )?num[ée]riques?\b/i,
+  /\bsoci[ée]t[ée]s? de services? (en ing[ée]nierie )?informatiques?\b/i,
+  /\b(soci[ée]t[ée]|cabinet|groupe) de conseil (en |et )?(informatique|ing[ée]nierie|IT\b|syst[èe]mes d['’]information|technologies)/i,
   /\bintercontrat\b/i,
   /\bnos consultants?\b/i,
+  /\bconsultante?s? (d[ée]veloppeu(r|se)|full ?stack)\b/i,
   /\ben r[ée]gie\b/i,
-  /\b(missions?|intervenir|interviendrez|intervention) (chez|aupr[èe]s de) (nos|des) clients\b/i,
+  /\b(en|d['’]|mode) assistance technique\b/i,
+  // « interviendrez auprès d'un client majeur », « en mission chez nos clients »…
+  /\b(missions?|intervenir|interviendr\w+|interventions?|d[ée]tach[ée]e?s?|plac[ée]e?s?) (chez |aupr[èe]s de |aupr[èe]s d['’])(nos|des|un|une|l['’]un de nos|un de nos|notre) (clients?|partenaires?)\b/i,
   /\bau sein de nos clients\b/i,
 ]
 
