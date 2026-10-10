@@ -1,6 +1,7 @@
 // Sophie prépare un premier message (e-mail ou LinkedIn) pour une entreprise.
 //
-// POST, JSON : { companyId, channel: "email" | "linkedin_message", contactId?, instructions? }
+// POST, JSON : { companyId, channel: "email" | "linkedin_message", contactId?, instructions?, situation? }
+// situation "after_invitation" : message LinkedIn envoyé juste après l'acceptation d'une invitation sans note.
 // Réponse : { subject, body, angle, signal, warnings }. Rien n'est enregistré ici :
 // l'application enregistre le brouillon si l'utilisatrice le garde.
 //
@@ -79,7 +80,7 @@ Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   if (request.method !== 'POST') return json({ error: 'Méthode non autorisée' }, 405)
 
-  let input: { companyId?: unknown; channel?: unknown; contactId?: unknown; instructions?: unknown }
+  let input: { companyId?: unknown; channel?: unknown; contactId?: unknown; instructions?: unknown; situation?: unknown }
   try {
     input = await request.json()
   } catch {
@@ -92,6 +93,7 @@ Deno.serve(async (request) => {
   const contactId = typeof input.contactId === 'string' && UUID.test(input.contactId) ? input.contactId : null
   const instructions =
     typeof input.instructions === 'string' ? input.instructions.trim().slice(0, MAX_INSTRUCTIONS_LENGTH) || null : null
+  const afterInvitation = input.situation === 'after_invitation' && channel === 'linkedin_message'
 
   if (!companyId || !channel) return json({ error: 'Entreprise ou canal invalide' }, 400)
 
@@ -229,6 +231,7 @@ Deno.serve(async (request) => {
         ? { firstName: contact.data.first_name, lastName: contact.data.last_name, role: contact.data.role }
         : null,
       instructions,
+      afterInvitation,
     })
 
     const firstName = senderProfile?.first_name?.trim() || null

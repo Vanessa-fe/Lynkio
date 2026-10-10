@@ -21,11 +21,29 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { deleteProspectList, renameProspectList } from '@/lib/actions/prospect-lists'
+import { startLinkedinSequences, type StartSummary } from '@/lib/actions/linkedin-sequences'
+import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { ProspectListWithCount } from '@/lib/queries/people'
 
 const ALL = 'all'
+
+function plural(count: number, one: string, many: string) {
+  return `${count} ${count > 1 ? many : one}`
+}
+
+// « 3 déjà contactées, 1 sans profil LinkedIn… » : les personnes écartées et pourquoi
+function skippedSummary({ skipped }: StartSummary): string | null {
+  const parts = [
+    skipped.inProgress && plural(skipped.inProgress, 'déjà en cours d\'envoi', 'déjà en cours d\'envoi'),
+    skipped.contacted && plural(skipped.contacted, 'déjà contactée', 'déjà contactées'),
+    skipped.noLinkedin && plural(skipped.noLinkedin, 'sans profil LinkedIn', 'sans profil LinkedIn'),
+    skipped.closed && plural(skipped.closed, 'sur une fiche close', 'sur une fiche close'),
+    skipped.optedOut && plural(skipped.optedOut, 'qui ne veut plus être contactée', 'qui ne veulent plus être contactées'),
+  ].filter(Boolean)
+  return parts.length > 0 ? `Écartées : ${parts.join(', ')}.` : null
+}
 
 interface ListToolbarProps {
   lists: ProspectListWithCount[]
@@ -44,6 +62,7 @@ export function ListToolbar({ lists, activeList, exportableCount }: ListToolbarP
   const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isStarting, setIsStarting] = useState(false)
 
   const selectList = (value: string) => {
     router.push(value === ALL ? '/people' : `/people?list=${value}`)
@@ -74,6 +93,35 @@ export function ListToolbar({ lists, activeList, exportableCount }: ListToolbarP
     }
     setIsRenaming(false)
     router.refresh()
+  }
+
+  const handleLinkedin = async () => {
+    if (!activeList) return
+    setIsStarting(true)
+    let result: Awaited<ReturnType<typeof startLinkedinSequences>>
+    try {
+      result = await startLinkedinSequences(activeList.id)
+    } catch {
+      toast({ variant: 'destructive', title: 'Envoi impossible', description: CONNECTION_ERROR })
+      setIsStarting(false)
+      return
+    }
+    setIsStarting(false)
+    if (!result.success || !result.data) {
+      toast({ variant: 'destructive', title: 'Envoi impossible', description: result.error })
+      return
+    }
+    const { added } = result.data
+    const skipped = skippedSummary(result.data)
+    if (added === 0) {
+      toast({ title: 'Personne de nouveau à envoyer', description: skipped ?? undefined })
+      return
+    }
+    toast({
+      title: `${plural(added, 'personne ajoutée', 'personnes ajoutées')} à l'envoi LinkedIn`,
+      description: skipped ?? 'Sophie peut maintenant rédiger leurs messages.',
+    })
+    router.push('/people/linkedin')
   }
 
   const handleDelete = async () => {
@@ -130,6 +178,12 @@ export function ListToolbar({ lists, activeList, exportableCount }: ListToolbarP
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          {exportableCount > 0 && (
+            <Button onClick={handleLinkedin} disabled={isStarting}>
+              {isStarting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LinkedinIcon className="w-4 h-4 mr-2" />}
+              Envoyer sur LinkedIn ({exportableCount})
+            </Button>
+          )}
           {exportableCount > 0 ? (
             <Button variant="outline" asChild>
               <a href={`/api/export/waalaxy?list=${activeList.id}`} download>

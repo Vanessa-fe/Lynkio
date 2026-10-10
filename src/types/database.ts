@@ -17,6 +17,7 @@ import type {
   CompanyOrigin,
   EmailSource,
   InteractionDirection,
+  LinkedinSequenceStatus,
   OutreachStatus,
   PipelineRunStatus,
   PipelineRunTrigger,
@@ -53,6 +54,7 @@ export type Database = MergeDeep<
           status: CompanyInteractionStatus
         }>
         pipeline_runs: Columns<{ triggered_by: PipelineRunTrigger; status: PipelineRunStatus }>
+        linkedin_sequences: Columns<{ status: LinkedinSequenceStatus }>
       }
       Views: {
         contact_outreach: { Row: { status: OutreachStatus | null } }
