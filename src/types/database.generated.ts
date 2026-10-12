@@ -499,6 +499,10 @@ export type Database = {
           connected_at: string | null
           contact_id: string
           created_at: string
+          follow_up_1: string | null
+          follow_up_1_at: string | null
+          follow_up_2: string | null
+          follow_up_2_at: string | null
           id: string
           invited_at: string | null
           list_id: string | null
@@ -515,6 +519,10 @@ export type Database = {
           connected_at?: string | null
           contact_id: string
           created_at?: string
+          follow_up_1?: string | null
+          follow_up_1_at?: string | null
+          follow_up_2?: string | null
+          follow_up_2_at?: string | null
           id?: string
           invited_at?: string | null
           list_id?: string | null
@@ -531,6 +539,10 @@ export type Database = {
           connected_at?: string | null
           contact_id?: string
           created_at?: string
+          follow_up_1?: string | null
+          follow_up_1_at?: string | null
+          follow_up_2?: string | null
+          follow_up_2_at?: string | null
           id?: string
           invited_at?: string | null
           list_id?: string | null
@@ -1079,6 +1091,10 @@ export type Database = {
           connected_at: string | null
           contact_id: string
           created_at: string
+          follow_up_1: string | null
+          follow_up_1_at: string | null
+          follow_up_2: string | null
+          follow_up_2_at: string | null
           id: string
           invited_at: string | null
           list_id: string | null

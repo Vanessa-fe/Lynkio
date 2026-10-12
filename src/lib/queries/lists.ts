@@ -8,7 +8,7 @@ export type ListOverview = {
   count: number
   // Personnes avec un profil LinkedIn et qui acceptent d'être contactées
   linkedinCount: number
-  // Personnes de la liste dont l'envoi LinkedIn est en cours (pas encore répondu ni arrêté)
+  // Personnes de la liste dont l'envoi LinkedIn est en cours (ni réponse, ni arrêt, ni séquence terminée)
   inProgressCount: number
 }
 
@@ -31,7 +31,7 @@ export async function getListsOverview(): Promise<ListOverview[]> {
       .select('list_id')
       .eq('user_id', user.id)
       .not('list_id', 'is', null)
-      .not('status', 'in', '(replied,stopped)'),
+      .not('status', 'in', '(replied,stopped,followed_up_2)'),
   ])
 
   if (listsResult.error) console.error('Lists overview error:', listsResult.error)
