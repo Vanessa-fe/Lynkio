@@ -211,3 +211,10 @@ html.lenis body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Badge « Powered by Netlify » que Netlify ajoute aux sites de son offre gratuite (une iframe
+   fixée en bas à droite) : il cachait les notifications. Il se désactive aussi dans les réglages
+   du projet Netlify (Project configuration > General > Powered by Netlify badge). */
+#nl-badge-frame {
+  display: none !important;
+}

@@ -14,7 +14,7 @@ export function MobileNav() {
       aria-label="Menu principal"
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-ink/[0.07] bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
     >
-      <div className="grid grid-cols-6">
+      <div className="grid grid-cols-7">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = isActivePath(pathname, item.href)
