@@ -1,4 +1,4 @@
-import { Bell, Building2, Home, Radar, Settings, Users, type LucideIcon } from 'lucide-react'
+import { Bell, Building2, Home, ListChecks, Radar, Settings, Users, type LucideIcon } from 'lucide-react'
 
 type NavItem = {
   href: string
@@ -13,6 +13,7 @@ export const navItems: NavItem[] = [
   { href: '/prospection', label: 'Prospection', shortLabel: 'Sophie', icon: Radar },
   { href: '/companies', label: 'Entreprises', shortLabel: 'Sociétés', icon: Building2 },
   { href: '/people', label: 'Personnes', shortLabel: 'Contacts', icon: Users },
+  { href: '/lists', label: 'Listes', shortLabel: 'Listes', icon: ListChecks },
   { href: '/reminders', label: 'Relances', shortLabel: 'Relances', icon: Bell },
   { href: '/settings', label: 'Paramètres', shortLabel: 'Réglages', icon: Settings },
 ]

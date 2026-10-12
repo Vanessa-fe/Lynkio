@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ToastAction } from '@/components/ui/toast'
 import {
   Dialog,
@@ -28,19 +29,30 @@ interface AddToListDialogProps {
   onDone: () => void
 }
 
+// Choix « Nouvelle liste… » du menu
+const NEW_LIST = '__new__'
+
 /**
- * Ajoute les personnes cochées à une liste existante, ou à une nouvelle liste
- * créée à partir du nom tapé
+ * Ajoute les personnes cochées à une liste existante, choisie dans le menu, ou à une
+ * nouvelle liste créée à partir du nom tapé
  */
 export function AddToListDialog({ contactIds, lists, open, onOpenChange, onDone }: AddToListDialogProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const [choice, setChoice] = useState('')
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
+  // Sans liste existante, on crée forcément une nouvelle liste
+  const creating = lists.length === 0 || choice === NEW_LIST
   const trimmed = name.trim()
-  const existing = trimmed ? lists.find((list) => list.name.toLowerCase() === trimmed.toLowerCase()) : undefined
+  const existing = creating
+    ? trimmed
+      ? lists.find((list) => list.name.toLowerCase() === trimmed.toLowerCase())
+      : undefined
+    : lists.find((list) => list.id === choice)
+  const canSubmit = creating ? trimmed !== '' : existing !== undefined
   const count = contactIds.length
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -74,6 +86,7 @@ export function AddToListDialog({ contactIds, lists, open, onOpenChange, onDone 
       ),
     })
     setName('')
+    setChoice('')
     onOpenChange(false)
     onDone()
     router.refresh()
@@ -88,7 +101,7 @@ export function AddToListDialog({ contactIds, lists, open, onOpenChange, onDone 
               Ajouter {count} personne{count > 1 ? 's' : ''} à une liste
             </DialogTitle>
             <DialogDescription>
-              Choisissez une liste ou tapez le nom d&apos;une nouvelle. Une personne peut être dans plusieurs listes.
+              Choisissez une de vos listes, ou créez-en une nouvelle. Une personne peut être dans plusieurs listes.
             </DialogDescription>
           </DialogHeader>
 
@@ -98,38 +111,53 @@ export function AddToListDialog({ contactIds, lists, open, onOpenChange, onDone 
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="list-name">Liste</Label>
-            <Input
-              id="list-name"
-              list="prospect-list-options"
-              autoComplete="off"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Agences Lyon, Session du lundi..."
-              maxLength={100}
-              disabled={isSaving}
-              autoFocus
-            />
-            <datalist id="prospect-list-options">
-              {lists.map((list) => (
-                <option key={list.id} value={list.name} />
-              ))}
-            </datalist>
-            {trimmed && (
-              <p className="text-sm text-muted-foreground">
-                {existing
-                  ? `Liste existante (${existing.count} personne${existing.count > 1 ? 's' : ''}).`
-                  : 'Nouvelle liste : elle sera créée.'}
-              </p>
-            )}
-          </div>
+          {lists.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="list-choice">Liste</Label>
+              <Select value={choice} onValueChange={setChoice} disabled={isSaving}>
+                <SelectTrigger id="list-choice">
+                  <SelectValue placeholder="Choisir une liste" />
+                </SelectTrigger>
+                <SelectContent>
+                  {lists.map((list) => (
+                    <SelectItem key={list.id} value={list.id}>
+                      {list.name} ({list.count})
+                    </SelectItem>
+                  ))}
+                  <SelectSeparator />
+                  <SelectItem value={NEW_LIST}>+ Nouvelle liste…</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {creating && (
+            <div className="space-y-2">
+              <Label htmlFor="list-name">{lists.length > 0 ? 'Nom de la nouvelle liste' : 'Nom de la liste'}</Label>
+              <Input
+                id="list-name"
+                autoComplete="off"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Agences Lyon, Session du lundi..."
+                maxLength={100}
+                disabled={isSaving}
+                autoFocus
+              />
+              {existing && (
+                <p className="text-sm text-muted-foreground">
+                  Cette liste existe déjà ({existing.count} personne{existing.count > 1 ? 's' : ''}) : les personnes y
+                  seront ajoutées.
+                </p>
+              )}
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
               Annuler
             </Button>
-            <Button type="submit" disabled={isSaving || !trimmed}>
+            <Button type="submit" disabled={isSaving || !canSubmit}>
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Ajouter
             </Button>
