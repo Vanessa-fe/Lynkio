@@ -82,8 +82,8 @@ function Meter({ label, value, max }: { label: string; value: number; max: numbe
 }
 
 /**
- * File d'envoi LinkedIn, une étape par onglet. Pour l'instant, l'envoi se fait à la main
- * sur LinkedIn (« Ouvrir le profil », « Copier et ouvrir LinkedIn ») et on note ici ce qui est fait.
+ * File d'envoi LinkedIn, une étape par onglet. Avec l'envoi automatique, l'extension fait les
+ * invitations et le premier message ; sinon, on envoie à la main et on note ici ce qui est fait.
  */
 export function LinkedinQueue({
   sequences,
@@ -139,13 +139,13 @@ export function LinkedinQueue({
       <Card>
         <CardContent className="flex flex-col items-start gap-4 py-10">
           <p className="text-muted-foreground max-w-xl">
-            Aucun envoi en cours. Pour commencer, choisissez une liste dans Personnes et cliquez sur « Envoyer sur
-            LinkedIn » : Sophie préparera un message pour chaque personne.
+            Aucun envoi en cours. Pour commencer, cochez des personnes dans Personnes (ou ouvrez une de vos listes) et
+            cliquez sur « Envoyer sur LinkedIn » : Sophie préparera les messages de chaque personne.
           </p>
           <Button asChild>
             <Link href="/people">
               <Users className="w-4 h-4 mr-2" />
-              Aller aux listes
+              Choisir des personnes
             </Link>
           </Button>
         </CardContent>

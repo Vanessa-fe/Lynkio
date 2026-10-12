@@ -15,6 +15,8 @@ const UNIQUE_VIOLATION = '23505'
 const MAX_MESSAGE_LENGTH = 2000
 const MAX_ANGLE_LENGTH = 500
 const MAX_APPROVALS_PER_CALL = 200
+// Une sélection dans Personnes : pas plus que le plafond d'invitations du mois
+const MAX_SELECTION = 200
 
 // Messages d'erreur de advance_linkedin_sequence, montrés tels quels
 const STEP_ERRORS = [
@@ -49,36 +51,63 @@ function revalidateOutreach() {
   revalidatePath('/dashboard')
 }
 
+// Les personnes à envoyer : toute une liste, ou celles cochées dans Personnes
+export type StartSource = { listId: string } | { contactIds: string[] }
+
+const CONTACT_FIELDS = 'id, linkedin_url, opted_out_at, company:companies!inner(stage:pipeline_stages(kind))'
+
+type Candidate = {
+  id: string
+  linkedin_url: string | null
+  opted_out_at: string | null
+  company: { stage: { kind: string } | null } | null
+}
+
 /**
- * Prépare l'envoi LinkedIn des personnes d'une liste. Sont écartées : celles sans profil
- * LinkedIn, celles qui ne veulent plus être contactées, celles dont la fiche est close
+ * Prépare l'envoi LinkedIn des personnes d'une liste ou d'une sélection. Sont écartées : celles
+ * sans profil LinkedIn, celles qui ne veulent plus être contactées, celles dont la fiche est close
  * (gagnée, perdue, hors cible), celles déjà contactées et celles déjà en cours d'envoi.
  */
-export async function startLinkedinSequences(listId: string): Promise<ActionResult<StartSummary>> {
+export async function startLinkedinSequences(source: StartSource): Promise<ActionResult<StartSummary>> {
   try {
     const user = await getAuthUser()
     if (!user) return { success: false, error: 'Vous devez être connecté' }
 
     const supabase = await createClient()
-    const { data: members, error: membersError } = await supabase
-      .from('prospect_list_members')
-      .select('contact:company_contacts!inner(id, linkedin_url, opted_out_at, company:companies!inner(stage:pipeline_stages(kind)))')
-      .eq('user_id', user.id)
-      .eq('list_id', listId)
+    let contacts: Candidate[]
+    if ('listId' in source) {
+      const { data: members, error: membersError } = await supabase
+        .from('prospect_list_members')
+        .select(`contact:company_contacts!inner(${CONTACT_FIELDS})`)
+        .eq('user_id', user.id)
+        .eq('list_id', source.listId)
 
-    if (membersError) {
-      console.error('LinkedIn start members error:', membersError)
-      return { success: false, error: 'Impossible de lire la liste' }
-    }
-    if (!members || members.length === 0) return { success: false, error: 'Cette liste est vide' }
+      if (membersError) {
+        console.error('LinkedIn start members error:', membersError)
+        return { success: false, error: 'Impossible de lire la liste' }
+      }
+      if (!members || members.length === 0) return { success: false, error: 'Cette liste est vide' }
+      contacts = members.map((member) => member.contact as unknown as Candidate)
+    } else {
+      const contactIds = [...new Set(source.contactIds)]
+      if (contactIds.length === 0) return { success: false, error: 'Sélectionnez au moins une personne' }
+      if (contactIds.length > MAX_SELECTION) {
+        return { success: false, error: `Au plus ${MAX_SELECTION} personnes à la fois` }
+      }
+      const { data, error } = await supabase
+        .from('company_contacts')
+        .select(CONTACT_FIELDS)
+        .eq('user_id', user.id)
+        .in('id', contactIds)
 
-    type Member = {
-      id: string
-      linkedin_url: string | null
-      opted_out_at: string | null
-      company: { stage: { kind: string } | null } | null
+      if (error) {
+        console.error('LinkedIn start contacts error:', error)
+        return { success: false, error: 'Impossible de lire ces personnes' }
+      }
+      if (!data || data.length === 0) return { success: false, error: 'Personnes introuvables' }
+      contacts = data as unknown as Candidate[]
     }
-    const contacts = members.map((member) => member.contact as unknown as Member)
+    const listId = 'listId' in source ? source.listId : null
     const ids = contacts.map((contact) => contact.id)
 
     const [outreachResult, activeResult] = await Promise.all([
