@@ -58,6 +58,8 @@ export type MessageContext = {
   instructions: string | null
   // Message LinkedIn envoyé juste après l'acceptation d'une invitation envoyée sans note
   afterInvitation: boolean
+  // Séquence LinkedIn : Sophie écrit aussi les deux relances
+  sequence: boolean
 }
 
 export type DraftFromAi = {
@@ -65,6 +67,9 @@ export type DraftFromAi = {
   body: string
   angle: string
   signal_id: string
+  // Séquence seulement
+  follow_up_1?: string
+  follow_up_2?: string
 }
 
 const RESPONSES_URL = 'https://api.openai.com/v1/responses'
@@ -82,6 +87,12 @@ const schema = {
     angle: { type: 'string' },
     signal_id: { type: 'string' },
   },
+}
+
+const sequenceSchema = {
+  ...schema,
+  required: [...schema.required, 'follow_up_1', 'follow_up_2'],
+  properties: { ...schema.properties, follow_up_1: { type: 'string' }, follow_up_2: { type: 'string' } },
 }
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -119,6 +130,7 @@ Selon le signal :
 Règles absolues :
 - n'invente jamais rien : ni client, ni chiffre, ni résultat, ni référence, ni lien, ni fait sur l'entreprise. Utilise seulement les informations données ;
 - ne mentionne jamais de tarif ni de prix ;
+- ne devine jamais le genre du destinataire d'après son prénom : tournures neutres (« la bonne personne », pas « le bon interlocuteur » ni « la bonne interlocutrice ») ;
 - ne dis jamais comment l'entreprise a été repérée (outil, score, « signal », Sophie) ;
 - n'écris aucun champ à compléter (comme [Prénom]) : si le prénom du destinataire est inconnu, commence par « Bonjour, » ;
 - ne signe pas : termine par une formule courte comme « Belle journée, » ou « Bien à vous, ». La signature est ajoutée ensuite ;
@@ -130,6 +142,15 @@ Format :
 - angle : en une phrase, pour la freelance, sur quoi repose le message ;
 - signal_id : l'identifiant du signal sur lequel repose le message, ou une chaîne vide.`
 
+// Ajouté aux règles quand Sophie écrit la séquence entière : relu et validé d'un coup par la freelance
+const SEQUENCE_RULES = `
+
+Séquence LinkedIn : tu rédiges d'un coup les trois messages que la personne recevra si elle ne répond pas entre deux envois. Les trois sont obligatoires et complets : follow_up_1 et follow_up_2 ne sont jamais vides.
+- body : le premier message, selon les règles ci-dessus ;
+- follow_up_1 : la relance, envoyée 5 jours plus tard. De 200 à 350 caractères. Elle ne répète ni le premier message ni ses formules : elle apporte un élément nouveau et utile, soit une référence proche de l'activité ou du besoin de l'entreprise (seulement si elle existe dans les références), soit une proposition concrète et facile à accepter (un premier périmètre réduit, un échange de 15 minutes). Pas de « je me permets de vous relancer », pas de « suite à mon précédent message », aucun reproche ;
+- follow_up_2 : le dernier message, envoyé 7 jours après la relance. De 150 à 300 caractères. Une sortie courtoise : la freelance dit simplement qu'elle ne relancera plus, laisse la porte ouverte, et demande, si ce n'est pas la bonne personne, à qui elle pourrait s'adresser. Aucune culpabilisation, aucun humour forcé ;
+- les deux relances commencent par « Bonjour » suivi du prénom s'il est connu, et respectent les règles absolues (première personne, vouvoiement, rien d'inventé, pas de prix, pas de signature).`
+
 function section(title: string, lines: (string | null | undefined | false)[]): string | null {
   const content = lines.filter((line): line is string => typeof line === 'string' && line.trim() !== '')
   return content.length > 0 ? `## ${title}\n${content.join('\n')}` : null
@@ -137,7 +158,11 @@ function section(title: string, lines: (string | null | undefined | false)[]): s
 
 function contextPrompt(context: MessageContext): string {
   const { sender, company, recipient } = context
-  const channel = context.channel === 'email' ? 'un e-mail' : 'un message LinkedIn'
+  const channel = context.sequence
+    ? 'une séquence LinkedIn de trois messages complets (body, follow_up_1 et follow_up_2)'
+    : context.channel === 'email'
+      ? 'un e-mail'
+      : 'un message LinkedIn'
 
   return [
     `Rédige ${channel}.`,
@@ -231,9 +256,16 @@ export async function writeDraft(context: MessageContext): Promise<DraftFromAi> 
       body: JSON.stringify({
         model: Deno.env.get('OPENAI_MODEL') || DEFAULT_MODEL,
         reasoning: { effort: 'low' },
-        instructions: RULES,
+        instructions: context.sequence ? RULES + SEQUENCE_RULES : RULES,
         input: contextPrompt(context),
-        text: { format: { type: 'json_schema', name: 'prospecting_message', strict: true, schema } },
+        text: {
+          format: {
+            type: 'json_schema',
+            name: context.sequence ? 'prospecting_sequence' : 'prospecting_message',
+            strict: true,
+            schema: context.sequence ? sequenceSchema : schema,
+          },
+        },
         store: false,
       }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -266,5 +298,8 @@ export async function writeDraft(context: MessageContext): Promise<DraftFromAi> 
     body: draft.body.trim(),
     angle: draft.angle?.trim() ?? '',
     signal_id: draft.signal_id?.trim() ?? '',
+    ...(context.sequence
+      ? { follow_up_1: draft.follow_up_1?.trim() ?? '', follow_up_2: draft.follow_up_2?.trim() ?? '' }
+      : {}),
   }
 }

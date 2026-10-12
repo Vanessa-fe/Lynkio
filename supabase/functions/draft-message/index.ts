@@ -2,6 +2,7 @@
 //
 // POST, JSON : { companyId, channel: "email" | "linkedin_message", contactId?, instructions?, situation? }
 // situation "after_invitation" : message LinkedIn envoyé juste après l'acceptation d'une invitation sans note.
+// sequence true (LinkedIn) : Sophie écrit aussi les deux relances ; la réponse a alors followUp1 et followUp2.
 // Réponse : { subject, body, angle, signal, warnings }. Rien n'est enregistré ici :
 // l'application enregistre le brouillon si l'utilisatrice le garde.
 //
@@ -80,7 +81,14 @@ Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   if (request.method !== 'POST') return json({ error: 'Méthode non autorisée' }, 405)
 
-  let input: { companyId?: unknown; channel?: unknown; contactId?: unknown; instructions?: unknown; situation?: unknown }
+  let input: {
+    companyId?: unknown
+    channel?: unknown
+    contactId?: unknown
+    instructions?: unknown
+    situation?: unknown
+    sequence?: unknown
+  }
   try {
     input = await request.json()
   } catch {
@@ -94,6 +102,7 @@ Deno.serve(async (request) => {
   const instructions =
     typeof input.instructions === 'string' ? input.instructions.trim().slice(0, MAX_INSTRUCTIONS_LENGTH) || null : null
   const afterInvitation = input.situation === 'after_invitation' && channel === 'linkedin_message'
+  const sequence = input.sequence === true && channel === 'linkedin_message'
 
   if (!companyId || !channel) return json({ error: 'Entreprise ou canal invalide' }, 400)
 
@@ -232,6 +241,7 @@ Deno.serve(async (request) => {
         : null,
       instructions,
       afterInvitation,
+      sequence,
     })
 
     const firstName = senderProfile?.first_name?.trim() || null
@@ -242,26 +252,39 @@ Deno.serve(async (request) => {
           null
         : firstName
 
-    return json(
-      checkDraft(draft, {
-        channel,
-        signals: activeSignals,
-        knownUrls: [website, ...referenceRows.map((reference) => reference.url)].filter(
-          (url): url is string => typeof url === 'string' && url !== ''
-        ),
-        knownTexts: [
-          senderProfile?.message_pitch ?? null,
-          senderProfile?.message_signature ?? null,
-          instructions,
-          jobAd?.text ?? null,
-        ],
-        confidentialClients: referenceRows
-          .filter((reference) => !reference.is_client_name_public && reference.client_name?.trim())
-          .map((reference) => reference.client_name!.trim()),
-        signature,
-        lastOutgoingAt: lastOutgoing.data?.occurred_at ?? null,
-      })
-    )
+    const checks = {
+      channel,
+      signals: activeSignals,
+      knownUrls: [website, ...referenceRows.map((reference) => reference.url)].filter(
+        (url): url is string => typeof url === 'string' && url !== ''
+      ),
+      knownTexts: [
+        senderProfile?.message_pitch ?? null,
+        senderProfile?.message_signature ?? null,
+        instructions,
+        jobAd?.text ?? null,
+      ],
+      confidentialClients: referenceRows
+        .filter((reference) => !reference.is_client_name_public && reference.client_name?.trim())
+        .map((reference) => reference.client_name!.trim()),
+      signature,
+      lastOutgoingAt: lastOutgoing.data?.occurred_at ?? null,
+    }
+    const checked = checkDraft(draft, checks)
+    if (!sequence) return json(checked)
+
+    // Les relances passent les mêmes vérifications, signature comprise
+    const followUps = [draft.follow_up_1 ?? '', draft.follow_up_2 ?? ''].map((text, index) => {
+      if (!text.trim()) return { body: '', warnings: [] as string[] }
+      const result = checkDraft({ subject: '', body: text, angle: '', signal_id: '' }, { ...checks, lastOutgoingAt: null })
+      return { body: result.body, warnings: result.warnings.map((warning) => `Relance ${index + 1} : ${warning}`) }
+    })
+    return json({
+      ...checked,
+      followUp1: followUps[0]!.body,
+      followUp2: followUps[1]!.body,
+      warnings: [...checked.warnings, ...followUps.flatMap((followUp) => followUp.warnings)],
+    })
   } catch (error) {
     if (error instanceof UserFacingError) return json({ error: error.message }, 422)
     console.error('draft-message', error)

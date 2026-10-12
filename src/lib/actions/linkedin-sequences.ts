@@ -24,10 +24,18 @@ const STEP_ERRORS = [
   'Envoi introuvable',
 ]
 
-// Le message reste modifiable jusqu'à son envoi
-const EDITABLE_STATUSES: LinkedinSequenceStatus[] = ['to_review', 'approved', 'invited', 'connected']
+// Chaque texte reste modifiable jusqu'à son envoi
+const BEFORE_MESSAGE: LinkedinSequenceStatus[] = ['to_review', 'approved', 'invited', 'connected']
+const EDITABLE_STATUSES = {
+  message: BEFORE_MESSAGE,
+  follow_up_1: [...BEFORE_MESSAGE, 'messaged'],
+  follow_up_2: [...BEFORE_MESSAGE, 'messaged', 'followed_up_1'],
+} satisfies Record<string, LinkedinSequenceStatus[]>
 
-export type LinkedinStep = 'invited' | 'connected' | 'messaged' | 'replied' | 'stopped'
+export type LinkedinStep = 'invited' | 'connected' | 'messaged' | 'followed_up_1' | 'followed_up_2' | 'replied' | 'stopped'
+
+// Textes d'une séquence : le message, puis les deux relances (vides : pas de relance)
+export type LinkedinTexts = { message?: string; followUp1?: string; followUp2?: string }
 
 export type StartSummary = {
   added: number
@@ -125,51 +133,74 @@ export async function startLinkedinSequences(listId: string): Promise<ActionResu
 }
 
 /**
- * Enregistre le message (rédigé par Sophie ou modifié à la main), tant qu'il n'est pas envoyé
+ * Enregistre les textes (rédigés par Sophie ou modifiés à la main). Un texte déjà envoyé
+ * ne change plus.
  */
-export async function saveLinkedinMessage(
+export async function saveLinkedinTexts(
   sequenceId: string,
-  message: string,
+  texts: LinkedinTexts,
   angle?: string | null
 ): Promise<ActionResult> {
   try {
     const user = await getAuthUser()
     if (!user) return { success: false, error: 'Vous devez être connecté' }
 
-    const text = message.trim()
-    if (text.length > MAX_MESSAGE_LENGTH) return { success: false, error: 'Le message est trop long' }
+    const fields = {
+      message: texts.message,
+      follow_up_1: texts.followUp1,
+      follow_up_2: texts.followUp2,
+    }
+    for (const value of Object.values(fields)) {
+      if (value !== undefined && value.trim().length > MAX_MESSAGE_LENGTH) {
+        return { success: false, error: 'Le message est trop long' }
+      }
+    }
 
     const supabase = await createClient()
-    const update: { message: string | null; message_angle?: string | null } = { message: text || null }
-    if (angle !== undefined) update.message_angle = angle?.trim().slice(0, MAX_ANGLE_LENGTH) || null
+    const { data: sequence } = await supabase
+      .from('linkedin_sequences')
+      .select('status')
+      .eq('id', sequenceId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!sequence) return { success: false, error: 'Envoi introuvable' }
 
-    const { data, error } = await supabase
+    const update: Partial<Record<keyof typeof EDITABLE_STATUSES | 'message_angle', string | null>> = {}
+    for (const [column, value] of Object.entries(fields) as [keyof typeof EDITABLE_STATUSES, string | undefined][]) {
+      if (value === undefined) continue
+      if (!(EDITABLE_STATUSES[column] as LinkedinSequenceStatus[]).includes(sequence.status)) {
+        return { success: false, error: 'Ce message a déjà été envoyé' }
+      }
+      update[column] = value.trim() || null
+    }
+    if (angle !== undefined) update.message_angle = angle?.trim().slice(0, MAX_ANGLE_LENGTH) || null
+    if (Object.keys(update).length === 0) return { success: true }
+
+    const { error } = await supabase
       .from('linkedin_sequences')
       .update(update)
       .eq('id', sequenceId)
       .eq('user_id', user.id)
-      .in('status', EDITABLE_STATUSES)
-      .select('id')
+      .eq('status', sequence.status)
 
     if (error) {
-      console.error('Save LinkedIn message error:', error)
+      console.error('Save LinkedIn texts error:', error)
       return { success: false, error: 'Impossible d\'enregistrer le message' }
     }
-    if (!data || data.length === 0) return { success: false, error: 'Ce message a déjà été envoyé' }
 
     revalidatePath('/people/linkedin')
     return { success: true }
   } catch (error) {
-    console.error('Save LinkedIn message error:', error)
+    console.error('Save LinkedIn texts error:', error)
     return { success: false, error: 'Une erreur est survenue' }
   }
 }
 
 /**
- * Valide des messages relus : les personnes passent « à inviter »
+ * Valide des séquences relues (le message et ses relances) : les personnes passent « à inviter »
  */
 export async function approveLinkedinSequences(
-  items: { id: string; message: string }[]
+  items: ({ id: string; message: string } & Pick<LinkedinTexts, 'followUp1' | 'followUp2'>)[]
 ): Promise<ActionResult<{ approved: number }>> {
   try {
     const user = await getAuthUser()
@@ -184,11 +215,13 @@ export async function approveLinkedinSequences(
 
     for (const item of items) {
       const text = item.message.trim()
-      if (!text || text.length > MAX_MESSAGE_LENGTH) continue
+      const followUp1 = item.followUp1?.trim() || null
+      const followUp2 = item.followUp2?.trim() || null
+      if (!text || [text, followUp1, followUp2].some((value) => value && value.length > MAX_MESSAGE_LENGTH)) continue
 
       const { data, error } = await supabase
         .from('linkedin_sequences')
-        .update({ message: text, status: 'approved' })
+        .update({ message: text, follow_up_1: followUp1, follow_up_2: followUp2, status: 'approved' })
         .eq('id', item.id)
         .eq('user_id', user.id)
         .eq('status', 'to_review')
@@ -246,7 +279,7 @@ export async function removeLinkedinSequence(sequenceId: string): Promise<Action
 }
 
 /**
- * Note une étape franchie (invitation envoyée, acceptée, message envoyé, réponse, arrêt).
+ * Note une étape franchie (invitation envoyée, acceptée, message ou relance envoyés, réponse, arrêt).
  * La base la note aussi dans les échanges de la personne : statut et étape suivent.
  */
 export async function advanceLinkedinSequence(sequenceId: string, step: LinkedinStep): Promise<ActionResult> {

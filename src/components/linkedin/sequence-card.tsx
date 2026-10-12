@@ -5,24 +5,29 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Check, Copy, ExternalLink, Loader2, Pencil, UserCheck, X } from 'lucide-react'
+import { Check, Clock, Copy, ExternalLink, Loader2, Pencil, UserCheck, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import {
   advanceLinkedinSequence,
   removeLinkedinSequence,
-  saveLinkedinMessage,
+  saveLinkedinTexts,
   type LinkedinStep,
+  type LinkedinTexts,
 } from '@/lib/actions/linkedin-sequences'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { LinkedinSequenceRow } from '@/lib/queries/linkedin'
 
+type Field = keyof Required<LinkedinTexts>
+
 const STEP_TOASTS: Record<LinkedinStep, string> = {
   invited: 'Invitation notée',
   connected: 'Invitation acceptée',
   messaged: 'Message noté',
+  followed_up_1: 'Relance notée',
+  followed_up_2: 'Dernier message noté',
   replied: 'Réponse notée',
   stopped: 'Envoi arrêté',
 }
@@ -55,7 +60,31 @@ export function PersonHeader({ sequence }: { sequence: LinkedinSequenceRow }) {
   )
 }
 
+/** Le prochain texte à envoyer à la main, s'il y en a un : le message, puis les relances */
+export function pendingSend(sequence: LinkedinSequenceRow): { field: Field; step: LinkedinStep; label: string; done: string } | null {
+  if (sequence.status === 'connected') {
+    return { field: 'message', step: 'messaged', label: 'Message', done: 'Message envoyé' }
+  }
+  if (sequence.status === 'messaged' && sequence.followUp1?.trim()) {
+    return { field: 'followUp1', step: 'followed_up_1', label: 'Relance', done: 'Relance envoyée' }
+  }
+  if (sequence.status === 'followed_up_1' && sequence.followUp2?.trim()) {
+    return { field: 'followUp2', step: 'followed_up_2', label: 'Dernier message', done: 'Dernier message envoyé' }
+  }
+  return null
+}
+
+/** La relance n'est pas encore à envoyer (5 jours après le message, 7 jours après la relance) */
+export function notYetDue(sequence: LinkedinSequenceRow, now = Date.now()): boolean {
+  return sequence.nextFollowUpDueAt !== null && new Date(sequence.nextFollowUpDueAt).getTime() > now
+}
+
 function statusLine(sequence: LinkedinSequenceRow): string | null {
+  // « relance prévue le… », « dernier message prévu le… »
+  const next = (feminine: boolean) =>
+    sequence.nextFollowUpDueAt
+      ? `${notYetDue(sequence) ? (feminine ? 'prévue le' : 'prévu le') : 'à envoyer depuis le'} ${day(sequence.nextFollowUpDueAt)}`
+      : ''
   switch (sequence.status) {
     case 'invited':
       return `Invitation envoyée le ${day(sequence.invitedAt)}`
@@ -64,7 +93,11 @@ function statusLine(sequence: LinkedinSequenceRow): string | null {
         ? `Invitation acceptée le ${day(sequence.connectedAt)}`
         : `Déjà en relation (noté le ${day(sequence.connectedAt)})`
     case 'messaged':
-      return `Message envoyé le ${day(sequence.messagedAt)}`
+      return `Message envoyé le ${day(sequence.messagedAt)}${next(true) ? ` · relance ${next(true)}` : ''}`
+    case 'followed_up_1':
+      return `Relance envoyée le ${day(sequence.followUp1At)}${next(false) ? ` · dernier message ${next(false)}` : ''}`
+    case 'followed_up_2':
+      return `Dernier message envoyé le ${day(sequence.followUp2At)} : séquence terminée`
     case 'replied':
       return `A répondu le ${day(sequence.repliedAt)}`
     case 'stopped':
@@ -74,8 +107,16 @@ function statusLine(sequence: LinkedinSequenceRow): string | null {
   }
 }
 
+// Dernier texte envoyé, montré pour mémoire
+function lastSent(sequence: LinkedinSequenceRow): string | null {
+  if (sequence.followUp2At) return sequence.followUp2
+  if (sequence.followUp1At) return sequence.followUp1
+  if (sequence.messagedAt) return sequence.message
+  return null
+}
+
 /**
- * Une personne de la file, après la relecture : son message et l'étape suivante à noter.
+ * Une personne de la file, après la relecture : le texte à envoyer et l'étape suivante à noter.
  * L'envoi se fait à la main sur LinkedIn ; ici, on note ce qui est fait.
  */
 export function SequenceCard({
@@ -89,13 +130,19 @@ export function SequenceCard({
 }) {
   const router = useRouter()
   const { toast } = useToast()
-  const [busy, setBusy] = useState(false)
-  const [editing, setEditing] = useState(sequence.status === 'connected')
-  const [message, setMessage] = useState(sequence.message ?? '')
-  const [savedMessage, setSavedMessage] = useState(sequence.message ?? '')
-  const name = personName(sequence)
   const { status } = sequence
-  const sent = status === 'messaged' || status === 'replied' || status === 'stopped'
+  const pending = pendingSend(sequence)
+  const waiting = notYetDue(sequence)
+  const beforeSending = status === 'approved' || status === 'invited'
+
+  // Texte modifiable : celui qui part ensuite, ou le message avant l'invitation
+  const field: Field | null = pending?.field ?? (beforeSending ? 'message' : null)
+  const initial = field ? ((field === 'message' ? sequence.message : field === 'followUp1' ? sequence.followUp1 : sequence.followUp2) ?? '') : ''
+  const [busy, setBusy] = useState(false)
+  const [editing, setEditing] = useState(pending !== null)
+  const [text, setText] = useState(initial)
+  const [savedText, setSavedText] = useState(initial)
+  const name = personName(sequence)
 
   const run = async (action: () => Promise<{ success: boolean; error?: string }>, success: string) => {
     setBusy(true)
@@ -118,11 +165,11 @@ export function SequenceCard({
   }
 
   // Enregistrement discret (en quittant le champ) : rien à dire si tout va bien
-  const saveMessage = async () => {
-    const text = message.trim()
-    if (text === savedMessage.trim()) return true
+  const saveText = async () => {
+    const trimmed = text.trim()
+    if (!field || trimmed === savedText.trim()) return true
     try {
-      const result = await saveLinkedinMessage(sequence.id, text)
+      const result = await saveLinkedinTexts(sequence.id, { [field]: trimmed })
       if (!result.success) {
         toast({ variant: 'destructive', title: 'Message non enregistré', description: result.error })
         return false
@@ -131,13 +178,13 @@ export function SequenceCard({
       toast({ variant: 'destructive', title: 'Message non enregistré', description: CONNECTION_ERROR })
       return false
     }
-    setSavedMessage(text)
+    setSavedText(trimmed)
     return true
   }
 
   const advance = async (step: LinkedinStep) => {
     if (step === 'stopped' && !confirm(`Arrêter l'envoi LinkedIn pour ${name} ?`)) return
-    if (step === 'messaged' && !(await saveMessage())) return
+    if (pending?.step === step && !(await saveText())) return
     await run(() => advanceLinkedinSequence(sequence.id, step), STEP_TOASTS[step])
   }
 
@@ -148,7 +195,7 @@ export function SequenceCard({
 
   const copyAndOpen = async () => {
     try {
-      await navigator.clipboard.writeText(message.trim())
+      await navigator.clipboard.writeText(text.trim())
       toast({ title: 'Message copié', description: 'Ouvrez la conversation sur LinkedIn et collez-le.' })
     } catch {
       toast({ variant: 'destructive', title: 'Copie impossible', description: 'Sélectionnez le texte et copiez-le à la main.' })
@@ -166,6 +213,8 @@ export function SequenceCard({
   )
 
   const line = statusLine(sequence)
+  const sentText = pending || beforeSending ? null : lastSent(sequence)
+  const followUps = [sequence.followUp1, sequence.followUp2].filter((value) => value?.trim()).length
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-3">
@@ -174,29 +223,34 @@ export function SequenceCard({
         {line && <span className="text-xs text-muted-foreground shrink-0">{line}</span>}
       </div>
 
-      {message && !editing && (
+      {field && !editing && text && (
         <div className="flex items-start gap-2">
-          <p className={`flex-1 whitespace-pre-line text-sm ${sent ? 'text-muted-foreground' : ''} line-clamp-4`}>{message}</p>
-          {!sent && (
-            <Button variant="ghost" size="sm" onClick={() => setEditing(true)} aria-label={`Modifier le message pour ${name}`}>
-              <Pencil className="w-4 h-4" />
-            </Button>
-          )}
+          <p className="flex-1 whitespace-pre-line text-sm line-clamp-4">{text}</p>
+          <Button variant="ghost" size="sm" onClick={() => setEditing(true)} aria-label={`Modifier le message pour ${name}`}>
+            <Pencil className="w-4 h-4" />
+          </Button>
         </div>
       )}
-      {editing && !sent && (
+      {field && editing && (
         <div className="space-y-1">
+          {pending && <p className="text-sm font-medium">{pending.label} à envoyer</p>}
           <Textarea
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            onBlur={() => void saveMessage()}
-            rows={5}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onBlur={() => void saveText()}
+            rows={pending?.field === 'message' || !pending ? 5 : 4}
             maxLength={2000}
-            aria-label={`Message pour ${name}`}
+            aria-label={`${pending?.label ?? 'Message'} pour ${name}`}
           />
-          <p className="text-xs text-muted-foreground">{message.trim().length} caractères</p>
+          <p className="text-xs text-muted-foreground">{text.trim().length} caractères</p>
         </div>
       )}
+      {beforeSending && followUps > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {followUps === 2 ? 'Relance et dernier message prévus' : '1 relance prévue'} si la personne ne répond pas.
+        </p>
+      )}
+      {sentText && <p className="whitespace-pre-line text-sm text-muted-foreground line-clamp-4">{sentText}</p>}
 
       <div className="flex flex-wrap items-center gap-2">
         {status === 'approved' && (
@@ -219,25 +273,28 @@ export function SequenceCard({
               Invitation acceptée
             </Button>
             {profileLink}
-            <Button variant="outline" size="sm" onClick={() => advance('replied')} disabled={busy}>
-              A répondu
-            </Button>
           </>
         )}
-        {status === 'connected' && (
+        {pending && waiting && (
+          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Clock className="w-4 h-4" />
+            {pending.label} à envoyer à partir du {day(sequence.nextFollowUpDueAt)}
+          </span>
+        )}
+        {pending && !waiting && (
           <>
-            <Button variant="outline" size="sm" onClick={copyAndOpen} disabled={!message.trim()}>
+            <Button variant="outline" size="sm" onClick={copyAndOpen} disabled={!text.trim()}>
               <Copy className="w-4 h-4 mr-2" />
               Copier et ouvrir LinkedIn
             </Button>
-            <Button size="sm" onClick={() => advance('messaged')} disabled={busy || messageBlocked || !message.trim()}>
+            <Button size="sm" onClick={() => advance(pending.step)} disabled={busy || messageBlocked || !text.trim()}>
               {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
-              Message envoyé
+              {pending.done}
             </Button>
           </>
         )}
-        {status === 'messaged' && (
-          <Button size="sm" onClick={() => advance('replied')} disabled={busy}>
+        {['invited', 'messaged', 'followed_up_1', 'followed_up_2'].includes(status) && (
+          <Button variant={pending || status === 'invited' ? 'outline' : 'default'} size="sm" onClick={() => advance('replied')} disabled={busy}>
             A répondu
           </Button>
         )}
@@ -248,7 +305,7 @@ export function SequenceCard({
             Retirer
           </Button>
         )}
-        {(status === 'invited' || status === 'connected' || status === 'messaged') && (
+        {['invited', 'connected', 'messaged', 'followed_up_1'].includes(status) && (
           <Button variant="ghost" size="sm" onClick={() => advance('stopped')} disabled={busy} className="text-muted-foreground">
             <X className="w-4 h-4 mr-2" />
             Arrêter

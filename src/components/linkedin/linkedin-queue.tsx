@@ -7,32 +7,58 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { LinkedinCounters, LinkedinSequenceRow } from '@/lib/queries/linkedin'
-import type { LinkedinSequenceStatus } from '@/types'
 import { ReviewPanel } from './review-panel'
-import { SequenceCard } from './sequence-card'
+import { notYetDue, pendingSend, SequenceCard } from './sequence-card'
 
-const TABS: { key: string; label: string; statuses: LinkedinSequenceStatus[]; empty: string }[] = [
-  { key: 'review', label: 'À relire', statuses: ['to_review'], empty: 'Aucun message à relire.' },
+type Tab = {
+  key: string
+  label: string
+  includes: (sequence: LinkedinSequenceRow) => boolean
+  empty: string
+}
+
+// Relance en attente (à envoyer, ou prévue plus tard)
+const hasFollowUp = (sequence: LinkedinSequenceRow) =>
+  (sequence.status === 'messaged' || sequence.status === 'followed_up_1') && pendingSend(sequence) !== null
+
+const TABS: Tab[] = [
+  { key: 'review', label: 'À relire', includes: (s) => s.status === 'to_review', empty: 'Aucun message à relire.' },
   {
     key: 'invite',
     label: 'À inviter',
-    statuses: ['approved'],
-    empty: 'Personne à inviter : validez des messages dans « À relire ».',
+    includes: (s) => s.status === 'approved',
+    empty: 'Personne à inviter : validez des séquences dans « À relire ».',
   },
   {
     key: 'waiting',
     label: 'Invitations envoyées',
-    statuses: ['invited'],
+    includes: (s) => s.status === 'invited',
     empty: 'Aucune invitation en attente de réponse.',
   },
   {
     key: 'write',
     label: 'À écrire',
-    statuses: ['connected'],
+    includes: (s) => s.status === 'connected',
     empty: 'Personne à qui écrire : notez ici les invitations acceptées.',
   },
-  { key: 'done', label: 'Suivi', statuses: ['messaged', 'replied', 'stopped'], empty: 'Aucun message envoyé pour l\'instant.' },
+  {
+    key: 'follow',
+    label: 'Relances',
+    includes: hasFollowUp,
+    empty: 'Aucune relance prévue : elles apparaissent ici après l\'envoi du premier message.',
+  },
+  {
+    key: 'done',
+    label: 'Suivi',
+    includes: (s) => ['messaged', 'followed_up_1', 'followed_up_2', 'replied', 'stopped'].includes(s.status) && !hasFollowUp(s),
+    empty: 'Aucune séquence terminée pour l\'instant.',
+  },
 ]
+
+// Ce qu'il y a à faire maintenant dans un onglet (les relances pas encore dues attendent)
+function todo(key: string, rows: LinkedinSequenceRow[]): number {
+  return key === 'follow' ? rows.filter((sequence) => !notYetDue(sequence)).length : rows.length
+}
 
 function Meter({ label, value, max }: { label: string; value: number; max: number }) {
   const ratio = Math.min(value / max, 1)
@@ -68,10 +94,23 @@ export function LinkedinQueue({
   caps: { invitationsPerMonth: number; actionsPerDay: number }
 }) {
   const byTab = Object.fromEntries(
-    TABS.map((tab) => [tab.key, sequences.filter((sequence) => tab.statuses.includes(sequence.status))])
+    TABS.map((tab) => {
+      const rows = sequences.filter(tab.includes)
+      // Relances : celles à envoyer d'abord, puis par date prévue
+      if (tab.key === 'follow') {
+        rows.sort((a, b) => (a.nextFollowUpDueAt ?? '').localeCompare(b.nextFollowUpDueAt ?? ''))
+      }
+      return [tab.key, rows]
+    })
   ) as Record<string, LinkedinSequenceRow[]>
   // Première étape où il y a quelque chose à faire (« Suivi » en dernier)
-  const [tab, setTab] = useState(() => TABS.find((candidate) => byTab[candidate.key]!.length > 0)?.key ?? 'review')
+  const [tab, setTab] = useState(
+    () =>
+      // « Suivi » n'est jamais à faire : on n'y arrive que s'il n'y a rien d'autre
+      TABS.find((candidate) => candidate.key !== 'done' && todo(candidate.key, byTab[candidate.key]!) > 0)?.key ??
+      TABS.find((candidate) => byTab[candidate.key]!.length > 0)?.key ??
+      'review'
+  )
 
   // L'onglet ouvert vient de se vider (tout validé, tout invité…) : on passe à l'étape suivante qui a du monde
   const counts = TABS.map((candidate) => byTab[candidate.key]!.length).join(',')
@@ -129,7 +168,9 @@ export function LinkedinQueue({
             {TABS.map((candidate) => (
               <TabsTrigger key={candidate.key} value={candidate.key}>
                 {candidate.label}
-                <span className="ml-1.5 tabular-nums text-muted-foreground">{byTab[candidate.key]!.length}</span>
+                <span className="ml-1.5 tabular-nums text-muted-foreground">
+                  {todo(candidate.key, byTab[candidate.key]!)}
+                </span>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -146,7 +187,8 @@ export function LinkedinQueue({
               ) : (
                 rows.map((sequence) => (
                   <SequenceCard
-                    key={sequence.id}
+                    // Nouvelle étape, nouveau texte à envoyer : la carte repart de zéro
+                    key={`${sequence.id}-${sequence.status}`}
                     sequence={sequence}
                     inviteBlocked={monthReached || dayReached}
                     messageBlocked={dayReached}

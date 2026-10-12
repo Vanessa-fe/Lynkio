@@ -5,8 +5,12 @@ import type { LinkedinSequenceStatus } from '@/types'
 // Plafonds validés avec l'utilisatrice : bien en dessous des limites de LinkedIn
 export const LINKEDIN_CAPS = { invitationsPerMonth: 200, actionsPerDay: 12 }
 
+// Relance 1 : 5 jours après le message ; message de sortie : 7 jours après la relance 1
+export const FOLLOW_UP_DELAYS_DAYS = { first: 5, second: 7 }
+
 const TIMEZONE = 'Europe/Paris'
 const MAX_SEQUENCES = 2000
+const DAY_MS = 24 * 60 * 60 * 1000
 
 export type LinkedinSequenceRow = {
   id: string
@@ -16,6 +20,12 @@ export type LinkedinSequenceRow = {
   invitedAt: string | null
   connectedAt: string | null
   messagedAt: string | null
+  followUp1: string | null
+  followUp2: string | null
+  followUp1At: string | null
+  followUp2At: string | null
+  // Date à partir de laquelle la prochaine relance peut partir (null : pas de relance à venir)
+  nextFollowUpDueAt: string | null
   repliedAt: string | null
   stoppedAt: string | null
   createdAt: string
@@ -39,9 +49,30 @@ export type LinkedinCounters = {
 // Jour (AAAA-MM-JJ) à l'heure de Paris
 const parisDay = new Intl.DateTimeFormat('fr-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' })
 
+function addDays(iso: string, days: number): string {
+  return new Date(new Date(iso).getTime() + days * DAY_MS).toISOString()
+}
+
+/** Prochaine relance à envoyer, et à partir de quand */
+function nextFollowUpDueAt(row: {
+  status: LinkedinSequenceStatus
+  messaged_at: string | null
+  follow_up_1: string | null
+  follow_up_1_at: string | null
+  follow_up_2: string | null
+}): string | null {
+  if (row.status === 'messaged' && row.messaged_at && row.follow_up_1?.trim()) {
+    return addDays(row.messaged_at, FOLLOW_UP_DELAYS_DAYS.first)
+  }
+  if (row.status === 'followed_up_1' && row.follow_up_1_at && row.follow_up_2?.trim()) {
+    return addDays(row.follow_up_1_at, FOLLOW_UP_DELAYS_DAYS.second)
+  }
+  return null
+}
+
 /**
  * Envois LinkedIn de l'utilisatrice, et ce qui compte pour les plafonds :
- * invitations du mois, invitations et messages du jour.
+ * invitations du mois, invitations, messages et relances du jour.
  */
 export async function getLinkedinQueue(): Promise<{ sequences: LinkedinSequenceRow[]; counters: LinkedinCounters }> {
   const empty = { sequences: [], counters: { invitationsThisMonth: 0, actionsToday: 0 } }
@@ -53,6 +84,7 @@ export async function getLinkedinQueue(): Promise<{ sequences: LinkedinSequenceR
     .from('linkedin_sequences')
     .select(
       `id, status, message, message_angle, invited_at, connected_at, messaged_at, replied_at, stopped_at, created_at,
+       follow_up_1, follow_up_2, follow_up_1_at, follow_up_2_at,
        list:prospect_lists(name),
        contact:company_contacts!inner(id, first_name, last_name, role, linkedin_url, opted_out_at,
          company:companies!inner(id, name, kind))`
@@ -84,7 +116,9 @@ export async function getLinkedinQueue(): Promise<{ sequences: LinkedinSequenceR
     const invitedDay = dayOf(row.invited_at)
     if (invitedDay?.startsWith(month)) counters.invitationsThisMonth++
     if (invitedDay === today) counters.actionsToday++
-    if (dayOf(row.messaged_at) === today) counters.actionsToday++
+    for (const sentAt of [row.messaged_at, row.follow_up_1_at, row.follow_up_2_at]) {
+      if (dayOf(sentAt) === today) counters.actionsToday++
+    }
 
     return {
       id: row.id,
@@ -94,6 +128,11 @@ export async function getLinkedinQueue(): Promise<{ sequences: LinkedinSequenceR
       invitedAt: row.invited_at,
       connectedAt: row.connected_at,
       messagedAt: row.messaged_at,
+      followUp1: row.follow_up_1,
+      followUp2: row.follow_up_2,
+      followUp1At: row.follow_up_1_at,
+      followUp2At: row.follow_up_2_at,
+      nextFollowUpDueAt: nextFollowUpDueAt(row),
       repliedAt: row.replied_at,
       stoppedAt: row.stopped_at,
       createdAt: row.created_at,
