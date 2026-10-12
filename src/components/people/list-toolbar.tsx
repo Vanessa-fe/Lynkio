@@ -145,19 +145,24 @@ export function ListToolbar({ lists, activeList, exportableCount }: ListToolbarP
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select value={activeList?.id ?? ALL} onValueChange={selectList}>
-        <SelectTrigger className="w-full sm:w-[260px]" aria-label="Liste affichée">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>Toutes les personnes</SelectItem>
-          {lists.map((list) => (
-            <SelectItem key={list.id} value={list.id}>
-              {list.name} ({list.count})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex w-full items-center gap-2 sm:w-auto">
+        <Label htmlFor="list-select" className="shrink-0 text-sm text-muted-foreground">
+          Liste
+        </Label>
+        <Select value={activeList?.id ?? ALL} onValueChange={selectList}>
+          <SelectTrigger id="list-select" className="min-w-0 flex-1 sm:w-[260px] sm:flex-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Toutes les personnes</SelectItem>
+            {lists.map((list) => (
+              <SelectItem key={list.id} value={list.id}>
+                {list.name} ({list.count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {activeList && (
         <>
