@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ListMinus, ListPlus, Plus, Search, Users, X } from 'lucide-react'
+import { ListMinus, ListPlus, Loader2, Plus, Search, Users, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { CompanyStageSelect } from '@/components/companies/company-stage-select'
+import { useStartLinkedin } from '@/components/linkedin/use-start-linkedin'
 import { SegmentBadge } from '@/components/companies/company-segment'
 import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
 import { removeContactsFromList } from '@/lib/actions/prospect-lists'
@@ -56,6 +57,7 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [isAddingToList, setIsAddingToList] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
+  const { start: startLinkedin, isStarting } = useStartLinkedin()
 
   const activeList = lists.find((list) => list.id === activeListId) ?? null
   const inList = activeList ? people.filter((person) => person.listIds.includes(activeList.id)) : people
@@ -78,6 +80,10 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
 
   const selectedIds = [...selected].filter((id) => filtered.some((person) => person.id === id))
   const allSelected = filtered.length > 0 && selectedIds.length === filtered.length
+  // Parmi elles, celles qu'on peut inviter sur LinkedIn
+  const linkedinCount = filtered.filter(
+    (person) => selected.has(person.id) && person.linkedin_url && !person.opted_out_at
+  ).length
 
   const toggle = (id: string, checked: boolean) => {
     setSelected((current) => {
@@ -203,7 +209,19 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
           <span className="text-sm font-medium mr-2">
             {selectedIds.length} sélectionnée{selectedIds.length > 1 ? 's' : ''}
           </span>
-          <Button size="sm" onClick={() => setIsAddingToList(true)}>
+          {linkedinCount > 0 && (
+            <Button
+              size="sm"
+              onClick={async () => {
+                if (await startLinkedin({ contactIds: selectedIds })) setSelected(new Set())
+              }}
+              disabled={isStarting}
+            >
+              {isStarting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LinkedinIcon className="w-4 h-4 mr-2" />}
+              Envoyer sur LinkedIn ({linkedinCount})
+            </Button>
+          )}
+          <Button size="sm" variant={linkedinCount > 0 ? 'outline' : 'default'} onClick={() => setIsAddingToList(true)}>
             <ListPlus className="w-4 h-4 mr-2" />
             Ajouter à une liste
           </Button>
