@@ -6,7 +6,8 @@ import { AlertTriangle, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import type { LinkedinCounters, LinkedinSequenceRow } from '@/lib/queries/linkedin'
+import type { LinkedinAutomation, LinkedinCounters, LinkedinSequenceRow } from '@/lib/queries/linkedin'
+import { AutomationPanel } from './automation-panel'
 import { ReviewPanel } from './review-panel'
 import { notYetDue, pendingSend, SequenceCard } from './sequence-card'
 
@@ -88,10 +89,15 @@ export function LinkedinQueue({
   sequences,
   counters,
   caps,
+  automation,
+  now,
 }: {
   sequences: LinkedinSequenceRow[]
   counters: LinkedinCounters
   caps: { invitationsPerMonth: number; actionsPerDay: number }
+  automation: LinkedinAutomation
+  // Heure du rendu côté serveur : la même pour tout le monde, pas d'écart à l'hydratation
+  now: number
 }) {
   const byTab = Object.fromEntries(
     TABS.map((tab) => {
@@ -149,6 +155,8 @@ export function LinkedinQueue({
 
   return (
     <div className="space-y-6">
+      <AutomationPanel automation={automation} now={now} />
+
       <div className="flex flex-wrap gap-6 rounded-lg border bg-card p-4">
         <Meter label="Invitations ce mois-ci" value={counters.invitationsThisMonth} max={caps.invitationsPerMonth} />
         <Meter label="Invitations et messages aujourd'hui" value={counters.actionsToday} max={caps.actionsPerDay} />
@@ -180,6 +188,12 @@ export function LinkedinQueue({
           const rows = byTab[candidate.key]!
           return (
             <TabsContent key={candidate.key} value={candidate.key} className="mt-4 space-y-3">
+              {candidate.key === 'follow' && rows.length > 0 && (
+                <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+                  Avant d&apos;envoyer une relance, vérifiez sur LinkedIn que la personne n&apos;a pas répondu : l&apos;extension ne
+                  lit pas encore les conversations. Si elle a répondu, cliquez sur « A répondu ».
+                </p>
+              )}
               {rows.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-6">{candidate.empty}</p>
               ) : candidate.key === 'review' ? (
