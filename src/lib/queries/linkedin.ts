@@ -29,6 +29,8 @@ export type LinkedinSequenceRow = {
   repliedAt: string | null
   stoppedAt: string | null
   createdAt: string
+  // Ce qui a empêché l'extension d'avancer pour cette personne (elle passe alors en un clic)
+  automationError: string | null
   listName: string | null
   contact: {
     id: string
@@ -39,6 +41,15 @@ export type LinkedinSequenceRow = {
     optedOut: boolean
   }
   company: { id: string; name: string; isIndividual: boolean }
+}
+
+export type LinkedinAutomation = {
+  enabled: boolean
+  pausedReason: string | null
+  pausedUntil: string | null
+  // Dernier passage de l'extension (Chrome ouvert et connecté) et dernière action envoyée
+  lastSeenAt: string | null
+  lastActionAt: string | null
 }
 
 export type LinkedinCounters = {
@@ -74,17 +85,44 @@ function nextFollowUpDueAt(row: {
  * Envois LinkedIn de l'utilisatrice, et ce qui compte pour les plafonds :
  * invitations du mois, invitations, messages et relances du jour.
  */
-export async function getLinkedinQueue(): Promise<{ sequences: LinkedinSequenceRow[]; counters: LinkedinCounters }> {
-  const empty = { sequences: [], counters: { invitationsThisMonth: 0, actionsToday: 0 } }
+export async function getLinkedinQueue(): Promise<{
+  sequences: LinkedinSequenceRow[]
+  counters: LinkedinCounters
+  automation: LinkedinAutomation
+  // Heure de la lecture, pour juger côté page si l'extension est passée récemment
+  readAt: number
+}> {
+  const readAt = Date.now()
+  const automation: LinkedinAutomation = {
+    enabled: false,
+    pausedReason: null,
+    pausedUntil: null,
+    lastSeenAt: null,
+    lastActionAt: null,
+  }
+  const empty = { sequences: [], counters: { invitationsThisMonth: 0, actionsToday: 0 }, automation, readAt }
   const user = await getAuthUser()
   if (!user) return empty
 
   const supabase = await createClient()
+  const { data: settings } = await supabase
+    .from('linkedin_automation')
+    .select('enabled, paused_reason, paused_until, last_seen_at, last_action_at')
+    .eq('user_id', user.id)
+    .maybeSingle()
+  if (settings) {
+    automation.enabled = settings.enabled
+    automation.pausedReason = settings.paused_reason
+    automation.pausedUntil = settings.paused_until
+    automation.lastSeenAt = settings.last_seen_at
+    automation.lastActionAt = settings.last_action_at
+  }
+
   const { data, error } = await supabase
     .from('linkedin_sequences')
     .select(
       `id, status, message, message_angle, invited_at, connected_at, messaged_at, replied_at, stopped_at, created_at,
-       follow_up_1, follow_up_2, follow_up_1_at, follow_up_2_at,
+       follow_up_1, follow_up_2, follow_up_1_at, follow_up_2_at, automation_error,
        list:prospect_lists(name),
        contact:company_contacts!inner(id, first_name, last_name, role, linkedin_url, opted_out_at,
          company:companies!inner(id, name, kind))`
@@ -136,6 +174,7 @@ export async function getLinkedinQueue(): Promise<{ sequences: LinkedinSequenceR
       repliedAt: row.replied_at,
       stoppedAt: row.stopped_at,
       createdAt: row.created_at,
+      automationError: row.automation_error,
       listName: (row.list as { name: string } | null)?.name ?? null,
       contact: {
         id: contact.id,
@@ -149,5 +188,5 @@ export async function getLinkedinQueue(): Promise<{ sequences: LinkedinSequenceR
     }
   })
 
-  return { sequences, counters }
+  return { sequences, counters, automation, readAt }
 }

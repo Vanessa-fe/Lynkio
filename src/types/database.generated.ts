@@ -494,8 +494,43 @@ export type Database = {
         }
         Relationships: []
       }
+      linkedin_automation: {
+        Row: {
+          enabled: boolean
+          last_action_at: string | null
+          last_seen_at: string | null
+          paused_at: string | null
+          paused_reason: string | null
+          paused_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          last_action_at?: string | null
+          last_seen_at?: string | null
+          paused_at?: string | null
+          paused_reason?: string | null
+          paused_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          enabled?: boolean
+          last_action_at?: string | null
+          last_seen_at?: string | null
+          paused_at?: string | null
+          paused_reason?: string | null
+          paused_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       linkedin_sequences: {
         Row: {
+          automation_error: string | null
+          automation_error_at: string | null
           connected_at: string | null
           contact_id: string
           created_at: string
@@ -505,10 +540,12 @@ export type Database = {
           follow_up_2_at: string | null
           id: string
           invited_at: string | null
+          last_checked_at: string | null
           list_id: string | null
           message: string | null
           message_angle: string | null
           messaged_at: string | null
+          profile_urn: string | null
           replied_at: string | null
           status: string
           stopped_at: string | null
@@ -516,6 +553,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          automation_error?: string | null
+          automation_error_at?: string | null
           connected_at?: string | null
           contact_id: string
           created_at?: string
@@ -525,10 +564,12 @@ export type Database = {
           follow_up_2_at?: string | null
           id?: string
           invited_at?: string | null
+          last_checked_at?: string | null
           list_id?: string | null
           message?: string | null
           message_angle?: string | null
           messaged_at?: string | null
+          profile_urn?: string | null
           replied_at?: string | null
           status?: string
           stopped_at?: string | null
@@ -536,6 +577,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          automation_error?: string | null
+          automation_error_at?: string | null
           connected_at?: string | null
           contact_id?: string
           created_at?: string
@@ -545,10 +588,12 @@ export type Database = {
           follow_up_2_at?: string | null
           id?: string
           invited_at?: string | null
+          last_checked_at?: string | null
           list_id?: string | null
           message?: string | null
           message_angle?: string | null
           messaged_at?: string | null
+          profile_urn?: string | null
           replied_at?: string | null
           status?: string
           stopped_at?: string | null
@@ -1088,6 +1133,8 @@ export type Database = {
       advance_linkedin_sequence: {
         Args: { p_sequence_id: string; p_step: string }
         Returns: {
+          automation_error: string | null
+          automation_error_at: string | null
           connected_at: string | null
           contact_id: string
           created_at: string
@@ -1097,10 +1144,12 @@ export type Database = {
           follow_up_2_at: string | null
           id: string
           invited_at: string | null
+          last_checked_at: string | null
           list_id: string | null
           message: string | null
           message_angle: string | null
           messaged_at: string | null
+          profile_urn: string | null
           replied_at: string | null
           status: string
           stopped_at: string | null

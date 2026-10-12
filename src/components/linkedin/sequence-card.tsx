@@ -3,9 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import { Check, Clock, Copy, ExternalLink, Loader2, Pencil, UserCheck, X } from 'lucide-react'
+import { AlertTriangle, Check, Clock, Copy, ExternalLink, Loader2, Pencil, UserCheck, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -18,6 +16,7 @@ import {
 } from '@/lib/actions/linkedin-sequences'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
+import { formatDate } from '@/lib/utils/dates'
 import type { LinkedinSequenceRow } from '@/lib/queries/linkedin'
 
 type Field = keyof Required<LinkedinTexts>
@@ -33,7 +32,7 @@ const STEP_TOASTS: Record<LinkedinStep, string> = {
 }
 
 function day(iso: string | null): string {
-  return iso ? format(new Date(iso), 'd MMM', { locale: fr }) : ''
+  return iso ? formatDate(iso, 'd MMM') : ''
 }
 
 export function personName(sequence: LinkedinSequenceRow): string {
@@ -223,6 +222,12 @@ export function SequenceCard({
         {line && <span className="text-xs text-muted-foreground shrink-0">{line}</span>}
       </div>
 
+      {sequence.automationError && (
+        <p className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+          L&apos;extension n&apos;a pas pu continuer : {sequence.automationError} Cette étape se fait en un clic.
+        </p>
+      )}
       {field && !editing && text && (
         <div className="flex items-start gap-2">
           <p className="flex-1 whitespace-pre-line text-sm line-clamp-4">{text}</p>

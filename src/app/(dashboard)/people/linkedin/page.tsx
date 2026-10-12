@@ -5,7 +5,7 @@ import { LinkedinQueue } from '@/components/linkedin/linkedin-queue'
 import { getLinkedinQueue, LINKEDIN_CAPS } from '@/lib/queries/linkedin'
 
 export default async function LinkedinOutreachPage() {
-  const { sequences, counters } = await getLinkedinQueue()
+  const { sequences, counters, automation, readAt } = await getLinkedinQueue()
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -19,12 +19,12 @@ export default async function LinkedinOutreachPage() {
       <div>
         <h1 className="text-3xl font-bold">Envoi LinkedIn</h1>
         <p className="text-muted-foreground mt-2 max-w-3xl">
-          Les invitations et les messages de Sophie, personne par personne. Pour l&apos;instant, vous envoyez sur LinkedIn
-          et vous notez ici ce qui est fait : l&apos;extension s&apos;en chargera bientôt.
+          Les invitations et les messages de Sophie, personne par personne. Avec l&apos;envoi automatique, l&apos;extension
+          s&apos;en charge ; sinon, tout se fait en un clic.
         </p>
       </div>
 
-      <LinkedinQueue sequences={sequences} counters={counters} caps={LINKEDIN_CAPS} />
+      <LinkedinQueue sequences={sequences} counters={counters} caps={LINKEDIN_CAPS} automation={automation} now={readAt} />
     </div>
   )
 }

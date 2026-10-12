@@ -303,3 +303,59 @@ export async function advanceLinkedinSequence(sequenceId: string, step: Linkedin
     return { success: false, error: 'Une erreur est survenue' }
   }
 }
+
+/**
+ * Active ou coupe l'envoi automatique par l'extension. L'activer efface une pause éventuelle.
+ */
+export async function setLinkedinAutomation(enabled: boolean): Promise<ActionResult> {
+  try {
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('linkedin_automation')
+      .upsert(
+        { user_id: user.id, enabled, ...(enabled ? { paused_reason: null, paused_at: null, paused_until: null } : {}) },
+        { onConflict: 'user_id' }
+      )
+
+    if (error) {
+      console.error('Set LinkedIn automation error:', error)
+      return { success: false, error: 'Impossible de changer l\'envoi automatique' }
+    }
+
+    revalidatePath('/people/linkedin')
+    return { success: true }
+  } catch (error) {
+    console.error('Set LinkedIn automation error:', error)
+    return { success: false, error: 'Une erreur est survenue' }
+  }
+}
+
+/**
+ * Reprend l'envoi automatique après une pause posée par l'extension
+ */
+export async function resumeLinkedinAutomation(): Promise<ActionResult> {
+  try {
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('linkedin_automation')
+      .update({ paused_reason: null, paused_at: null, paused_until: null })
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('Resume LinkedIn automation error:', error)
+      return { success: false, error: 'Impossible de reprendre l\'envoi automatique' }
+    }
+
+    revalidatePath('/people/linkedin')
+    return { success: true }
+  } catch (error) {
+    console.error('Resume LinkedIn automation error:', error)
+    return { success: false, error: 'Une erreur est survenue' }
+  }
+}
