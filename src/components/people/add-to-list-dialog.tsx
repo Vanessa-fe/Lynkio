@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ToastAction } from '@/components/ui/toast'
 import {
   Dialog,
   DialogContent,
@@ -61,11 +62,16 @@ export function AddToListDialog({ contactIds, lists, open, onOpenChange, onDone 
       return
     }
 
-    const { added } = result.data
+    const { added, listId } = result.data
     const already = count - added
     toast({
       title: `${added} personne${added > 1 ? 's' : ''} ajoutée${added > 1 ? 's' : ''} à « ${existing?.name ?? trimmed} »`,
       description: already > 0 ? `${already} y étai${already > 1 ? 'en' : ''}t déjà.` : undefined,
+      action: (
+        <ToastAction altText="Voir la liste" onClick={() => router.push(`/people?list=${listId}`)}>
+          Voir la liste
+        </ToastAction>
+      ),
     })
     setName('')
     onOpenChange(false)
