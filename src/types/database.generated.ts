@@ -494,6 +494,79 @@ export type Database = {
         }
         Relationships: []
       }
+      linkedin_sequences: {
+        Row: {
+          connected_at: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          invited_at: string | null
+          list_id: string | null
+          message: string | null
+          message_angle: string | null
+          messaged_at: string | null
+          replied_at: string | null
+          status: string
+          stopped_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          list_id?: string | null
+          message?: string | null
+          message_angle?: string | null
+          messaged_at?: string | null
+          replied_at?: string | null
+          status?: string
+          stopped_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connected_at?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          list_id?: string | null
+          message?: string | null
+          message_angle?: string | null
+          messaged_at?: string | null
+          replied_at?: string | null
+          status?: string
+          stopped_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linkedin_sequences_contact_id_user_id_fkey"
+            columns: ["contact_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "company_contacts"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "linkedin_sequences_contact_id_user_id_fkey"
+            columns: ["contact_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "contact_outreach"
+            referencedColumns: ["contact_id", "user_id"]
+          },
+          {
+            foreignKeyName: "linkedin_sequences_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_runs: {
         Row: {
           companies_created: number
@@ -1000,6 +1073,31 @@ export type Database = {
       }
     }
     Functions: {
+      advance_linkedin_sequence: {
+        Args: { p_sequence_id: string; p_step: string }
+        Returns: {
+          connected_at: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          invited_at: string | null
+          list_id: string | null
+          message: string | null
+          message_angle: string | null
+          messaged_at: string | null
+          replied_at: string | null
+          status: string
+          stopped_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "linkedin_sequences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       attach_individual_to_company: {
         Args: { p_company_id: string; p_individual_id: string }
         Returns: undefined

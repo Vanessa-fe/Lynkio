@@ -56,6 +56,8 @@ export type MessageContext = {
   jobAd: { signalId: string; text: string } | null
   recipient: { firstName: string | null; lastName: string | null; role: string | null } | null
   instructions: string | null
+  // Message LinkedIn envoyé juste après l'acceptation d'une invitation envoyée sans note
+  afterInvitation: boolean
 }
 
 export type DraftFromAi = {
@@ -192,6 +194,10 @@ function contextPrompt(context: MessageContext): string {
             .filter(Boolean)
             .join('\n')
         : 'Inconnu : écris à l\'entreprise.',
+    ]),
+    section('Situation', [
+      context.afterInvitation &&
+        "La personne vient d'accepter l'invitation LinkedIn de la freelance, envoyée sans note : elle ne sait pas encore pourquoi elle l'a invitée. N'ouvre pas sur un remerciement pour l'acceptation : entre directement dans le sujet.",
     ]),
     section('Consignes de la freelance pour ce message', [context.instructions]),
   ]

@@ -41,6 +41,8 @@ export type PipelineStageKind = 'open' | 'won' | 'lost' | 'excluded'
 export type PipelineStageRole = 'to_contact' | 'contacted' | 'followed_up' | 'in_discussion'
 // Statut de prospection d'une personne, déduit de ses échanges (vue contact_outreach)
 export type OutreachStatus = 'to_contact' | 'contacted' | 'followed_up' | 'replied' | 'do_not_contact'
+// Envoi LinkedIn d'une personne : relu et validé, invitée, en relation, message envoyé, a répondu (ou arrêté)
+export type LinkedinSequenceStatus = 'to_review' | 'approved' | 'invited' | 'connected' | 'messaged' | 'replied' | 'stopped'
 export type CompanyOrigin = 'manual' | 'import' | 'detector'
 // organization : entreprise ; individual : personne seule (indépendant ou entreprise inconnue)
 export type CompanyKind = 'organization' | 'individual'
