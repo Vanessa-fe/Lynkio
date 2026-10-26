@@ -3,7 +3,8 @@ import { formatDistanceStrict } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent } from '@/components/ui/card'
+import { CollapsibleCard } from '@/components/ui/collapsible-card'
 import type { PipelineRun } from '@/types'
 import { formatDate } from '@/lib/utils/dates'
 
@@ -36,11 +37,7 @@ function plural(count: number, singular: string, pluralForm: string) {
 
 export function PipelineRunsList({ runs }: { runs: PipelineRun[] }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Historique</CardTitle>
-        <CardDescription>Les dernières recherches de Sophie</CardDescription>
-      </CardHeader>
+    <CollapsibleCard title="Historique" description="Les dernières recherches de Sophie">
       <CardContent>
         {runs.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">Aucune recherche pour l&apos;instant.</p>
@@ -52,7 +49,7 @@ export function PipelineRunsList({ runs }: { runs: PipelineRun[] }) {
           </ul>
         )}
       </CardContent>
-    </Card>
+    </CollapsibleCard>
   )
 }
 

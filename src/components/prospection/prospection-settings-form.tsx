@@ -8,7 +8,8 @@ import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent, CardFooter } from '@/components/ui/card'
+import { CollapsibleCard } from '@/components/ui/collapsible-card'
 import {
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ import type { ProspectionSettings } from '@/types'
 
 interface ProspectionSettingsFormProps {
   settings: ProspectionSettings | null
+  defaultOpen?: boolean
 }
 
 function toFormValues(settings: ProspectionSettings | null): ProspectionSettingsInput {
@@ -54,7 +56,7 @@ function toFormValues(settings: ProspectionSettings | null): ProspectionSettings
   }
 }
 
-export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormProps) {
+export function ProspectionSettingsForm({ settings, defaultOpen = false }: ProspectionSettingsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
@@ -97,14 +99,11 @@ export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormPro
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Réglages</CardTitle>
-        <CardDescription>
-          Sophie repère des entreprises dans vos départements, puis les complète avec les données
-          officielles : ancienneté, activité, taille, dirigeants.
-        </CardDescription>
-      </CardHeader>
+    <CollapsibleCard
+      title="Réglages"
+      description="Sophie repère des entreprises dans vos départements, puis les complète avec les données officielles : ancienneté, activité, taille, dirigeants."
+      defaultOpen={defaultOpen}
+    >
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <CardContent className="space-y-8">
@@ -384,6 +383,6 @@ export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormPro
           {isDirty && <p className="text-sm font-medium text-amber-600">Modifications non enregistrées</p>}
         </CardFooter>
       </form>
-    </Card>
+    </CollapsibleCard>
   )
 }
