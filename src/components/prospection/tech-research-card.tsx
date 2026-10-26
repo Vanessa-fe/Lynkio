@@ -73,11 +73,16 @@ export function TechResearchCard({ techStack, isRunning }: TechResearchCardProps
           </p>
         ) : (
           <>
-            <Button onClick={handleLaunch} disabled={isLaunching || isRunning}>
+            {/* Le libellé s'allonge avec la liste des technologies : il passe à la ligne sur mobile */}
+            <Button
+              onClick={handleLaunch}
+              disabled={isLaunching || isRunning}
+              className="h-auto min-h-10 max-w-full whitespace-normal text-left"
+            >
               {isLaunching || isRunning ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 shrink-0 animate-spin" />
               ) : (
-                <Search className="w-4 h-4 mr-2" />
+                <Search className="w-4 h-4 mr-2 shrink-0" />
               )}
               {isRunning ? 'Recherche en cours…' : `Chercher des entreprises ${techList}`}
             </Button>
