@@ -34,10 +34,11 @@ export default async function ProspectionPage() {
       <ProspectionStatus settings={settings} runningRun={runningRun} />
       <TechResearchCard techStack={icp.techStack} isRunning={!!runningRun} />
       <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />
-      {/* Premier usage : les réglages d'abord, l'historique est encore vide */}
+      {/* Premier usage : les réglages d'abord et déjà ouverts, l'historique est encore vide.
+          Ensuite les deux restent repliés pour ne pas encombrer la page */}
       {runs.length === 0 ? (
         <>
-          <ProspectionSettingsForm settings={settings} />
+          <ProspectionSettingsForm settings={settings} defaultOpen />
           <PipelineRunsList runs={runs} />
         </>
       ) : (
