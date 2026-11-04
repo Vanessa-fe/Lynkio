@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import Papa from 'papaparse'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerEvent } from '@/lib/posthog-server'
 import { normalizeLinkedinProfileUrl } from '@/lib/validations/company'
 import { getWaalaxyContacts } from '@/lib/queries/waalaxy'
 
@@ -35,6 +36,8 @@ export async function GET(request: NextRequest) {
   }
 
   const contacts = await getWaalaxyContacts(supabase, user.id, listId ?? undefined)
+
+  captureServerEvent(user.id, 'waalaxy_exported', { from_list: !!listId, contacts: contacts.length })
 
   const rows = contacts
     .map((contact) => ({

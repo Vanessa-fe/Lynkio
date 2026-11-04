@@ -1,14 +1,16 @@
 import { getUserProfile } from '@/lib/queries/user-profile'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { MobileNav } from '@/components/layout/mobile-nav'
+import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const profile = await getUserProfile()
+  const [profile, user] = await Promise.all([getUserProfile(), getAuthUser()])
 
   if (!profile) {
     redirect('/login')
@@ -21,6 +23,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <PostHogIdentify userId={profile.id} email={user?.email ?? null} professionKey={profile.profession_key} />
       <Sidebar />
       <div className="md:pl-64">
         <main className="mx-auto max-w-7xl p-4 pb-24 md:p-8 md:pb-10">

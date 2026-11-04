@@ -3,6 +3,7 @@ import { Fraunces, Inter, Sora } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { MotionProvider } from '@/components/motion/motion-provider'
+import { CookieBanner } from '@/components/analytics/cookie-banner'
 import { OPEN_GRAPH_BASE, SITE_URL } from '@/lib/site'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
@@ -37,6 +38,7 @@ export default function RootLayout({
         <MotionProvider>
           {children}
           <Toaster />
+          <CookieBanner />
         </MotionProvider>
       </body>
     </html>

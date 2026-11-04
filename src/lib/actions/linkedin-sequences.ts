@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 import type { LinkedinSequenceStatus } from '@/types'
 
 type ActionResult<T = void> = {
@@ -153,10 +154,17 @@ export async function startLinkedinSequences(source: StartSource): Promise<Actio
       summary.added = toAdd.length
     }
 
+    captureServerEvent(user.id, 'linkedin_sequences_started', {
+      from: listId ? 'list' : 'selection',
+      added: summary.added,
+      skipped: contacts.length - summary.added,
+    })
+
     revalidatePath('/people/linkedin')
     return { success: true, data: summary }
   } catch (error) {
     console.error('LinkedIn start error:', error)
+    captureServerError(error, undefined, { action: 'start_linkedin_sequences' })
     return { success: false, error: 'Une erreur est survenue' }
   }
 }
@@ -264,6 +272,8 @@ export async function approveLinkedinSequences(
     }
 
     if (approved === 0) return { success: false, error: 'Aucun message validé : vérifiez qu\'ils ne sont pas vides' }
+
+    captureServerEvent(user.id, 'linkedin_messages_approved', { approved })
 
     revalidatePath('/people/linkedin')
     return { success: true, data: { approved } }

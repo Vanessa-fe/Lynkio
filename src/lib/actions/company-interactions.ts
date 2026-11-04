@@ -8,6 +8,7 @@ import {
   type CompanyInteractionInput,
 } from '@/lib/validations/company'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerEvent } from '@/lib/posthog-server'
 
 type ActionResult = {
   success: boolean
@@ -48,6 +49,12 @@ export async function createCompanyInteraction(
       console.error('Create company interaction error:', error)
       return { success: false, error: 'Impossible d\'enregistrer l\'échange' }
     }
+
+    captureServerEvent(user.id, 'interaction_created', {
+      type: validated.type,
+      status: validated.status,
+      direction: validated.direction ?? null,
+    })
 
     revalidatePath(`/companies/${validated.companyId}`)
     revalidatePath('/companies')
@@ -130,6 +137,9 @@ export async function logContactExchange(
       console.error('Log contact exchange error:', error)
       return { success: false, error: 'Impossible d\'enregistrer l\'échange' }
     }
+
+    // direction « incoming » : le prospect a répondu
+    captureServerEvent(user.id, 'exchange_logged', { type: exchange.type, direction: exchange.direction })
 
     revalidatePath('/people')
     revalidatePath('/companies')

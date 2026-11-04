@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 import { SITE_URL, toOrigin } from '@/lib/site'
+import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 import {
   loginSchema,
   signupSchema,
@@ -78,7 +79,10 @@ export async function login(data: LoginInput): Promise<ActionResult> {
     if (!onboardingCompleted) {
       destination = '/onboarding'
     }
+
+    captureServerEvent(authData.user.id, 'user_logged_in', { onboarding_completed: !!onboardingCompleted })
   } catch (error) {
+    captureServerError(error, undefined, { action: 'login' })
     return {
       success: false,
       error: 'Une erreur est survenue lors de la connexion',
@@ -128,6 +132,12 @@ export async function signup(data: SignupInput): Promise<ActionResult> {
     // Le profil utilisateur sera créé automatiquement par un trigger PostgreSQL
     // Pas besoin de le créer manuellement ici
 
+    // Adresse déjà inscrite : Supabase répond comme pour un nouveau compte, mais sans identité.
+    // Ce n'est pas une inscription.
+    if (authData.user.identities?.length !== 0) {
+      captureServerEvent(authData.user.id, 'user_signed_up', { email_confirmation_required: !authData.session })
+    }
+
     // Sans session, Supabase attend la confirmation de l'adresse email.
     // Ne pas envoyer l'utilisateur vers une page protégée avant cette étape.
     if (!authData.session) {
@@ -136,6 +146,7 @@ export async function signup(data: SignupInput): Promise<ActionResult> {
       }
     }
   } catch (error) {
+    captureServerError(error, undefined, { action: 'signup' })
     return {
       success: false,
       error: 'Une erreur est survenue lors de l\'inscription',

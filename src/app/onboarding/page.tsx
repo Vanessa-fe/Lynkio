@@ -4,6 +4,7 @@ import { getAuthUser } from '@/lib/supabase/auth'
 import { getActiveProfessions } from '@/lib/queries/professions'
 import { THEMES } from '@/lib/constants/themes'
 import { OnboardingForm } from '@/components/onboarding/onboarding-form'
+import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 
 export default async function OnboardingPage() {
   const [profile, professions, user] = await Promise.all([getUserProfile(), getActiveProfessions(), getAuthUser()])
@@ -21,16 +22,19 @@ export default async function OnboardingPage() {
   const onlyProfessionKey = professions.length === 1 ? professions[0]?.key : undefined
 
   return (
-    <OnboardingForm
-      professions={professions.map(({ key, label, description }) => ({ key, label, description }))}
-      defaultValues={{
-        firstName: profile.first_name ?? undefined,
-        businessName: profile.business_name ?? undefined,
-        professionKey: profile.profession_key ?? onlyProfessionKey,
-        selectedTheme: hasValidTheme && profile.selected_theme ? profile.selected_theme : undefined,
-      }}
-      isReturningUser={profile.onboarding_completed === true}
-      email={user?.email ?? null}
-    />
+    <>
+      <PostHogIdentify userId={profile.id} email={user?.email ?? null} professionKey={profile.profession_key} />
+      <OnboardingForm
+        professions={professions.map(({ key, label, description }) => ({ key, label, description }))}
+        defaultValues={{
+          firstName: profile.first_name ?? undefined,
+          businessName: profile.business_name ?? undefined,
+          professionKey: profile.profession_key ?? onlyProfessionKey,
+          selectedTheme: hasValidTheme && profile.selected_theme ? profile.selected_theme : undefined,
+        }}
+        isReturningUser={profile.onboarding_completed === true}
+        email={user?.email ?? null}
+      />
+    </>
   )
 }

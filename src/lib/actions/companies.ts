@@ -17,6 +17,7 @@ import type { Database } from '@/types/database'
 import type { CompanySegment } from '@/types'
 import { SEGMENTS } from '@/lib/constants/segments'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerEvent } from '@/lib/posthog-server'
 
 type CompanyUpdate = Database['public']['Tables']['companies']['Update']
 
@@ -142,6 +143,12 @@ export async function createCompany(
       console.error('Create company error:', error)
       return { success: false, error: 'Impossible d\'ajouter l\'entreprise' }
     }
+
+    captureServerEvent(user.id, 'company_created', {
+      has_website: !!validated.website,
+      has_stack: hasStack,
+      has_stage: !!validated.stageId,
+    })
 
     revalidatePath('/companies')
     return { success: true, data: { id: data.id } }

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { AlertTriangle, Copy, Loader2, RotateCcw, Sparkles } from 'lucide-react'
+import posthog from 'posthog-js'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -106,10 +107,17 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
           invokeError instanceof FunctionsHttpError
             ? ((await invokeError.context.json().catch(() => null)) as { error?: string } | null)?.error
             : null
+        // Message métier (quota, fiche incomplète…) : pas une panne
+        if (!detail) posthog.captureException(invokeError ?? new Error('draft-message: réponse vide'), { channel })
         setError(detail ?? CONNECTION_ERROR)
         return
       }
 
+      posthog.capture('message_drafted', {
+        channel,
+        has_contact: !!contactId,
+        has_instructions: !!instructions.trim(),
+      })
       setDraft(data)
       setSubject(data.subject ?? '')
       setBody(data.body)
@@ -124,6 +132,7 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
     try {
       await navigator.clipboard.writeText(text)
       toast({ title: `${what} copié` })
+      posthog.capture('message_copied', { channel, part: what === 'Objet' ? 'subject' : 'body' })
     } catch {
       toast({ variant: 'destructive', title: 'Copie impossible', description: 'Sélectionnez le texte et copiez-le à la main.' })
     }

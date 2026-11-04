@@ -9,6 +9,7 @@ import {
   type UpdateReminderInput,
 } from '@/lib/validations/reminder'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerEvent } from '@/lib/posthog-server'
 
 type ActionResult<T = unknown> = {
   success: boolean
@@ -83,6 +84,11 @@ export async function createReminder(
 
     revalidateReminderPages({
       company_id: validated.companyId,
+    })
+
+    captureServerEvent(user.id, 'reminder_created', {
+      priority: validated.priority,
+      has_company: !!validated.companyId,
     })
 
     return {
