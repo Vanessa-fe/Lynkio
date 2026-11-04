@@ -1,6 +1,7 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
+import { useSyncExternalStore, type ReactNode } from 'react'
+import Link from 'next/link'
 import posthog from 'posthog-js'
 import { Button } from '@/components/ui/button'
 
@@ -50,7 +51,10 @@ export function CookieBanner() {
       <p className="leading-relaxed text-ink/75">
         Filonea mesure son audience avec PostHog, hébergé en Europe, pour comprendre comment le site est utilisé
         et l&apos;améliorer. Rien n&apos;est revendu ni utilisé pour de la publicité. Vous acceptez les cookies de
-        mesure ?
+        mesure ?{' '}
+        <Link href="/confidentialite" className="font-medium text-ink underline underline-offset-2 hover:text-brand-700">
+          En savoir plus
+        </Link>
       </p>
       <div className="mt-3 flex gap-2">
         <Button type="button" variant="outline" size="sm" className="flex-1" onClick={() => choose(false)}>
@@ -65,9 +69,9 @@ export function CookieBanner() {
 }
 
 /**
- * Lien « Cookies » du pied de page : rouvre le bandeau pour changer d'avis
+ * Lien « Cookies » du pied de page (et de la page Confidentialité) : rouvre le bandeau pour changer d'avis
  */
-export function CookieSettingsButton({ className }: { className?: string }) {
+export function CookieSettingsButton({ className, children = 'Cookies' }: { className?: string; children?: ReactNode }) {
   const reopen = () => {
     reopened = true
     window.dispatchEvent(new Event(BANNER_EVENT))
@@ -75,7 +79,7 @@ export function CookieSettingsButton({ className }: { className?: string }) {
 
   return (
     <button type="button" className={className} onClick={reopen}>
-      Cookies
+      {children}
     </button>
   )
 }

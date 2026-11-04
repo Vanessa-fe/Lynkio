@@ -64,10 +64,12 @@ export async function updateSession(request: NextRequest) {
   )
   // Liens des e-mails : la personne n'est pas encore connectée en arrivant
   const isAuthCallback = ['/auth/callback', '/auth/confirm'].includes(request.nextUrl.pathname)
-  const isPublicRoute = isAuthRoute || isAuthCallback
+  // Pages lisibles sans compte : l'accueil, et la politique de confidentialité (liée au bandeau cookies)
+  const isPublicPage = ['/', '/confidentialite'].includes(request.nextUrl.pathname)
+  const isPublicRoute = isAuthRoute || isAuthCallback || isPublicPage
 
   // Redirection si non authentifié et accès à une route protégée
-  if (!user && !isPublicRoute && request.nextUrl.pathname !== '/') {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', request.nextUrl.pathname)
