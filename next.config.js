@@ -12,7 +12,8 @@ const nextConfig = {
     ],
   },
   // Statistiques PostHog (région Europe) envoyées via filonea.fr/ingest plutôt qu'au domaine de
-  // PostHog, que les bloqueurs de publicité arrêtent souvent
+  // PostHog, que les bloqueurs de publicité arrêtent souvent. En ligne, c'est netlify.toml qui relaie
+  // (ces réécritures abîment les envois compressés sur Netlify) : celles-ci servent en local.
   async rewrites() {
     return [
       {

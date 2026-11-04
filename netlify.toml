@@ -19,3 +19,24 @@
   to = "https://filonea.fr/:splat"
   status = 301
   force = true
+
+# Statistiques PostHog (région Europe) relayées par Netlify lui-même. Les réécritures de next.config.js
+# passent par la fonction Next.js, qui abîme les envois compressés (gzip) : PostHog les refusait.
+# Ces règles s'appliquent avant ; next.config.js ne sert plus qu'en local (npm run dev).
+[[redirects]]
+  from = "/ingest/static/*"
+  to = "https://eu-assets.i.posthog.com/static/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ingest/array/*"
+  to = "https://eu-assets.i.posthog.com/array/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ingest/*"
+  to = "https://eu.i.posthog.com/:splat"
+  status = 200
+  force = true
