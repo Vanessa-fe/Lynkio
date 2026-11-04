@@ -13,6 +13,7 @@ import {
   type UpdateProfileInput,
 } from '@/lib/validations/user-profile'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 
 /**
  * Type de retour pour les actions de profil
@@ -93,8 +94,15 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
           error: 'Impossible de sauvegarder votre profil',
         }
       }
+
+      captureServerEvent(user.id, 'onboarding_completed', {
+        profession_key: validated.professionKey,
+        selected_theme: validated.selectedTheme,
+        $set: { profession_key: validated.professionKey },
+      })
     }
   } catch (error) {
+    captureServerError(error, undefined, { action: 'complete_onboarding' })
     return {
       success: false,
       error: 'Une erreur est survenue lors de l\'onboarding',

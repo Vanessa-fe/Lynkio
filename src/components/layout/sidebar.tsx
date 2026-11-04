@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'motion/react'
 import { LogOut } from 'lucide-react'
+import posthog from 'posthog-js'
 import { cn } from '@/lib/utils/cn'
 import { logout } from '@/lib/actions/auth'
 import { Logo } from '@/components/brand/logo'
@@ -13,6 +14,8 @@ export function Sidebar() {
   const pathname = usePathname()
 
   const handleLogout = async () => {
+    // La prochaine personne sur ce navigateur ne reprend pas l'identité PostHog du compte
+    posthog.reset()
     await logout()
   }
 

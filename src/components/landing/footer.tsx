@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Logo } from '@/components/brand/logo'
 import { FadeIn } from '@/components/motion/reveal'
 import { SIGNUPS_OPEN } from '@/lib/constants/signup'
+import { CookieSettingsButton } from '@/components/analytics/cookie-banner'
 
 export function Footer() {
   return (
@@ -30,7 +31,10 @@ export function Footer() {
       </FadeIn>
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 border-t border-ink/[0.07] px-4 py-6 text-xs text-ink/45 sm:flex-row md:px-6">
         <p>© {new Date().getFullYear()} Filonea</p>
-        <p>Sources publiques · Messages relus par vous</p>
+        <p>
+          Sources publiques · Messages relus par vous ·{' '}
+          <CookieSettingsButton className="hover:text-ink" />
+        </p>
       </div>
     </footer>
   )

@@ -21,6 +21,7 @@ import {
   type WaalaxyActivity,
 } from '@/lib/validations/company-import'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 import { addContactsToList } from '@/lib/actions/prospect-lists'
 import { SEGMENTS } from '@/lib/constants/segments'
 import type { CompanySegment } from '@/types'
@@ -732,6 +733,15 @@ export async function importCompanies(
       else console.error('Import list error:', listed.error)
     }
 
+    captureServerEvent(user.id, 'prospects_imported', {
+      companies_imported: companies.length,
+      contacts_imported: insertedContacts,
+      contacts_skipped: withContact.length - insertedContacts,
+      from_waalaxy: !!waalaxy,
+      added_to_list: !!list,
+      segment,
+    })
+
     revalidatePath('/companies')
     revalidatePath('/people')
     revalidatePath('/dashboard')
@@ -747,6 +757,7 @@ export async function importCompanies(
     }
   } catch (error) {
     console.error('Import companies error:', error)
+    captureServerError(error, undefined, { action: 'import_companies' })
     return { success: false, error: 'Une erreur est survenue pendant l\'import' }
   }
 }

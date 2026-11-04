@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerEvent } from '@/lib/posthog-server'
 import { normalizeLinkedinProfileUrl, personSchema, type PersonInput } from '@/lib/validations/company'
 import { findContactByLinkedin } from '@/lib/queries/people'
 import { addContactsToList } from '@/lib/actions/prospect-lists'
@@ -171,6 +172,14 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
       const listed = await addContactsToList({ listName: validated.listName }, [contact.id])
       if (!listed.success) console.error('Create person list error:', listed.error)
     }
+
+    captureServerEvent(user.id, 'person_created', {
+      origin: validated.origin,
+      company_mode: validated.companyMode,
+      has_email: !!validated.email,
+      has_linkedin: !!validated.linkedinUrl,
+      added_to_list: !!validated.listName,
+    })
 
     revalidatePath('/people')
     revalidatePath('/companies')

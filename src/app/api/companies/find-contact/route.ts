@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { toWebsiteDomain } from '@/lib/validations/company'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 
 const HUNTER_DOMAIN_SEARCH_URL = 'https://api.hunter.io/v2/domain-search'
 const HUNTER_EMAIL_FINDER_URL = 'https://api.hunter.io/v2/email-finder'
@@ -248,6 +249,11 @@ export async function POST(request: Request) {
 
     const candidates: Candidate[] = ranked.map((r) => r.candidate)
 
+    captureServerEvent(user.id, 'contact_search_completed', {
+      found: emails.length,
+      target_roles_found: candidates.filter((candidate) => candidate.isTargetRole).length,
+    })
+
     return NextResponse.json({
       domain,
       organization: json?.data?.organization || null,
@@ -256,6 +262,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('Find contact error:', error)
+    captureServerError(error, undefined, { route: 'find_contact' })
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }

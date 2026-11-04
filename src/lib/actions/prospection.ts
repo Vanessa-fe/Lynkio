@@ -10,6 +10,7 @@ import {
 } from '@/lib/validations/prospection'
 import { createCompany } from '@/lib/actions/companies'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 
 type ActionResult = {
   success: boolean
@@ -96,13 +97,17 @@ async function invokeProspection(body: { mode: 'manual'; source?: 'tech_users' }
         }
       }
       console.error('Launch prospection error:', error)
+      captureServerError(error, user.id, { action: 'launch_prospection', source: body.source ?? 'all' })
       return { success: false, error: 'Impossible de lancer la prospection' }
     }
+
+    captureServerEvent(user.id, 'prospection_launched', { source: body.source ?? 'all' })
 
     revalidatePath('/prospection')
     return { success: true }
   } catch (error) {
     console.error('Launch prospection error:', error)
+    captureServerError(error, undefined, { action: 'launch_prospection', source: body.source ?? 'all' })
     return { success: false, error: 'Une erreur est survenue' }
   }
 }

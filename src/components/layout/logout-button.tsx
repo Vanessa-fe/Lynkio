@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { LogOut } from 'lucide-react'
+import posthog from 'posthog-js'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { logout } from '@/lib/actions/auth'
 
@@ -15,6 +16,8 @@ export function LogoutButton({ variant = 'ghost', size = 'sm', className }: Pick
   const handleLogout = async () => {
     setIsPending(true)
     try {
+      // La prochaine personne sur ce navigateur ne reprend pas l'identité PostHog du compte
+      posthog.reset()
       await logout()
     } finally {
       setIsPending(false)

@@ -11,6 +11,26 @@ const nextConfig = {
       },
     ],
   },
+  // Statistiques PostHog (région Europe) envoyées via filonea.fr/ingest plutôt qu'au domaine de
+  // PostHog, que les bloqueurs de publicité arrêtent souvent
+  async rewrites() {
+    return [
+      {
+        source: '/ingest/static/:path*',
+        destination: 'https://eu-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/ingest/array/:path*',
+        destination: 'https://eu-assets.i.posthog.com/array/:path*',
+      },
+      {
+        source: '/ingest/:path*',
+        destination: 'https://eu.i.posthog.com/:path*',
+      },
+    ]
+  },
+  // Les adresses d'envoi de PostHog finissent par « / » : sans ce réglage, Next.js les redirige
+  skipTrailingSlashRedirect: true,
 }
 
 module.exports = nextConfig

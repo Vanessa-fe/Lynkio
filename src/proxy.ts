@@ -25,8 +25,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - robots.txt, sitemap.xml, opengraph-image (lus par les moteurs sans être connectés)
+     * - ingest (statistiques PostHog, envoyées aussi par les visiteurs non connectés)
      * - public files (public folder)
      */
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|opengraph-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|opengraph-image|ingest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
