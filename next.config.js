@@ -3,6 +3,12 @@ const nextConfig = {
   // En développement, Next.js bloque les autres adresses que localhost : 127.0.0.1 sert à voir
   // le site en visiteur (sans les cookies de connexion de localhost)
   allowedDevOrigins: ['127.0.0.1'],
+  experimental: {
+    // Le cache disque de Turbopack enregistre les valeurs des variables d'environnement lues
+    // (dont RESEND_API_KEY) : le scan de secrets de Netlify le détecte et bloque le déploiement
+    // (vu sur Solynk le 2026-09-30)
+    turbopackFileSystemCacheForBuild: false,
+  },
   images: {
     remotePatterns: [
       {
