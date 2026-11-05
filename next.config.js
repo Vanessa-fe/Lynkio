@@ -5,8 +5,8 @@ const nextConfig = {
   allowedDevOrigins: ['127.0.0.1'],
   experimental: {
     // Le cache disque de Turbopack enregistre les valeurs des variables d'environnement lues
-    // (dont RESEND_API_KEY) : le scan de secrets de Netlify le détecte et bloque le déploiement
-    // (vu sur Solynk le 2026-09-30)
+    // (dont BREVO_API_KEY) : le scan de secrets de Netlify le détecte et bloque le déploiement
+    // (vu sur Solynk avec sa clé Resend, le 2026-09-30)
     turbopackFileSystemCacheForBuild: false,
   },
   images: {
