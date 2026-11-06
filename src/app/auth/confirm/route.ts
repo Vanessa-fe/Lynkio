@@ -1,5 +1,6 @@
 import type { EmailOtpType } from '@supabase/supabase-js'
 import type { NextRequest } from 'next/server'
+import { addToSignupList } from '@/lib/brevo'
 import { createClient } from '@/lib/supabase/server'
 import { redirectToPath } from '@/lib/utils/redirect'
 
@@ -20,8 +21,10 @@ export async function GET(request: NextRequest) {
 
   if (tokenHash && type && OTP_TYPES.includes(type)) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash })
+    const { data, error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash })
     if (!error) {
+      // Adresse d'inscription confirmée : la personne rejoint la liste Brevo des inscrits
+      if ((type === 'email' || type === 'signup') && data.user?.email) addToSignupList(data.user.email)
       return redirectToPath(request, next)
     }
     console.error('Lien e-mail refusé :', error.message)

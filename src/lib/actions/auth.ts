@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 import { SITE_URL, toOrigin } from '@/lib/site'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
-import { notifySignup } from '@/lib/notifications'
+import { addToSignupList, notifySignup } from '@/lib/brevo'
 import {
   loginSchema,
   signupSchema,
@@ -138,6 +138,8 @@ export async function signup(data: SignupInput): Promise<ActionResult> {
     if (authData.user.identities?.length !== 0) {
       captureServerEvent(authData.user.id, 'user_signed_up', { email_confirmation_required: !authData.session })
       notifySignup({ email: validated.email, confirmationRequired: !authData.session })
+      // Adresse à confirmer : l'ajout à la liste se fait au clic sur le lien (/auth/confirm)
+      if (authData.session) addToSignupList(validated.email)
     }
 
     // Sans session, Supabase attend la confirmation de l'adresse email.
