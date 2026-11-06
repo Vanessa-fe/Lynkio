@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 // Adresse de toutes les demandes sur les données (accès, suppression, opposition…)
 const CONTACT_EMAIL = 'lynkio@solynk.fr'
 // À changer à chaque modification du contenu de la page
-const UPDATED_AT = '5 novembre 2026'
+const UPDATED_AT = '6 novembre 2026'
 
 function Mail() {
   return (
@@ -104,6 +104,10 @@ const sections: { id: string; title: string; content: ReactNode }[] = [
           Pour les personnes que vous prospectez, c’est vous qui décidez qui contacter et pourquoi : vous êtes
           responsable de ces données. Filonea les trouve, les range et prépare vos messages pour votre compte (on dit
           qu’elle est « sous-traitante »).
+        </p>
+        <p>
+          Les prestataires qui traitent des données pour Filonea, détaillés plus bas : Supabase et Netlify
+          (hébergement), PostHog (mesure d’audience), Resend et Brevo (e-mails), Hunter.io et OpenAI (prospection).
         </p>
       </>
     ),
@@ -211,9 +215,23 @@ const sections: { id: string; title: string; content: ReactNode }[] = [
     content: (
       <>
         <p>
-          Les e-mails de Filonea (confirmation de votre adresse, nouveau mot de passe) sont envoyés par{' '}
+          Les e-mails de votre compte (confirmation de votre adresse, nouveau mot de passe) sont envoyés par{' '}
           <Strong>Resend</Strong>, un service d’envoi d’e-mails qui reçoit pour cela votre adresse et le message.
         </p>
+        <p>
+          Quand vous créez un compte, votre adresse e-mail est aussi transmise à <Strong>Brevo</Strong> (Sendinblue,
+          entreprise française, serveurs dans l’Union européenne), pour deux choses :
+        </p>
+        <List
+          items={[
+            'prévenir l’équipe de Filonea de votre inscription, par un e-mail d’alerte ;',
+            'une fois votre adresse confirmée, vous envoyer de temps en temps des nouvelles de Filonea (nouveautés, conseils), comme l’annonce le formulaire d’inscription. Chaque e-mail contient un lien pour vous désinscrire en un clic.',
+          ]}
+        />
+        <Facts
+          basis="Le contrat pour les e-mails de votre compte. Notre intérêt à suivre les inscriptions et à vous tenir au courant d’un service que vous utilisez : un clic suffit pour ne plus recevoir ces nouvelles."
+          duration="Pour les nouvelles : jusqu’à votre désinscription ou la suppression de votre compte."
+        />
         <p>
           Filonea n’envoie aucun e-mail à vos prospects : c’est vous qui envoyez vos messages, depuis votre messagerie
           ou LinkedIn, après les avoir relus.
@@ -299,6 +317,7 @@ const sections: { id: string; title: string; content: ReactNode }[] = [
             'savoir quelles données Filonea a sur vous, et en recevoir une copie ;',
             'les faire corriger ou effacer ;',
             'vous opposer à un usage, ou demander qu’il soit mis en pause ;',
+            'vous désinscrire des nouvelles de Filonea, avec le lien présent dans chaque e-mail ;',
             'récupérer vos données dans un fichier que vous pouvez réutiliser ailleurs ;',
             'retirer votre accord aux cookies, avec le bouton « Changer mon choix » ci-dessus.',
           ]}
@@ -375,7 +394,7 @@ export default async function PrivacyPage() {
                   </h2>
                   <ul className="mt-4 space-y-2.5 leading-relaxed text-cream/80">
                     {[
-                      'Vos données ne sont ni revendues, ni utilisées pour de la publicité.',
+                      'Vos données ne sont jamais revendues, ni confiées à des annonceurs.',
                       'Aucun cookie de mesure sans votre accord : sans réponse au bandeau, les visites sont comptées sans cookie.',
                       'Votre compte est hébergé à Londres, la mesure d’audience dans l’Union européenne.',
                       'Vos prospects viennent de sources publiques ou de vous. Qui refuse d’être contacté est écarté de tout envoi.',
