@@ -153,6 +153,10 @@ export function SignupForm() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? 'Création...' : 'Créer mon compte'}
           </Button>
+          <p className="text-xs text-center text-muted-foreground">
+            Vous recevrez de temps en temps des nouvelles de Filonea (nouveautés, conseils).
+            Un clic suffit pour vous désinscrire.
+          </p>
           <p className="text-sm text-center text-muted-foreground">
             Vous avez déjà un compte ?{' '}
             <Link href="/login" className="text-primary hover:underline">
