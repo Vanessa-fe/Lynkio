@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { useStartLinkedin } from '@/components/linkedin/use-start-linkedin'
+import { SearchPostsNowButton } from '@/components/linkedin/search-posts-now-button'
 import { addLinkedinPost, dismissLinkedinPost } from '@/lib/actions/linkedin-posts'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
@@ -66,6 +67,9 @@ export function LinkedinPostsCard({ posts, search }: LinkedinPostsCardProps) {
           </div>
         ) : (
           <div className="space-y-2">
+            <div className="flex justify-end">
+              <SearchPostsNowButton />
+            </div>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <span>
                 {search.lastSearchAt
