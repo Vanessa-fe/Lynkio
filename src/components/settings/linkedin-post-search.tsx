@@ -45,6 +45,21 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
     setDraft('')
   }
 
+  // « Chercher maintenant » avec des mots-clés modifiés : ils sont enregistrés d'abord, sans autre clic
+  const saveBeforeSearch = async (): Promise<boolean> => {
+    try {
+      const result = await saveLinkedinPostSearch({ enabled: true, keywords })
+      if (!result.success) {
+        toast({ variant: 'destructive', title: 'Enregistrement impossible', description: result.error })
+        return false
+      }
+      return true
+    } catch {
+      toast({ variant: 'destructive', title: 'Enregistrement impossible', description: CONNECTION_ERROR })
+      return false
+    }
+  }
+
   const save = async (enabled: boolean) => {
     setBusy(true)
     try {
@@ -143,8 +158,8 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
                 <Pause className="w-4 h-4 mr-2" />
                 Désactiver
               </Button>
-              {/* Avec les mots-clés enregistrés : ceux que l'extension lit */}
-              <SearchPostsNowButton disabled={busy || unsaved} />
+              {/* L'extension lit les mots-clés enregistrés : ceux modifiés le sont avant de chercher */}
+              <SearchPostsNowButton disabled={busy || keywords.length === 0} beforeSearch={unsaved ? saveBeforeSearch : undefined} />
             </>
           ) : (
             <Button onClick={() => save(true)} disabled={busy || keywords.length === 0}>

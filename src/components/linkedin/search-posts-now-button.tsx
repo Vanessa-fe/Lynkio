@@ -18,15 +18,26 @@ function plural(count: number, one: string, many: string) {
 
 /**
  * « Chercher maintenant » : l'extension lance la recherche de posts tout de suite, dans un
- * onglet en arrière-plan, au lieu d'attendre son prochain passage
+ * onglet en arrière-plan, au lieu d'attendre son prochain passage.
+ * beforeSearch : ce qu'il faut faire d'abord (enregistrer des mots-clés modifiés), false pour s'arrêter.
  */
-export function SearchPostsNowButton({ disabled = false }: { disabled?: boolean }) {
+export function SearchPostsNowButton({
+  disabled = false,
+  beforeSearch,
+}: {
+  disabled?: boolean
+  beforeSearch?: () => Promise<boolean>
+}) {
   const router = useRouter()
   const { toast } = useToast()
   const [busy, setBusy] = useState(false)
 
   const run = async () => {
     setBusy(true)
+    if (beforeSearch && !(await beforeSearch())) {
+      setBusy(false)
+      return
+    }
     const result = await sendToExtension<SearchNowResult>({ type: 'search-posts-now' }, SEARCH_TIMEOUT_MS)
     setBusy(false)
 
