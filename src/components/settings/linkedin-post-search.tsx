@@ -151,6 +151,8 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
           )}
         </div>
 
+        {search.error && <p className="text-sm text-amber-700 dark:text-amber-400">{search.error}</p>}
+
         {search.lastSearchAt && (
           <p className="text-xs text-muted-foreground">
             Dernière recherche{' '}

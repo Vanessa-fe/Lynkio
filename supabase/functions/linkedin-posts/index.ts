@@ -219,7 +219,11 @@ Deno.serve(async (request) => {
 
     const { error: searchError } = await admin
       .from('linkedin_automation')
-      .upsert({ user_id: userId, post_search_at: new Date().toISOString() }, { onConflict: 'user_id' })
+      // Recherche réussie : la raison d'un échec précédent n'a plus lieu d'être
+      .upsert(
+        { user_id: userId, post_search_at: new Date().toISOString(), post_search_error: null },
+        { onConflict: 'user_id' }
+      )
     if (searchError) throw searchError
 
     return json({

@@ -12,6 +12,8 @@ export type LinkedinPostSearch = {
   lastSearchAt: string | null
   // Dernier passage de l'extension (Chrome ouvert et extension connectée)
   extensionSeenAt: string | null
+  // Ce qui empêche l'extension de lire la recherche (LinkedIn a changé sa page)
+  error: string | null
   // Heure de la lecture, pour dire « il y a 3 h » sans dépendre de l'horloge du rendu
   readAt: number
 }
@@ -28,14 +30,21 @@ export type LinkedinPosts = {
 
 export async function getLinkedinPostSearch(): Promise<LinkedinPostSearch> {
   const readAt = Date.now()
-  const search: LinkedinPostSearch = { enabled: false, keywords: [], lastSearchAt: null, extensionSeenAt: null, readAt }
+  const search: LinkedinPostSearch = {
+    enabled: false,
+    keywords: [],
+    lastSearchAt: null,
+    extensionSeenAt: null,
+    error: null,
+    readAt,
+  }
   const user = await getAuthUser()
   if (!user) return search
 
   const supabase = await createClient()
   const { data } = await supabase
     .from('linkedin_automation')
-    .select('post_search_enabled, post_keywords, post_search_at, last_seen_at')
+    .select('post_search_enabled, post_keywords, post_search_at, last_seen_at, post_search_error')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -45,6 +54,7 @@ export async function getLinkedinPostSearch(): Promise<LinkedinPostSearch> {
     keywords: data.post_keywords,
     lastSearchAt: data.post_search_at,
     extensionSeenAt: data.last_seen_at,
+    error: data.post_search_error,
     readAt,
   }
 }

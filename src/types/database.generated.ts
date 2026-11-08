@@ -503,6 +503,7 @@ export type Database = {
           paused_reason: string | null
           paused_until: string | null
           post_keywords: string[]
+          post_search_error: string | null
           post_search_at: string | null
           post_search_enabled: boolean
           updated_at: string
@@ -516,6 +517,7 @@ export type Database = {
           paused_reason?: string | null
           paused_until?: string | null
           post_keywords?: string[]
+          post_search_error?: string | null
           post_search_at?: string | null
           post_search_enabled?: boolean
           updated_at?: string
@@ -529,6 +531,7 @@ export type Database = {
           paused_reason?: string | null
           paused_until?: string | null
           post_keywords?: string[]
+          post_search_error?: string | null
           post_search_at?: string | null
           post_search_enabled?: boolean
           updated_at?: string
