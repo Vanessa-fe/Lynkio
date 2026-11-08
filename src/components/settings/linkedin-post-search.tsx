@@ -15,6 +15,7 @@ import { MAX_POST_KEYWORDS } from '@/lib/validations/linkedin-posts'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { LinkedinPostSearch } from '@/lib/queries/linkedin-posts'
+import { SearchPostsNowButton } from '@/components/linkedin/search-posts-now-button'
 
 interface LinkedinPostSearchCardProps {
   search: LinkedinPostSearch
@@ -142,6 +143,8 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
                 <Pause className="w-4 h-4 mr-2" />
                 Désactiver
               </Button>
+              {/* Avec les mots-clés enregistrés : ceux que l'extension lit */}
+              <SearchPostsNowButton disabled={busy || unsaved} />
             </>
           ) : (
             <Button onClick={() => save(true)} disabled={busy || keywords.length === 0}>
