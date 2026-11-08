@@ -1,6 +1,7 @@
 // Posts LinkedIn trouvés par l'extension Chrome (recherche par mots-clés, toutes les 2 heures).
 //
 // POST, JSON : { posts: [{ urn, url, authorName, authorHeadline?, authorProfileUrl?, text, postedAt?, keyword? }] }
+// authorProfileUrl : linkedin.com/in/… pour une personne, linkedin.com/company/… pour une page entreprise.
 // Réponse : { received, known, kept, filtered }.
 //
 // Appelée par l'extension avec la session de l'utilisatrice (la passerelle vérifie le
@@ -24,7 +25,9 @@ type IncomingPost = {
   url: string
   authorName: string
   authorHeadline: string | null
+  // Profil d'une personne ; null pour une page entreprise (authorIsCompany)
   authorProfileUrl: string | null
+  authorIsCompany: boolean
   text: string
   postedAt: string | null
   keyword: string | null
@@ -70,6 +73,7 @@ function parsePost(value: unknown): IncomingPost | null {
     authorName,
     authorHeadline: text(post.authorHeadline, 500),
     authorProfileUrl: profileUrl(post.authorProfileUrl),
+    authorIsCompany: typeof post.authorProfileUrl === 'string' && /linkedin\.com\/company\//i.test(post.authorProfileUrl),
     text: body,
     postedAt,
     keyword: text(post.keyword, 100),
@@ -78,7 +82,7 @@ function parsePost(value: unknown): IncomingPost | null {
 
 /** Raison d'écarter un post sans demander à l'IA, ou null */
 function ruleOut(post: IncomingPost, excludedKeywords: string[]): string | null {
-  if (!post.authorProfileUrl) return 'Publié par une page entreprise : pas de personne à contacter'
+  if (!post.authorProfileUrl && !post.authorIsCompany) return 'Auteur introuvable sur LinkedIn'
   const all = `${post.authorHeadline ?? ''}\n${post.text}`
   const intermediary = intermediaryFromText(all)
   if (intermediary?.kind === 'consulting') return `ESN ou société de services (« ${intermediary.clue} »)`
@@ -169,10 +173,17 @@ Deno.serve(async (request) => {
     // Sans IA (clé absente, OpenAI indisponible), les posts restent à traiter, non triés : rien n'est perdu
     let verdicts: (SortedPost | null)[] = toSort.map(() => null)
     try {
-      verdicts = await sortPosts(toSort, {
-        profession: (profile.data?.profession as { label?: string } | null)?.label ?? null,
-        technologies: strings(criteria.tech_stack).map((tech) => TECHNOLOGY_LABELS[tech] ?? tech),
-      })
+      verdicts = await sortPosts(
+        toSort.map((post) => ({
+          authorCompany: post.authorIsCompany ? post.authorName : null,
+          authorHeadline: post.authorHeadline,
+          text: post.text,
+        })),
+        {
+          profession: (profile.data?.profession as { label?: string } | null)?.label ?? null,
+          technologies: strings(criteria.tech_stack).map((tech) => TECHNOLOGY_LABELS[tech] ?? tech),
+        }
+      )
     } catch (error) {
       console.error('linkedin-posts sorting', error)
     }
@@ -192,7 +203,8 @@ Deno.serve(async (request) => {
         posted_at: post.postedAt,
         keyword: post.keyword,
         summary: sorted?.summary || null,
-        company_name: sorted?.companyName ?? null,
+        // Une page entreprise parle pour elle-même
+        company_name: sorted?.companyName ?? (post.authorIsCompany ? post.authorName : null),
         email: post.text.match(EMAIL)?.[0]?.toLowerCase().slice(0, 255) ?? null,
         status: reason ? 'filtered' : 'new',
         filter_reason: reason,

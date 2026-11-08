@@ -245,7 +245,10 @@ function PostToReview({ post, ago }: { post: LinkedinPost; ago: (iso: string) =>
         </details>
         <div className="flex flex-wrap items-center gap-3">
           <PostLink post={post} />
-          {post.company_name && <Badge variant="secondary">{post.company_name}</Badge>}
+          {!post.author_linkedin_url && <Badge variant="outline">Page entreprise</Badge>}
+          {post.company_name && post.company_name !== post.author_name && (
+            <Badge variant="secondary">{post.company_name}</Badge>
+          )}
           {post.email && (
             <Badge variant="secondary">
               <Mail className="w-3 h-3 mr-1" />
@@ -274,21 +277,23 @@ function AddedPost({ post, ago }: { post: AddedLinkedinPost; ago: (iso: string) 
   const optedOut = !!post.contact?.opted_out_at
 
   return (
-    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
+    <div className="space-y-3">
       <div className="min-w-0 space-y-1">
         <Author post={post} ago={ago} />
         {post.summary && <p className="text-sm">{post.summary}</p>}
         <p className="text-sm text-muted-foreground">
           {optedOut
             ? 'Cette personne ne souhaite plus être contactée.'
-            : email
-              ? `E-mail : ${email}${post.contact?.email_source && EMAIL_ORIGIN[post.contact.email_source] ? ` (${EMAIL_ORIGIN[post.contact.email_source]})` : ''}`
-              : 'Pas d\'e-mail trouvé : répondez-lui sur LinkedIn, ou ajoutez son e-mail sur sa fiche.'}
+            : !post.contact_id
+              ? 'Publié par la page de l\'entreprise : trouvez la bonne personne sur sa fiche.'
+              : email
+                ? `E-mail : ${email}${post.contact?.email_source && EMAIL_ORIGIN[post.contact.email_source] ? ` (${EMAIL_ORIGIN[post.contact.email_source]})` : ''}`
+                : 'Pas d\'e-mail trouvé : répondez-lui sur LinkedIn, ou ajoutez son e-mail sur sa fiche.'}
         </p>
         <PostLink post={post} />
       </div>
       {!optedOut && (
-        <div className="flex flex-wrap gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2">
           {email && post.company_id && (
             <Button size="sm" asChild>
               <Link href={`/companies/${post.company_id}?redaction=email`}>
@@ -309,7 +314,7 @@ function AddedPost({ post, ago }: { post: AddedLinkedinPost; ago: (iso: string) 
             </Button>
           )}
           {!email && post.company_id && (
-            <Button size="sm" variant="ghost" asChild>
+            <Button size="sm" variant="outline" asChild>
               <Link href={`/companies/${post.company_id}`}>Voir la fiche</Link>
             </Button>
           )}

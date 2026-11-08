@@ -5,6 +5,7 @@ import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import { createCompany } from '@/lib/actions/companies'
 import { createPerson } from '@/lib/actions/people'
 import { findContactByLinkedin } from '@/lib/queries/people'
 import { findEmail, hunterApiKey, HunterError, linkedinHandle } from '@/lib/hunter'
@@ -27,7 +28,8 @@ const MAX_SIGNAL_TEXT = 3000
 
 export type AddedPost = {
   companyId: string
-  contactId: string
+  // null pour un post publié par une page entreprise : la bonne personne reste à trouver
+  contactId: string | null
   email: string | null
   emailSource: EmailSource | null
   // Pourquoi l'e-mail n'a pas été cherché ou trouvé, à dire à l'utilisatrice
@@ -122,9 +124,35 @@ async function emailFromHunter(
 }
 
 /**
+ * Fiche de l'entreprise qui a publié le post depuis sa page : celle du même nom si elle est
+ * déjà suivie, sinon une nouvelle
+ */
+async function organizationFromPage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  name: string,
+  postUrl: string
+): Promise<string | null> {
+  const { data: found } = await supabase
+    .from('companies')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('kind', 'organization')
+    .ilike('name', name.replace(/[\\%_]/g, '\\$&'))
+    .limit(1)
+    .maybeSingle()
+  if (found) return found.id
+
+  const created = await createCompany({ name, notes: `Trouvée par Sophie dans un post LinkedIn : ${postUrl}` })
+  // Entreprise déjà suivie sous ce site ou ce SIREN : on la réutilise
+  return created.data?.id ?? null
+}
+
+/**
  * Ajoute l'auteur du post à Filonea : la personne (avec son profil LinkedIn et, si possible,
  * son e-mail), son entreprise ou sa fiche de personne seule, et le signal « Cherche un
  * freelance sur LinkedIn » avec le texte du post. Déjà dans Filonea : le signal s'ajoute à sa fiche.
+ * Post d'une page entreprise : la fiche de l'entreprise seule, la personne à contacter reste à trouver.
  */
 export async function addLinkedinPost(postId: string): Promise<ActionResult<AddedPost>> {
   try {
@@ -143,13 +171,24 @@ export async function addLinkedinPost(postId: string): Promise<ActionResult<Adde
     if (!post) return { success: false, error: 'Post introuvable ou déjà traité' }
 
     let companyId: string
-    let contactId: string
+    let contactId: string | null
     let email: string | null = null
     let emailSource: EmailSource | null = null
     let emailNote: string | null = null
 
     const existing = await findContactByLinkedin(supabase, user.id, post.author_linkedin_url)
-    if (existing) {
+    if (!post.author_linkedin_url) {
+      const organizationId = await organizationFromPage(
+        supabase,
+        user.id,
+        (post.company_name ?? post.author_name).slice(0, 200),
+        post.post_url
+      )
+      if (!organizationId) return { success: false, error: 'Impossible de créer la fiche de cette entreprise' }
+      companyId = organizationId
+      contactId = null
+      emailNote = 'Publié par la page de l\'entreprise : trouvez la bonne personne sur sa fiche'
+    } else if (existing) {
       companyId = existing.companyId
       contactId = existing.id
       const { data: contact } = await supabase

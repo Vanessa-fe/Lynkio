@@ -15,6 +15,8 @@ const REQUEST_TIMEOUT_MS = 90_000
 const MAX_TEXT_FOR_AI = 1500
 
 export type PostToSort = {
+  // Publié par une page entreprise (une agence, une startup…), pas par une personne
+  authorCompany: string | null
   authorHeadline: string | null
   text: string
 }
@@ -37,7 +39,7 @@ const RULES = `Tu es Sophie, l'assistante de prospection d'une freelance. Tu tri
 
 Pour chaque post :
 - is_request : vrai si l'auteur, ou l'entreprise pour laquelle il travaille, cherche maintenant un freelance ou un indépendant pour une mission. Faux pour : un freelance qui propose ses services ou annonce sa disponibilité, quelqu'un qui cherche un emploi, une offre d'emploi salarié (CDI, CDD, alternance, stage) qui n'est pas ouverte aux freelances, un conseil, un témoignage, un événement ;
-- direct_client : vrai si l'auteur travaille dans l'entreprise qui a besoin du travail (fondateur, dirigeant, CTO, manager, équipe interne). Faux pour une ESN, une société de conseil ou de services informatiques, un cabinet de recrutement, une société de portage, une plateforme de mise en relation, ou quand le post parle de « notre client » ;
+- direct_client : vrai si l'auteur travaille dans l'entreprise qui a besoin du travail (fondateur, dirigeant, CTO, manager, équipe interne), ou si c'est la page de cette entreprise. Une agence (web, digitale, de communication) ou un studio qui cherche du renfort pour ses projets clients est un client direct : elle confie elle-même le travail au freelance, c'est une cible. Faux pour qui place un freelance chez un autre : une ESN, une société de conseil ou de services informatiques (régie, assistance technique), un cabinet de recrutement, une société de portage, une plateforme de mise en relation, ou un post qui parle de « notre client » chez qui le freelance travaillera ;
 - matches_trade : vrai si la mission correspond au métier de la freelance. Sois souple sur les technologies : une mission de son métier avec un autre outil compte ;
 - company_name : l'entreprise qui a besoin du travail si le post ou le poste de l'auteur la nomme (« CTO chez Acme » donne Acme), sinon une chaîne vide. N'invente jamais de nom ;
 - summary : en français, une phrase de moins de 140 caractères sur ce qui est cherché (rôle, technologies, durée, télétravail si c'est dit) ;
@@ -88,6 +90,7 @@ function inputPrompt(posts: PostToSort[], freelancer: Freelancer): string {
   const list = posts.map((post, index) =>
     [
       `### Post ${index}`,
+      post.authorCompany && `Publié par la page entreprise : ${post.authorCompany}`,
       post.authorHeadline && `Poste de l'auteur : ${post.authorHeadline}`,
       post.text.slice(0, MAX_TEXT_FOR_AI),
     ]

@@ -615,6 +615,13 @@ export type Database = {
             referencedRelation: "company_contacts"
             referencedColumns: ["id", "user_id"]
           },
+          {
+            foreignKeyName: "linkedin_posts_contact_id_user_id_fkey"
+            columns: ["contact_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "contact_outreach"
+            referencedColumns: ["contact_id", "user_id"]
+          },
         ]
       }
       linkedin_sequences: {
