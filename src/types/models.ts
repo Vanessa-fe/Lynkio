@@ -18,6 +18,7 @@ export type CompanyInteraction = Database['public']['Tables']['company_interacti
 export type ProspectionSettings = Database['public']['Tables']['prospection_settings']['Row']
 export type PipelineRun = Database['public']['Tables']['pipeline_runs']['Row']
 export type UnidentifiedJobOffer = Database['public']['Tables']['unidentified_job_offers']['Row']
+export type LinkedinPost = Database['public']['Tables']['linkedin_posts']['Row']
 export type CompanyQualification = Database['public']['Tables']['company_qualifications']['Row']
 export type ProspectList = Database['public']['Tables']['prospect_lists']['Row']
 export type ContactOutreach = Database['public']['Views']['contact_outreach']['Row']
@@ -52,6 +53,8 @@ export type LinkedinSequenceStatus =
   | 'followed_up_2'
   | 'replied'
   | 'stopped'
+// Post LinkedIn trouvé par l'extension : à traiter, écarté par Sophie, ignoré, ajouté à Filonea
+export type LinkedinPostStatus = 'new' | 'filtered' | 'dismissed' | 'added'
 export type CompanyOrigin = 'manual' | 'import' | 'detector'
 // organization : entreprise ; individual : personne seule (indépendant ou entreprise inconnue)
 export type CompanyKind = 'organization' | 'individual'
@@ -59,7 +62,7 @@ export type CompanyKind = 'organization' | 'individual'
 export type CompanySegment = 'agency' | 'startup' | 'smb'
 export type CompanySegmentSetBy = 'auto' | 'manual'
 export type SizeCategory = 'solo' | 'tpe' | 'pme' | 'eti' | 'ge'
-export type EmailSource = 'manual' | 'hunter' | 'website' | 'other'
+export type EmailSource = 'manual' | 'hunter' | 'website' | 'linkedin_post' | 'other'
 export type CompanyInteractionType =
   | 'email'
   | 'linkedin_message'

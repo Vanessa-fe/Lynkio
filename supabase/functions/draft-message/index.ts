@@ -190,13 +190,22 @@ Deno.serve(async (request) => {
       detectedAt: signal.detected_at,
     }))
 
-    // Texte de l'offre d'emploi la plus récente : de quoi parler du vrai besoin de l'entreprise
+    // Texte de l'offre d'emploi ou du post LinkedIn le plus récent : de quoi parler du vrai besoin
     const adText = (signal: (typeof active)[number]) => {
       const description = (signal.evidence as Record<string, unknown> | null)?.description
       return typeof description === 'string' ? description.trim().slice(0, MAX_JOB_AD_LENGTH) : ''
     }
     const adSignal = active.find((signal) => adText(signal) !== '')
-    const jobAd = adSignal ? { signalId: adSignal.id, text: adText(adSignal) } : null
+    const sourceText = adSignal
+      ? {
+          signalId: adSignal.id,
+          text: adText(adSignal),
+          kind:
+            (adSignal.evidence as Record<string, unknown> | null)?.source === 'linkedin_post'
+              ? ('linkedin_post' as const)
+              : ('job_ad' as const),
+        }
+      : null
 
     const criteria = (icp.data?.criteria ?? {}) as { tech_stack?: string[]; remote?: string }
     const senderProfile = profile.data
@@ -235,7 +244,7 @@ Deno.serve(async (request) => {
       },
       siteText,
       signals: activeSignals,
-      jobAd,
+      sourceText,
       recipient: contact.data
         ? { firstName: contact.data.first_name, lastName: contact.data.last_name, role: contact.data.role }
         : null,
@@ -262,7 +271,7 @@ Deno.serve(async (request) => {
         senderProfile?.message_pitch ?? null,
         senderProfile?.message_signature ?? null,
         instructions,
-        jobAd?.text ?? null,
+        sourceText?.text ?? null,
       ],
       confidentialClients: referenceRows
         .filter((reference) => !reference.is_client_name_public && reference.client_name?.trim())

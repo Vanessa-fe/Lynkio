@@ -87,13 +87,21 @@ interface CompanyInteractionsProps {
   interactions: CompanyInteractionWithContact[]
   // L'utilisatrice a rempli sa présentation (Paramètres, Messages de Sophie)
   hasPitch: boolean
+  // La rédaction d'un e-mail avec Sophie s'ouvre dès l'arrivée sur la fiche
+  openEmailDraft?: boolean
 }
 
-export function CompanyInteractions({ companyId, contacts, interactions, hasPitch }: CompanyInteractionsProps) {
+export function CompanyInteractions({
+  companyId,
+  contacts,
+  interactions,
+  hasPitch,
+  openEmailDraft = false,
+}: CompanyInteractionsProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isDraftDialogOpen, setIsDraftDialogOpen] = useState(false)
+  const [isDraftDialogOpen, setIsDraftDialogOpen] = useState(openEmailDraft)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [sendingId, setSendingId] = useState<string | null>(null)
 

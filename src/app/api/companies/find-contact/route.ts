@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { toWebsiteDomain } from '@/lib/validations/company'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import { findEmail, hunterApiKey, hunterError, HunterError } from '@/lib/hunter'
 
 const HUNTER_DOMAIN_SEARCH_URL = 'https://api.hunter.io/v2/domain-search'
-const HUNTER_EMAIL_FINDER_URL = 'https://api.hunter.io/v2/email-finder'
 
 // Équivalents anglais des postes de décideurs : Hunter renvoie surtout des
 // intitulés en anglais (« Founder », « CEO »…), alors que les postes à cibler
@@ -93,15 +93,6 @@ type HunterEmail = {
   confidence: number | null
 }
 
-type HunterPerson = {
-  email: string | null
-  first_name: string | null
-  last_name: string | null
-  position: string | null
-  linkedin_url: string | null
-  score: number | null
-}
-
 type Candidate = {
   name: string | null
   position: string | null
@@ -126,23 +117,8 @@ function sortScore(email: Pick<HunterEmail, 'department' | 'seniority' | 'decisi
   return score
 }
 
-function handleHunterError(status: number) {
-  if (status === 401 || status === 403) {
-    return NextResponse.json(
-      { error: 'Clé API Hunter.io invalide ou quota dépassé' },
-      { status }
-    )
-  }
-  if (status === 429) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes envoyées à Hunter.io, réessayez dans un instant' },
-      { status: 429 }
-    )
-  }
-  return NextResponse.json(
-    { error: 'Impossible d\'interroger Hunter.io pour le moment' },
-    { status: 502 }
-  )
+function errorResponse(error: HunterError) {
+  return NextResponse.json({ error: error.message }, { status: error.status })
 }
 
 export async function POST(request: Request) {
@@ -155,7 +131,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const apiKey = process.env.HUNTER_API_KEY
+    const apiKey = hunterApiKey()
     if (!apiKey) {
       return NextResponse.json(
         { error: 'La clé API Hunter.io n\'est pas configurée sur le serveur' },
@@ -184,20 +160,15 @@ export async function POST(request: Request) {
     // publique face aux profils "executive" que Hunter priorise). Hunter ne
     // facture aucun crédit quand cette recherche ciblée ne trouve rien.
     if (firstName && lastName) {
-      const finderUrl = `${HUNTER_EMAIL_FINDER_URL}?domain=${encodeURIComponent(domain)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}`
-
-      const response = await fetch(finderUrl, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      })
-
-      if (!response.ok && response.status !== 404) {
-        return handleHunterError(response.status)
+      let person
+      try {
+        person = await findEmail({ domain, firstName, lastName }, apiKey)
+      } catch (error) {
+        if (error instanceof HunterError) return errorResponse(error)
+        throw error
       }
 
-      const json = await response.json().catch(() => null)
-      const person: HunterPerson | null = json?.data || null
-
-      if (!person || !person.email) {
+      if (!person) {
         return NextResponse.json({ domain, organization: null, candidates: [], totalFound: 0 })
       }
 
@@ -224,7 +195,7 @@ export async function POST(request: Request) {
     })
 
     if (!response.ok) {
-      return handleHunterError(response.status)
+      return errorResponse(hunterError(response.status))
     }
 
     const json = await response.json()

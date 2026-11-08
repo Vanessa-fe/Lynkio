@@ -3,6 +3,7 @@ import { ProspectionSettingsForm } from '@/components/prospection/prospection-se
 import { PipelineRunsList } from '@/components/prospection/pipeline-runs-list'
 import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers'
 import { TechResearchCard } from '@/components/prospection/tech-research-card'
+import { LinkedinPostsCard } from '@/components/prospection/linkedin-posts'
 import { getIcpBasics } from '@/lib/queries/icp'
 import {
   getCompanyChoices,
@@ -10,14 +11,17 @@ import {
   getProspectionSettings,
   getUnidentifiedOffers,
 } from '@/lib/queries/prospection'
+import { getLinkedinPostSearch, getLinkedinPosts } from '@/lib/queries/linkedin-posts'
 
 export default async function ProspectionPage() {
-  const [settings, runs, unidentifiedOffers, companyChoices, icp] = await Promise.all([
+  const [settings, runs, unidentifiedOffers, companyChoices, icp, linkedinPosts, postSearch] = await Promise.all([
     getProspectionSettings(),
     getPipelineRuns(),
     getUnidentifiedOffers(),
     getCompanyChoices(),
     getIcpBasics(),
+    getLinkedinPosts(),
+    getLinkedinPostSearch(),
   ])
   const runningRun = runs.find((run) => run.status === 'running') ?? null
 
@@ -32,6 +36,7 @@ export default async function ProspectionPage() {
       </div>
 
       <ProspectionStatus settings={settings} runningRun={runningRun} />
+      <LinkedinPostsCard posts={linkedinPosts} search={postSearch} />
       <TechResearchCard techStack={icp.techStack} isRunning={!!runningRun} />
       <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />
       {/* Premier usage : les réglages d'abord et déjà ouverts, l'historique est encore vide.

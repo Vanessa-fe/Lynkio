@@ -77,6 +77,8 @@ interface CompanyDetailProps {
   organizations: OrganizationOption[]
   // Statut de prospection de chaque contact, par identifiant
   outreach: Record<string, PersonRow['outreach']>
+  // Arrivée depuis un post LinkedIn (« Écrire un e-mail avec Sophie ») : la rédaction s'ouvre tout de suite
+  openEmailDraft?: boolean
 }
 
 /**
@@ -109,6 +111,7 @@ export function CompanyDetail({
   hasPitch,
   organizations,
   outreach,
+  openEmailDraft = false,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -397,6 +400,7 @@ export function CompanyDetail({
         contacts={contacts}
         interactions={interactions}
         hasPitch={hasPitch}
+        openEmailDraft={openEmailDraft}
       />
     </div>
   )

@@ -17,10 +17,11 @@ interface CompanyPageProps {
   params: Promise<{
     id: string
   }>
+  searchParams: Promise<{ redaction?: string }>
 }
 
-export default async function CompanyPage({ params }: CompanyPageProps) {
-  const { id } = await params
+export default async function CompanyPage({ params, searchParams }: CompanyPageProps) {
+  const [{ id }, { redaction }] = await Promise.all([params, searchParams])
   const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach] = await Promise.all([
     getCompanyById(id),
     getPipelineStages(),
@@ -54,6 +55,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
       hasPitch={Boolean(profile?.message_pitch)}
       organizations={organizations}
       outreach={outreach}
+      openEmailDraft={redaction === 'email'}
     />
   )
 }

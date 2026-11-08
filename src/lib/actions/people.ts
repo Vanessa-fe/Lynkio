@@ -58,7 +58,7 @@ async function findOrganizationByName(supabase: Supabase, userId: string, name: 
  * Renvoie la fiche où elle se trouve : la sienne, ou celle de son entreprise.
  * Une personne dont le profil LinkedIn est déjà suivi n'est pas ajoutée une seconde fois.
  */
-export async function createPerson(input: PersonInput): Promise<ActionResult<{ companyId: string }>> {
+export async function createPerson(input: PersonInput): Promise<ActionResult<{ companyId: string; contactId?: string }>> {
   try {
     const validated = personSchema.parse(input)
     const supabase = await createClient()
@@ -79,7 +79,7 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
 
     // Venue de LinkedIn : la fiche créée prend la source « LinkedIn », si elle existe
     let sourceId: string | null = null
-    if (validated.origin === 'linkedin') {
+    if (validated.origin !== 'manual') {
       const { data: source } = await supabase
         .from('lead_sources')
         .select('id')
@@ -122,7 +122,8 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
         .from('companies')
         .insert({
           user_id: user.id,
-          origin: 'manual',
+          // Trouvée par Sophie dans un post LinkedIn
+          origin: validated.origin === 'linkedin_post' ? 'detector' : 'manual',
           kind: isIndividual ? 'individual' : 'organization',
           name: isIndividual ? fullName : validated.companyName!,
           size_category: isIndividual && validated.isIndependent ? 'solo' : null,
@@ -147,7 +148,8 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
         // Une personne seule décide pour elle-même
         is_decision_maker: validated.companyMode === 'none' || validated.isDecisionMaker,
         email: validated.email,
-        email_source: validated.email ? 'manual' : null,
+        email_source: validated.email ? (validated.emailSource ?? 'manual') : null,
+        email_confidence: validated.email ? (validated.emailConfidence ?? null) : null,
         phone: validated.phone,
         linkedin_url: normalizeLinkedinProfileUrl(validated.linkedinUrl) ?? validated.linkedinUrl,
         notes: validated.notes,
@@ -183,7 +185,7 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
 
     revalidatePath('/people')
     revalidatePath('/companies')
-    return { success: true, data: { companyId } }
+    return { success: true, data: { companyId, contactId: contact.id } }
   } catch (error) {
     return errorResult(error, 'Impossible d\'ajouter la personne')
   }
