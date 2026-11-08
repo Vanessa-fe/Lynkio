@@ -147,3 +147,8 @@ verify_jwt = true
 # jeton de l'utilisatrice, que la passerelle vérifie
 [functions.extension-connect]
 verify_jwt = true
+
+# Posts LinkedIn trouvés par l'extension : envoyés avec la session de
+# l'extension, que la passerelle vérifie
+[functions.linkedin-posts]
+verify_jwt = true

@@ -502,6 +502,9 @@ export type Database = {
           paused_at: string | null
           paused_reason: string | null
           paused_until: string | null
+          post_keywords: string[]
+          post_search_at: string | null
+          post_search_enabled: boolean
           updated_at: string
           user_id: string
         }
@@ -512,6 +515,9 @@ export type Database = {
           paused_at?: string | null
           paused_reason?: string | null
           paused_until?: string | null
+          post_keywords?: string[]
+          post_search_at?: string | null
+          post_search_enabled?: boolean
           updated_at?: string
           user_id: string
         }
@@ -522,10 +528,94 @@ export type Database = {
           paused_at?: string | null
           paused_reason?: string | null
           paused_until?: string | null
+          post_keywords?: string[]
+          post_search_at?: string | null
+          post_search_enabled?: boolean
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      linkedin_posts: {
+        Row: {
+          author_headline: string | null
+          author_linkedin_url: string | null
+          author_name: string
+          company_id: string | null
+          company_name: string | null
+          contact_id: string | null
+          created_at: string
+          email: string | null
+          filter_reason: string | null
+          id: string
+          keyword: string | null
+          post_url: string
+          post_urn: string
+          posted_at: string | null
+          status: string
+          summary: string | null
+          text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_headline?: string | null
+          author_linkedin_url?: string | null
+          author_name: string
+          company_id?: string | null
+          company_name?: string | null
+          contact_id?: string | null
+          created_at?: string
+          email?: string | null
+          filter_reason?: string | null
+          id?: string
+          keyword?: string | null
+          post_url: string
+          post_urn: string
+          posted_at?: string | null
+          status?: string
+          summary?: string | null
+          text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_headline?: string | null
+          author_linkedin_url?: string | null
+          author_name?: string
+          company_id?: string | null
+          company_name?: string | null
+          contact_id?: string | null
+          created_at?: string
+          email?: string | null
+          filter_reason?: string | null
+          id?: string
+          keyword?: string | null
+          post_url?: string
+          post_urn?: string
+          posted_at?: string | null
+          status?: string
+          summary?: string | null
+          text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linkedin_posts_company_id_user_id_fkey"
+            columns: ["company_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "linkedin_posts_contact_id_user_id_fkey"
+            columns: ["contact_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "company_contacts"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       linkedin_sequences: {
         Row: {

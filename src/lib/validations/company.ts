@@ -138,7 +138,7 @@ const contactFields = {
     .nullable()
     .transform((value) => (value ? value.toLowerCase() : null))
     .refine((value) => !value || z.string().email().safeParse(value).success, 'L\'e-mail n\'est pas valide'),
-  emailSource: z.enum(['manual', 'hunter', 'website', 'other']).optional().nullable(),
+  emailSource: z.enum(['manual', 'hunter', 'website', 'linkedin_post', 'other']).optional().nullable(),
   emailConfidence: z.number().int().min(0).max(100).optional().nullable(),
   phone: z
     .string()
@@ -186,8 +186,9 @@ export const personSchema = z
     estimatedAmount: optionalAmount,
     // Liste où ranger la personne (existante, ou créée à partir du nom)
     listName: optionalText(100, 'Le nom de la liste est trop long'),
-    // linkedin : pré-remplie depuis un profil LinkedIn (bouton « + Filonea »)
-    origin: z.enum(['manual', 'linkedin']).default('manual'),
+    // linkedin : pré-remplie depuis un profil LinkedIn (bouton « + Filonea ») ;
+    // linkedin_post : auteur d'un post « je cherche un freelance » trouvé par Sophie
+    origin: z.enum(['manual', 'linkedin', 'linkedin_post']).default('manual'),
   })
   .refine((data) => data.firstName || data.lastName, {
     message: 'Renseignez au moins le prénom ou le nom',
