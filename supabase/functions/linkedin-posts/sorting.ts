@@ -27,6 +27,8 @@ export type Freelancer = {
 }
 
 export type SortedPost = {
+  // Code ISO 639-1 de la langue principale du post (fr, en, es…)
+  language: string
   isRequest: boolean
   directClient: boolean
   matchesTrade: boolean
@@ -38,6 +40,7 @@ export type SortedPost = {
 const RULES = `Tu es Sophie, l'assistante de prospection d'une freelance. Tu tries des posts LinkedIn trouvés par une recherche par mots-clés, pour ne lui montrer que ceux où quelqu'un cherche un freelance qu'elle pourrait être.
 
 Pour chaque post :
+- language : le code ISO 639-1 de la langue dans laquelle le post est écrit (fr, en, es…), d'après son texte et non d'après le pays de l'auteur ;
 - is_request : vrai si l'auteur, ou l'entreprise pour laquelle il travaille, cherche maintenant un freelance ou un indépendant pour une mission. Faux pour : un freelance qui propose ses services ou annonce sa disponibilité, quelqu'un qui cherche un emploi, une offre d'emploi salarié (CDI, CDD, alternance, stage) qui n'est pas ouverte aux freelances, un conseil, un témoignage, un événement ;
 - direct_client : vrai si l'auteur travaille dans l'entreprise qui a besoin du travail (fondateur, dirigeant, CTO, manager, équipe interne), ou si c'est la page de cette entreprise. Une agence (web, digitale, de communication) ou un studio qui cherche du renfort pour ses projets clients est un client direct : elle confie elle-même le travail au freelance, c'est une cible. Faux pour qui place un freelance chez un autre : une ESN, une société de conseil ou de services informatiques (régie, assistance technique), un cabinet de recrutement, une société de portage, une plateforme de mise en relation, ou un post qui parle de « notre client » chez qui le freelance travaillera ;
 - matches_trade : vrai si la mission correspond au métier de la freelance. Sois souple sur les technologies : une mission de son métier avec un autre outil compte ;
@@ -57,9 +60,10 @@ const schema = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['index', 'is_request', 'direct_client', 'matches_trade', 'company_name', 'summary', 'reason'],
+        required: ['index', 'language', 'is_request', 'direct_client', 'matches_trade', 'company_name', 'summary', 'reason'],
         properties: {
           index: { type: 'integer' },
+          language: { type: 'string' },
           is_request: { type: 'boolean' },
           direct_client: { type: 'boolean' },
           matches_trade: { type: 'boolean' },
@@ -74,6 +78,7 @@ const schema = {
 
 type SortedFromAi = {
   index: number
+  language: string
   is_request: boolean
   direct_client: boolean
   matches_trade: boolean
@@ -144,6 +149,7 @@ export async function sortPosts(posts: PostToSort[], freelancer: Freelancer): Pr
     const sorted = byIndex.get(index)
     if (!sorted) return null
     return {
+      language: sorted.language.trim().toLowerCase().slice(0, 2),
       isRequest: sorted.is_request,
       directClient: sorted.direct_client,
       matchesTrade: sorted.matches_trade,

@@ -97,8 +97,8 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
         </CardTitle>
         <CardDescription>
           Toutes les 2 heures, du lundi au vendredi de 9 h à 18 h, l&apos;extension cherche les posts LinkedIn des
-          dernières 24 heures qui contiennent vos mots-clés, comme vous le feriez à la main. Sophie les trie et vous les
-          retrouvez dans Prospection.
+          dernières 24 heures qui contiennent vos mots-clés, comme vous le feriez à la main. Sophie ne garde que les
+          annonces en français, les trie et vous les retrouvez dans Prospection.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

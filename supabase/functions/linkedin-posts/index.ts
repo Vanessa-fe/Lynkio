@@ -6,14 +6,15 @@
 //
 // Appelée par l'extension avec la session de l'utilisatrice (la passerelle vérifie le
 // jeton). Les posts déjà connus sont ignorés ; les autres sont triés, d'abord par le
-// code (intermédiaires, mots-clés exclus), puis par l'IA (vraie demande ? client
-// direct ? son métier ?). Tous sont gardés : à traiter (new) ou écartés avec leur
-// raison (filtered), pour que l'utilisatrice puisse vérifier le tri.
+// code (langue, intermédiaires, mots-clés exclus), puis par l'IA (en français ? vraie
+// demande ? client direct ? son métier ?). Tous sont gardés : à traiter (new) ou écartés
+// avec leur raison (filtered), pour que l'utilisatrice puisse vérifier le tri.
 
 import { createClient } from '@supabase/supabase-js'
 import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
 import { intermediaryFromText, matchesExcludedKeyword, truncate } from '../prospection-run/rules.ts'
 import { sortPosts, type SortedPost } from './sorting.ts'
+import { clearlyEnglish, notFrenchReason } from './language.ts'
 
 const MAX_POSTS = 50
 const MAX_TEXT_LENGTH = 5000
@@ -83,6 +84,7 @@ function parsePost(value: unknown): IncomingPost | null {
 /** Raison d'écarter un post sans demander à l'IA, ou null */
 function ruleOut(post: IncomingPost, excludedKeywords: string[]): string | null {
   if (!post.authorProfileUrl && !post.authorIsCompany) return 'Auteur introuvable sur LinkedIn'
+  if (clearlyEnglish(post.text)) return notFrenchReason('en')
   const all = `${post.authorHeadline ?? ''}\n${post.text}`
   const intermediary = intermediaryFromText(all)
   if (intermediary?.kind === 'consulting') return `ESN ou société de services (« ${intermediary.clue} »)`
@@ -94,6 +96,7 @@ function ruleOut(post: IncomingPost, excludedKeywords: string[]): string | null 
 
 /** Raison d'écarter un post d'après le verdict de l'IA, ou null s'il est retenu */
 function aiReason(sorted: SortedPost): string | null {
+  if (sorted.language && sorted.language !== 'fr') return notFrenchReason(sorted.language)
   if (sorted.isRequest && sorted.directClient && sorted.matchesTrade) return null
   const prefix = !sorted.isRequest
     ? 'Pas une demande de freelance'
