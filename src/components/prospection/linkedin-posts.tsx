@@ -82,6 +82,12 @@ export function LinkedinPostsCard({ posts, search }: LinkedinPostsCardProps) {
                 Modifier
               </Link>
             </div>
+            {search.error && (
+              <p className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>{search.error}</span>
+              </p>
+            )}
             {!seenRecently && (
               <p className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -173,7 +179,7 @@ function PostLink({ post }: { post: LinkedinPost }) {
       rel="noopener noreferrer"
       className="text-sm inline-flex items-center gap-1 hover:underline"
     >
-      Voir le post
+      Voir sur LinkedIn
       <ExternalLink className="w-3 h-3" />
     </a>
   )
