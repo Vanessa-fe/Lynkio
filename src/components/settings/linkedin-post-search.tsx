@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { saveLinkedinPostSearch } from '@/lib/actions/linkedin-posts'
-import { MAX_POST_KEYWORDS } from '@/lib/validations/linkedin-posts'
+import { LONG_POST_KEYWORD_WORDS, MAX_POST_KEYWORDS } from '@/lib/validations/linkedin-posts'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { LinkedinPostSearch } from '@/lib/queries/linkedin-posts'
@@ -36,6 +36,8 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
   const full = keywords.length >= MAX_POST_KEYWORDS
   // Un mot seul (« freelance », « mission ») ramène des posts du monde entier, surtout en anglais
   const singleWords = keywords.filter((keyword) => keyword.trim().split(/\s+/).length < 2)
+  // Cherchée mot pour mot, une phrase longue n'est presque jamais écrite telle quelle
+  const longPhrases = keywords.filter((keyword) => keyword.trim().split(/\s+/).length >= LONG_POST_KEYWORD_WORDS)
   const unsaved = keywords.join('\n') !== search.keywords.join('\n')
 
   const addKeyword = () => {
@@ -98,9 +100,9 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
           )}
         </CardTitle>
         <CardDescription>
-          Toutes les 2 heures, du lundi au vendredi de 9 h à 18 h, l&apos;extension cherche les posts LinkedIn des
-          dernières 24 heures qui contiennent vos mots-clés, comme vous le feriez à la main. Sophie ne garde que les
-          annonces en français, les trie et vous les retrouvez dans Prospection.
+          Toutes les 2 heures, du lundi au vendredi de 9 h à 18 h, l&apos;extension cherche les posts LinkedIn des 7
+          derniers jours qui contiennent vos mots-clés mot pour mot, comme vous le feriez à la main. Sophie ne garde
+          que les annonces en français, les trie et vous les retrouvez dans Prospection.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -134,7 +136,7 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
                   addKeyword()
                 }
               }}
-              placeholder={full ? `${MAX_POST_KEYWORDS} mots-clés au plus` : 'Ex. : cherche un freelance Next.js'}
+              placeholder={full ? `${MAX_POST_KEYWORDS} mots-clés au plus` : 'Ex. : cherche un développeur'}
               maxLength={100}
               disabled={full}
             />
@@ -150,9 +152,16 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
               Préférez une phrase en français, comme « cherche un freelance ».
             </p>
           )}
+          {longPhrases.length > 0 && (
+            <p className="text-sm text-amber-700 dark:text-amber-400 max-w-2xl">
+              {longPhrases.map((keyword) => `« ${keyword} »`).join(', ')} : une phrase longue est rarement écrite
+              telle quelle, elle ne ramènera presque rien. Gardez 2 ou 3 mots, comme « cherche un développeur ».
+            </p>
+          )}
           <p className="text-sm text-muted-foreground max-w-2xl">
-            Préférez les mots de quelqu&apos;un qui cherche (« cherche un développeur freelance ») : « freelance » seul
-            ramène surtout des freelances qui se présentent.
+            Chaque mot-clé est cherché mot pour mot. Préférez une phrase courte de quelqu&apos;un qui cherche
+            (« cherche un développeur », « besoin d&apos;un freelance ») : « freelance » seul ramène surtout des
+            freelances qui se présentent.
           </p>
         </div>
 
