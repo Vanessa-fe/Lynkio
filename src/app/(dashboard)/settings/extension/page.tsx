@@ -4,9 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ExtensionConnection } from '@/components/settings/extension-connection'
 import { LinkedinPostSearchCard } from '@/components/settings/linkedin-post-search'
 import { createClient } from '@/lib/supabase/server'
-import { getIcpBasics } from '@/lib/queries/icp'
 import { getLinkedinPostSearch } from '@/lib/queries/linkedin-posts'
-import { technologyLabel } from '@/lib/constants/technologies'
 import { suggestedPostKeywords } from '@/lib/validations/linkedin-posts'
 
 export default async function ExtensionSettingsPage() {
@@ -16,8 +14,7 @@ export default async function ExtensionSettingsPage() {
       data: { user },
     },
     postSearch,
-    icp,
-  ] = await Promise.all([supabase.auth.getUser(), getLinkedinPostSearch(), getIcpBasics()])
+  ] = await Promise.all([supabase.auth.getUser(), getLinkedinPostSearch()])
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -38,7 +35,7 @@ export default async function ExtensionSettingsPage() {
       </div>
 
       <ExtensionConnection accountEmail={user?.email ?? null} />
-      <LinkedinPostSearchCard search={postSearch} suggestions={suggestedPostKeywords(icp.techStack.map(technologyLabel))} />
+      <LinkedinPostSearchCard search={postSearch} suggestions={suggestedPostKeywords()} />
     </div>
   )
 }

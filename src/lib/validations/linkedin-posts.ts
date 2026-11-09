@@ -29,17 +29,22 @@ export const linkedinPostSearchSchema = z
 export type LinkedinPostSearchInput = z.input<typeof linkedinPostSearchSchema>
 
 /**
- * Mots-clés proposés au départ : des formulations de quelqu'un qui cherche (pas d'un
- * freelance qui se présente), puis une par technologie de la freelance
+ * Mots-clés proposés au départ : des phrases courtes de quelqu'un qui cherche (pas d'un
+ * freelance qui se présente). L'extension les cherche mot pour mot : une phrase longue,
+ * ou suivie d'une technologie, n'est presque jamais écrite telle quelle.
  */
-export function suggestedPostKeywords(technologyLabels: string[]): string[] {
+export function suggestedPostKeywords(): string[] {
   return [
-    'cherche un développeur freelance',
-    'recherche développeur freelance',
-    'mission freelance développeur web',
-    ...technologyLabels.map((label) => `freelance ${label}`),
+    'cherche un développeur',
+    'recherche un développeur',
+    "besoin d'un développeur",
+    'cherche un freelance',
+    'recherche un freelance',
   ].slice(0, MAX_POST_KEYWORDS)
 }
+
+/** Au-delà de 3 mots, une phrase cherchée mot pour mot ne ramène presque rien */
+export const LONG_POST_KEYWORD_WORDS = 4
 
 /**
  * « Jean-Pierre Martin 🚀 | CTO » → { firstName: 'Jean-Pierre', lastName: 'Martin' } :
