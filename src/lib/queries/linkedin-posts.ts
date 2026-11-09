@@ -5,6 +5,8 @@ import type { EmailSource, LinkedinPost } from '@/types'
 // Les posts ajoutés ou écartés restent visibles une semaine : de quoi répondre, ou rattraper le tri
 const RECENT_DAYS = 7
 const MAX_POSTS = 50
+// Fin de la raison donnée par la fonction linkedin-posts aux posts qui ne sont pas en français
+const OTHER_LANGUAGE_REASON = '% : seules les annonces en français sont gardées'
 
 export type LinkedinPostSearch = {
   enabled: boolean
@@ -25,7 +27,9 @@ export type AddedLinkedinPost = LinkedinPost & {
 export type LinkedinPosts = {
   toReview: LinkedinPost[]
   added: AddedLinkedinPost[]
+  // Écartés par Sophie, sauf ceux dans une autre langue : seulement comptés, ils ne sont pas des pistes
   filtered: LinkedinPost[]
+  otherLanguage: number
 }
 
 export async function getLinkedinPostSearch(): Promise<LinkedinPostSearch> {
@@ -60,14 +64,14 @@ export async function getLinkedinPostSearch(): Promise<LinkedinPostSearch> {
 }
 
 export async function getLinkedinPosts(): Promise<LinkedinPosts> {
-  const empty: LinkedinPosts = { toReview: [], added: [], filtered: [] }
+  const empty: LinkedinPosts = { toReview: [], added: [], filtered: [], otherLanguage: 0 }
   const user = await getAuthUser()
   if (!user) return empty
 
   const supabase = await createClient()
   const since = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
-  const [toReview, added, filtered] = await Promise.all([
+  const [toReview, added, filtered, otherLanguage] = await Promise.all([
     supabase
       .from('linkedin_posts')
       .select('*')
@@ -89,11 +93,19 @@ export async function getLinkedinPosts(): Promise<LinkedinPosts> {
       .eq('user_id', user.id)
       .eq('status', 'filtered')
       .gte('created_at', since)
+      .not('filter_reason', 'like', OTHER_LANGUAGE_REASON)
       .order('created_at', { ascending: false })
       .limit(MAX_POSTS),
+    supabase
+      .from('linkedin_posts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('status', 'filtered')
+      .gte('created_at', since)
+      .like('filter_reason', OTHER_LANGUAGE_REASON),
   ])
 
-  for (const result of [toReview, added, filtered]) {
+  for (const result of [toReview, added, filtered, otherLanguage]) {
     if (result.error) console.error('LinkedIn posts error:', result.error)
   }
 
@@ -101,5 +113,6 @@ export async function getLinkedinPosts(): Promise<LinkedinPosts> {
     toReview: toReview.data ?? [],
     added: (added.data ?? []) as unknown as AddedLinkedinPost[],
     filtered: filtered.data ?? [],
+    otherLanguage: otherLanguage.count ?? 0,
   }
 }
