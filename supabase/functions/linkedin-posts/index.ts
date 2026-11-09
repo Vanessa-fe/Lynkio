@@ -12,7 +12,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
-import { intermediaryFromText, matchesExcludedKeyword, truncate } from '../prospection-run/rules.ts'
+import { matchesExcludedKeyword, truncate } from '../prospection-run/rules.ts'
 import { sortPosts, type SortedPost } from './sorting.ts'
 import { clearlyEnglish, notFrenchReason } from './language.ts'
 
@@ -85,10 +85,8 @@ function parsePost(value: unknown): IncomingPost | null {
 function ruleOut(post: IncomingPost, excludedKeywords: string[]): string | null {
   if (!post.authorProfileUrl && !post.authorIsCompany) return 'Auteur introuvable sur LinkedIn'
   if (clearlyEnglish(post.text)) return notFrenchReason('en')
+  // Les missions relayées par un recruteur, une ESN ou une plateforme sont gardées (choix du 9 novembre 2026)
   const all = `${post.authorHeadline ?? ''}\n${post.text}`
-  const intermediary = intermediaryFromText(all)
-  if (intermediary?.kind === 'consulting') return `ESN ou société de services (« ${intermediary.clue} »)`
-  if (intermediary?.kind === 'hidden_client') return `Recrute pour un client qu'il ne nomme pas (« ${intermediary.clue} »)`
   const keyword = matchesExcludedKeyword(all, excludedKeywords)
   if (keyword) return `Contient un mot-clé exclu (« ${keyword} »)`
   return null
@@ -97,12 +95,8 @@ function ruleOut(post: IncomingPost, excludedKeywords: string[]): string | null 
 /** Raison d'écarter un post d'après le verdict de l'IA, ou null s'il est retenu */
 function aiReason(sorted: SortedPost): string | null {
   if (sorted.language && sorted.language !== 'fr') return notFrenchReason(sorted.language)
-  if (sorted.isRequest && sorted.directClient && sorted.matchesTrade) return null
-  const prefix = !sorted.isRequest
-    ? 'Pas une demande de freelance'
-    : !sorted.directClient
-      ? 'Intermédiaire'
-      : 'Hors de votre métier'
+  if (sorted.isRequest && sorted.matchesTrade) return null
+  const prefix = !sorted.isRequest ? 'Pas une demande de freelance' : 'Hors de votre métier'
   return truncate(sorted.reason ? `${prefix} : ${sorted.reason}` : prefix, 300)
 }
 

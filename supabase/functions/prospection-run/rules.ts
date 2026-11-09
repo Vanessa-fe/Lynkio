@@ -163,18 +163,31 @@ const CONSULTING_PATTERNS: RegExp[] = [
 
 export type IntermediaryClue = { kind: 'hidden_client' | 'consulting'; clue: string }
 
+// « pas d'ESN », « sans SSII », « aucun cabinet de recrutement » : l'offre dit justement le contraire
+const NEGATION_BEFORE = /(^|[^\p{L}])(pas|sans|aucune?|hors|ni|non)\s*(d['’]\s*|de\s+|des\s+)?$/iu
+
+/** Première mention du motif qui n'est pas niée juste avant */
+function affirmedMatch(text: string, pattern: RegExp): string | null {
+  const everywhere = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`)
+  for (const match of text.matchAll(everywhere)) {
+    const before = text.slice(Math.max(0, (match.index ?? 0) - 12), match.index)
+    if (!NEGATION_BEFORE.test(before)) return match[0]
+  }
+  return null
+}
+
 /**
  * Intermédiaire repéré dans le texte d'une offre : cabinet qui cache son client
  * (à identifier à la main) ou société de services qui place des développeurs (écartée)
  */
 export function intermediaryFromText(text: string): IntermediaryClue | null {
   for (const pattern of CONSULTING_PATTERNS) {
-    const match = text.match(pattern)
-    if (match) return { kind: 'consulting', clue: match[0] }
+    const clue = affirmedMatch(text, pattern)
+    if (clue) return { kind: 'consulting', clue }
   }
   for (const pattern of HIDDEN_CLIENT_PATTERNS) {
-    const match = text.match(pattern)
-    if (match) return { kind: 'hidden_client', clue: match[0] }
+    const clue = affirmedMatch(text, pattern)
+    if (clue) return { kind: 'hidden_client', clue }
   }
   return null
 }

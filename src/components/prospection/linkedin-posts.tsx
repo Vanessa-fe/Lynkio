@@ -48,9 +48,9 @@ export function LinkedinPostsCard({ posts, search }: LinkedinPostsCardProps) {
           Posts LinkedIn
         </CardTitle>
         <CardDescription>
-          Des personnes qui écrivent sur LinkedIn qu&apos;elles cherchent un freelance. L&apos;extension les trouve
-          toutes les 2 heures, Sophie ne garde que les annonces en français et écarte les ESN, les cabinets et ce qui
-          n&apos;est pas votre métier.
+          Les missions freelance publiées sur LinkedIn, par l&apos;entreprise elle-même ou par un recruteur, une ESN
+          ou une plateforme. L&apos;extension les trouve toutes les 2 heures. Sophie ne garde que les annonces en
+          français, dans votre métier, et signale celles qui passent par un intermédiaire.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
