@@ -34,6 +34,8 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
   const [busy, setBusy] = useState(false)
 
   const full = keywords.length >= MAX_POST_KEYWORDS
+  // Un mot seul (« freelance », « mission ») ramène des posts du monde entier, surtout en anglais
+  const singleWords = keywords.filter((keyword) => keyword.trim().split(/\s+/).length < 2)
   const unsaved = keywords.join('\n') !== search.keywords.join('\n')
 
   const addKeyword = () => {
@@ -141,6 +143,13 @@ export function LinkedinPostSearchCard({ search, suggestions }: LinkedinPostSear
               <span className="sr-only">Ajouter le mot-clé</span>
             </Button>
           </div>
+          {singleWords.length > 0 && (
+            <p className="text-sm text-amber-700 dark:text-amber-400 max-w-2xl">
+              {singleWords.map((keyword) => `« ${keyword} »`).join(', ')} : un mot seul ramène des posts du monde
+              entier, surtout en anglais. LinkedIn cherche dans tous les posts publics, pas seulement dans votre fil.
+              Préférez une phrase en français, comme « cherche un freelance ».
+            </p>
+          )}
           <p className="text-sm text-muted-foreground max-w-2xl">
             Préférez les mots de quelqu&apos;un qui cherche (« cherche un développeur freelance ») : « freelance » seul
             ramène surtout des freelances qui se présentent.

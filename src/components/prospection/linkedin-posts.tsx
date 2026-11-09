@@ -133,6 +133,13 @@ export function LinkedinPostsCard({ posts, search }: LinkedinPostsCardProps) {
           </div>
         )}
 
+        {posts.otherLanguage > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {posts.otherLanguage} post{posts.otherLanguage > 1 ? 's' : ''} dans une autre langue ignoré
+            {posts.otherLanguage > 1 ? 's' : ''} cette semaine : seules les annonces en français sont gardées.
+          </p>
+        )}
+
         {posts.filtered.length > 0 && (
           <details className="group">
             <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
