@@ -40,6 +40,7 @@ function ApiKeyCard({ service, saved }: { service: ApiKeyService; saved: SavedAp
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [showSteps, setShowSteps] = useState(!saved)
 
   const handleSubmit = async (event: FormEvent) => {
@@ -63,7 +64,6 @@ function ApiKeyCard({ service, saved }: { service: ApiKeyService; saved: SavedAp
   }
 
   const handleDelete = async () => {
-    if (!window.confirm(`Supprimer votre clé ${service.label} de Filonea ?`)) return
     setIsDeleting(true)
     try {
       const result = await deleteApiKey(service.provider)
@@ -77,6 +77,7 @@ function ApiKeyCard({ service, saved }: { service: ApiKeyService; saved: SavedAp
       toast({ title: 'Suppression impossible', description: CONNECTION_ERROR, variant: 'destructive' })
     } finally {
       setIsDeleting(false)
+      setConfirmingDelete(false)
     }
   }
 
@@ -97,10 +98,22 @@ function ApiKeyCard({ service, saved }: { service: ApiKeyService; saved: SavedAp
               Clé enregistrée, se termine par <code className="font-mono">…{saved.keyHint}</code>
               {saved.model ? ` · modèle ${saved.model}` : ''} · {dateFormat.format(new Date(saved.updatedAt))}
             </span>
-            <Button type="button" variant="ghost" size="sm" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              <span className="ml-1">Supprimer</span>
-            </Button>
+            {confirmingDelete ? (
+              <span className="flex items-center gap-2">
+                <Button type="button" variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+                  {isDeleting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+                  Confirmer la suppression
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmingDelete(false)} disabled={isDeleting}>
+                  Annuler
+                </Button>
+              </span>
+            ) : (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmingDelete(true)}>
+                <Trash2 className="h-4 w-4" />
+                <span className="ml-1">Supprimer</span>
+              </Button>
+            )}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">{service.cost}</p>
