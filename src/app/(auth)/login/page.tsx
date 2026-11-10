@@ -5,6 +5,6 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const { lien } = await searchParams
-  return <LoginForm linkExpired={lien === 'expire'} />
+  const { lien, compte } = await searchParams
+  return <LoginForm linkExpired={lien === 'expire'} accountDeleted={compte === 'supprime'} />
 }

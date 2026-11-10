@@ -157,3 +157,8 @@ verify_jwt = true
 # serveur du site avec le jeton de l'utilisateur, que la passerelle vérifie
 [functions.hunter]
 verify_jwt = true
+
+# Suppression du compte : appelée par le serveur du site avec le jeton de l'utilisateur, que la
+# passerelle vérifie ; seul le rôle service_role peut supprimer un compte
+[functions.delete-account]
+verify_jwt = true
