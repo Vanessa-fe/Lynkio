@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { onboardingSchema, type OnboardingInput } from '@/lib/validations/user-profile'
 import { completeOnboarding } from '@/lib/actions/user-profile'
 import { THEMES } from '@/lib/constants/themes'
+import { MAX_SEARCH_KEYWORDS } from '@/lib/validations/icp'
+import { KeywordPicker } from '@/components/settings/keyword-picker'
 import { cn } from '@/lib/utils'
 import type { Profession } from '@/types'
 import { LogoutButton } from '@/components/layout/logout-button'
@@ -27,8 +29,13 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
+type ProfessionChoice = Pick<Profession, 'key' | 'label' | 'description'> & {
+  suggestedKeywords: string[]
+  defaultKeywords: string[]
+}
+
 interface OnboardingFormProps {
-  professions: Pick<Profession, 'key' | 'label' | 'description'>[]
+  professions: ProfessionChoice[]
   defaultValues: Partial<OnboardingInput>
   /** Compte déjà configuré à qui il ne manque que le métier */
   isReturningUser: boolean
@@ -44,6 +51,7 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<OnboardingInput>({
     resolver: zodResolver(onboardingSchema),
@@ -53,12 +61,19 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
     },
   })
 
+  const professionKey = useWatch({ control, name: 'professionKey' })
+  const searchKeywords = useWatch({ control, name: 'searchKeywords' })
+  const profession = professions.find((candidate) => candidate.key === professionKey) ?? null
+  // Tant que la personne n'a rien touché, les mots-clés suivent le métier choisi
+  const [keywordsEdited, setKeywordsEdited] = useState(false)
+  const shownKeywords = keywordsEdited ? (searchKeywords ?? []) : (profession?.defaultKeywords ?? [])
+
   const onSubmit = async (data: OnboardingInput) => {
     setError(null)
     setIsLoading(true)
 
     try {
-      const result = await completeOnboarding(data)
+      const result = await completeOnboarding({ ...data, searchKeywords: shownKeywords })
 
       // Action réussie : le serveur redirige et ne renvoie rien (la navigation est déjà en cours)
       if (result && !result.success && result.error) {
@@ -171,6 +186,32 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
                   utiles. Vous pourrez affiner votre client idéal ensuite.
                 </p>
               </fieldset>
+
+              {profession && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium leading-none">Mots-clés recherchés</p>
+                  <p className="text-xs text-muted-foreground">
+                    Sophie cherche les offres d&apos;emploi dont l&apos;intitulé contient l&apos;un de ces mots : une
+                    entreprise qui recrute dans votre métier a un besoin et un budget.
+                    {profession.key === 'web_developer'
+                      ? ' Les offres de développeur, de webmaster et du digital sont déjà cherchées pour vous.'
+                      : ''}
+                  </p>
+                  <KeywordPicker
+                    value={shownKeywords}
+                    onChange={(next) => {
+                      setKeywordsEdited(true)
+                      setValue('searchKeywords', next)
+                    }}
+                    suggestions={profession.suggestedKeywords}
+                    max={MAX_SEARCH_KEYWORDS}
+                    disabled={isLoading}
+                    placeholder="Ex. : graphiste, community manager"
+                    inputLabel="Nouveau mot-clé recherché"
+                    listLabel="Mots-clés recherchés"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="selectedTheme">Thème de couleur</Label>

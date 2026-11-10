@@ -899,6 +899,7 @@ export type Database = {
           key: string
           label: string
           order: number
+          suggested_keywords: string[]
           target_roles: string[]
         }
         Insert: {
@@ -909,6 +910,7 @@ export type Database = {
           key: string
           label: string
           order?: number
+          suggested_keywords?: string[]
           target_roles?: string[]
         }
         Update: {
@@ -919,6 +921,7 @@ export type Database = {
           key?: string
           label?: string
           order?: number
+          suggested_keywords?: string[]
           target_roles?: string[]
         }
         Relationships: []

@@ -81,6 +81,29 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       }
     }
 
+    // Client idéal : il suit le métier choisi (poids des signaux, suggestions), et les mots-clés
+    // choisis remplacent ceux proposés par défaut pour le métier
+    {
+      const { data: icp } = await supabase
+        .from('icp_profiles')
+        .select('id, criteria')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('created_at')
+        .limit(1)
+        .maybeSingle()
+      if (icp) {
+        const criteria = validated.searchKeywords
+          ? { ...((icp.criteria ?? {}) as Record<string, unknown>), search_keywords: validated.searchKeywords }
+          : icp.criteria
+        const { error: icpError } = await supabase
+          .from('icp_profiles')
+          .update({ criteria, profession_key: validated.professionKey })
+          .eq('id', icp.id)
+        if (icpError) console.error('Error updating the ideal client:', icpError)
+      }
+    }
+
     // 3. Onboarding terminé seulement une fois tout initialisé
     if (isFirstOnboarding) {
       const { error: completeError } = await supabase
@@ -98,6 +121,7 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       captureServerEvent(user.id, 'onboarding_completed', {
         profession_key: validated.professionKey,
         selected_theme: validated.selectedTheme,
+        search_keywords_count: validated.searchKeywords?.length ?? 0,
         $set: { profession_key: validated.professionKey },
       })
     }

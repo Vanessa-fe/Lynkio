@@ -166,9 +166,9 @@ export const MAX_COMPANIES_OPTIONS = [5, 10, 20, 30, 50] as const
 export const PROSPECTION_SOURCES = [
   {
     key: 'job_postings',
-    label: 'Entreprises qui recrutent pour leur site ou leur digital',
+    label: 'Entreprises qui recrutent dans votre métier',
     description:
-      'Offres d\'emploi publiées sur France Travail : webmaster, marketing digital, e-commerce, chef de projet web, et développeurs selon votre client idéal. Une entreprise qui recrute a un besoin et un budget. Les cabinets, ESN et missions en régie sont écartés.',
+      'Offres d\'emploi publiées sur France Travail (qui relaie aussi de nombreux sites d\'emploi partenaires) dont l\'intitulé contient l\'un de vos mots-clés (Paramètres, Client idéal). Pour le développement web, Sophie cherche aussi les postes de webmaster, marketing digital, e-commerce et de développeur. Une entreprise qui recrute a un besoin et un budget. Les cabinets, ESN et missions en régie sont écartés.',
   },
   {
     key: 'recent_creations',

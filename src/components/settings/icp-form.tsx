@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { KeywordPicker } from '@/components/settings/keyword-picker'
 import {
+  MAX_SEARCH_KEYWORDS,
   MAX_SIGNAL_WEIGHT,
   MISSION_DAYS,
   SIZE_FIT_OPTIONS,
@@ -36,6 +38,8 @@ interface IcpFormProps {
   icp: IcpProfile
   signals: SignalWeightOption[]
   companiesCount: number
+  professionKey: string | null
+  suggestedKeywords: string[]
 }
 
 function toFormValues(icp: IcpProfile, signals: SignalWeightOption[]): IcpInput {
@@ -51,6 +55,7 @@ function toFormValues(icp: IcpProfile, signals: SignalWeightOption[]): IcpInput 
         return [signal.key, typeof override === 'number' ? override : signal.defaultWeight]
       })
     ),
+    searchKeywords: criteria.search_keywords ?? [],
     excludeKeywords: criteria.exclude_keywords ?? [],
     dayRate: typeof criteria.day_rate === 'number' ? criteria.day_rate : null,
     techStack: (criteria.tech_stack ?? []).filter((tech): tech is DetectableTechnology =>
@@ -59,7 +64,7 @@ function toFormValues(icp: IcpProfile, signals: SignalWeightOption[]): IcpInput 
   }
 }
 
-export function IcpForm({ icp, signals, companiesCount }: IcpFormProps) {
+export function IcpForm({ icp, signals, companiesCount, professionKey, suggestedKeywords }: IcpFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
@@ -78,6 +83,8 @@ export function IcpForm({ icp, signals, companiesCount }: IcpFormProps) {
   })
 
   const keywords = useWatch({ control, name: 'excludeKeywords' }) ?? []
+  const searchKeywords = useWatch({ control, name: 'searchKeywords' }) ?? []
+  const isWebDeveloper = professionKey === 'web_developer'
   const professionSignals = signals.filter((signal) => signal.isProfessionSignal)
   const otherSignals = signals.filter((signal) => !signal.isProfessionSignal)
 
@@ -162,6 +169,30 @@ export function IcpForm({ icp, signals, companiesCount }: IcpFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Mots-clés recherchés</CardTitle>
+          <CardDescription>
+            Sophie cherche les offres d&apos;emploi dont l&apos;intitulé contient l&apos;un de ces mots, dans les
+            départements choisis dans Prospection. Écrivez des intitulés de poste, comme ils apparaissent dans les
+            annonces{isWebDeveloper ? ' ; les offres de développeur, de webmaster et du digital sont déjà cherchées pour vous' : ''}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <KeywordPicker
+            value={searchKeywords}
+            onChange={(next) => setValue('searchKeywords', next, { shouldDirty: true })}
+            suggestions={suggestedKeywords}
+            max={MAX_SEARCH_KEYWORDS}
+            disabled={isSaving}
+            placeholder="Ex. : graphiste, community manager"
+            inputLabel="Nouveau mot-clé recherché"
+            listLabel="Mots-clés recherchés"
+          />
+          {errors.searchKeywords && <p className="text-sm text-destructive mt-2">{errors.searchKeywords.message}</p>}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Nom</CardTitle>
@@ -271,6 +302,7 @@ export function IcpForm({ icp, signals, companiesCount }: IcpFormProps) {
         </CardContent>
       </Card>
 
+      {(isWebDeveloper || (icp.criteria as IcpCriteria | null)?.tech_stack?.length) ? (
       <Card>
         <CardHeader>
           <CardTitle>Technologies qui vous intéressent</CardTitle>
@@ -313,6 +345,7 @@ export function IcpForm({ icp, signals, companiesCount }: IcpFormProps) {
           </p>
         </CardContent>
       </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

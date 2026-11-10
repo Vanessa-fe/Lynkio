@@ -21,6 +21,18 @@ export { sizeCategories, sizeCategoryLabels }
 
 export const MAX_SIGNAL_WEIGHT = 60
 
+// Mots-clés de recherche : une recherche France Travail par mot-clé à chaque passage
+export const MAX_SEARCH_KEYWORDS = 10
+
+export const searchKeywordsSchema = z
+  .array(z.string().trim().min(2, 'Mot-clé trop court').max(60, 'Mot-clé trop long'))
+  .max(MAX_SEARCH_KEYWORDS, `Au plus ${MAX_SEARCH_KEYWORDS} mots-clés`)
+  .transform((keywords) =>
+    keywords.filter(
+      (keyword, index) => keywords.findIndex((other) => other.toLowerCase() === keyword.toLowerCase()) === index
+    )
+  )
+
 export const icpSchema = z.object({
   name: z.string().trim().min(1, 'Donnez un nom à votre client idéal').max(100, 'Le nom est trop long'),
   sizeFit: z.record(z.enum(sizeCategories), z.enum(['preferred', 'accepted', 'excluded'])),
@@ -41,6 +53,7 @@ export const icpSchema = z.object({
     .nullable(),
   // Technologies qui déclenchent le signal « Stack technique compatible »
   techStack: z.array(z.enum(DETECTABLE_TECHNOLOGIES)).transform((technologies) => [...new Set(technologies)]),
+  searchKeywords: searchKeywordsSchema,
   excludeKeywords: z
     .array(z.string().trim().toLowerCase().min(2, 'Mot-clé trop court').max(60, 'Mot-clé trop long'))
     .max(30, 'Au plus 30 mots-clés')
@@ -54,6 +67,7 @@ export type IcpCriteria = {
   countries?: string[]
   size_categories?: { preferred?: string[]; accepted?: string[] }
   exclude_keywords?: string[]
+  search_keywords?: string[]
   tech_stack?: string[]
   day_rate?: number
   [key: string]: Json | undefined

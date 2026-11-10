@@ -61,6 +61,7 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
       ...((icp.criteria ?? {}) as IcpCriteria),
       size_categories: sizeCategoriesFromFit(validated.sizeFit),
       exclude_keywords: validated.excludeKeywords,
+      search_keywords: validated.searchKeywords,
       tech_stack: validated.techStack,
       ...(validated.dayRate ? { day_rate: validated.dayRate } : {}),
     }
@@ -79,6 +80,7 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
 
     revalidatePath('/settings/icp')
     revalidatePath('/companies')
+    revalidatePath('/prospection')
     return { success: true }
   } catch (error) {
     if (error instanceof ZodError) {

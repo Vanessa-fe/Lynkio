@@ -271,3 +271,36 @@ export function nafSectionFromDivision(division: string | null | undefined): str
   if (!division || !Number.isInteger(value)) return null
   return NAF_DIVISION_RANGES.find(([min, max]) => value >= min && value <= max)?.[2] ?? null
 }
+
+// Petits mots ignorés quand on compare un mot-clé à un intitulé de poste
+const KEYWORD_STOP_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'l', 'd', 'et', 'en', 'a', 'au', 'aux', 'un', 'une', 'h', 'f'])
+
+function keywordWords(value: string): string[] {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word && !KEYWORD_STOP_WORDS.has(word))
+}
+
+/**
+ * L'intitulé du poste contient-il le mot-clé ? Chaque mot du mot-clé doit commencer un mot de
+ * l'intitulé, au masculin comme au féminin : « rédacteur web » trouve « Rédacteur(trice) Web SEO »,
+ * « développeur » trouve « Développeuse ». Les mots courts (SEO, UX, web) doivent être exacts.
+ * France Travail cherche aussi dans le texte de l'offre : ce contrôle écarte les offres qui ne
+ * citent le mot qu'en passant.
+ */
+export function titleMatchesKeyword(title: string, keyword: string): boolean {
+  const words = keywordWords(title)
+  // Mots voisins collés aussi : « Web designer » vaut « webdesigner »
+  const titleWords = [...words, ...words.slice(1).map((word, index) => `${words[index]}${word}`)]
+  const wanted = keywordWords(keyword)
+  if (wanted.length === 0) return false
+  return wanted.every((word) => {
+    if (word.length <= 4) return titleWords.includes(word)
+    const stem = word.slice(0, Math.max(5, word.length - 3))
+    // Un radical assez long peut être au milieu d'un mot : « graphiste » dans « infographiste »
+    return titleWords.some((titleWord) => titleWord.startsWith(stem) || (stem.length >= 6 && titleWord.includes(stem)))
+  })
+}
