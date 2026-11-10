@@ -1,14 +1,11 @@
 import 'server-only'
-import { readUserApiKey } from '@/lib/supabase/admin'
+import { FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js'
 
 /**
- * Recherche ciblée d'un e-mail avec Hunter.io (Email Finder), à partir du nom de la personne
- * et du site de son entreprise, de son profil LinkedIn, ou du nom de son entreprise.
- * Hunter ne facture aucun crédit quand la recherche ne trouve rien.
+ * Recherches Hunter.io avec la clé de l'utilisateur (Paramètres > Vos clés). Elles passent par la
+ * fonction Supabase `hunter`, qui déchiffre la clé : elle ne quitte jamais Supabase.
+ * Hunter ne facture aucun crédit quand une recherche ciblée (Email Finder) ne trouve rien.
  */
-
-const EMAIL_FINDER_URL = 'https://api.hunter.io/v2/email-finder'
-const TIMEOUT_MS = 15_000
 
 export type HunterPerson = {
   email: string | null
@@ -42,13 +39,24 @@ export function hunterError(status: number): HunterError {
   return new HunterError('Impossible d\'interroger Hunter.io pour le moment', 502)
 }
 
-// Message montré quand l'utilisateur n'a pas encore enregistré sa clé
-export const MISSING_HUNTER_KEY_MESSAGE =
-  'Ajoutez votre clé Hunter dans Paramètres > Vos clés (gratuite jusqu\'à 50 recherches par mois).'
-
-/** Clé Hunter de l'utilisateur (Paramètres > Vos clés), déchiffrée côté serveur */
-export async function hunterApiKey(userId: string): Promise<string | null> {
-  return (await readUserApiKey(userId, 'hunter'))?.apiKey ?? null
+/**
+ * Appel à Hunter (domain-search ou email-finder) via la fonction Supabase `hunter`.
+ * Renvoie le statut et le corps de la réponse de Hunter.
+ */
+export async function hunterRequest(
+  supabase: SupabaseClient,
+  endpoint: 'domain-search' | 'email-finder',
+  params: Record<string, string | number>
+): Promise<{ status: number; body: unknown }> {
+  const { data, error } = await supabase.functions.invoke<{ status: number; body: unknown }>('hunter', {
+    body: { endpoint, params },
+  })
+  if (error instanceof FunctionsHttpError) {
+    const payload = (await error.context.json().catch(() => null)) as { error?: string } | null
+    throw new HunterError(payload?.error ?? 'Impossible d\'interroger Hunter.io pour le moment', error.context.status)
+  }
+  if (error || !data) throw new HunterError('Impossible d\'interroger Hunter.io pour le moment', 502)
+  return data
 }
 
 /**
@@ -62,10 +70,10 @@ export function linkedinHandle(profileUrl: string | null | undefined): string | 
 
 /** La personne trouvée par Hunter, ou null s'il n'a pas d'e-mail pour elle */
 export async function findEmail(
-  query: EmailFinderQuery,
-  apiKey: string
+  supabase: SupabaseClient,
+  query: EmailFinderQuery
 ): Promise<(HunterPerson & { email: string }) | null> {
-  const params = new URLSearchParams(
+  const params: Record<string, string> =
     'linkedinHandle' in query
       ? { linkedin_handle: query.linkedinHandle }
       : {
@@ -73,15 +81,10 @@ export async function findEmail(
           first_name: query.firstName,
           last_name: query.lastName,
         }
-  )
-  const response = await fetch(`${EMAIL_FINDER_URL}?${params}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  })
+  const { status, body } = await hunterRequest(supabase, 'email-finder', params)
   // 404 : personne ou entreprise inconnue de Hunter
-  if (!response.ok && response.status !== 404) throw hunterError(response.status)
+  if (status >= 400 && status !== 404) throw hunterError(status)
 
-  const json = await response.json().catch(() => null)
-  const person: HunterPerson | null = json?.data || null
+  const person = ((body as { data?: HunterPerson } | null)?.data ?? null) as HunterPerson | null
   return person?.email ? { ...person, email: person.email } : null
 }

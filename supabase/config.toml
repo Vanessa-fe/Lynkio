@@ -152,3 +152,8 @@ verify_jwt = true
 # l'extension, que la passerelle vérifie
 [functions.linkedin-posts]
 verify_jwt = true
+
+# Relais vers Hunter avec la clé de l'utilisateur, déchiffrée dans Supabase : appelé par le
+# serveur du site avec le jeton de l'utilisateur, que la passerelle vérifie
+[functions.hunter]
+verify_jwt = true
