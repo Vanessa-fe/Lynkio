@@ -53,13 +53,12 @@ const settingsCards = [
     badge: 'Utiliser le sélecteur',
   },
   {
-    title: 'Profil',
-    description: 'Gérer votre profil utilisateur',
+    title: 'Mon compte',
+    description: 'Exporter vos données ou supprimer votre compte',
     icon: User,
-    href: '#',
+    href: '/settings/account',
     color: 'text-orange-500',
     bgColor: 'bg-orange-500/10',
-    badge: 'Bientôt',
   },
 ]
 

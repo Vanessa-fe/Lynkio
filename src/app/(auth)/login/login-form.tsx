@@ -19,7 +19,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
+export function LoginForm({
+  linkExpired = false,
+  accountDeleted = false,
+}: {
+  linkExpired?: boolean
+  // Arrivée juste après la suppression du compte
+  accountDeleted?: boolean
+}) {
   const [error, setError] = useState<string | null>(
     linkExpired ? 'Ce lien n’est plus valable (déjà utilisé ou expiré). Connectez-vous avec votre mot de passe.' : null
   )
@@ -61,6 +68,11 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
+          {accountDeleted && !error && (
+            <div role="status" className="p-3 text-sm text-emerald-800 bg-emerald-50 rounded-md dark:text-emerald-200 dark:bg-emerald-950/40">
+              Votre compte et toutes vos données ont été supprimés. Merci d&apos;avoir essayé Filonea.
+            </div>
+          )}
           {error && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
               {error}

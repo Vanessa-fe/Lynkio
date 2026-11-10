@@ -71,3 +71,21 @@ export async function addContactToSignupList(email: string) {
   if (!SIGNUP_LIST_ID) return false
   return brevoRequest('/contacts', { email, listIds: [SIGNUP_LIST_ID], updateEnabled: true })
 }
+
+/**
+ * Retire une personne de Brevo (listes et historique) quand elle supprime son compte.
+ * Une adresse inconnue de Brevo (404) n'est pas une erreur.
+ */
+export async function removeBrevoContact(email: string): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY
+  if (!apiKey) return false
+
+  const response = await fetch(`${BREVO_API_URL}/contacts/${encodeURIComponent(email)}?identifierType=email_id`, {
+    method: 'DELETE',
+    headers: { 'api-key': apiKey, Accept: 'application/json' },
+  })
+  if (!response.ok && response.status !== 404) {
+    console.error('Brevo error on contact removal:', response.status, await response.text())
+  }
+  return response.ok || response.status === 404
+}
