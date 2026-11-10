@@ -12,6 +12,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { UserFacingError, newSourceStats, skip, type Budget, type Context, type Settings, type SourceStats } from './context.ts'
 import { findCompaniesUsingTech, type TechCandidate } from './ai-research.ts'
+import { loadAiAccess } from '../_shared/ai.ts'
 import { detectSiteStack } from './site-stack.ts'
 import { fetchRegistryCompany, searchRegistryByName, type RegistryCompany } from './sources.ts'
 import { findSirenOnSite } from './legal-id.ts'
@@ -57,6 +58,7 @@ export async function detectTechUsers(
   if (count <= 0) return { stats, cursor: null }
 
   const candidates = await findCompaniesUsingTech(
+    await loadAiAccess(admin, context.userId),
     technologies.map((technology) => TECHNOLOGY_LABELS[technology]!),
     count,
     await knownDomains(admin, context.userId)

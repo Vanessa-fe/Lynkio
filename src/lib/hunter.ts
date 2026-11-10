@@ -1,4 +1,5 @@
 import 'server-only'
+import { readUserApiKey } from '@/lib/supabase/admin'
 
 /**
  * Recherche ciblée d'un e-mail avec Hunter.io (Email Finder), à partir du nom de la personne
@@ -34,13 +35,20 @@ export class HunterError extends Error {
 
 /** Erreur lisible pour une réponse en échec de Hunter */
 export function hunterError(status: number): HunterError {
-  if (status === 401 || status === 403) return new HunterError('Clé API Hunter.io invalide ou quota dépassé', status)
+  if (status === 401 || status === 403) {
+    return new HunterError('Hunter refuse votre clé ou votre quota est épuisé : vérifiez-la dans Paramètres > Vos clés', status)
+  }
   if (status === 429) return new HunterError('Trop de requêtes envoyées à Hunter.io, réessayez dans un instant', 429)
   return new HunterError('Impossible d\'interroger Hunter.io pour le moment', 502)
 }
 
-export function hunterApiKey(): string | null {
-  return process.env.HUNTER_API_KEY || null
+// Message montré quand l'utilisateur n'a pas encore enregistré sa clé
+export const MISSING_HUNTER_KEY_MESSAGE =
+  'Ajoutez votre clé Hunter dans Paramètres > Vos clés (gratuite jusqu\'à 50 recherches par mois).'
+
+/** Clé Hunter de l'utilisateur (Paramètres > Vos clés), déchiffrée côté serveur */
+export async function hunterApiKey(userId: string): Promise<string | null> {
+  return (await readUserApiKey(userId, 'hunter'))?.apiKey ?? null
 }
 
 /**

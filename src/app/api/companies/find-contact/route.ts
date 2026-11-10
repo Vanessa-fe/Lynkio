@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { toWebsiteDomain } from '@/lib/validations/company'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
-import { findEmail, hunterApiKey, hunterError, HunterError } from '@/lib/hunter'
+import { findEmail, hunterApiKey, hunterError, HunterError, MISSING_HUNTER_KEY_MESSAGE } from '@/lib/hunter'
 
 const HUNTER_DOMAIN_SEARCH_URL = 'https://api.hunter.io/v2/domain-search'
 
@@ -131,12 +131,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const apiKey = hunterApiKey()
+    const apiKey = await hunterApiKey(user.id)
     if (!apiKey) {
-      return NextResponse.json(
-        { error: 'La clé API Hunter.io n\'est pas configurée sur le serveur' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: MISSING_HUNTER_KEY_MESSAGE, missingKey: 'hunter' }, { status: 400 })
     }
 
     const body = await request.json().catch(() => null)

@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js'
 import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
 import { matchesExcludedKeyword, truncate } from '../prospection-run/rules.ts'
 import { sortPosts, type SortedPost } from './sorting.ts'
+import { loadAiAccess } from '../_shared/ai.ts'
 import { clearlyEnglish, notFrenchReason } from './language.ts'
 
 const MAX_POSTS = 50
@@ -171,6 +172,7 @@ Deno.serve(async (request) => {
     let verdicts: (SortedPost | null)[] = toSort.map(() => null)
     try {
       verdicts = await sortPosts(
+        await loadAiAccess(admin, userId),
         toSort.map((post) => ({
           authorCompany: post.authorIsCompany ? post.authorName : null,
           authorHeadline: post.authorHeadline,

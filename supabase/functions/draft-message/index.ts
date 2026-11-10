@@ -13,6 +13,7 @@
 // ne voit que ses données.
 
 import { createClient } from '@supabase/supabase-js'
+import { loadAiAccess } from '../_shared/ai.ts'
 import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
 import { checkDraft } from './checks.ts'
 import { fetchSiteText } from './site-text.ts'
@@ -116,7 +117,13 @@ Deno.serve(async (request) => {
   const user = auth?.user
   if (!user) return json({ error: 'Vous devez être connecté' }, 401)
 
+  // Seul le rôle service_role peut déchiffrer la clé d'IA de l'utilisateur
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
   try {
+    const access = await loadAiAccess(admin, user.id)
     const [company, signals, contact, profile, icp, references, lastOutgoing] = await Promise.all([
       supabase
         .from('companies')
@@ -213,7 +220,7 @@ Deno.serve(async (request) => {
     const siteText = website ? await fetchSiteText(website) : null
 
     const referenceRows = references.data ?? []
-    const draft = await writeDraft({
+    const draft = await writeDraft(access, {
       channel,
       sender: {
         firstName: senderProfile?.first_name ?? null,
