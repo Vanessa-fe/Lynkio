@@ -81,8 +81,9 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       }
     }
 
-    // Mots-clés choisis : ils remplacent ceux proposés par défaut pour le métier
-    if (validated.searchKeywords) {
+    // Client idéal : il suit le métier choisi (poids des signaux, suggestions), et les mots-clés
+    // choisis remplacent ceux proposés par défaut pour le métier
+    {
       const { data: icp } = await supabase
         .from('icp_profiles')
         .select('id, criteria')
@@ -92,9 +93,14 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
         .limit(1)
         .maybeSingle()
       if (icp) {
-        const criteria = { ...((icp.criteria ?? {}) as Record<string, unknown>), search_keywords: validated.searchKeywords }
-        const { error: keywordsError } = await supabase.from('icp_profiles').update({ criteria }).eq('id', icp.id)
-        if (keywordsError) console.error('Error saving search keywords:', keywordsError)
+        const criteria = validated.searchKeywords
+          ? { ...((icp.criteria ?? {}) as Record<string, unknown>), search_keywords: validated.searchKeywords }
+          : icp.criteria
+        const { error: icpError } = await supabase
+          .from('icp_profiles')
+          .update({ criteria, profession_key: validated.professionKey })
+          .eq('id', icp.id)
+        if (icpError) console.error('Error updating the ideal client:', icpError)
       }
     }
 
