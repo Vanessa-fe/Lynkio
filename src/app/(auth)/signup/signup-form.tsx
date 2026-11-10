@@ -128,7 +128,7 @@ export function SignupForm() {
               <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Au moins 8 caractères avec majuscule, minuscule et chiffre
+              Au moins 10 caractères avec majuscule, minuscule et chiffre
             </p>
           </div>
 
@@ -147,6 +147,12 @@ export function SignupForm() {
                 {errors.confirmPassword.message}
               </p>
             )}
+          </div>
+
+          {/* Piège à robots : invisible et hors de la navigation au clavier, une personne le laisse vide */}
+          <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+            <label htmlFor="website">Laissez ce champ vide</label>
+            <input id="website" type="text" tabIndex={-1} autoComplete="off" {...register('website')} />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">

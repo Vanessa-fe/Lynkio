@@ -106,6 +106,12 @@ export async function signup(data: SignupInput): Promise<ActionResult> {
     // Validation
     const validated = signupSchema.parse(data)
 
+    // Champ caché rempli : un robot. On lui répond comme à une vraie inscription, sans rien créer
+    if (validated.website) {
+      captureServerEvent('signup-bot', 'signup_bot_blocked')
+      return { success: true }
+    }
+
     const supabase = await createClient()
 
     const { data: authData, error } = await supabase.auth.signUp({

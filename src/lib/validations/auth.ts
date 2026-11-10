@@ -23,12 +23,14 @@ export const signupSchema = z.object({
   password: z
     .string()
     .min(1, 'Le mot de passe est requis')
-    .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+    .min(10, 'Le mot de passe doit contenir au moins 10 caractères')
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
     ),
   confirmPassword: z.string().min(1, 'La confirmation du mot de passe est requise'),
+  // Piège à robots : champ caché qu'une personne laisse toujours vide
+  website: z.string().max(200).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Les mots de passe ne correspondent pas',
   path: ['confirmPassword'],
@@ -45,7 +47,7 @@ export const updatePasswordSchema = z.object({
   password: z
     .string()
     .min(1, 'Le mot de passe est requis')
-    .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+    .min(10, 'Le mot de passe doit contenir au moins 10 caractères')
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
