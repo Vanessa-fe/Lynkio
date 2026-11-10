@@ -21,8 +21,6 @@ export type ExtensionMessage =
   | { type: 'ping' }
   | { type: 'connect'; tokenHash: string }
   | { type: 'disconnect' }
-  // « Chercher maintenant » : la recherche de posts tout de suite (extension 0.3.1 ou plus)
-  | { type: 'search-posts-now' }
 
 type ChromeRuntime = {
   sendMessage: (extensionId: string, message: unknown, callback: (response: unknown) => void) => void
