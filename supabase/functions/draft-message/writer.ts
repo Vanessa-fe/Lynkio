@@ -1,13 +1,15 @@
-// Rédaction du message par l'IA (API Responses d'OpenAI, sans recherche web).
+// Rédaction du message par l'IA de l'utilisateur, avec sa propre clé (sans recherche web).
 //
 // L'IA ne reçoit que ce que le code a choisi de lui donner : la fiche de
 // l'entreprise, ses signaux, ce que dit son site, le texte de son offre
 // d'emploi ou de son post LinkedIn, la présentation et les références de
 // l'utilisatrice (sans le nom des clients confidentiels).
-// La clé est dans les secrets Supabase (OPENAI_API_KEY) ; le modèle peut être
-// changé avec OPENAI_MODEL.
+// La clé et le modèle viennent de Paramètres > Clés (voir _shared/ai.ts).
 
-export class UserFacingError extends Error {}
+import { generateJson, type AiAccess } from '../_shared/ai.ts'
+import { UserFacingError } from '../_shared/errors.ts'
+
+export { UserFacingError }
 
 export type Channel = 'email' | 'linkedin_message'
 
@@ -72,8 +74,6 @@ export type DraftFromAi = {
   follow_up_2?: string
 }
 
-const RESPONSES_URL = 'https://api.openai.com/v1/responses'
-const DEFAULT_MODEL = 'gpt-5.6-terra'
 // La passerelle Supabase coupe une requête au bout de 150 secondes
 const REQUEST_TIMEOUT_MS = 90_000
 const TOTAL_BUDGET_MS = 140_000
@@ -245,26 +245,12 @@ function contextPrompt(context: MessageContext): string {
     .join('\n\n')
 }
 
-function outputText(response: { output_text?: string; output?: unknown[] }): string {
-  if (typeof response.output_text === 'string' && response.output_text.trim()) return response.output_text
-  return (response.output ?? [])
-    .flatMap((item) => (item as { content?: { text?: string }[] }).content ?? [])
-    .map((block) => block.text)
-    .filter((text): text is string => typeof text === 'string')
-    .join('\n')
-}
-
 /**
  * Message proposé par l'IA, à vérifier ensuite (checks.ts)
  */
-export async function writeDraft(context: MessageContext): Promise<DraftFromAi> {
-  const apiKey = Deno.env.get('OPENAI_API_KEY')
-  if (!apiKey) {
-    throw new UserFacingError('La clé OpenAI n\'est pas encore enregistrée sur Supabase')
-  }
-
+export async function writeDraft(access: AiAccess, context: MessageContext): Promise<DraftFromAi> {
   const startedAt = Date.now()
-  const draft = await requestDraft(apiKey, context, contextPrompt(context), REQUEST_TIMEOUT_MS)
+  const draft = await requestDraft(access, context, contextPrompt(context), REQUEST_TIMEOUT_MS)
   if (context.channel !== 'linkedin_message' || draft.body.length <= LINKEDIN_SHORTEN_ABOVE) return draft
 
   // L'IA compte mal les caractères : un premier message LinkedIn trop long est réécrit une fois,
@@ -282,7 +268,7 @@ export async function writeDraft(context: MessageContext): Promise<DraftFromAi> 
     ]
       .filter((part): part is string => part !== null)
       .join('\n\n')
-    const shorter = await requestDraft(apiKey, single, prompt, Math.min(REQUEST_TIMEOUT_MS, remaining))
+    const shorter = await requestDraft(access, single, prompt, Math.min(REQUEST_TIMEOUT_MS, remaining))
     if (shorter.body.length >= draft.body.length) return draft
     return {
       ...draft,
@@ -297,50 +283,20 @@ export async function writeDraft(context: MessageContext): Promise<DraftFromAi> 
 }
 
 async function requestDraft(
-  apiKey: string,
+  access: AiAccess,
   context: MessageContext,
   input: string,
   timeoutMs: number
 ): Promise<DraftFromAi> {
-  let response: Response
-  try {
-    response = await fetch(RESPONSES_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: Deno.env.get('OPENAI_MODEL') || DEFAULT_MODEL,
-        reasoning: { effort: 'low' },
-        instructions: context.sequence ? RULES + SEQUENCE_RULES : RULES,
-        input,
-        text: {
-          format: {
-            type: 'json_schema',
-            name: context.sequence ? 'prospecting_sequence' : 'prospecting_message',
-            strict: true,
-            schema: context.sequence ? sequenceSchema : schema,
-          },
-        },
-        store: false,
-      }),
-      signal: AbortSignal.timeout(timeoutMs),
-    })
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new UserFacingError('La rédaction a pris trop de temps : réessayez dans un instant')
-    }
-    throw error
-  }
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '')
-    if (response.status === 401) throw new UserFacingError('OpenAI refuse la clé enregistrée sur Supabase')
-    if (response.status === 429) {
-      throw new UserFacingError('Quota ou crédit OpenAI épuisé : vérifiez votre compte OpenAI')
-    }
-    throw new Error(`Rédaction IA impossible (HTTP ${response.status}) ${detail.slice(0, 200)}`)
-  }
-
-  const text = outputText((await response.json()) as { output_text?: string; output?: unknown[] })
+  const { text } = await generateJson({
+    access,
+    name: context.sequence ? 'prospecting_sequence' : 'prospecting_message',
+    schema: context.sequence ? sequenceSchema : schema,
+    instructions: context.sequence ? RULES + SEQUENCE_RULES : RULES,
+    input,
+    timeoutMs,
+    task: 'La rédaction',
+  })
   const draft = text ? (JSON.parse(text) as Partial<DraftFromAi>) : {}
 
   if (!draft.body?.trim()) {

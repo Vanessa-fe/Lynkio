@@ -3,9 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { toWebsiteDomain } from '@/lib/validations/company'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
-import { findEmail, hunterApiKey, hunterError, HunterError } from '@/lib/hunter'
-
-const HUNTER_DOMAIN_SEARCH_URL = 'https://api.hunter.io/v2/domain-search'
+import { findEmail, hunterError, hunterRequest, HunterError } from '@/lib/hunter'
 
 // Équivalents anglais des postes de décideurs : Hunter renvoie surtout des
 // intitulés en anglais (« Founder », « CEO »…), alors que les postes à cibler
@@ -131,14 +129,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const apiKey = hunterApiKey()
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'La clé API Hunter.io n\'est pas configurée sur le serveur' },
-        { status: 500 }
-      )
-    }
-
     const body = await request.json().catch(() => null)
     const website = body && typeof body.website === 'string' ? body.website : null
     const firstName = body && typeof body.firstName === 'string' ? body.firstName.trim() : ''
@@ -162,7 +152,7 @@ export async function POST(request: Request) {
     if (firstName && lastName) {
       let person
       try {
-        person = await findEmail({ domain, firstName, lastName }, apiKey)
+        person = await findEmail(supabase, { domain, firstName, lastName })
       } catch (error) {
         if (error instanceof HunterError) return errorResponse(error)
         throw error
@@ -188,17 +178,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ domain, organization: null, candidates, totalFound: 1 })
     }
 
-    const searchUrl = `${HUNTER_DOMAIN_SEARCH_URL}?domain=${encodeURIComponent(domain)}&limit=10`
-
-    const response = await fetch(searchUrl, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    })
-
-    if (!response.ok) {
-      return errorResponse(hunterError(response.status))
+    let search
+    try {
+      search = await hunterRequest(supabase, 'domain-search', { domain, limit: 10 })
+    } catch (error) {
+      if (error instanceof HunterError) return errorResponse(error)
+      throw error
     }
+    if (search.status >= 400) return errorResponse(hunterError(search.status))
 
-    const json = await response.json()
+    const json = search.body as { data?: { emails?: HunterEmail[]; organization?: string | null } } | null
     const emails: HunterEmail[] = json?.data?.emails || []
 
     const ranked = emails

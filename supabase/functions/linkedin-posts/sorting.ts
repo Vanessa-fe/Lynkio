@@ -1,15 +1,14 @@
-// Tri des posts par l'IA (API Responses d'OpenAI, sans recherche web).
+// Tri des posts par l'IA de l'utilisateur, avec sa propre clé (sans recherche web).
 //
 // Pour chaque post, l'IA dit si son auteur cherche vraiment un freelance (lui-même
 // ou pour un client : les missions des recruteurs, ESN et plateformes sont gardées,
 // choix du 9 novembre 2026), si la mission correspond au métier de la freelance,
 // et résume le besoin en une phrase. Un seul appel pour tous les nouveaux posts
 // d'une recherche.
-// La clé est dans les secrets Supabase (OPENAI_API_KEY) ; le modèle peut être
-// changé avec OPENAI_MODEL.
+// La clé et le modèle viennent de Paramètres > Clés (voir _shared/ai.ts).
 
-const RESPONSES_URL = 'https://api.openai.com/v1/responses'
-const DEFAULT_MODEL = 'gpt-5.6-terra'
+import { generateJson, type AiAccess } from '../_shared/ai.ts'
+
 // La passerelle Supabase coupe une requête au bout de 150 secondes
 const REQUEST_TIMEOUT_MS = 90_000
 // Texte d'un post transmis à l'IA : le besoin est presque toujours au début
@@ -102,43 +101,25 @@ function inputPrompt(posts: PostToSort[], freelancer: Freelancer): string {
   return [`## La freelance\n${about.join('\n')}`, `## Les posts\n${list.join('\n\n')}`].join('\n\n')
 }
 
-function outputText(response: { output_text?: string; output?: unknown[] }): string {
-  if (typeof response.output_text === 'string' && response.output_text.trim()) return response.output_text
-  return (response.output ?? [])
-    .flatMap((item) => (item as { content?: { text?: string }[] }).content ?? [])
-    .map((block) => block.text)
-    .filter((text): text is string => typeof text === 'string')
-    .join('\n')
-}
-
 /**
  * Verdict de l'IA pour chaque post, dans le même ordre (null si l'IA n'a rien dit d'un post)
  */
-export async function sortPosts(posts: PostToSort[], freelancer: Freelancer): Promise<(SortedPost | null)[]> {
+export async function sortPosts(
+  access: AiAccess,
+  posts: PostToSort[],
+  freelancer: Freelancer
+): Promise<(SortedPost | null)[]> {
   if (posts.length === 0) return []
-  const apiKey = Deno.env.get('OPENAI_API_KEY')
-  if (!apiKey) throw new Error('La clé OpenAI n\'est pas enregistrée sur Supabase')
 
-  const response = await fetch(RESPONSES_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: Deno.env.get('OPENAI_MODEL') || DEFAULT_MODEL,
-      reasoning: { effort: 'low' },
-      instructions: RULES,
-      input: inputPrompt(posts, freelancer),
-      text: { format: { type: 'json_schema', name: 'linkedin_posts_sorting', strict: true, schema } },
-      store: false,
-    }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  const { text } = await generateJson({
+    access,
+    name: 'linkedin_posts_sorting',
+    schema,
+    instructions: RULES,
+    input: inputPrompt(posts, freelancer),
+    timeoutMs: REQUEST_TIMEOUT_MS,
+    task: 'Le tri des posts',
   })
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '')
-    throw new Error(`Tri IA impossible (HTTP ${response.status}) ${detail.slice(0, 200)}`)
-  }
-
-  const text = outputText((await response.json()) as { output_text?: string; output?: unknown[] })
   const parsed = (text ? JSON.parse(text) : {}) as { posts?: SortedFromAi[] }
   const byIndex = new Map((parsed.posts ?? []).map((post) => [post.index, post]))
 

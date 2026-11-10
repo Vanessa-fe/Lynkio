@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   graphql_public: {
     Tables: {
@@ -307,6 +307,13 @@ export type Database = {
             referencedRelation: "company_contacts"
             referencedColumns: ["id", "company_id"]
           },
+          {
+            foreignKeyName: "company_interactions_contact_id_company_id_fkey"
+            columns: ["contact_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "contact_outreach"
+            referencedColumns: ["contact_id", "company_id"]
+          },
         ]
       }
       company_qualifications: {
@@ -503,9 +510,9 @@ export type Database = {
           paused_reason: string | null
           paused_until: string | null
           post_keywords: string[]
-          post_search_error: string | null
           post_search_at: string | null
           post_search_enabled: boolean
+          post_search_error: string | null
           updated_at: string
           user_id: string
         }
@@ -517,9 +524,9 @@ export type Database = {
           paused_reason?: string | null
           paused_until?: string | null
           post_keywords?: string[]
-          post_search_error?: string | null
           post_search_at?: string | null
           post_search_enabled?: boolean
+          post_search_error?: string | null
           updated_at?: string
           user_id: string
         }
@@ -531,9 +538,9 @@ export type Database = {
           paused_reason?: string | null
           paused_until?: string | null
           post_keywords?: string[]
-          post_search_error?: string | null
           post_search_at?: string | null
           post_search_enabled?: boolean
+          post_search_error?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -786,7 +793,7 @@ export type Database = {
           kind?: string
           name: string
           order: number
-          role: string | null
+          role?: string | null
           user_id: string
         }
         Update: {
@@ -944,6 +951,13 @@ export type Database = {
             referencedColumns: ["id", "user_id"]
           },
           {
+            foreignKeyName: "prospect_list_members_contact_id_user_id_fkey"
+            columns: ["contact_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "contact_outreach"
+            referencedColumns: ["contact_id", "user_id"]
+          },
+          {
             foreignKeyName: "prospect_list_members_list_id_user_id_fkey"
             columns: ["list_id", "user_id"]
             isOneToOne: false
@@ -1024,6 +1038,24 @@ export type Database = {
           timezone?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          bucket: string
+          hits: number
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          hits?: number
+          window_start: string
+        }
+        Update: {
+          bucket?: string
+          hits?: number
+          window_start?: string
         }
         Relationships: []
       }
@@ -1164,8 +1196,39 @@ export type Database = {
           },
         ]
       }
+      user_api_keys: {
+        Row: {
+          created_at: string
+          key_hint: string
+          model: string | null
+          provider: string
+          secret_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          key_hint: string
+          model?: string | null
+          provider: string
+          secret_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          key_hint?: string
+          model?: string | null
+          provider?: string
+          secret_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
+          ai_provider: string | null
           avatar_url: string | null
           business_name: string | null
           created_at: string | null
@@ -1179,6 +1242,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ai_provider?: string | null
           avatar_url?: string | null
           business_name?: string | null
           created_at?: string | null
@@ -1192,6 +1256,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ai_provider?: string | null
           avatar_url?: string | null
           business_name?: string | null
           created_at?: string | null
@@ -1226,7 +1291,15 @@ export type Database = {
           status: string | null
           user_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "company_contacts_company_id_user_id_fkey"
+            columns: ["company_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -1290,18 +1363,39 @@ export type Database = {
         }
         Returns: string
       }
+      default_stage_role: { Args: { p_name: string }; Returns: string }
+      delete_my_api_key: { Args: { p_provider: string }; Returns: undefined }
+      hit_my_rate_limit: {
+        Args: { p_action: string; p_max: number; p_window_seconds: number }
+        Returns: boolean
+      }
+      hit_rate_limit: {
+        Args: { p_bucket: string; p_max: number; p_window_seconds: number }
+        Returns: boolean
+      }
       infer_company_segment: {
         Args: {
           p_kind: string
-          p_name: string
           p_naf: string
+          p_name: string
           p_notes: string
           p_size: string
         }
         Returns: string
       }
       initialize_prospection_defaults: { Args: never; Returns: undefined }
+      read_user_api_key: {
+        Args: { p_provider: string; p_user_id: string }
+        Returns: {
+          api_key: string
+          model: string
+        }[]
+      }
       rescore_companies_with_expired_signals: { Args: never; Returns: number }
+      save_my_api_key: {
+        Args: { p_key: string; p_model?: string; p_provider: string }
+        Returns: undefined
+      }
       score_company: { Args: { p_company_id: string }; Returns: undefined }
       sync_tech_stack_signal: {
         Args: { p_company_id: string }

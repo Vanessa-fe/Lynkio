@@ -1,3 +1,5 @@
+import { UserFacingError } from '../_shared/errors.ts'
+
 // Types et outils partagés par l'orchestration et les détecteurs
 
 // tech_users (recherche par technologie) n'est lancée qu'à la demande : elle coûte
@@ -56,8 +58,8 @@ export function skip(stats: SourceStats, reason: string) {
 // partagé entre les sources (la première servie est la plus utile)
 export type Budget = { remaining: number }
 
-// Erreur dont le message peut être montré tel quel à l'utilisateur
-export class UserFacingError extends Error {}
+// Erreur dont le message peut être montré tel quel à l'utilisateur (commune aux fonctions)
+export { UserFacingError }
 
 // Coupures réseau, délais dépassés : passagères, il suffit de relancer
 const NETWORK_ERROR = /error sending request|connection (reset|refused|error)|network|timed? ?out|fetch failed|dns/i

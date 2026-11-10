@@ -1,8 +1,16 @@
 import Link from 'next/link'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle } from 'lucide-react'
+import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle, KeyRound } from 'lucide-react'
 
 const settingsCards = [
+  {
+    title: 'Vos clés',
+    description: 'Vos comptes OpenAI et Hunter, pour que Sophie rédige et trouve les e-mails',
+    icon: KeyRound,
+    href: '/settings/keys',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500/10',
+  },
   {
     title: 'Client idéal',
     description: 'Tailles, signaux et mots-clés qui font le score des entreprises',
