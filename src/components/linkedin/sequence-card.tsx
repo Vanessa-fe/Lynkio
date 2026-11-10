@@ -15,6 +15,7 @@ import {
   type LinkedinTexts,
 } from '@/lib/actions/linkedin-sequences'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
+import { LINKEDIN_FIRST_MESSAGE_MAX, LINKEDIN_FIRST_MESSAGE_TARGET } from '@/lib/constants/outreach'
 import { useToast } from '@/lib/hooks/use-toast'
 import { formatDate } from '@/lib/utils/dates'
 import type { LinkedinSequenceRow } from '@/lib/queries/linkedin'
@@ -37,6 +38,16 @@ function day(iso: string | null): string {
 
 export function personName(sequence: LinkedinSequenceRow): string {
   return [sequence.contact.firstName, sequence.contact.lastName].filter(Boolean).join(' ') || 'Personne sans nom'
+}
+
+/** Nombre de caractères ; pour le premier message, rappelle la longueur visée (les messages courts obtiennent plus de réponses) */
+export function LengthHint({ length, firstMessage }: { length: number; firstMessage: boolean }) {
+  if (!firstMessage) return <p className="text-xs text-muted-foreground">{length} caractères</p>
+  return (
+    <p className={`text-xs ${length > LINKEDIN_FIRST_MESSAGE_MAX ? 'text-amber-600' : 'text-muted-foreground'}`}>
+      {length} caractères (visez moins de {LINKEDIN_FIRST_MESSAGE_TARGET})
+    </p>
+  )
 }
 
 /** En-tête commun : la personne, son poste, son entreprise, sa liste */
@@ -247,7 +258,7 @@ export function SequenceCard({
             maxLength={2000}
             aria-label={`${pending?.label ?? 'Message'} pour ${name}`}
           />
-          <p className="text-xs text-muted-foreground">{text.trim().length} caractères</p>
+          <LengthHint length={text.trim().length} firstMessage={field === 'message'} />
         </div>
       )}
       {beforeSending && followUps > 0 && (

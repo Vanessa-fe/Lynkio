@@ -27,3 +27,10 @@ export const outreachStatusTones: Record<OutreachStatus, string> = {
   replied: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300',
   do_not_contact: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300',
 }
+
+/**
+ * Premier message LinkedIn : Sophie vise 150 à 250 caractères, jamais plus de 300.
+ * Les messages courts obtiennent bien plus de réponses (moins de 200 signes : 50 %, plus de 400 : 33 %)
+ */
+export const LINKEDIN_FIRST_MESSAGE_TARGET = 250
+export const LINKEDIN_FIRST_MESSAGE_MAX = 300
