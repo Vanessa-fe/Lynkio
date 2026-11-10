@@ -26,13 +26,16 @@ export default async function ProspectionPage() {
       <div>
         <h1 className="text-3xl font-bold">Prospection</h1>
         <p className="text-muted-foreground mt-2">
-          Sophie cherche pour vous les entreprises qui investissent dans leur site ou leur digital.
+          Sophie cherche pour vous les entreprises qui recrutent dans votre métier ou viennent d&apos;être créées.
           Celles qu&apos;elle retient arrivent dans Entreprises, à l&apos;étape « À qualifier ».
         </p>
       </div>
 
       <ProspectionStatus settings={settings} runningRun={runningRun} />
-      <TechResearchCard techStack={icp.techStack} isRunning={!!runningRun} />
+      {/* Recherche par technologie : seulement pour le développement web (ou des technologies déjà choisies) */}
+      {(icp.professionKey === 'web_developer' || icp.techStack.length > 0) && (
+        <TechResearchCard techStack={icp.techStack} isRunning={!!runningRun} />
+      )}
       <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />
       {/* Premier usage : les réglages d'abord et déjà ouverts, l'historique est encore vide.
           Ensuite les deux restent repliés pour ne pas encombrer la page */}

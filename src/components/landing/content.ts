@@ -210,7 +210,7 @@ export const faq = [
   {
     question: 'À quels freelances s’adresse Filonea ?',
     answer:
-      'Aux freelances qui vendent leurs services aux entreprises : développement, design, marketing, communication, rédaction… Le développement web est le premier métier disponible ; les signaux propres aux autres métiers arrivent ensuite.',
+      'Aux freelances qui vendent leurs services aux entreprises : développement web, design et graphisme, rédaction et SEO, marketing et communication, vidéo et photo, assistanat… Vous choisissez votre métier et vos mots-clés (les intitulés de poste qui vous concernent) ; Sophie cherche les entreprises qui recrutent sur ces mots-clés. Un métier absent de la liste ? Choisissez « Autre métier » et écrivez vos propres mots-clés.',
   },
   {
     question: 'Qu’est-ce qu’un signal d’achat ?',

@@ -26,7 +26,13 @@ export default async function IcpSettingsPage() {
       </div>
 
       {settings ? (
-        <IcpForm icp={settings.icp} signals={settings.signals} companiesCount={settings.companiesCount} />
+        <IcpForm
+          icp={settings.icp}
+          signals={settings.signals}
+          companiesCount={settings.companiesCount}
+          professionKey={settings.professionKey}
+          suggestedKeywords={settings.suggestedKeywords}
+        />
       ) : (
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">

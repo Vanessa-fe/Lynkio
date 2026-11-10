@@ -33,7 +33,13 @@ export type JobOffer = {
   lieuTravail?: { libelle?: string; codePostal?: string; commune?: string }
   entreprise?: { nom?: string; description?: string; url?: string; entrepriseAdaptee?: boolean }
   origineOffre?: { origine?: string; urlOrigine?: string }
+  // Ajouté par Filonea : mot-clé de l'utilisateur qui a trouvé l'offre
+  matchedKeyword?: string
 }
+
+// Recherche par codes de métier (ROME) ou par un mot-clé (cherché par France Travail dans
+// l'intitulé et le texte de l'offre ; plusieurs mots-clés à la fois se combinent en « et »)
+export type OfferFilter = { romeCodes: string[] } | { keyword: string }
 
 let cachedToken: { value: string; expiresAt: number } | null = null
 
@@ -87,15 +93,17 @@ function toApiDate(date: Date): string {
 }
 
 /**
- * Offres publiées entre `since` et maintenant, pour ces codes ROME et départements.
+ * Offres publiées entre `since` et maintenant, pour ces départements et ce filtre.
  * Parcourt les pages jusqu'à `maxOffers`, les plus récentes d'abord.
  */
 export async function fetchJobOffers(
   departments: string[],
-  romeCodes: string[],
+  filter: OfferFilter,
   since: Date,
   maxOffers: number
 ): Promise<JobOffer[]> {
+  if ('romeCodes' in filter && filter.romeCodes.length === 0) return []
+  if ('keyword' in filter && filter.keyword.trim().length < 2) return []
   const token = await accessToken()
   const offers: JobOffer[] = []
 
@@ -106,7 +114,7 @@ export async function fetchJobOffers(
       const end = Math.min(start + OFFERS_PAGE_SIZE - 1, MAX_RANGE_END)
       const params = new URLSearchParams({
         departement: departmentBatch.join(','),
-        codeROME: romeCodes.join(','),
+        ...('romeCodes' in filter ? { codeROME: filter.romeCodes.join(',') } : { motsCles: filter.keyword.trim() }),
         minCreationDate: toApiDate(since),
         maxCreationDate: toApiDate(new Date()),
         // 1 = date de création décroissante

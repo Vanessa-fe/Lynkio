@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { searchKeywordsSchema } from './icp'
 
 /**
  * Schémas de validation pour le profil utilisateur
@@ -17,6 +18,8 @@ export const onboardingSchema = z.object({
   professionKey: z
     .string({ required_error: 'Choisissez votre métier' })
     .regex(/^[a-z][a-z0-9_]*$/, 'Choisissez votre métier'),
+  // Mots-clés de recherche des offres d'emploi, rangés dans le premier client idéal
+  searchKeywords: searchKeywordsSchema.optional(),
   selectedTheme: z
     .string()
     .min(1, 'Le thème est requis')

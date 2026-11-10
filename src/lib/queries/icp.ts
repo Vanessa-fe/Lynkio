@@ -19,6 +19,9 @@ export async function getIcpSettings(): Promise<{
   icp: IcpProfile
   signals: SignalWeightOption[]
   companiesCount: number
+  professionKey: string | null
+  // Mots-clés de recherche proposés pour le métier
+  suggestedKeywords: string[]
 } | null> {
   const supabase = await createClient()
 
@@ -47,12 +50,12 @@ export async function getIcpSettings(): Promise<{
   }
 
   const professionKey = icp.profession_key ?? profile?.profession_key ?? null
-  const { data: professionSignals } = professionKey
-    ? await supabase
-        .from('profession_signals')
-        .select('signal_type, default_weight')
-        .eq('profession_key', professionKey)
-    : { data: [] }
+  const [{ data: professionSignals }, { data: profession }] = professionKey
+    ? await Promise.all([
+        supabase.from('profession_signals').select('signal_type, default_weight').eq('profession_key', professionKey),
+        supabase.from('professions').select('suggested_keywords').eq('key', professionKey).maybeSingle(),
+      ])
+    : [{ data: [] }, { data: null }]
 
   const defaults = new Map((professionSignals ?? []).map((row) => [row.signal_type, row.default_weight]))
 
@@ -67,25 +70,31 @@ export async function getIcpSettings(): Promise<{
     // Les signaux du métier d'abord, les plus importants en haut
     .sort((a, b) => Number(b.isProfessionSignal) - Number(a.isProfessionSignal) || b.defaultWeight - a.defaultWeight)
 
-  return { icp, signals, companiesCount: count ?? 0 }
+  return {
+    icp,
+    signals,
+    companiesCount: count ?? 0,
+    professionKey,
+    suggestedKeywords: profession?.suggested_keywords ?? [],
+  }
 }
 
 /**
  * Tarif journalier et technologies du client idéal actif (budget des entreprises,
  * recherche par technologie)
  */
-export async function getIcpBasics(): Promise<{ dayRate: number | null; techStack: string[] }> {
+export async function getIcpBasics(): Promise<{ dayRate: number | null; techStack: string[]; professionKey: string | null }> {
   const supabase = await createClient()
 
   const user = await getAuthUser()
 
   if (!user) {
-    return { dayRate: null, techStack: [] }
+    return { dayRate: null, techStack: [], professionKey: null }
   }
 
   const { data } = await supabase
     .from('icp_profiles')
-    .select('criteria')
+    .select('criteria, profession_key')
     .eq('user_id', user.id)
     .eq('is_active', true)
     .order('created_at')
@@ -98,5 +107,6 @@ export async function getIcpBasics(): Promise<{ dayRate: number | null; techStac
     techStack: Array.isArray(criteria.tech_stack)
       ? criteria.tech_stack.filter((tech): tech is string => typeof tech === 'string')
       : [],
+    professionKey: data?.profession_key ?? null,
   }
 }

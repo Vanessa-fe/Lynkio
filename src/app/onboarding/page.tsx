@@ -25,7 +25,16 @@ export default async function OnboardingPage() {
     <>
       <PostHogIdentify userId={profile.id} email={user?.email ?? null} professionKey={profile.profession_key} />
       <OnboardingForm
-        professions={professions.map(({ key, label, description }) => ({ key, label, description }))}
+        professions={professions.map(({ key, label, description, suggested_keywords, default_icp }) => {
+          const defaults = (default_icp as { search_keywords?: unknown } | null)?.search_keywords
+          return {
+            key,
+            label,
+            description,
+            suggestedKeywords: suggested_keywords,
+            defaultKeywords: Array.isArray(defaults) ? defaults.filter((k): k is string => typeof k === 'string') : [],
+          }
+        })}
         defaultValues={{
           firstName: profile.first_name ?? undefined,
           businessName: profile.business_name ?? undefined,

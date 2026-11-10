@@ -174,6 +174,7 @@ async function loadContext(admin: SupabaseClient, userId: string): Promise<Conte
     (size): size is string => typeof size === 'string'
   )
   const techStack = icp.data?.criteria?.tech_stack
+  const searchKeywords = icp.data?.criteria?.search_keywords
   const weights = icp.data?.signal_weights
   return {
     userId,
@@ -181,6 +182,9 @@ async function loadContext(admin: SupabaseClient, userId: string): Promise<Conte
     stageId: stage.data?.id ?? null,
     sourceId: source.data?.id ?? null,
     excludedKeywords: Array.isArray(keywords) ? keywords.filter((k): k is string => typeof k === 'string') : [],
+    searchKeywords: Array.isArray(searchKeywords)
+      ? searchKeywords.filter((k): k is string => typeof k === 'string' && k.trim().length >= 2)
+      : [],
     signalWeights:
       weights && typeof weights === 'object'
         ? Object.fromEntries(Object.entries(weights).filter((entry): entry is [string, number] => typeof entry[1] === 'number'))

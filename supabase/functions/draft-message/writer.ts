@@ -119,14 +119,14 @@ Ce qui fait un bon premier message :
 - si la freelance donne des consignes pour ce message, applique-les en priorité et de façon visible.
 
 Adapte-toi à l'entreprise, d'après son segment :
-- TPE/PME dont le métier n'est pas le numérique : elle n'a pas d'équipe technique et ne connaît pas le vocabulaire des développeurs. Parle-lui de son site et de ses clients, pas de technique, et ne propose pas de « renfort d'équipe » ;
-- agence (web, digitale, de communication) ou studio : elle a ses propres clients et achète déjà du travail freelance. Propose un renfort sur ses projets (refonte, migration, pic de charge), en autonomie. Ne lui parle pas de son propre site ;
+- TPE/PME dont le métier n'est pas le numérique : elle n'a souvent personne en interne pour le métier de la freelance et n'en connaît pas le vocabulaire. Parle-lui de son activité, de ses clients et de ce que la freelance peut lui apporter concrètement (son site, si la freelance fait du développement web), sans jargon, et ne propose pas de « renfort d'équipe » ;
+- agence (web, digitale, de communication) ou studio : elle a ses propres clients et achète déjà du travail freelance. Propose un renfort sur ses projets (pic de charge, projet précis), en autonomie. Ne lui parle pas de son propre site ;
 - startup ou éditeur de logiciel : propose un renfort sur son produit, pour avancer plus vite, en autonomie ;
 - segment inconnu : déduis-le de ce que tu sais, sans l'affirmer.
 
 Selon le signal :
 - agence ou startup qui recrute un développeur : elle a plus de travail que d'équipe. Ne postule pas : propose un renfort freelance pendant qu'elle recrute, ou sur un projet précis ;
-- offre d'emploi salariée : ne postule pas. Propose une aide freelance à distance sur un projet précis, en attendant le bon profil ;
+- offre d'emploi salariée (dont celles trouvées avec les mots-clés de la freelance) : ne postule pas. Propose une aide freelance sur un projet précis, en attendant le bon profil ;
 - mission ouverte aux freelances : réponds directement à la mission ;
 - post LinkedIn où la personne cherche un freelance, dont le texte est fourni : c'est une demande explicite, faite pour être contactée. Réponds directement à son besoin : tu peux dire que tu as vu son post, reprends un ou deux éléments concrets de sa demande (le projet, une technologie, la durée), dis en une phrase pourquoi la freelance correspond, et propose un échange court. Ne reprends ni tarif ni budget, même s'ils sont indiqués ;
 - offre d'emploi dont le texte est fourni : c'est ta meilleure matière. Reprends un ou deux éléments concrets qui montrent que la freelance l'a lue (le projet, le produit, le contexte de l'équipe, une technologie qu'elle connaît), avec tes mots mais sans rien y ajouter, et sans recopier de phrase. Ne parle ni du salaire, ni des avantages, ni du profil demandé (diplôme, années d'expérience) : elle ne postule pas. Ne lui prête jamais une compétence absente de ses technologies, de sa présentation et de ses références ;

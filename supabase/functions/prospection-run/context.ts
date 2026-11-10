@@ -21,6 +21,8 @@ export type Context = {
   stageId: string | null
   sourceId: string | null
   excludedKeywords: string[]
+  // Mots-clés de recherche du client idéal (criteria.search_keywords) : intitulés de poste
+  searchKeywords: string[]
   // Surcharge des poids des signaux par le client idéal (icp_profiles.signal_weights)
   signalWeights: Record<string, number>
   // Tailles idéales et acceptées du client idéal ; null = pas de préférence

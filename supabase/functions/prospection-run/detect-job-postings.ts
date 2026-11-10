@@ -28,6 +28,7 @@ import {
   normalizeCompanyName,
   sizeCategoryFromHeadcount,
   summarizeActivity,
+  titleMatchesKeyword,
   toTitleCase,
   truncate,
 } from './rules.ts'
@@ -41,6 +42,12 @@ const MAX_OFFERS_PER_RUN = 600
 const MAX_UNIDENTIFIED_PER_RUN = 10
 // Texte de l'offre gardé avec le signal, pour que Sophie s'en serve dans le message
 const MAX_DESCRIPTION_LENGTH = 4000
+// Mots-clés de recherche : une recherche France Travail par mot-clé (ensemble, ils se combinent en « et »)
+const MAX_SEARCH_KEYWORDS = 10
+const MAX_OFFERS_PER_KEYWORD = 150
+const KEYWORD_SIGNAL = 'job_posting_keyword'
+// Poids du signal quand le métier ne le prévoit pas
+const DEFAULT_KEYWORD_WEIGHT = 30
 
 // Métiers recherchés dans les offres (codes ROME) pour chaque signal d'offre d'emploi.
 // Le métier de l'utilisateur (profession_signals) décide lesquels sont utilisés.
@@ -104,7 +111,8 @@ export async function detectJobPostings(
     [...signalWeights.keys()].flatMap((type) => (JOB_SIGNAL_ROME_CODES[type] ?? []).map((code) => [code, type] as const))
   )
 
-  const offers = await fetchJobOffers(settings.departments, [...romeToSignal.keys()], since, MAX_OFFERS_PER_RUN)
+  const offers = await fetchJobOffers(settings.departments, { romeCodes: [...romeToSignal.keys()] }, since, MAX_OFFERS_PER_RUN)
+  offers.push(...(await fetchKeywordOffers(settings, context, stats, since, signalWeights, new Set(offers.map((offer) => offer.id)))))
   const newest = offers.reduce<string | null>(
     (latest, offer) => (offer.dateCreation && (!latest || offer.dateCreation > latest) ? offer.dateCreation : latest),
     null
@@ -133,6 +141,38 @@ export async function detectJobPostings(
 }
 
 /**
+ * Offres trouvées par les mots-clés de l'utilisateur, une recherche par mot-clé. Seules sont
+ * gardées celles dont l'intitulé contient le mot-clé (France Travail cherche aussi dans le texte).
+ */
+async function fetchKeywordOffers(
+  settings: Settings,
+  context: Context,
+  stats: SourceStats,
+  since: Date,
+  signalWeights: Map<string, number>,
+  known: Set<string>
+): Promise<JobOffer[]> {
+  if (!signalWeights.has(KEYWORD_SIGNAL)) return []
+  const found: JobOffer[] = []
+
+  for (const keyword of context.searchKeywords.slice(0, MAX_SEARCH_KEYWORDS)) {
+    const offers = await fetchJobOffers(settings.departments, { keyword }, since, MAX_OFFERS_PER_KEYWORD)
+    for (const offer of offers) {
+      if (known.has(offer.id)) continue
+      known.add(offer.id)
+      if (!titleMatchesKeyword(offer.intitule ?? '', keyword)) {
+        stats.seen++
+        skip(stats, 'Mot-clé absent de l\'intitulé du poste')
+        continue
+      }
+      found.push({ ...offer, matchedKeyword: keyword })
+    }
+  }
+
+  return found
+}
+
+/**
  * Signaux d'offre d'emploi à chercher, avec leur poids : ceux du métier de l'utilisateur,
  * pondérés par son client idéal. Un signal à 0 point n'est pas cherché du tout.
  */
@@ -144,7 +184,7 @@ async function jobSignalWeights(admin: SupabaseClient, context: Context): Promis
       .from('profession_signals')
       .select('signal_type, default_weight')
       .eq('profession_key', context.professionKey)
-      .in('signal_type', Object.keys(JOB_SIGNAL_ROME_CODES))
+      .in('signal_type', [...Object.keys(JOB_SIGNAL_ROME_CODES), KEYWORD_SIGNAL])
 
     if (error) throw error
     for (const row of (data ?? []) as { signal_type: string; default_weight: number }[]) {
@@ -153,7 +193,12 @@ async function jobSignalWeights(admin: SupabaseClient, context: Context): Promis
     }
   }
 
-  if (weights.size === 0) weights.set('job_posting_dev', 30)
+  // Mots-clés choisis : cherchés même si le métier ne prévoit pas ce signal
+  if (context.searchKeywords.length > 0 && !weights.has(KEYWORD_SIGNAL) && context.signalWeights[KEYWORD_SIGNAL] !== 0) {
+    weights.set(KEYWORD_SIGNAL, context.signalWeights[KEYWORD_SIGNAL] ?? DEFAULT_KEYWORD_WEIGHT)
+  }
+  // Sans métier (comptes d'avant les métiers) : la recherche d'origine, les offres de développeur
+  if (weights.size === 0 && !context.professionKey) weights.set('job_posting_dev', 30)
   return weights
 }
 
@@ -188,7 +233,7 @@ function groupByCompany(
       skip(stats, 'Contrat en alternance')
       continue
     }
-    const signalType = offer.romeCode ? romeToSignal.get(offer.romeCode) : undefined
+    const signalType = offer.matchedKeyword ? KEYWORD_SIGNAL : offer.romeCode ? romeToSignal.get(offer.romeCode) : undefined
     if (!signalType && !isFreelanceOffer(offer)) {
       skip(stats, 'Métier hors recherche')
       continue
@@ -405,6 +450,7 @@ function isFreelanceOffer(offer: JobOffer): boolean {
  */
 function offerSignalType(offer: JobOffer, romeToSignal: Map<string, string>, nafCode?: string | null): string {
   if (isFreelanceOffer(offer)) return 'freelance_mission'
+  if (offer.matchedKeyword) return KEYWORD_SIGNAL
   const type = (offer.romeCode && romeToSignal.get(offer.romeCode)) || 'job_posting_dev'
   if (type === 'job_posting_dev' || type === 'dev_hiring_reinforcement') {
     const agencyOrStartup = !!offer.secteurActivite && AGENCY_STARTUP_DIVISIONS.has(offer.secteurActivite)
@@ -426,6 +472,7 @@ function offerSignal(offer: JobOffer, romeToSignal: Map<string, string>, nafCode
       lieu: offer.lieuTravail?.libelle ?? null,
       date_publication: offer.dateCreation ?? null,
       metier: offer.romeLibelle ?? null,
+      mot_cle: offer.matchedKeyword ?? null,
       description: offer.description ? truncate(offer.description, MAX_DESCRIPTION_LENGTH) : null,
     },
   }
