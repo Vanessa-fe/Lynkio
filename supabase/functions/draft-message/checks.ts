@@ -6,7 +6,11 @@ import type { Channel, DraftFromAi, SignalForMessage } from './writer.ts'
 
 const MAX_SUBJECT_LENGTH = 70
 const MAX_EMAIL_WORDS = 180
-const MAX_LINKEDIN_LENGTH = 700
+// Premier message LinkedIn : Sophie vise 150 à 250 caractères (moins de 200 signes :
+// 50 % de réponses, plus de 400 : 33 %, observatoire Mimikflow 2026 sur 98 000 prospects)
+const MAX_LINKEDIN_LENGTH = 300
+// Relances : 200 à 350 caractères demandés
+const MAX_FOLLOW_UP_LENGTH = 400
 
 export type CheckedDraft = {
   subject: string | null
@@ -44,6 +48,8 @@ export function checkDraft(
     confidentialClients: string[]
     signature: string | null
     lastOutgoingAt: string | null
+    // Relance d'une séquence LinkedIn : elle peut être un peu plus longue que le premier message
+    followUp?: boolean
   }
 ): CheckedDraft {
   const warnings: string[] = []
@@ -83,8 +89,14 @@ export function checkDraft(
     if (words > MAX_EMAIL_WORDS) warnings.push(`E-mail long (${words} mots) : un premier e-mail se lit mieux sous 150 mots.`)
     if (!subject) warnings.push('Objet manquant.')
     else if (subject.length > MAX_SUBJECT_LENGTH) warnings.push(`Objet long (${subject.length} caractères).`)
+  } else if (options.followUp) {
+    if (body.length > MAX_FOLLOW_UP_LENGTH) {
+      warnings.push(`Message long pour LinkedIn (${body.length} caractères) : visez moins de 350.`)
+    }
   } else if (body.length > MAX_LINKEDIN_LENGTH) {
-    warnings.push(`Message long pour LinkedIn (${body.length} caractères) : visez moins de 600.`)
+    warnings.push(
+      `Message long pour LinkedIn (${body.length} caractères) : un premier message de moins de 250 caractères obtient bien plus de réponses.`
+    )
   }
 
   if (options.lastOutgoingAt) {

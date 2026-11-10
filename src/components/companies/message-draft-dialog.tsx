@@ -30,6 +30,7 @@ import { createClient } from '@/lib/supabase/client'
 import { createCompanyInteraction } from '@/lib/actions/company-interactions'
 import { contactDisplayName } from '@/lib/validations/company'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
+import { LINKEDIN_FIRST_MESSAGE_MAX, LINKEDIN_FIRST_MESSAGE_TARGET } from '@/lib/constants/outreach'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact } from '@/types'
 
@@ -46,7 +47,6 @@ type Draft = {
 
 const NONE = 'none'
 const MAX_INSTRUCTIONS_LENGTH = 500
-const LINKEDIN_TARGET_LENGTH = 600
 
 const channelLabels: Record<Channel, string> = {
   email: 'E-mail',
@@ -330,9 +330,9 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
               />
               {channel === 'linkedin_message' && (
                 <p
-                  className={`text-xs text-right tabular-nums ${body.length > LINKEDIN_TARGET_LENGTH ? 'text-amber-600' : 'text-muted-foreground'}`}
+                  className={`text-xs text-right tabular-nums ${body.length > LINKEDIN_FIRST_MESSAGE_MAX ? 'text-amber-600' : 'text-muted-foreground'}`}
                 >
-                  {body.length} caractères (visez moins de {LINKEDIN_TARGET_LENGTH})
+                  {body.length} caractères (visez moins de {LINKEDIN_FIRST_MESSAGE_TARGET})
                 </p>
               )}
             </div>

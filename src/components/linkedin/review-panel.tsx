@@ -17,7 +17,7 @@ import {
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { LinkedinSequenceRow } from '@/lib/queries/linkedin'
-import { PersonHeader, personName } from './sequence-card'
+import { LengthHint, PersonHeader, personName } from './sequence-card'
 
 type Field = keyof Required<LinkedinTexts>
 type Texts = Record<Field, string>
@@ -235,7 +235,7 @@ export function ReviewPanel({ sequences }: { sequences: LinkedinSequenceRow[] })
                             : 'Vide : pas de relance.'
                         }
                       />
-                      <p className="text-xs text-muted-foreground">{texts[field].trim().length} caractères</p>
+                      <LengthHint length={texts[field].trim().length} firstMessage={field === 'message'} />
                     </div>
                   )
                 })}

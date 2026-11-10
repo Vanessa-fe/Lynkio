@@ -285,7 +285,7 @@ Deno.serve(async (request) => {
     // Les relances passent les mêmes vérifications, signature comprise
     const followUps = [draft.follow_up_1 ?? '', draft.follow_up_2 ?? ''].map((text, index) => {
       if (!text.trim()) return { body: '', warnings: [] as string[] }
-      const result = checkDraft({ subject: '', body: text, angle: '', signal_id: '' }, { ...checks, lastOutgoingAt: null })
+      const result = checkDraft({ subject: '', body: text, angle: '', signal_id: '' }, { ...checks, lastOutgoingAt: null, followUp: true })
       return { body: result.body, warnings: result.warnings.map((warning) => `Relance ${index + 1} : ${warning}`) }
     })
     return json({

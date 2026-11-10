@@ -76,6 +76,11 @@ const RESPONSES_URL = 'https://api.openai.com/v1/responses'
 const DEFAULT_MODEL = 'gpt-5.6-terra'
 // La passerelle Supabase coupe une requête au bout de 150 secondes
 const REQUEST_TIMEOUT_MS = 90_000
+const TOTAL_BUDGET_MS = 140_000
+// Premier message LinkedIn plus long que ça : Sophie le raccourcit dans un second passage
+const LINKEDIN_SHORTEN_ABOVE = 300
+// Temps minimum pour tenter ce second passage
+const MIN_SHORTEN_TIME_MS = 20_000
 
 const schema = {
   type: 'object',
@@ -106,7 +111,7 @@ const RULES = `Tu es Sophie, l'assistante de prospection d'une freelance. Tu ré
 Ce qui fait un bon premier message :
 - il part de l'entreprise, pas de la freelance : la première phrase parle d'un fait précis la concernant (le signal le plus parlant, ce que dit son offre d'emploi ou son site) ;
 - il fait le lien entre ce fait et un besoin probable, puis présente la freelance en une phrase, à partir de sa présentation ;
-- il cite au plus une référence, seulement si elle est proche de l'activité ou du besoin de l'entreprise ;
+- dans un e-mail, il cite au plus une référence, seulement si elle est proche de l'activité ou du besoin de l'entreprise ; un message LinkedIn n'en cite aucune ;
 - il se termine par une question simple et facile à accepter (par exemple un court échange de 15 minutes), sans insister ;
 - il est écrit à la première personne, au nom de la freelance (« je »), jamais en parlant d'elle à la troisième personne ;
 - il est sobre et naturel : vouvoiement, phrases courtes, aucune flatterie, aucun jargon commercial, pas d'emoji, pas de tiret long (—), pas de « J'espère que vous allez bien » ;
@@ -139,7 +144,13 @@ Règles absolues :
 
 Format :
 - e-mail : un objet court (moins de 60 caractères, sans « Objet : »), et un texte de 80 à 140 mots ;
-- message LinkedIn : objet vide, et un texte de 400 à 500 caractères ;
+- message LinkedIn : objet vide, et un message court, comme sur une messagerie : 25 à 40 mots en tout (150 à 250 caractères), jamais plus de 45 mots. Sur LinkedIn, un premier message court obtient bien plus de réponses. Sa forme, dans cet ordre :
+  « Bonjour » suivi du prénom s'il est connu, une virgule, puis un retour à la ligne ;
+  une phrase sur le fait précis concernant l'entreprise, reliée à son besoin ;
+  une phrase de moins de 12 mots sur qui est la freelance ;
+  une question de moins de 10 mots, par exemple « Un échange de 15 minutes cette semaine ? » ;
+  la formule de fin seule sur la dernière ligne.
+  Aucune référence, aucune liste de technologies, aucune ancienneté : ils viendront dans la suite de l'échange ;
 - angle : en une phrase, pour la freelance, sur quoi repose le message ;
 - signal_id : l'identifiant du signal sur lequel repose le message, ou une chaîne vide.`
 
@@ -252,6 +263,45 @@ export async function writeDraft(context: MessageContext): Promise<DraftFromAi> 
     throw new UserFacingError('La clé OpenAI n\'est pas encore enregistrée sur Supabase')
   }
 
+  const startedAt = Date.now()
+  const draft = await requestDraft(apiKey, context, contextPrompt(context), REQUEST_TIMEOUT_MS)
+  if (context.channel !== 'linkedin_message' || draft.body.length <= LINKEDIN_SHORTEN_ABOVE) return draft
+
+  // L'IA compte mal les caractères : un premier message LinkedIn trop long est réécrit une fois,
+  // les relances de la première proposition sont gardées telles quelles
+  const remaining = TOTAL_BUDGET_MS - (Date.now() - startedAt)
+  if (remaining < MIN_SHORTEN_TIME_MS) return draft
+  try {
+    const single = { ...context, sequence: false }
+    const prompt = [
+      contextPrompt(single),
+      section('Ta première proposition, trop longue', [
+        `Elle fait ${draft.body.length} caractères : bien trop long pour un premier message LinkedIn. Réécris-la en 25 à 40 mots (150 à 250 caractères), avec la forme demandée : garde le fait précis et la question, coupe tout le reste.`,
+        draft.body,
+      ]),
+    ]
+      .filter((part): part is string => part !== null)
+      .join('\n\n')
+    const shorter = await requestDraft(apiKey, single, prompt, Math.min(REQUEST_TIMEOUT_MS, remaining))
+    if (shorter.body.length >= draft.body.length) return draft
+    return {
+      ...draft,
+      body: shorter.body,
+      angle: shorter.angle || draft.angle,
+      signal_id: shorter.signal_id || draft.signal_id,
+    }
+  } catch (error) {
+    console.error('draft-message: raccourcissement impossible', error)
+    return draft
+  }
+}
+
+async function requestDraft(
+  apiKey: string,
+  context: MessageContext,
+  input: string,
+  timeoutMs: number
+): Promise<DraftFromAi> {
   let response: Response
   try {
     response = await fetch(RESPONSES_URL, {
@@ -261,7 +311,7 @@ export async function writeDraft(context: MessageContext): Promise<DraftFromAi> 
         model: Deno.env.get('OPENAI_MODEL') || DEFAULT_MODEL,
         reasoning: { effort: 'low' },
         instructions: context.sequence ? RULES + SEQUENCE_RULES : RULES,
-        input: contextPrompt(context),
+        input,
         text: {
           format: {
             type: 'json_schema',
@@ -272,7 +322,7 @@ export async function writeDraft(context: MessageContext): Promise<DraftFromAi> 
         },
         store: false,
       }),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     })
   } catch (error) {
     if (error instanceof DOMException && error.name === 'TimeoutError') {
