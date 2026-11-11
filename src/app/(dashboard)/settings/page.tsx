@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle, KeyRound, Radar, Lightbulb } from 'lucide-react'
+import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle, KeyRound, Radar, Lightbulb, CreditCard } from 'lucide-react'
 
 const settingsCards = [
   {
@@ -67,6 +67,14 @@ const settingsCards = [
     color: 'text-purple-500',
     bgColor: 'bg-purple-500/10',
     badge: 'Utiliser le sélecteur',
+  },
+  {
+    title: 'Abonnement',
+    description: 'Votre offre, votre essai gratuit, vos factures',
+    icon: CreditCard,
+    href: '/billing',
+    color: 'text-teal-500',
+    bgColor: 'bg-teal-500/10',
   },
   {
     title: 'Mon compte',

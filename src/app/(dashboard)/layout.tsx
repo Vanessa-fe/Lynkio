@@ -5,13 +5,16 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { MobileNav } from '@/components/layout/mobile-nav'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 import { NavigationProgress } from '@/components/layout/navigation-progress'
+import { BillingBanner } from '@/components/billing/billing-banner'
+import { getBilling } from '@/lib/queries/billing'
+import { getAccess } from '@/lib/billing'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [profile, user] = await Promise.all([getUserProfile(), getAuthUser()])
+  const [profile, user, billing] = await Promise.all([getUserProfile(), getAuthUser(), getBilling()])
 
   if (!profile) {
     redirect('/login')
@@ -22,6 +25,12 @@ export default async function DashboardLayout({
     redirect('/onboarding')
   }
 
+  // Essai terminé sans abonnement : seule la page Abonnement reste ouverte (avec l'export et la suppression)
+  const access = getAccess(billing)
+  if (!access.allowed) {
+    redirect('/billing')
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <NavigationProgress />
@@ -29,6 +38,7 @@ export default async function DashboardLayout({
       <Sidebar />
       <div className="md:pl-64">
         <main className="mx-auto max-w-7xl p-4 pb-24 md:p-8 md:pb-10">
+          <BillingBanner access={access} />
           {children}
         </main>
       </div>

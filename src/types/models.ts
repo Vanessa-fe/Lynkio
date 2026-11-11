@@ -6,6 +6,7 @@ import type { Database } from './database'
 
 // Alias pour les types de tables
 export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
+export type Billing = Database['public']['Tables']['billing']['Row']
 export type Reminder = Database['public']['Tables']['reminders']['Row']
 export type Profession = Database['public']['Tables']['professions']['Row']
 export type IcpProfile = Database['public']['Tables']['icp_profiles']['Row']
