@@ -5,6 +5,15 @@ export type BillingInterval = 'month' | 'year'
 
 export const PLAN_LABELS: Record<PlanKey, string> = { essentiel: 'Essentiel', pro: 'Pro' }
 
+/** Ce que permet chaque offre (mêmes valeurs dans supabase/functions/_shared/plan.ts et sur la page Tarifs) */
+export const PLAN_LIMITS: Record<PlanKey, { searchKeywords: number; companiesPerRun: number; daysPerWeek: number }> = {
+  essentiel: { searchKeywords: 3, companiesPerRun: 10, daysPerWeek: 1 },
+  pro: { searchKeywords: 10, companiesPerRun: 50, daysPerWeek: 7 },
+}
+
+export const NO_ACCESS_MESSAGE = 'Votre essai gratuit est terminé : choisissez une offre dans Paramètres > Abonnement.'
+export const PRO_ONLY_MESSAGE = 'Réservé à l’offre Pro : vous pouvez changer d’offre dans Paramètres > Abonnement.'
+
 /** États d'un abonnement Stripe qui donnent accès (past_due : Stripe retente le paiement quelques jours) */
 const SUBSCRIBED = ['active', 'trialing', 'past_due']
 

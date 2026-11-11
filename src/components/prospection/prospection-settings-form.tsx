@@ -39,9 +39,22 @@ import type { ProspectionSettings } from '@/types'
 
 interface ProspectionSettingsFormProps {
   settings: ProspectionSettings | null
+  /** Limites de l'offre : jours de recherche par semaine, entreprises par recherche */
+  maxDays?: number
+  maxCompanies?: number
 }
 
-function toFormValues(settings: ProspectionSettings | null): ProspectionSettingsInput {
+// Réglages enregistrés, ramenés dans les limites de l'offre (après un passage de Pro à Essentiel)
+function toFormValues(settings: ProspectionSettings | null, maxDays: number, maxCompanies: number): ProspectionSettingsInput {
+  const values = toSavedValues(settings)
+  return {
+    ...values,
+    daysOfWeek: values.daysOfWeek.slice(0, maxDays),
+    maxCompaniesPerRun: Math.min(values.maxCompaniesPerRun, maxCompanies),
+  }
+}
+
+function toSavedValues(settings: ProspectionSettings | null): ProspectionSettingsInput {
   if (!settings) return DEFAULT_PROSPECTION_SETTINGS
   return {
     isActive: settings.is_active,
@@ -59,7 +72,8 @@ function toFormValues(settings: ProspectionSettings | null): ProspectionSettings
   }
 }
 
-export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormProps) {
+export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 50 }: ProspectionSettingsFormProps) {
+  const companyOptions = MAX_COMPANIES_OPTIONS.filter((count) => count <= maxCompanies)
   const router = useRouter()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
@@ -73,7 +87,7 @@ export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormPro
     reset,
   } = useForm<ProspectionSettingsInput>({
     resolver: zodResolver(prospectionSettingsSchema),
-    defaultValues: toFormValues(settings),
+    defaultValues: toFormValues(settings, maxDays, maxCompanies),
   })
 
   const isActive = useWatch({ control, name: 'isActive' })
@@ -312,7 +326,10 @@ export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormPro
                               field.onChange(
                                 checked
                                   ? field.value.filter((value) => value !== day.value)
-                                  : [...field.value, day.value]
+                                  : // Un seul jour permis (offre Essentiel) : le nouveau remplace l'ancien
+                                    maxDays <= 1
+                                    ? [day.value]
+                                    : [...field.value, day.value]
                               )
                             }
                             className={cn(
@@ -380,7 +397,7 @@ export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormPro
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {MAX_COMPANIES_OPTIONS.map((count) => (
+                    {companyOptions.map((count) => (
                       <SelectItem key={count} value={String(count)}>
                         {count} entreprises
                       </SelectItem>

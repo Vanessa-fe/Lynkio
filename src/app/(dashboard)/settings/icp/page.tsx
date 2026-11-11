@@ -4,9 +4,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { IcpForm } from '@/components/settings/icp-form'
 import { getIcpSettings } from '@/lib/queries/icp'
+import { getCurrentPlan } from '@/lib/queries/billing'
+import { PLAN_LIMITS } from '@/lib/billing'
+import { ProOnlyNotice } from '@/components/billing/pro-only-notice'
 
 export default async function IcpSettingsPage() {
-  const settings = await getIcpSettings()
+  const [settings, plan] = await Promise.all([getIcpSettings(), getCurrentPlan()])
+  const maxKeywords = PLAN_LIMITS[plan ?? 'pro'].searchKeywords
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -25,8 +29,16 @@ export default async function IcpSettingsPage() {
         </p>
       </div>
 
+      {plan === 'essentiel' && (
+        <ProOnlyNotice>
+          Offre Essentiel : {maxKeywords} mots-clés de recherche. L&apos;offre Pro en permet{' '}
+          {PLAN_LIMITS.pro.searchKeywords}.
+        </ProOnlyNotice>
+      )}
+
       {settings ? (
         <IcpForm
+          maxKeywords={maxKeywords}
           icp={settings.icp}
           signals={settings.signals}
           companiesCount={settings.companiesCount}

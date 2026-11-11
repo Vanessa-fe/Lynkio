@@ -25,6 +25,8 @@ import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 import { addContactsToList } from '@/lib/actions/prospect-lists'
 import { SEGMENTS } from '@/lib/constants/segments'
 import type { CompanySegment } from '@/types'
+import { getCurrentPlan } from '@/lib/queries/billing'
+import { NO_ACCESS_MESSAGE, PRO_ONLY_MESSAGE } from '@/lib/billing'
 
 type ActionResult<T> = { success: boolean; error?: string; data?: T }
 
@@ -427,10 +429,19 @@ function waalaxySummary(analyzed: AnalyzedRow[]): ImportPreview['waalaxy'] {
   }
 }
 
+/** Import de prospects (CSV, Waalaxy) : offre Pro */
+async function importDenied(): Promise<string | null> {
+  const plan = await getCurrentPlan()
+  if (!plan) return NO_ACCESS_MESSAGE
+  return plan === 'pro' ? null : PRO_ONLY_MESSAGE
+}
+
 export async function previewCompaniesImport(
   rawRows: Record<string, string>[]
 ): Promise<ActionResult<ImportPreview>> {
   try {
+    const denied = await importDenied()
+    if (denied) return { success: false, error: denied }
     const analyzed = await analyzeRows(rawRows)
     if ('error' in analyzed) return { success: false, error: analyzed.error }
 
@@ -595,6 +606,8 @@ export async function importCompanies(
   }>
 > {
   try {
+    const denied = await importDenied()
+    if (denied) return { success: false, error: denied }
     const analyzed = await analyzeRows(rawRows)
     if ('error' in analyzed) return { success: false, error: analyzed.error }
 

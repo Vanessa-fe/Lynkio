@@ -13,6 +13,7 @@
 // ne voit que ses données.
 
 import { createClient } from '@supabase/supabase-js'
+import { accountPlan, planDenial } from '../_shared/plan.ts'
 import { loadAiAccess } from '../_shared/ai.ts'
 import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
 import { checkDraft } from './checks.ts'
@@ -121,6 +122,10 @@ Deno.serve(async (request) => {
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
+
+  // Messages LinkedIn et relances : offre Pro ; premiers e-mails : toutes les offres
+  const denial = planDenial(await accountPlan(admin, user.id), channel === 'linkedin_message')
+  if (denial) return json({ error: denial.message, code: denial.code }, 403)
 
   try {
     const access = await loadAiAccess(admin, user.id)

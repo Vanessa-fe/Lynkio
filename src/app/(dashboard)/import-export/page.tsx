@@ -4,9 +4,16 @@ import { WaalaxyExport } from '@/components/import/waalaxy-export'
 import { getLeadSources } from '@/lib/queries/companies'
 import { countWaalaxyContacts } from '@/lib/queries/waalaxy'
 import { getProspectLists } from '@/lib/queries/people'
+import { getCurrentPlan } from '@/lib/queries/billing'
+import { ProOnlyNotice } from '@/components/billing/pro-only-notice'
 
 export default async function ImportExportPage() {
-  const [sources, waalaxyCount, lists] = await Promise.all([getLeadSources(), countWaalaxyContacts(), getProspectLists()])
+  const [sources, waalaxyCount, lists, plan] = await Promise.all([
+    getLeadSources(),
+    countWaalaxyContacts(),
+    getProspectLists(),
+    getCurrentPlan(),
+  ])
 
   return (
     <div className="space-y-6">
@@ -17,7 +24,14 @@ export default async function ImportExportPage() {
         </p>
       </div>
 
-      <CompaniesImport sources={sources} lists={lists} />
+      {plan === 'pro' ? (
+        <CompaniesImport sources={sources} lists={lists} />
+      ) : (
+        <ProOnlyNotice>
+          L&apos;import de vos prospects (fichier CSV, export Waalaxy) fait partie de l&apos;offre Pro. L&apos;export
+          de vos données reste ouvert à tous.
+        </ProOnlyNotice>
+      )}
       <CompaniesExport />
       <WaalaxyExport count={waalaxyCount} />
     </div>

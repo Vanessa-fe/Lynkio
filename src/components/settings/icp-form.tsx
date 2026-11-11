@@ -36,6 +36,8 @@ import {
 } from '@/lib/constants/technologies'
 
 interface IcpFormProps {
+  /** Mots-clés de recherche permis par l'offre */
+  maxKeywords?: number
   icp: IcpProfile
   signals: SignalWeightOption[]
   companiesCount: number
@@ -65,7 +67,14 @@ function toFormValues(icp: IcpProfile, signals: SignalWeightOption[]): IcpInput 
   }
 }
 
-export function IcpForm({ icp, signals, companiesCount, professionKey, suggestedKeywords }: IcpFormProps) {
+export function IcpForm({
+  icp,
+  signals,
+  companiesCount,
+  professionKey,
+  suggestedKeywords,
+  maxKeywords = MAX_SEARCH_KEYWORDS,
+}: IcpFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
@@ -184,7 +193,7 @@ export function IcpForm({ icp, signals, companiesCount, professionKey, suggested
             value={searchKeywords}
             onChange={(next) => setValue('searchKeywords', next, { shouldDirty: true })}
             suggestions={suggestedKeywords}
-            max={MAX_SEARCH_KEYWORDS}
+            max={maxKeywords}
             disabled={isSaving}
             placeholder="Ex. : graphiste, community manager"
             inputLabel="Nouveau mot-clé recherché"
