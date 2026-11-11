@@ -106,6 +106,16 @@ html.lenis body {
 }
 
 @layer utilities {
+  /* Barre de chargement entre deux pages : avance vite puis ralentit, sans jamais finir seule */
+  @keyframes navigation-progress {
+    from {
+      transform: scaleX(0.05);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
   @keyframes slide-in-from-bottom {
     from {
       transform: translateY(20px);
