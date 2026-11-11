@@ -198,21 +198,48 @@ export const safeguards = [
   },
 ]
 
-/** Tarifs (validés le 10/11/2026) : un seul abonnement, l'IA est payée par l'utilisateur à son fournisseur */
-export const pricing = {
-  monthly: 15,
-  yearly: 150,
-  trialDays: 14,
-  founders: { monthly: 9, seats: 50 },
-  included: [
-    'Sophie cherche pour vous, aux jours que vous choisissez : offres d’emploi sur vos mots-clés, missions freelance, entreprises tout juste créées',
-    'Chaque entreprise notée sur 100 selon votre client idéal, avec son SIREN, ses dirigeants et son chiffre d’affaires',
-    'Premiers messages et relances préparés par Sophie, en e-mail et sur LinkedIn',
-    'Le suivi de vos prospects : entreprises, personnes, listes, échanges, rappels',
-    'L’extension LinkedIn et l’import de vos prospects (CSV, Waalaxy)',
-    'Vos données exportables à tout moment',
-  ],
-}
+/**
+ * Tarifs (11/11/2026) : deux offres. Essentiel, accessible pour démarrer ; Pro, l'offre complète mise en
+ * avant. L'IA est payée par l'utilisateur à son fournisseur. Les limites d'Essentiel seront appliquées
+ * avec l'abonnement Stripe.
+ */
+export const plans = [
+  {
+    key: 'essentiel',
+    name: 'Essentiel',
+    tagline: 'Pour démarrer votre prospection',
+    monthly: 9,
+    yearly: 90,
+    highlighted: false,
+    features: [
+      'Une recherche de Sophie par semaine, jusqu’à 10 entreprises',
+      '3 mots-clés de recherche',
+      'Score sur 100 et fiche complète : SIREN, dirigeants, chiffre d’affaires',
+      'Premiers e-mails rédigés par Sophie',
+      'Suivi de vos prospects : entreprises, personnes, listes, rappels',
+      'Export de vos données',
+    ],
+  },
+  {
+    key: 'pro',
+    name: 'Pro',
+    tagline: 'Pour ne laisser passer aucun client',
+    monthly: 15,
+    yearly: 150,
+    highlighted: true,
+    features: [
+      'Tout Essentiel, et :',
+      'Sophie cherche jusqu’à 7 jours sur 7, jusqu’à 50 entreprises par recherche',
+      '10 mots-clés de recherche',
+      'Messages LinkedIn et relances préparés par Sophie',
+      'Extension LinkedIn : le bouton «\u00a0+\u00a0Filonea\u00a0» et vos envois à votre rythme',
+      'Recherche d’e-mails et recherche par technologie',
+      'Import de vos prospects (CSV, Waalaxy)',
+    ],
+  },
+] as const
+
+export const trialDays = 14
 
 /**
  * Questions fréquentes : affichées sur la page et reprises telles quelles dans les données
@@ -257,7 +284,7 @@ export const faq = [
   {
     question: 'Combien coûte Filonea ?',
     answer:
-      'Un seul abonnement, tout compris : 15 € par mois, ou 150 € par an (deux mois offerts), après 14 jours d’essai gratuit sans carte bancaire. Les 50 premiers abonnés profitent de l’offre Fondateurs : 9 € par mois, à vie. Sans engagement.',
+      'Deux offres, sans engagement : Essentiel à 9 € par mois (90 € par an) pour démarrer, et Pro à 15 € par mois (150 € par an) avec toute la prospection LinkedIn, plus de recherches et plus de mots-clés. Les 14 premiers jours sont gratuits, sans carte bancaire.',
   },
   {
     question: 'Pourquoi utiliser ma propre clé d’IA ?',
