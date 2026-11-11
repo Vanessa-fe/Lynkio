@@ -88,7 +88,7 @@ export function TechResearchCard({ techStack, isRunning }: TechResearchCardProps
             </Button>
             <p className="text-xs text-muted-foreground">
               Jusqu&apos;à 10 entreprises par recherche, sans celles que vous suivez déjà. Chaque recherche utilise
-              votre crédit OpenAI (quelques centimes).
+              votre IA : quelques centimes avec OpenAI ; avec Gemini, la facturation Google doit être activée.
             </p>
           </>
         )}
