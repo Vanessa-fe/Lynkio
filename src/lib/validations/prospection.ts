@@ -168,7 +168,7 @@ export const PROSPECTION_SOURCES = [
     key: 'job_postings',
     label: 'Entreprises qui recrutent dans votre métier',
     description:
-      'Offres d\'emploi publiées sur France Travail (qui relaie aussi de nombreux sites d\'emploi partenaires) dont l\'intitulé contient l\'un de vos mots-clés (Paramètres, Client idéal). Pour le développement web, Sophie cherche aussi les postes de webmaster, marketing digital, e-commerce et de développeur. Une entreprise qui recrute a un besoin et un budget. Les cabinets, ESN et missions en régie sont écartés.',
+      'Offres d\'emploi publiées sur France Travail (qui relaie aussi de nombreux sites d\'emploi partenaires) dont l\'intitulé contient l\'un de vos mots-clés (Paramètres, Client idéal). Pour la tech, Sophie cherche aussi les postes de développeur, de webmaster, de marketing digital et d\'e-commerce. Une entreprise qui recrute a un besoin et un budget. Vous choisissez plus bas les intermédiaires acceptés (ESN, cabinets, plateformes).',
   },
   {
     key: 'recent_creations',
@@ -179,6 +179,34 @@ export const PROSPECTION_SOURCES = [
 ] as const
 
 export type ProspectionSourceKey = (typeof PROSPECTION_SOURCES)[number]['key']
+
+// Intermédiaires que l'utilisateur accepte dans les offres d'emploi (prospection_settings.accepted_intermediaries)
+export const INTERMEDIARY_OPTIONS = [
+  {
+    key: 'consulting',
+    label: 'ESN et sociétés de conseil',
+    description:
+      'Elles placent des profils chez leurs clients (régie) : souvent des missions longues, dans l\'équipe du client. Sophie vous propose comme freelance pour une de leurs missions.',
+  },
+  {
+    key: 'recruiters',
+    label: 'Cabinets de recrutement',
+    description: 'Ils ne nomment pas l\'entreprise qui recrute : leurs offres arrivent dans « Offres à identifier ».',
+  },
+  {
+    key: 'platforms',
+    label: 'Plateformes de missions freelance',
+    description: 'Malt, Free-Work, Collective… : des missions ouvertes aux indépendants, sans le nom du client final.',
+  },
+  {
+    key: 'staffing',
+    label: 'Agences d\'intérim',
+    description: 'Rarement utiles à un freelance : leurs offres arrivent dans « Offres à identifier ».',
+  },
+] as const
+
+export type IntermediaryKey = (typeof INTERMEDIARY_OPTIONS)[number]['key']
+const intermediaryKeys = INTERMEDIARY_OPTIONS.map((option) => option.key) as [IntermediaryKey, ...IntermediaryKey[]]
 const sourceKeys = PROSPECTION_SOURCES.map((source) => source.key) as [ProspectionSourceKey, ...ProspectionSourceKey[]]
 
 export const prospectionSettingsSchema = z
@@ -198,6 +226,7 @@ export const prospectionSettingsSchema = z
       .array(z.enum(sourceKeys))
       .min(1, 'Choisissez au moins une source')
       .transform((keys) => [...new Set(keys)]),
+    acceptedIntermediaries: z.array(z.enum(intermediaryKeys)).transform((keys) => [...new Set(keys)]),
   })
   .refine((data) => !data.isActive || data.daysOfWeek.length > 0, {
     message: 'Choisissez au moins un jour pour la prospection automatique',
@@ -222,4 +251,5 @@ export const DEFAULT_PROSPECTION_SETTINGS: ProspectionSettingsInput = {
   excludedNafSections: ['K', 'L', 'O', 'T', 'U'],
   maxCompaniesPerRun: 20,
   sources: ['job_postings'],
+  acceptedIntermediaries: ['consulting', 'recruiters', 'platforms'],
 }

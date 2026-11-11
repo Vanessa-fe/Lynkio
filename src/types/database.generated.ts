@@ -995,6 +995,7 @@ export type Database = {
       }
       prospection_settings: {
         Row: {
+          accepted_intermediaries: string[]
           bodacc_cursor: string | null
           created_at: string
           days_of_week: number[]
@@ -1011,6 +1012,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accepted_intermediaries?: string[]
           bodacc_cursor?: string | null
           created_at?: string
           days_of_week?: number[]
@@ -1027,6 +1029,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accepted_intermediaries?: string[]
           bodacc_cursor?: string | null
           created_at?: string
           days_of_week?: number[]

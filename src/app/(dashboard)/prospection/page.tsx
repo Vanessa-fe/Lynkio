@@ -32,7 +32,7 @@ export default async function ProspectionPage() {
       </div>
 
       <ProspectionStatus settings={settings} runningRun={runningRun} />
-      {/* Recherche par technologie : seulement pour le développement web (ou des technologies déjà choisies) */}
+      {/* Recherche par technologie : seulement pour la tech (ou des technologies déjà choisies) */}
       {(icp.professionKey === 'web_developer' || icp.techStack.length > 0) && (
         <TechResearchCard techStack={icp.techStack} isRunning={!!runningRun} />
       )}

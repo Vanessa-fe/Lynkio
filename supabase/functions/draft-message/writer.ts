@@ -126,6 +126,7 @@ Adapte-toi à l'entreprise, d'après son segment :
 
 Selon le signal :
 - agence ou startup qui recrute un développeur : elle a plus de travail que d'équipe. Ne postule pas : propose un renfort freelance pendant qu'elle recrute, ou sur un projet précis ;
+- ESN qui recrute : c'est une société de services ou de conseil qui place des profils chez ses clients. Ne postule pas au poste salarié : présente la freelance comme disponible pour une mission chez l'un de ses clients (en régie) ou un renfort sur un projet, en une phrase sur ce qu'elle sait faire ;
 - offre d'emploi salariée (dont celles trouvées avec les mots-clés de la freelance) : ne postule pas. Propose une aide freelance sur un projet précis, en attendant le bon profil ;
 - mission ouverte aux freelances : réponds directement à la mission ;
 - post LinkedIn où la personne cherche un freelance, dont le texte est fourni : c'est une demande explicite, faite pour être contactée. Réponds directement à son besoin : tu peux dire que tu as vu son post, reprends un ou deux éléments concrets de sa demande (le projet, une technologie, la durée), dis en une phrase pourquoi la freelance correspond, et propose un échange court. Ne reprends ni tarif ni budget, même s'ils sont indiqués ;

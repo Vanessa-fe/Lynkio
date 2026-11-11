@@ -6,9 +6,13 @@ import { UserFacingError } from '../_shared/errors.ts'
 // une recherche IA et ne fait pas partie des sources du planning
 export type SourceKey = 'job_postings' | 'recent_creations' | 'tech_users'
 
+// Intermédiaires acceptés dans les offres d'emploi (prospection_settings.accepted_intermediaries)
+export type Intermediary = 'consulting' | 'recruiters' | 'platforms' | 'staffing'
+
 export type Settings = {
   departments: string[]
   excluded_naf_sections: string[]
+  accepted_intermediaries: Intermediary[]
   max_companies_per_run: number
   sources: SourceKey[]
   bodacc_cursor: string | null
