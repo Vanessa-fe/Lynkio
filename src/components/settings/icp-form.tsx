@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { KeywordPicker } from '@/components/settings/keyword-picker'
+import { suggestKeywords } from '@/lib/actions/keyword-suggestions'
 import {
   MAX_SEARCH_KEYWORDS,
   MAX_SIGNAL_WEIGHT,
@@ -188,6 +189,7 @@ export function IcpForm({ icp, signals, companiesCount, professionKey, suggested
             placeholder="Ex. : graphiste, community manager"
             inputLabel="Nouveau mot-clé recherché"
             listLabel="Mots-clés recherchés"
+            searchSuggestions={suggestKeywords}
           />
           {errors.searchKeywords && <p className="text-sm text-destructive mt-2">{errors.searchKeywords.message}</p>}
         </CardContent>

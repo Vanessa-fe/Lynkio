@@ -8,6 +8,7 @@ import { completeOnboarding } from '@/lib/actions/user-profile'
 import { THEMES } from '@/lib/constants/themes'
 import { MAX_SEARCH_KEYWORDS } from '@/lib/validations/icp'
 import { KeywordPicker } from '@/components/settings/keyword-picker'
+import { suggestKeywords } from '@/lib/actions/keyword-suggestions'
 import { cn } from '@/lib/utils'
 import type { Profession } from '@/types'
 import { LogoutButton } from '@/components/layout/logout-button'
@@ -209,6 +210,7 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
                     placeholder="Ex. : graphiste, community manager"
                     inputLabel="Nouveau mot-clé recherché"
                     listLabel="Mots-clés recherchés"
+                    searchSuggestions={suggestKeywords}
                   />
                 </div>
               )}

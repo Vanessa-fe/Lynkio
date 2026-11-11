@@ -1414,6 +1414,12 @@ export type Database = {
         Returns: undefined
       }
       score_company: { Args: { p_company_id: string }; Returns: undefined }
+      suggest_search_keywords: {
+        Args: { p_query: string }
+        Returns: {
+          keyword: string
+        }[]
+      }
       sync_tech_stack_signal: {
         Args: { p_company_id: string }
         Returns: undefined

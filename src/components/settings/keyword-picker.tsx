@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,8 @@ interface KeywordPickerProps {
   placeholder?: string
   inputLabel: string
   listLabel: string
+  // Mots-clés proposés pendant la saisie (2 lettres au moins)
+  searchSuggestions?: (query: string) => Promise<string[]>
 }
 
 const sameKeyword = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase()
@@ -31,9 +33,34 @@ export function KeywordPicker({
   placeholder,
   inputLabel,
   listLabel,
+  searchSuggestions,
 }: KeywordPickerProps) {
   const [draft, setDraft] = useState('')
+  const [typed, setTyped] = useState<string[]>([])
+  const [highlighted, setHighlighted] = useState(-1)
+  const listId = useId()
   const isFull = value.length >= max
+
+  // Suggestions pendant la saisie, une fois la frappe arrêtée (200 ms)
+  useEffect(() => {
+    const query = draft.trim()
+    if (!searchSuggestions || query.length < 2) return
+    let cancelled = false
+    const timer = setTimeout(() => {
+      searchSuggestions(query)
+        .then((found) => {
+          if (!cancelled) {
+            setTyped(found)
+            setHighlighted(-1)
+          }
+        })
+        .catch(() => undefined)
+    }, 200)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [draft, searchSuggestions])
 
   const add = (keyword: string) => {
     const clean = keyword.trim().replace(/\s+/g, ' ')
@@ -43,24 +70,72 @@ export function KeywordPicker({
   }
 
   const remaining = suggestions.filter((suggestion) => !value.some((existing) => sameKeyword(existing, suggestion)))
+  // Moins de 2 lettres : plus de liste (les anciennes suggestions ne s'affichent pas)
+  const options =
+    draft.trim().length >= 2 ? typed.filter((option) => !value.some((existing) => sameKeyword(existing, option))) : []
+  const listOpen = options.length > 0 && !isFull && !disabled
 
   return (
     <div className="space-y-3">
       <div className="flex gap-2 sm:max-w-md">
-        <Input
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault()
-              add(draft)
-            }
-          }}
-          placeholder={placeholder}
-          disabled={disabled || isFull}
-          maxLength={60}
-          aria-label={inputLabel}
-        />
+        <div className="relative flex-1">
+          <Input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowDown' && listOpen) {
+                event.preventDefault()
+                setHighlighted((index) => (index + 1) % options.length)
+              } else if (event.key === 'ArrowUp' && listOpen) {
+                event.preventDefault()
+                setHighlighted((index) => (index <= 0 ? options.length - 1 : index - 1))
+              } else if (event.key === 'Escape') {
+                setTyped([])
+              } else if (event.key === 'Enter') {
+                event.preventDefault()
+                add(listOpen && highlighted >= 0 ? (options[highlighted] ?? draft) : draft)
+                setTyped([])
+              }
+            }}
+            onBlur={() => setTimeout(() => setTyped([]), 150)}
+            placeholder={placeholder}
+            disabled={disabled || isFull}
+            maxLength={60}
+            aria-label={inputLabel}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={listOpen}
+            aria-controls={listId}
+            aria-activedescendant={listOpen && highlighted >= 0 ? `${listId}-${highlighted}` : undefined}
+          />
+          {listOpen && (
+            <ul
+              id={listId}
+              role="listbox"
+              aria-label="Mots-clés proposés"
+              className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-md border bg-popover p-1 text-sm shadow-md"
+            >
+              {options.map((option, index) => (
+                <li
+                  key={option}
+                  id={`${listId}-${index}`}
+                  role="option"
+                  aria-selected={index === highlighted}
+                  onMouseDown={(event) => {
+                    // Avant la perte du focus du champ, qui fermerait la liste
+                    event.preventDefault()
+                    add(option)
+                    setTyped([])
+                  }}
+                  onMouseEnter={() => setHighlighted(index)}
+                  className={`cursor-pointer rounded px-2 py-1.5 ${index === highlighted ? 'bg-muted' : ''}`}
+                >
+                  {option}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <Button type="button" variant="outline" onClick={() => add(draft)} disabled={disabled || isFull}>
           Ajouter
         </Button>
