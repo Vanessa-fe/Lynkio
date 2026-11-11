@@ -18,6 +18,7 @@ export const navLinks = [
   { href: '#fonctionnalites', label: 'Fonctionnalités' },
   { href: '#comment-ca-marche', label: 'Comment ça marche' },
   { href: '#fiabilite', label: 'Fiabilité' },
+  { href: '#tarifs', label: 'Tarifs' },
   { href: '#questions', label: 'Questions' },
 ]
 
@@ -197,6 +198,22 @@ export const safeguards = [
   },
 ]
 
+/** Tarifs (validés le 10/11/2026) : un seul abonnement, l'IA est payée par l'utilisateur à son fournisseur */
+export const pricing = {
+  monthly: 15,
+  yearly: 150,
+  trialDays: 14,
+  founders: { monthly: 9, seats: 50 },
+  included: [
+    'Sophie cherche pour vous, aux jours que vous choisissez : offres d’emploi sur vos mots-clés, missions freelance, entreprises tout juste créées',
+    'Chaque entreprise notée sur 100 selon votre client idéal, avec son SIREN, ses dirigeants et son chiffre d’affaires',
+    'Premiers messages et relances préparés par Sophie, en e-mail et sur LinkedIn',
+    'Le suivi de vos prospects : entreprises, personnes, listes, échanges, rappels',
+    'L’extension LinkedIn et l’import de vos prospects (CSV, Waalaxy)',
+    'Vos données exportables à tout moment',
+  ],
+}
+
 /**
  * Questions fréquentes : affichées sur la page et reprises telles quelles dans les données
  * structurées (FAQPage). Réponses autonomes et factuelles, pour être citables par les moteurs.
@@ -236,6 +253,16 @@ export const faq = [
     question: 'Quelles entreprises Filonea cible-t-il ?',
     answer:
       'Des entreprises en France, de trois types : les agences qui ont besoin de renfort, les TPE et PME qui veulent confier un projet, et les startups qui renforcent leur équipe. Vous réglez la taille, les outils et les départements visés.',
+  },
+  {
+    question: 'Combien coûte Filonea ?',
+    answer:
+      'Un seul abonnement, tout compris : 15 € par mois, ou 150 € par an (deux mois offerts), après 14 jours d’essai gratuit sans carte bancaire. Les 50 premiers abonnés profitent de l’offre Fondateurs : 9 € par mois, à vie. Sans engagement.',
+  },
+  {
+    question: 'Pourquoi utiliser ma propre clé d’IA ?',
+    answer:
+      'Pour payer l’IA au prix coûtant, sans marge : Sophie utilise votre compte OpenAI (quelques centimes par message) ou Gemini de Google (offre gratuite). Votre clé est chiffrée, jamais affichée, et ne sert qu’aux demandes que vous faites à Sophie. La recherche d’e-mails utilise de la même façon votre compte Hunter, gratuit jusqu’à 50 recherches par mois.',
   },
   {
     question: 'Puis-je importer mes prospects existants ?',
