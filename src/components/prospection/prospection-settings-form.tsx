@@ -4,12 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { X } from 'lucide-react'
+import { CheckCircle2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { CardContent, CardFooter } from '@/components/ui/card'
-import { CollapsibleCard } from '@/components/ui/collapsible-card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -40,7 +39,6 @@ import type { ProspectionSettings } from '@/types'
 
 interface ProspectionSettingsFormProps {
   settings: ProspectionSettings | null
-  defaultOpen?: boolean
 }
 
 function toFormValues(settings: ProspectionSettings | null): ProspectionSettingsInput {
@@ -61,10 +59,12 @@ function toFormValues(settings: ProspectionSettings | null): ProspectionSettings
   }
 }
 
-export function ProspectionSettingsForm({ settings, defaultOpen = false }: ProspectionSettingsFormProps) {
+export function ProspectionSettingsForm({ settings }: ProspectionSettingsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
+  // Confirmation affichée à côté du bouton, quelques secondes après l'enregistrement
+  const [justSaved, setJustSaved] = useState(false)
 
   const {
     control,
@@ -91,8 +91,10 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
     }
 
     if (result.success) {
-      toast({ title: 'Réglages enregistrés' })
+      toast({ title: 'Réglages enregistrés', description: 'Sophie s\'en servira dès sa prochaine recherche.' })
       reset(data)
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 6000)
       router.refresh()
     } else {
       toast({
@@ -103,14 +105,26 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
     }
   }
 
-  return (
-    <CollapsibleCard
-      title="Réglages"
-      description="Sophie repère des entreprises dans vos départements, puis les complète avec les données officielles : ancienneté, activité, taille, dirigeants."
-      defaultOpen={defaultOpen}
-    >
+  // Un champ incomplet est signalé sous le champ, parfois loin du bouton : on le dit aussi ici
+  const onInvalid = () => {
+    toast({
+      variant: 'destructive',
+      title: 'Réglages incomplets',
+      description: 'Une information manque ou n\'est pas valide : elle est signalée en rouge plus haut.',
+    })
+  }
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Réglages de la recherche</CardTitle>
+        <CardDescription>
+          Sophie repère des entreprises dans vos départements, puis les complète avec les données officielles :
+          ancienneté, activité, taille, dirigeants.
+        </CardDescription>
+      </CardHeader>
+
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
         <CardContent className="space-y-8">
           {/* Quoi chercher */}
           <section className="space-y-3">
@@ -126,6 +140,7 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
                       <div key={source.key} className="flex items-start gap-2">
                         <Checkbox
                           id={`source-${source.key}`}
+                          className="mt-0.5"
                           checked={checked}
                           onCheckedChange={(value) =>
                             field.onChange(
@@ -137,7 +152,7 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
                           disabled={isSaving}
                         />
                         <div>
-                          <Label htmlFor={`source-${source.key}`}>{source.label}</Label>
+                          <Label htmlFor={`source-${source.key}`} className="leading-snug">{source.label}</Label>
                           <p className="text-sm text-muted-foreground">{source.description}</p>
                         </div>
                       </div>
@@ -169,6 +184,7 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
                       <div key={option.key} className="flex items-start gap-2">
                         <Checkbox
                           id={`intermediary-${option.key}`}
+                          className="mt-0.5"
                           checked={checked}
                           onCheckedChange={(value) =>
                             field.onChange(
@@ -180,7 +196,7 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
                           disabled={isSaving}
                         />
                         <div>
-                          <Label htmlFor={`intermediary-${option.key}`}>{option.label}</Label>
+                          <Label htmlFor={`intermediary-${option.key}`} className="leading-snug">{option.label}</Label>
                           <p className="text-sm text-muted-foreground">{option.description}</p>
                         </div>
                       </div>
@@ -382,8 +398,7 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
           <details className="group rounded-lg border p-4">
             <summary className="cursor-pointer font-semibold">Secteurs ignorés</summary>
             <p className="text-sm text-muted-foreground mt-2 mb-4">
-              Les sociétés de ces secteurs ne sont pas ajoutées. Par défaut : holdings, immobilier (SCI),
-              administrations et organismes rarement clients d&apos;un freelance.
+              Les sociétés des secteurs cochés ne sont pas ajoutées.
             </p>
             <Controller
               name="excludedNafSections"
@@ -427,9 +442,18 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
           <Button type="submit" disabled={isSaving || !isDirty}>
             {isSaving ? 'Enregistrement...' : 'Enregistrer les réglages'}
           </Button>
-          {isDirty && <p className="text-sm font-medium text-amber-600">Modifications non enregistrées</p>}
+          {isDirty ? (
+            <p className="text-sm font-medium text-amber-600">Modifications non enregistrées</p>
+          ) : (
+            justSaved && (
+              <p role="status" className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
+                Réglages enregistrés
+              </p>
+            )
+          )}
         </CardFooter>
       </form>
-    </CollapsibleCard>
+    </Card>
   )
 }

@@ -198,11 +198,6 @@ export const INTERMEDIARY_OPTIONS = [
     label: 'Plateformes de missions freelance',
     description: 'Malt, Free-Work, Collective… : des missions ouvertes aux indépendants, sans le nom du client final.',
   },
-  {
-    key: 'staffing',
-    label: 'Agences d\'intérim',
-    description: 'Rarement utiles à un freelance : leurs offres arrivent dans « Offres à identifier ».',
-  },
 ] as const
 
 export type IntermediaryKey = (typeof INTERMEDIARY_OPTIONS)[number]['key']
@@ -248,7 +243,7 @@ export const DEFAULT_PROSPECTION_SETTINGS: ProspectionSettingsInput = {
   daysOfWeek: [1, 4],
   runHour: 9,
   departments: [],
-  excludedNafSections: ['K', 'L', 'O', 'T', 'U'],
+  excludedNafSections: [],
   maxCompaniesPerRun: 20,
   sources: ['job_postings'],
   acceptedIntermediaries: ['consulting', 'recruiters', 'platforms'],
