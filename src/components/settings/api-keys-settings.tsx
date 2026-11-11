@@ -139,9 +139,8 @@ function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvid
           Votre IA
         </CardTitle>
         <CardDescription>
-          Sophie rédige vos messages avec l&apos;IA de votre choix. Collez la clé de votre compte : Filonea reconnaît le
-          service (OpenAI, Gemini, Mistral, DeepSeek, Groq, OpenRouter, Grok), la vérifie et l&apos;enregistre. La
-          recherche sur le web de Sophie fonctionne avec OpenAI et Gemini.
+          Sophie a besoin d&apos;une IA pour rédiger vos messages, par exemple ChatGPT (OpenAI) ou Gemini (Google).
+          Créez une clé sur le site de cette IA, puis collez-la ci-dessous : Filonea s&apos;occupe du reste.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -323,8 +322,7 @@ function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvid
           {showHelp && (
             <div className="mt-2 space-y-3 text-sm text-muted-foreground">
               <p>
-                Le plus simple : OpenAI (Sophie peut aussi chercher sur le web), ou Gemini, gratuit. Pour Claude, passez par
-                une clé OpenRouter.
+                Le plus simple : OpenAI, ou Gemini, qui est gratuit. Pour Claude, passez par une clé OpenRouter.
               </p>
               {AI_HELP.map((help) => (
                 <div key={help.provider}>

@@ -93,6 +93,11 @@ export default function PrivacyPage() {
           <strong>Stripe</strong> : paiement de l&apos;abonnement. Filonea ne voit jamais votre numéro de carte.
         </li>
         <li>
+          <strong>Tavily</strong> (États-Unis) : recherche sur Internet pour la recherche par technologie, quand votre IA
+          n&apos;a pas la sienne. Seuls des mots de recherche lui sont envoyés (technologies, type d&apos;entreprise),
+          jamais vos données ni celles de vos prospects.
+        </li>
+        <li>
           <strong>L&apos;IA et le service de recherche d&apos;e-mails que vous avez choisis</strong> (OpenAI, Google
           Gemini, Hunter ou un autre) : quand vous demandez un message ou une recherche, les informations utiles
           (fiche de l&apos;entreprise, prénom et poste du contact, votre présentation) leur sont envoyées avec votre

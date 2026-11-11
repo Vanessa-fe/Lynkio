@@ -8,7 +8,7 @@
 // generateJson, et l'ouvrir dans src/lib/constants/api-keys.ts et src/lib/api-key-checks.ts.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { UserFacingError } from './errors.ts'
+import { NoNativeWebSearchError, UserFacingError } from './errors.ts'
 
 export type AiProvider = 'openai' | 'gemini' | 'custom'
 
@@ -172,7 +172,7 @@ function extractJson(text: string): string {
 async function chatCompletionsJson(request: JsonRequest): Promise<JsonResult> {
   const { access } = request
   if (request.webSearch) {
-    throw new UserFacingError(
+    throw new NoNativeWebSearchError(
       'La recherche sur le web n\'est possible qu\'avec une clé OpenAI, ou Gemini avec la facturation Google : ajoutez-en une dans Paramètres > Vos clés.'
     )
   }
@@ -265,7 +265,7 @@ async function geminiJson(request: JsonRequest): Promise<JsonResult> {
     // Clé invalide : Google répond 400 « API key not valid »
     if (response.status === 400 && /api key/i.test(detail)) throw providerError('gemini', 401, detail, request.task)
     if (response.status === 429 && request.webSearch) {
-      throw new UserFacingError(
+      throw new NoNativeWebSearchError(
         'La recherche web de Gemini n\'est pas incluse dans l\'offre gratuite de Google : activez la facturation dans Google AI Studio, ou ajoutez une clé OpenAI pour cette recherche.'
       )
     }
