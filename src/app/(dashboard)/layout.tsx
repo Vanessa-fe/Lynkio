@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { MobileNav } from '@/components/layout/mobile-nav'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
+import { NavigationProgress } from '@/components/layout/navigation-progress'
 
 export default async function DashboardLayout({
   children,
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <NavigationProgress />
       <PostHogIdentify userId={profile.id} email={user?.email ?? null} professionKey={profile.profession_key} />
       <Sidebar />
       <div className="md:pl-64">
