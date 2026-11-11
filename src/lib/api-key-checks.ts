@@ -1,20 +1,24 @@
 import 'server-only'
+import Anthropic from '@anthropic-ai/sdk'
 import type { ApiKeyProvider } from '@/lib/constants/api-keys'
-import { isSafeApiBaseUrl } from '@/lib/url-safety'
-import { pickModel } from '@/lib/ai-key-detection'
 
 const TIMEOUT_MS = 10_000
 
-export type KeyCheck = { ok: true } | { ok: false; error: string }
+// warning : la clé est bonne, mais quelque chose est à savoir (recherche sur Internet impossible…)
+export type KeyCheck = { ok: true; warning?: string } | { ok: false; error: string }
+
+const noWebSearch = (model: string) =>
+  `Clé enregistrée, mais le modèle « ${model} » ne permet pas la recherche sur Internet : la recherche par technologie ne marchera pas. Laissez le champ Modèle vide pour le modèle conseillé.`
 
 /**
  * Vérifie une clé auprès de son service avant de l'enregistrer, sans rien dépenser :
- * lecture de la fiche du modèle (OpenAI) ou du compte (Hunter).
+ * lecture de la fiche du modèle (OpenAI, Gemini, Claude) ou du compte (Hunter).
  */
 export async function checkApiKey(provider: ApiKeyProvider, key: string, model: string | null): Promise<KeyCheck> {
   try {
     if (provider === 'openai') return await checkOpenAi(key, model ?? '')
     if (provider === 'gemini') return await checkGemini(key, model ?? '')
+    if (provider === 'anthropic') return await checkAnthropic(key, model ?? '')
     return await checkHunter(key)
   } catch (error) {
     if (error instanceof DOMException && error.name === 'TimeoutError') {
@@ -30,7 +34,10 @@ async function checkOpenAi(key: string, model: string): Promise<KeyCheck> {
     signal: AbortSignal.timeout(TIMEOUT_MS),
     cache: 'no-store',
   })
-  if (response.ok) return { ok: true }
+  if (response.ok) {
+    // Pas de recherche sur Internet avec les modèles « nano » (documentation OpenAI, 11/11/2026)
+    return /nano/i.test(model) ? { ok: true, warning: noWebSearch(model) } : { ok: true }
+  }
   if (response.status === 401) return { ok: false, error: 'OpenAI refuse cette clé : vérifiez que vous l\'avez copiée en entier.' }
   if (response.status === 403) {
     return { ok: false, error: 'Cette clé n\'a pas accès aux modèles : donnez-lui l\'accès complet (« All ») sur OpenAI.' }
@@ -49,7 +56,14 @@ async function checkGemini(key: string, model: string): Promise<KeyCheck> {
     signal: AbortSignal.timeout(TIMEOUT_MS),
     cache: 'no-store',
   })
-  if (response.ok) return { ok: true }
+  if (response.ok) {
+    if (/gemma/i.test(model)) return { ok: true, warning: noWebSearch(model) }
+    // L'offre gratuite de Google ne comprend pas la recherche sur Internet
+    return {
+      ok: true,
+      warning: 'Bon à savoir : pour la recherche par technologie, Gemini demande d\'activer la facturation dans Google AI Studio.',
+    }
+  }
   // Clé invalide : Google répond 400 « API key not valid »
   if (response.status === 400 || response.status === 401 || response.status === 403) {
     return { ok: false, error: 'Google refuse cette clé : vérifiez que vous l\'avez copiée en entier.' }
@@ -59,6 +73,37 @@ async function checkGemini(key: string, model: string): Promise<KeyCheck> {
   }
   if (response.status === 429) return { ok: false, error: 'Google reçoit trop de demandes : réessayez dans un instant.' }
   return { ok: false, error: `Google n'a pas pu vérifier la clé (erreur ${response.status}) : réessayez plus tard.` }
+}
+
+// Fiche du modèle chez Anthropic (gratuit) : vérifie la clé et dit si le modèle sait chercher sur Internet
+async function checkAnthropic(key: string, model: string): Promise<KeyCheck> {
+  const client = new Anthropic({ apiKey: key, maxRetries: 0, timeout: TIMEOUT_MS })
+  try {
+    const info = (await client.models.retrieve(model)) as {
+      capabilities?: { server_tools?: { web_search?: { supported?: boolean } } }
+    }
+    return info.capabilities?.server_tools?.web_search?.supported === false ? { ok: true, warning: noWebSearch(model) } : { ok: true }
+  } catch (error) {
+    if (error instanceof Anthropic.AuthenticationError) {
+      return { ok: false, error: 'Anthropic refuse cette clé : vérifiez que vous l\'avez copiée en entier.' }
+    }
+    if (error instanceof Anthropic.PermissionDeniedError) {
+      return { ok: false, error: 'Cette clé n\'a pas le droit d\'utiliser Claude : vérifiez ses droits sur platform.claude.com.' }
+    }
+    if (error instanceof Anthropic.NotFoundError) {
+      return { ok: false, error: `Le modèle « ${model} » n'est pas disponible avec cette clé : laissez le champ Modèle vide.` }
+    }
+    if (error instanceof Anthropic.RateLimitError) {
+      return { ok: false, error: 'Anthropic reçoit trop de demandes : réessayez dans un instant.' }
+    }
+    if (error instanceof Anthropic.APIConnectionTimeoutError) {
+      return { ok: false, error: 'Le service n\'a pas répondu à temps : réessayez dans un instant.' }
+    }
+    if (error instanceof Anthropic.APIError) {
+      return { ok: false, error: `Anthropic n'a pas pu vérifier la clé (erreur ${error.status ?? '?'}) : réessayez plus tard.` }
+    }
+    throw error
+  }
 }
 
 async function checkHunter(key: string): Promise<KeyCheck> {
@@ -73,62 +118,4 @@ async function checkHunter(key: string): Promise<KeyCheck> {
   }
   if (response.status === 429) return { ok: false, error: 'Hunter reçoit trop de demandes : réessayez dans un instant.' }
   return { ok: false, error: `Hunter n'a pas pu vérifier la clé (erreur ${response.status}) : réessayez plus tard.` }
-}
-
-export type CustomKeyCheck = { ok: true; model: string } | { ok: false; error: string }
-
-/**
- * Services compatibles OpenAI : la liste des modèles du service (GET /models) vérifie la clé et le
- * modèle sans rien dépenser. Sans modèle indiqué, on prend le premier de la liste qui correspond aux
- * préférences du service.
- */
-export async function checkCustomAiKey(
-  baseUrl: string,
-  key: string,
-  model: string | null,
-  preferences: string[] = []
-): Promise<CustomKeyCheck> {
-  if (!isSafeApiBaseUrl(baseUrl)) return { ok: false, error: 'Adresse d\'API invalide.' }
-  let response: Response
-  try {
-    response = await fetch(`${baseUrl}/models`, {
-      headers: { Authorization: `Bearer ${key}` },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      cache: 'no-store',
-      // Une redirection pourrait mener ailleurs que l'adresse vérifiée
-      redirect: 'error',
-    })
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      return { ok: false, error: 'Le service n\'a pas répondu à temps : réessayez dans un instant.' }
-    }
-    return { ok: false, error: 'Impossible de joindre cette adresse : vérifiez-la (elle se termine souvent par /v1).' }
-  }
-  if (response.status === 401 || response.status === 403) {
-    return { ok: false, error: 'Le service refuse cette clé : vérifiez que vous l\'avez copiée en entier.' }
-  }
-  if (response.status === 404) {
-    return { ok: false, error: 'Cette adresse ne répond pas comme une API compatible OpenAI : vérifiez-la (elle se termine souvent par /v1).' }
-  }
-  if (response.status === 429) return { ok: false, error: 'Le service reçoit trop de demandes : réessayez dans un instant.' }
-  if (!response.ok) return { ok: false, error: `Le service n'a pas pu vérifier la clé (erreur ${response.status}) : réessayez plus tard.` }
-
-  const body = (await response.json().catch(() => null)) as { data?: { id?: string }[] } | null
-  const ids = (body?.data ?? []).map((entry) => entry.id).filter((id): id is string => typeof id === 'string')
-  if (!model) {
-    const picked = pickModel(ids, preferences)
-    if (!picked) {
-      return {
-        ok: false,
-        error: 'Filonea n\'a pas trouvé de modèle à conseiller chez ce service : indiquez-le dans « Choisir le service moi-même ».',
-      }
-    }
-    return { ok: true, model: picked }
-  }
-  // Certains services préfixent leurs modèles (« models/… ») : on compare aussi la fin du nom
-  const known = ids.length === 0 || ids.some((id) => id === model || id.endsWith(`/${model}`))
-  if (!known) {
-    return { ok: false, error: `Le modèle « ${model} » n'est pas proposé par ce service avec cette clé : vérifiez son nom.` }
-  }
-  return { ok: true, model }
 }

@@ -4,9 +4,16 @@ import { revalidatePath } from 'next/cache'
 import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
-import { checkApiKey, checkCustomAiKey } from '@/lib/api-key-checks'
-import { CLAUDE_KEY_MESSAGE, detectAiService, UNKNOWN_KEY_MESSAGE } from '@/lib/ai-key-detection'
-import { API_KEY_SERVICES, findAiService, isAiProvider, type ApiKeyProvider } from '@/lib/constants/api-keys'
+import { checkApiKey } from '@/lib/api-key-checks'
+import { ADMIN_KEY_MESSAGE, detectAiProvider, UNKNOWN_KEY_MESSAGE } from '@/lib/ai-key-detection'
+import {
+  AI_DEFAULT_MODELS,
+  AI_PROVIDER_LABELS,
+  API_KEY_SERVICES,
+  isAiProvider,
+  type AiProvider,
+  type ApiKeyProvider,
+} from '@/lib/constants/api-keys'
 import { aiKeySchema, aiProviderSchema, apiKeySchema, type AiKeyInput, type ApiKeyInput } from '@/lib/validations/api-keys'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 
@@ -68,7 +75,7 @@ export async function saveApiKey(input: ApiKeyInput): Promise<ActionResult> {
  */
 export async function deleteApiKey(provider: ApiKeyProvider): Promise<ActionResult> {
   try {
-    if (provider !== 'custom' && !API_KEY_SERVICES.some((service) => service.provider === provider)) {
+    if (!API_KEY_SERVICES.some((service) => service.provider === provider)) {
       return { success: false, error: 'Service inconnu' }
     }
     const user = await getAuthUser()
@@ -131,27 +138,23 @@ export async function setAiProvider(provider: string): Promise<ActionResult> {
 }
 
 /**
- * Case unique « Clé de votre IA » : reconnaît le service d'après la clé (ou prend celui choisi),
- * vérifie la clé et le modèle auprès de ce service seulement, puis l'enregistre chiffrée.
+ * Case unique « Clé de votre IA » : reconnaît le fournisseur d'après la clé (ou prend celui choisi),
+ * vérifie la clé et le modèle auprès de ce fournisseur seulement, puis l'enregistre chiffrée.
  * Sophie utilise ensuite cette IA.
  */
-export async function saveAiKey(input: AiKeyInput): Promise<ActionResult & { serviceLabel?: string }> {
+export async function saveAiKey(input: AiKeyInput): Promise<ActionResult & { serviceLabel?: string; warning?: string }> {
   try {
-    const { key, service: chosen, model, baseUrl } = aiKeySchema.parse(input)
+    const { key, service, model } = aiKeySchema.parse(input)
 
-    let serviceKey: string = chosen
-    if (chosen === 'auto') {
-      const detection = detectAiService(key)
+    let provider: AiProvider
+    if (service === 'auto') {
+      const detection = detectAiProvider(key)
       if (!detection.ok) {
-        return { success: false, error: detection.reason === 'anthropic' ? CLAUDE_KEY_MESSAGE : UNKNOWN_KEY_MESSAGE }
+        return { success: false, error: detection.reason === 'admin_key' ? ADMIN_KEY_MESSAGE : UNKNOWN_KEY_MESSAGE }
       }
-      serviceKey = detection.service
-    }
-    const service = findAiService(serviceKey)
-    if (!service) return { success: false, error: 'Service inconnu' }
-    const apiUrl = service.key === 'other' ? baseUrl : service.baseUrl
-    if (service.provider === 'custom' && !apiUrl) {
-      return { success: false, error: 'Indiquez l\'adresse de l\'API du service (elle se termine souvent par /v1).' }
+      provider = detection.provider
+    } else {
+      provider = service
     }
 
     const user = await getAuthUser()
@@ -166,29 +169,18 @@ export async function saveAiKey(input: AiKeyInput): Promise<ActionResult & { ser
     if (limitError) throw limitError
     if (!allowed) return { success: false, error: 'Trop d\'essais en une heure : réessayez un peu plus tard.' }
 
-    if (service.provider === 'custom' && apiUrl) {
-      const check = await checkCustomAiKey(apiUrl, key, model ?? (service.model || null), service.modelPreferences)
-      if (!check.ok) return { success: false, error: check.error }
-      const { error } = await supabase.rpc('save_my_custom_ai_key', { p_key: key, p_model: check.model, p_base_url: apiUrl })
-      if (error) throw error
-    } else {
-      const check = await checkApiKey(service.provider, key, model ?? service.model)
-      if (!check.ok) return { success: false, error: check.error }
-      const { error } = await supabase.rpc('save_my_api_key', { p_provider: service.provider, p_key: key, p_model: model ?? undefined })
-      if (error) throw error
-    }
+    const check = await checkApiKey(provider, key, model ?? AI_DEFAULT_MODELS[provider])
+    if (!check.ok) return { success: false, error: check.error }
 
-    const { error: profileError } = await supabase.from('user_profiles').update({ ai_provider: service.provider }).eq('id', user.id)
+    const { error } = await supabase.rpc('save_my_api_key', { p_provider: provider, p_key: key, p_model: model ?? undefined })
+    if (error) throw error
+
+    const { error: profileError } = await supabase.from('user_profiles').update({ ai_provider: provider }).eq('id', user.id)
     if (profileError) throw profileError
 
-    captureServerEvent(user.id, 'api_key_saved', {
-      provider: service.provider,
-      service: service.key,
-      detected: chosen === 'auto',
-      custom_model: model !== null,
-    })
+    captureServerEvent(user.id, 'api_key_saved', { provider, detected: service === 'auto', custom_model: model !== null })
     revalidatePath('/settings/keys')
-    return { success: true, serviceLabel: service.label }
+    return { success: true, serviceLabel: AI_PROVIDER_LABELS[provider], warning: check.warning }
   } catch (error) {
     if (error instanceof ZodError) return { success: false, error: error.errors[0]?.message ?? 'Clé invalide' }
     captureServerError(error, undefined, { action: 'saveAiKey' })

@@ -1,7 +1,7 @@
 // Détecteur « entreprises qui utilisent votre stack » (recherche par technologie)
 //
 // Lancé à la demande depuis l'onglet Prospection (il coûte une recherche IA) :
-// 1. l'IA (ou la recherche de Filonea, voir ai-research.ts) cherche sur le web des TPE / PME dont le site utilise les technologies
+// 1. l'IA cherche sur le web des TPE / PME dont le site utilise les technologies
 //    du client idéal (criteria.tech_stack) ;
 // 2. Sophie vérifie chaque site : sans la technologie dans son code, l'entreprise
 //    est écartée, quoi qu'en dise l'IA ;
@@ -58,8 +58,6 @@ export async function detectTechUsers(
   if (count <= 0) return { stats, cursor: null }
 
   const candidates = await findCompaniesUsingTech(
-    admin,
-    context.userId,
     await loadAiAccess(admin, context.userId),
     technologies.map((technology) => TECHNOLOGY_LABELS[technology]!),
     count,

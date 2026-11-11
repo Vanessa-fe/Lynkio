@@ -7,7 +7,7 @@ export type SavedApiKey = {
   provider: string
   keyHint: string
   model: string | null
-  // « Autre IA » : adresse de l'API (pas secrète)
+  // Ancienne « Autre IA » : adresse de l'API (pas secrète), plus utilisée
   baseUrl: string | null
   updatedAt: string
 }

@@ -93,7 +93,8 @@ export function TechResearchCard({ techStack, isRunning, proOnly = false }: Tech
             </Button>
             <p className="text-xs text-muted-foreground">
               Jusqu&apos;à 10 entreprises par recherche, sans celles que vous suivez déjà. Chaque recherche utilise
-              votre IA : quelques centimes au plus.
+              votre IA et sa recherche sur Internet : quelques centimes, payés à votre fournisseur. Avec Gemini, la
+              facturation Google doit être activée.
             </p>
           </>
         )}

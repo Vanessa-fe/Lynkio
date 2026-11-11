@@ -8,16 +8,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
+  AI_DEFAULT_MODELS,
+  AI_KEYS_URLS,
   AI_PROVIDER_LABELS,
-  AI_SERVICES,
+  AI_PROVIDERS,
   API_KEY_SERVICES,
-  customAiLabel,
-  findAiService,
   isAiProvider,
   type AiProvider,
   type ApiKeyService,
 } from '@/lib/constants/api-keys'
-import { CLAUDE_KEY_MESSAGE, detectAiService } from '@/lib/ai-key-detection'
+import { ADMIN_KEY_MESSAGE, detectAiProvider } from '@/lib/ai-key-detection'
 import { deleteApiKey, saveAiKey, saveApiKey, setAiProvider } from '@/lib/actions/api-keys'
 import type { SavedApiKey } from '@/lib/queries/api-keys'
 import type { AiKeyInput } from '@/lib/validations/api-keys'
@@ -41,30 +41,28 @@ export function ApiKeysSettings({ savedKeys, aiProvider }: { savedKeys: SavedApi
   )
 }
 
-// Étiquette d'une IA enregistrée : les services compatibles OpenAI portent le nom de leur service
 function aiLabel(saved: SavedApiKey): string {
-  return saved.provider === 'custom' ? customAiLabel(saved.baseUrl) : AI_PROVIDER_LABELS[saved.provider as AiProvider]
+  return AI_PROVIDER_LABELS[saved.provider as AiProvider] ?? saved.provider
 }
 
 // Ce qu'on dit de la clé pendant la saisie (le service est reconnu sans envoyer la clé)
 function detectionHint(key: string): { text: string; tone: 'ok' | 'warning' } | null {
   if (key.trim().length < 12) return null
-  const detection = detectAiService(key)
-  if (detection.ok) return { text: `Clé ${findAiService(detection.service)?.label ?? ''} reconnue`, tone: 'ok' }
-  if (detection.reason === 'anthropic') return { text: CLAUDE_KEY_MESSAGE, tone: 'warning' }
-  return { text: 'Clé non reconnue : vérifiez-la, ou choisissez le service vous-même ci-dessous.', tone: 'warning' }
+  const detection = detectAiProvider(key)
+  if (detection.ok) return { text: `Clé ${AI_PROVIDER_LABELS[detection.provider]} reconnue`, tone: 'ok' }
+  if (detection.reason === 'admin_key') return { text: ADMIN_KEY_MESSAGE, tone: 'warning' }
+  return { text: 'Clé non reconnue : Filonea accepte les clés OpenAI, Claude et Gemini. Vérifiez-la, ou choisissez le service ci-dessous.', tone: 'warning' }
 }
 
 const AI_HELP = API_KEY_SERVICES.filter((service) => isAiProvider(service.provider))
 
-// Case unique « Clé de votre IA » : on colle sa clé, Filonea reconnaît le service, la vérifie et l'enregistre
+// Case unique « Clé de votre IA » : on colle sa clé, Filonea reconnaît le fournisseur, la vérifie et l'enregistre
 function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvider | null }) {
   const router = useRouter()
   const { toast } = useToast()
   const [key, setKey] = useState('')
   const [service, setService] = useState('auto')
   const [model, setModel] = useState('')
-  const [baseUrl, setBaseUrl] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [showHelp, setShowHelp] = useState(saved.length === 0)
@@ -73,7 +71,7 @@ function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvid
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
 
   const active = current ?? saved[0]?.provider ?? null
-  const chosenService = service === 'auto' ? null : findAiService(service)
+  const chosenService = service !== 'auto' && isAiProvider(service) ? service : null
   const hint = service === 'auto' ? detectionHint(key) : null
 
   const handleSubmit = async (event: FormEvent) => {
@@ -81,13 +79,16 @@ function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvid
     setError(null)
     setIsSaving(true)
     try {
-      const result = await saveAiKey({ key, service: service as AiKeyInput['service'], model: model || undefined, baseUrl: baseUrl || undefined })
+      const result = await saveAiKey({ key, service: service as AiKeyInput['service'], model: model || undefined })
       if (!result.success) {
         setError(result.error ?? 'Clé refusée')
         return
       }
       setKey('')
-      toast({ title: `Clé ${result.serviceLabel ?? ''} vérifiée et enregistrée`, description: 'Sophie utilise maintenant cette IA.' })
+      toast({
+        title: `Clé ${result.serviceLabel ?? ''} vérifiée et enregistrée`,
+        description: result.warning ?? 'Sophie utilise maintenant cette IA.',
+      })
       router.refresh()
     } catch {
       setError(CONNECTION_ERROR)
@@ -139,8 +140,8 @@ function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvid
           Votre IA
         </CardTitle>
         <CardDescription>
-          Sophie a besoin d&apos;une IA pour rédiger vos messages, par exemple ChatGPT (OpenAI) ou Gemini (Google).
-          Créez une clé sur le site de cette IA, puis collez-la ci-dessous : Filonea s&apos;occupe du reste.
+          Sophie a besoin d&apos;une IA pour rédiger vos messages : ChatGPT (OpenAI), Claude (Anthropic) ou Gemini
+          (Google). Créez une clé sur le site de cette IA, puis collez-la ci-dessous : Filonea s&apos;occupe du reste.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -244,50 +245,31 @@ function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvid
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-md"
                   >
                     <option value="auto">Reconnaître d&apos;après la clé</option>
-                    {AI_SERVICES.map((candidate) => (
-                      <option key={candidate.key} value={candidate.key}>
-                        {candidate.label}
+                    {AI_PROVIDERS.map((candidate) => (
+                      <option key={candidate} value={candidate}>
+                        {AI_PROVIDER_LABELS[candidate]}
                       </option>
                     ))}
                   </select>
-                  {chosenService?.keysUrl && (
+                  {chosenService && (
                     <a
-                      href={chosenService.keysUrl}
+                      href={AI_KEYS_URLS[chosenService]}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-0.5 text-sm text-primary hover:underline"
                     >
-                      Créer ma clé {chosenService.label}
+                      Créer ma clé {AI_PROVIDER_LABELS[chosenService]}
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   )}
                 </div>
-                {chosenService?.key === 'other' && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="ai-url">Adresse de l&apos;API</Label>
-                    <Input
-                      id="ai-url"
-                      value={baseUrl}
-                      onChange={(event) => setBaseUrl(event.target.value)}
-                      placeholder="https://api.exemple.com/v1"
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                  </div>
-                )}
                 <div className="space-y-1.5">
-                  <Label htmlFor="ai-model">{chosenService?.key === 'other' ? 'Modèle' : 'Modèle (facultatif)'}</Label>
+                  <Label htmlFor="ai-model">Modèle (facultatif)</Label>
                   <Input
                     id="ai-model"
                     value={model}
                     onChange={(event) => setModel(event.target.value)}
-                    placeholder={
-                      chosenService?.key === 'other'
-                        ? 'Nom du modèle, tel qu’indiqué par le service'
-                        : chosenService?.model
-                          ? `${chosenService.model} (conseillé)`
-                          : 'Choisi par Filonea si vide'
-                    }
+                    placeholder={chosenService ? `${AI_DEFAULT_MODELS[chosenService]} (conseillé)` : 'Modèle conseillé si vide'}
                     autoComplete="off"
                     spellCheck={false}
                   />
@@ -303,7 +285,7 @@ function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvid
           )}
           <Button
             type="submit"
-            disabled={isSaving || key.trim().length === 0 || (chosenService?.key === 'other' && (!baseUrl.trim() || !model.trim()))}
+            disabled={isSaving || key.trim().length === 0}
           >
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Vérifier et enregistrer
@@ -322,7 +304,8 @@ function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvid
           {showHelp && (
             <div className="mt-2 space-y-3 text-sm text-muted-foreground">
               <p>
-                Le plus simple : OpenAI, ou Gemini, qui est gratuit. Pour Claude, passez par une clé OpenRouter.
+                Le plus simple : OpenAI ou Claude. Gemini est gratuit pour rédiger, mais sa recherche sur Internet demande
+                la facturation Google.
               </p>
               {AI_HELP.map((help) => (
                 <div key={help.provider}>
