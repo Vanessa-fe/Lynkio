@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle, KeyRound, Radar } from 'lucide-react'
+import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle, KeyRound, Radar, Lightbulb } from 'lucide-react'
 
 const settingsCards = [
   {
@@ -50,6 +50,14 @@ const settingsCards = [
     href: '/settings/extension',
     color: 'text-sky-500',
     bgColor: 'bg-sky-500/10',
+  },
+  {
+    title: 'Boîte à idées',
+    description: 'Un besoin, une idée, un problème : écrivez-nous',
+    icon: Lightbulb,
+    href: '/ideas',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500/10',
   },
   {
     title: 'Thèmes',
