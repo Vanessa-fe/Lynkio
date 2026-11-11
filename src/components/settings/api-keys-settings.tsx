@@ -2,24 +2,25 @@
 
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, ExternalLink, KeyRound, Loader2, Trash2 } from 'lucide-react'
+import { CheckCircle2, ExternalLink, KeyRound, Loader2, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   AI_PROVIDER_LABELS,
+  AI_SERVICES,
   API_KEY_SERVICES,
-  CUSTOM_AI_PRESETS,
-  DEFAULT_CUSTOM_AI,
-  OTHER_CUSTOM_AI,
   customAiLabel,
+  findAiService,
   isAiProvider,
   type AiProvider,
   type ApiKeyService,
 } from '@/lib/constants/api-keys'
-import { deleteApiKey, saveApiKey, saveCustomAiKey, setAiProvider } from '@/lib/actions/api-keys'
+import { CLAUDE_KEY_MESSAGE, detectAiService } from '@/lib/ai-key-detection'
+import { deleteApiKey, saveAiKey, saveApiKey, setAiProvider } from '@/lib/actions/api-keys'
 import type { SavedApiKey } from '@/lib/queries/api-keys'
+import type { AiKeyInput } from '@/lib/validations/api-keys'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 
@@ -28,29 +29,333 @@ const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZon
 export function ApiKeysSettings({ savedKeys, aiProvider }: { savedKeys: SavedApiKey[]; aiProvider: AiProvider | null }) {
   const savedAi = savedKeys.filter((saved) => isAiProvider(saved.provider))
   const find = (provider: string) => savedKeys.find((saved) => saved.provider === provider) ?? null
-  const aiServices = API_KEY_SERVICES.filter((service) => isAiProvider(service.provider))
   const otherServices = API_KEY_SERVICES.filter((service) => !isAiProvider(service.provider))
 
   return (
     <div className="space-y-4">
-      {savedAi.length > 1 && <AiProviderChoice saved={savedAi} current={aiProvider} />}
-      {aiServices.map((service) => (
-        <ApiKeyCard key={service.provider} service={service} saved={find(service.provider)} />
-      ))}
-      <CustomAiCard saved={find('custom')} />
+      <AiKeyCard saved={savedAi} current={aiProvider} />
       {otherServices.map((service) => (
         <ApiKeyCard key={service.provider} service={service} saved={find(service.provider)} />
       ))}
-      <p className="text-sm text-muted-foreground">
-        Claude (Anthropic) arrivera bientôt en direct ; en attendant, il est accessible avec OpenRouter dans « Autre IA ».
-      </p>
     </div>
   )
 }
 
-// Étiquette d'une IA enregistrée : « Autre IA » porte le nom de son service
+// Étiquette d'une IA enregistrée : les services compatibles OpenAI portent le nom de leur service
 function aiLabel(saved: SavedApiKey): string {
   return saved.provider === 'custom' ? customAiLabel(saved.baseUrl) : AI_PROVIDER_LABELS[saved.provider as AiProvider]
+}
+
+// Ce qu'on dit de la clé pendant la saisie (le service est reconnu sans envoyer la clé)
+function detectionHint(key: string): { text: string; tone: 'ok' | 'warning' } | null {
+  if (key.trim().length < 12) return null
+  const detection = detectAiService(key)
+  if (detection.ok) return { text: `Clé ${findAiService(detection.service)?.label ?? ''} reconnue`, tone: 'ok' }
+  if (detection.reason === 'anthropic') return { text: CLAUDE_KEY_MESSAGE, tone: 'warning' }
+  return { text: 'Clé non reconnue : vérifiez-la, ou choisissez le service vous-même ci-dessous.', tone: 'warning' }
+}
+
+const AI_HELP = API_KEY_SERVICES.filter((service) => isAiProvider(service.provider))
+
+// Case unique « Clé de votre IA » : on colle sa clé, Filonea reconnaît le service, la vérifie et l'enregistre
+function AiKeyCard({ saved, current }: { saved: SavedApiKey[]; current: AiProvider | null }) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [key, setKey] = useState('')
+  const [service, setService] = useState('auto')
+  const [model, setModel] = useState('')
+  const [baseUrl, setBaseUrl] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showHelp, setShowHelp] = useState(saved.length === 0)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [pending, setPending] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
+
+  const active = current ?? saved[0]?.provider ?? null
+  const chosenService = service === 'auto' ? null : findAiService(service)
+  const hint = service === 'auto' ? detectionHint(key) : null
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault()
+    setError(null)
+    setIsSaving(true)
+    try {
+      const result = await saveAiKey({ key, service: service as AiKeyInput['service'], model: model || undefined, baseUrl: baseUrl || undefined })
+      if (!result.success) {
+        setError(result.error ?? 'Clé refusée')
+        return
+      }
+      setKey('')
+      toast({ title: `Clé ${result.serviceLabel ?? ''} vérifiée et enregistrée`, description: 'Sophie utilise maintenant cette IA.' })
+      router.refresh()
+    } catch {
+      setError(CONNECTION_ERROR)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const choose = async (entry: SavedApiKey) => {
+    setPending(entry.provider)
+    try {
+      const result = await setAiProvider(entry.provider)
+      if (!result.success) {
+        toast({ title: 'Changement impossible', description: result.error, variant: 'destructive' })
+        return
+      }
+      toast({ title: `Sophie utilise maintenant ${aiLabel(entry)}` })
+      router.refresh()
+    } catch {
+      toast({ title: 'Changement impossible', description: CONNECTION_ERROR, variant: 'destructive' })
+    } finally {
+      setPending(null)
+    }
+  }
+
+  const remove = async (entry: SavedApiKey) => {
+    setPending(entry.provider)
+    try {
+      const result = await deleteApiKey(entry.provider as AiProvider)
+      if (!result.success) {
+        toast({ title: 'Suppression impossible', description: result.error, variant: 'destructive' })
+        return
+      }
+      toast({ title: `Clé ${aiLabel(entry)} supprimée` })
+      router.refresh()
+    } catch {
+      toast({ title: 'Suppression impossible', description: CONNECTION_ERROR, variant: 'destructive' })
+    } finally {
+      setPending(null)
+      setConfirmingDelete(null)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Sparkles className="h-5 w-5 text-primary" />
+          Votre IA
+        </CardTitle>
+        <CardDescription>
+          Sophie rédige vos messages avec l&apos;IA de votre choix. Collez la clé de votre compte : Filonea reconnaît le
+          service (OpenAI, Gemini, Mistral, DeepSeek, Groq, OpenRouter, Grok), la vérifie et l&apos;enregistre. La
+          recherche sur le web de Sophie fonctionne avec OpenAI et Gemini.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {saved.length > 0 && (
+          <ul className="space-y-2">
+            {saved.map((entry) => {
+              const isActive = entry.provider === active
+              return (
+                <li
+                  key={entry.provider}
+                  className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm ${
+                    isActive ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40' : ''
+                  }`}
+                >
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    {isActive && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                    <span className="font-medium">{aiLabel(entry)}</span>
+                    <span className="text-muted-foreground">
+                      clé …<code className="font-mono">{entry.keyHint}</code>
+                      {entry.model ? ` · modèle ${entry.model}` : ''} · {dateFormat.format(new Date(entry.updatedAt))}
+                    </span>
+                    {isActive && saved.length > 1 && <span className="text-emerald-700 dark:text-emerald-400">· utilisée par Sophie</span>}
+                  </span>
+                  {confirmingDelete === entry.provider ? (
+                    <span className="flex items-center gap-2">
+                      <Button type="button" variant="destructive" size="sm" onClick={() => remove(entry)} disabled={pending !== null}>
+                        {pending === entry.provider && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+                        Confirmer la suppression
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmingDelete(null)} disabled={pending !== null}>
+                        Annuler
+                      </Button>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      {!isActive && (
+                        <Button type="button" variant="outline" size="sm" onClick={() => choose(entry)} disabled={pending !== null}>
+                          {pending === entry.provider && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+                          Utiliser
+                        </Button>
+                      )}
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmingDelete(entry.provider)}>
+                        <Trash2 className="h-4 w-4" />
+                        <span className="ml-1">Supprimer</span>
+                      </Button>
+                    </span>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+          <div className="space-y-1.5">
+            <Label htmlFor="ai-key">{saved.length > 0 ? 'Ajouter ou remplacer une clé' : 'Clé de votre IA'}</Label>
+            <Input
+              id="ai-key"
+              type="password"
+              value={key}
+              onChange={(event) => {
+                setKey(event.target.value)
+                setError(null)
+              }}
+              placeholder="Collez votre clé ici"
+              autoComplete="off"
+              spellCheck={false}
+              aria-invalid={error ? true : undefined}
+              aria-describedby="ai-key-hint"
+            />
+            <p
+              id="ai-key-hint"
+              aria-live="polite"
+              className={`text-sm ${hint?.tone === 'warning' ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'}`}
+            >
+              {hint?.text}
+            </p>
+          </div>
+
+          <div>
+            <button
+              type="button"
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+              onClick={() => setShowAdvanced((shown) => !shown)}
+              aria-expanded={showAdvanced}
+            >
+              {showAdvanced ? 'Laisser Filonea reconnaître le service' : 'Choisir le service moi-même'}
+            </button>
+            {showAdvanced && (
+              <div className="mt-3 space-y-3 rounded-lg border p-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ai-service">Service</Label>
+                  <select
+                    id="ai-service"
+                    value={service}
+                    onChange={(event) => {
+                      setService(event.target.value)
+                      setModel('')
+                      setError(null)
+                    }}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-md"
+                  >
+                    <option value="auto">Reconnaître d&apos;après la clé</option>
+                    {AI_SERVICES.map((candidate) => (
+                      <option key={candidate.key} value={candidate.key}>
+                        {candidate.label}
+                      </option>
+                    ))}
+                  </select>
+                  {chosenService?.keysUrl && (
+                    <a
+                      href={chosenService.keysUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-0.5 text-sm text-primary hover:underline"
+                    >
+                      Créer ma clé {chosenService.label}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+                {chosenService?.key === 'other' && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ai-url">Adresse de l&apos;API</Label>
+                    <Input
+                      id="ai-url"
+                      value={baseUrl}
+                      onChange={(event) => setBaseUrl(event.target.value)}
+                      placeholder="https://api.exemple.com/v1"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label htmlFor="ai-model">{chosenService?.key === 'other' ? 'Modèle' : 'Modèle (facultatif)'}</Label>
+                  <Input
+                    id="ai-model"
+                    value={model}
+                    onChange={(event) => setModel(event.target.value)}
+                    placeholder={
+                      chosenService?.key === 'other'
+                        ? 'Nom du modèle, tel qu’indiqué par le service'
+                        : chosenService?.model
+                          ? `${chosenService.model} (conseillé)`
+                          : 'Choisi par Filonea si vide'
+                    }
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <Button
+            type="submit"
+            disabled={isSaving || key.trim().length === 0 || (chosenService?.key === 'other' && (!baseUrl.trim() || !model.trim()))}
+          >
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Vérifier et enregistrer
+          </Button>
+        </form>
+
+        <div>
+          <button
+            type="button"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            onClick={() => setShowHelp((shown) => !shown)}
+            aria-expanded={showHelp}
+          >
+            {showHelp ? 'Masquer l’aide' : 'Je n’ai pas encore de clé'}
+          </button>
+          {showHelp && (
+            <div className="mt-2 space-y-3 text-sm text-muted-foreground">
+              <p>
+                Le plus simple : OpenAI (Sophie peut aussi chercher sur le web), ou Gemini, gratuit. Pour Claude, passez par
+                une clé OpenRouter.
+              </p>
+              {AI_HELP.map((help) => (
+                <div key={help.provider}>
+                  <p className="font-medium text-foreground">{help.label}</p>
+                  <ol className="mt-1 list-decimal space-y-1 pl-5">
+                    {help.steps.map((step) => (
+                      <li key={step.text}>
+                        {step.text}{' '}
+                        {step.url && (
+                          <a
+                            href={step.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-0.5 text-primary hover:underline"
+                          >
+                            {step.linkLabel}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mt-1">{help.cost}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 function ApiKeyCard({ service, saved }: { service: ApiKeyService; saved: SavedApiKey | null }) {
@@ -205,242 +510,6 @@ function ApiKeyCard({ service, saved }: { service: ApiKeyService; saved: SavedAp
             </p>
           )}
           <Button type="submit" disabled={isSaving || key.trim().length === 0}>
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Vérifier et enregistrer
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-  )
-}
-
-// Deux clés d'IA enregistrées : l'utilisateur choisit celle que Sophie utilise
-function AiProviderChoice({ saved, current }: { saved: SavedApiKey[]; current: AiProvider | null }) {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [pending, setPending] = useState<string | null>(null)
-  const selected = current ?? saved[0]?.provider
-
-  const choose = async (entry: SavedApiKey) => {
-    if (entry.provider === selected) return
-    setPending(entry.provider)
-    try {
-      const result = await setAiProvider(entry.provider)
-      if (!result.success) {
-        toast({ title: 'Changement impossible', description: result.error, variant: 'destructive' })
-        return
-      }
-      toast({ title: `Sophie utilise maintenant ${aiLabel(entry)}` })
-      router.refresh()
-    } catch {
-      toast({ title: 'Changement impossible', description: CONNECTION_ERROR, variant: 'destructive' })
-    } finally {
-      setPending(null)
-    }
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">IA utilisée par Sophie</CardTitle>
-        <CardDescription>Vous avez enregistré plusieurs IA : choisissez celle qui rédige vos messages.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div role="radiogroup" aria-label="IA utilisée par Sophie" className="flex flex-wrap gap-2">
-          {saved.map((entry) => (
-            <Button
-              key={entry.provider}
-              type="button"
-              role="radio"
-              aria-checked={entry.provider === selected}
-              variant={entry.provider === selected ? 'default' : 'outline'}
-              onClick={() => choose(entry)}
-              disabled={pending !== null}
-            >
-              {pending === entry.provider && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {aiLabel(entry)}
-            </Button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// « Autre IA » : n'importe quel service compatible avec l'API d'OpenAI
-function CustomAiCard({ saved }: { saved: SavedApiKey | null }) {
-  const router = useRouter()
-  const { toast } = useToast()
-  const initialPreset =
-    CUSTOM_AI_PRESETS.find((preset) => preset.baseUrl && preset.baseUrl === saved?.baseUrl) ??
-    (saved ? OTHER_CUSTOM_AI : DEFAULT_CUSTOM_AI)
-  const [presetKey, setPresetKey] = useState(initialPreset.key)
-  const [baseUrl, setBaseUrl] = useState(saved?.baseUrl ?? initialPreset.baseUrl)
-  const [model, setModel] = useState(saved?.model ?? initialPreset.model)
-  const [key, setKey] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const preset = CUSTOM_AI_PRESETS.find((candidate) => candidate.key === presetKey) ?? DEFAULT_CUSTOM_AI
-
-  const choosePreset = (next: string) => {
-    const chosen = CUSTOM_AI_PRESETS.find((candidate) => candidate.key === next) ?? DEFAULT_CUSTOM_AI
-    setPresetKey(chosen.key)
-    setBaseUrl(chosen.baseUrl)
-    setModel(chosen.model)
-    setError(null)
-  }
-
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault()
-    setError(null)
-    setIsSaving(true)
-    try {
-      const result = await saveCustomAiKey({ baseUrl, model, key })
-      if (!result.success) {
-        setError(result.error ?? 'Clé refusée')
-        return
-      }
-      setKey('')
-      toast({ title: 'Clé vérifiée et enregistrée', description: 'Sophie utilise maintenant cette IA.' })
-      router.refresh()
-    } catch {
-      setError(CONNECTION_ERROR)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    setIsDeleting(true)
-    try {
-      const result = await deleteApiKey('custom')
-      if (!result.success) {
-        toast({ title: 'Suppression impossible', description: result.error, variant: 'destructive' })
-        return
-      }
-      toast({ title: 'Clé supprimée' })
-      router.refresh()
-    } catch {
-      toast({ title: 'Suppression impossible', description: CONNECTION_ERROR, variant: 'destructive' })
-    } finally {
-      setIsDeleting(false)
-      setConfirmingDelete(false)
-    }
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <KeyRound className="h-5 w-5 text-primary" />
-          Autre IA
-        </CardTitle>
-        <CardDescription>
-          Mistral, DeepSeek, Groq, OpenRouter (pour Claude, Llama…), Grok, ou tout service compatible avec l&apos;API
-          d&apos;OpenAI : Sophie rédige vos messages avec l&apos;IA de votre choix. La recherche sur le web reste réservée
-          à OpenAI et Gemini.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {saved && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm dark:border-emerald-900 dark:bg-emerald-950/40">
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              {customAiLabel(saved.baseUrl)} · clé …<code className="font-mono">{saved.keyHint}</code>
-              {saved.model ? ` · modèle ${saved.model}` : ''}
-            </span>
-            {confirmingDelete ? (
-              <span className="flex items-center gap-2">
-                <Button type="button" variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
-                  {isDeleting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-                  Confirmer la suppression
-                </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmingDelete(false)} disabled={isDeleting}>
-                  Annuler
-                </Button>
-              </span>
-            ) : (
-              <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmingDelete(true)}>
-                <Trash2 className="h-4 w-4" />
-                <span className="ml-1">Supprimer</span>
-              </Button>
-            )}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
-          <div className="space-y-1.5">
-            <Label htmlFor="custom-ai-service">Service</Label>
-            <select
-              id="custom-ai-service"
-              value={presetKey}
-              onChange={(event) => choosePreset(event.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-md"
-            >
-              {CUSTOM_AI_PRESETS.map((candidate) => (
-                <option key={candidate.key} value={candidate.key}>
-                  {candidate.label}
-                </option>
-              ))}
-            </select>
-            {preset.keysUrl && (
-              <a
-                href={preset.keysUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 text-sm text-primary hover:underline"
-              >
-                Créer ma clé
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="custom-ai-url">Adresse de l&apos;API</Label>
-            <Input
-              id="custom-ai-url"
-              value={baseUrl}
-              onChange={(event) => setBaseUrl(event.target.value)}
-              placeholder="https://api.exemple.com/v1"
-              autoComplete="off"
-              spellCheck={false}
-              readOnly={preset.key !== 'other'}
-              className={preset.key !== 'other' ? 'bg-muted' : undefined}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="custom-ai-model">Modèle</Label>
-            <Input
-              id="custom-ai-model"
-              value={model}
-              onChange={(event) => setModel(event.target.value)}
-              placeholder="Nom du modèle, tel qu'indiqué par le service"
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="custom-ai-key">{saved ? 'Remplacer la clé' : 'Votre clé'}</Label>
-            <Input
-              id="custom-ai-key"
-              type="password"
-              value={key}
-              onChange={(event) => setKey(event.target.value)}
-              placeholder="Votre clé"
-              autoComplete="off"
-              spellCheck={false}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? 'custom-ai-error' : undefined}
-            />
-          </div>
-          {error && (
-            <p id="custom-ai-error" role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          <Button type="submit" disabled={isSaving || key.trim().length === 0 || !model.trim() || !baseUrl.trim()}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Vérifier et enregistrer
           </Button>
