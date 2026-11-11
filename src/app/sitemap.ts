@@ -8,5 +8,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 1,
     },
+    ...['/mentions-legales', '/conditions', '/confidentialite'].map((path) => ({
+      url: `${SITE_URL}${path}`,
+      changeFrequency: 'yearly' as const,
+      priority: 0.2,
+    })),
   ]
 }
