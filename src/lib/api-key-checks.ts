@@ -1,5 +1,6 @@
 import 'server-only'
 import type { ApiKeyProvider } from '@/lib/constants/api-keys'
+import { isSafeApiBaseUrl } from '@/lib/url-safety'
 
 const TIMEOUT_MS = 10_000
 
@@ -71,4 +72,44 @@ async function checkHunter(key: string): Promise<KeyCheck> {
   }
   if (response.status === 429) return { ok: false, error: 'Hunter reçoit trop de demandes : réessayez dans un instant.' }
   return { ok: false, error: `Hunter n'a pas pu vérifier la clé (erreur ${response.status}) : réessayez plus tard.` }
+}
+
+/**
+ * « Autre IA » : la liste des modèles du service (GET /models, commune aux API compatibles OpenAI)
+ * vérifie la clé et le modèle sans rien dépenser
+ */
+export async function checkCustomAiKey(baseUrl: string, key: string, model: string): Promise<KeyCheck> {
+  if (!isSafeApiBaseUrl(baseUrl)) return { ok: false, error: 'Adresse d\'API invalide.' }
+  let response: Response
+  try {
+    response = await fetch(`${baseUrl}/models`, {
+      headers: { Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      cache: 'no-store',
+      // Une redirection pourrait mener ailleurs que l'adresse vérifiée
+      redirect: 'error',
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      return { ok: false, error: 'Le service n\'a pas répondu à temps : réessayez dans un instant.' }
+    }
+    return { ok: false, error: 'Impossible de joindre cette adresse : vérifiez-la (elle se termine souvent par /v1).' }
+  }
+  if (response.status === 401 || response.status === 403) {
+    return { ok: false, error: 'Le service refuse cette clé : vérifiez que vous l\'avez copiée en entier.' }
+  }
+  if (response.status === 404) {
+    return { ok: false, error: 'Cette adresse ne répond pas comme une API compatible OpenAI : vérifiez-la (elle se termine souvent par /v1).' }
+  }
+  if (response.status === 429) return { ok: false, error: 'Le service reçoit trop de demandes : réessayez dans un instant.' }
+  if (!response.ok) return { ok: false, error: `Le service n'a pas pu vérifier la clé (erreur ${response.status}) : réessayez plus tard.` }
+
+  const body = (await response.json().catch(() => null)) as { data?: { id?: string }[] } | null
+  const ids = (body?.data ?? []).map((entry) => entry.id).filter((id): id is string => typeof id === 'string')
+  // Certains services préfixent leurs modèles (« models/… ») : on compare aussi la fin du nom
+  const known = ids.length === 0 || ids.some((id) => id === model || id.endsWith(`/${model}`))
+  if (!known) {
+    return { ok: false, error: `Le modèle « ${model} » n'est pas proposé par ce service avec cette clé : vérifiez son nom.` }
+  }
+  return { ok: true }
 }
