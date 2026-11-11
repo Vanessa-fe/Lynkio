@@ -3,10 +3,12 @@
 // POST { confirm: 'SUPPRIMER' }. Réponse : { deleted: true }.
 //
 // Supprimer le compte (auth.users) efface en cascade toutes ses données : profil, entreprises,
-// personnes, échanges, listes, réglages, clés chiffrées du coffre. Appelée par le serveur du site
+// personnes, échanges, listes, réglages, clés chiffrées du coffre, abonnement. Un abonnement Stripe en
+// cours est d'abord résilié. Appelée par le serveur du site
 // avec le jeton de l'utilisateur ; pas d'en-têtes CORS, un navigateur ne peut pas l'appeler directement.
 
 import { createClient } from '@supabase/supabase-js'
+import { stripeRequest } from '../_shared/stripe.ts'
 
 const CONFIRMATION = 'SUPPRIMER'
 
@@ -26,6 +28,17 @@ Deno.serve(async (request) => {
   const { data: auth } = await admin.auth.getUser(token)
   const userId = auth?.user?.id
   if (!userId) return json({ error: 'Vous devez être connecté' }, 401)
+
+  // Abonnement en cours : résilié tout de suite chez Stripe, pour ne plus rien prélever
+  const { data: billing } = await admin.from('billing').select('stripe_subscription_id, status').eq('user_id', userId).maybeSingle()
+  if (billing?.stripe_subscription_id && billing.status !== 'canceled') {
+    try {
+      await stripeRequest(`subscriptions/${encodeURIComponent(billing.stripe_subscription_id)}`, {}, 'DELETE')
+    } catch (error) {
+      console.error('delete-account: résiliation Stripe impossible', error instanceof Error ? error.message : error)
+      return json({ error: 'Impossible de résilier votre abonnement pour le moment : réessayez, ou écrivez-nous.' }, 502)
+    }
+  }
 
   const { error } = await admin.auth.admin.deleteUser(userId)
   if (error) {
