@@ -10,6 +10,8 @@ import {
   type IcpInput,
 } from '@/lib/validations/icp'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { getCurrentPlan } from '@/lib/queries/billing'
+import { NO_ACCESS_MESSAGE, PLAN_LIMITS } from '@/lib/billing'
 
 type ActionResult = {
   success: boolean
@@ -29,6 +31,16 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }
+    }
+
+    const plan = await getCurrentPlan()
+    if (!plan) return { success: false, error: NO_ACCESS_MESSAGE }
+    const maxKeywords = PLAN_LIMITS[plan].searchKeywords
+    if (validated.searchKeywords.length > maxKeywords) {
+      return {
+        success: false,
+        error: `Au plus ${maxKeywords} mots-clés de recherche avec l’offre ${plan === 'pro' ? 'Pro' : 'Essentiel'}.`,
+      }
     }
 
     const { data: icp } = await supabase

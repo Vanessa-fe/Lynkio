@@ -11,6 +11,8 @@ import {
 import { createCompany } from '@/lib/actions/companies'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import { getCurrentPlan } from '@/lib/queries/billing'
+import { NO_ACCESS_MESSAGE, PLAN_LIMITS } from '@/lib/billing'
 
 type ActionResult = {
   success: boolean
@@ -30,6 +32,23 @@ export async function saveProspectionSettings(input: ProspectionSettingsInput): 
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }
+    }
+
+    // Limites de l'offre : jours de recherche automatique et entreprises par recherche
+    const plan = await getCurrentPlan()
+    if (!plan) return { success: false, error: NO_ACCESS_MESSAGE }
+    const limits = PLAN_LIMITS[plan]
+    if (validated.isActive && validated.daysOfWeek.length > limits.daysPerWeek) {
+      return {
+        success: false,
+        error: 'Avec l’offre Essentiel, Sophie cherche un jour par semaine : gardez un seul jour, ou passez à l’offre Pro.',
+      }
+    }
+    if (validated.maxCompaniesPerRun > limits.companiesPerRun) {
+      return {
+        success: false,
+        error: `Au plus ${limits.companiesPerRun} entreprises par recherche avec l’offre ${plan === 'pro' ? 'Pro' : 'Essentiel'}.`,
+      }
     }
 
     const { error } = await supabase.from('prospection_settings').upsert({

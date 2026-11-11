@@ -11,6 +11,7 @@
 // avec leur raison (filtered), pour que l'utilisatrice puisse vérifier le tri.
 
 import { createClient } from '@supabase/supabase-js'
+import { accountPlan, planDenial } from '../_shared/plan.ts'
 import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
 import { matchesExcludedKeyword, truncate } from '../prospection-run/rules.ts'
 import { sortPosts, type SortedPost } from './sorting.ts'
@@ -124,6 +125,10 @@ Deno.serve(async (request) => {
   const { data: auth } = await admin.auth.getUser(token)
   const userId = auth?.user?.id
   if (!userId) return json({ error: 'Vous devez être connecté' }, 401)
+
+  // Recherche de posts par l'extension : offre Pro
+  const denial = planDenial(await accountPlan(admin, userId), true)
+  if (denial) return json({ error: denial.message, code: denial.code }, 403)
 
   try {
     // Un même post peut sortir de deux mots-clés : gardé une fois

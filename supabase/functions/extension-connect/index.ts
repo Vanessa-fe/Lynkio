@@ -11,6 +11,7 @@
 // Il est à usage unique, expire vite, et ne vaut que pour le compte qui l'a demandé.
 
 import { createClient } from '@supabase/supabase-js'
+import { accountPlan, planDenial } from '../_shared/plan.ts'
 
 // Le site en production (filonea.fr, filonea.com, et l'adresse Netlify avec ses aperçus de déploiement),
 // et le développement local
@@ -46,6 +47,10 @@ Deno.serve(async (request) => {
   const { data: auth } = await admin.auth.getUser(token)
   const email = auth?.user?.email
   if (!email) return json({ error: 'Vous devez être connecté' }, 401)
+
+  // Extension LinkedIn : offre Pro
+  const denial = planDenial(await accountPlan(admin, auth.user!.id), true)
+  if (denial) return json({ error: denial.message, code: denial.code }, 403)
 
   const { data, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
   const tokenHash = data?.properties?.hashed_token

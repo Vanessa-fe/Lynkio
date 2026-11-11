@@ -85,14 +85,19 @@ export async function runProspection(
   userId: string,
   runId: string,
   // Sources imposées (lancement « recherche par technologie ») ; sinon celles des réglages
-  only?: SourceKey[]
+  only?: SourceKey[],
+  // Plafonds de l'offre du compte (entreprises par passage, mots-clés de recherche)
+  limits?: { companiesPerRun: number; searchKeywords: number }
 ) {
   const results: Partial<Record<SourceKey, SourceStats>> = {}
 
   try {
     const settings = await loadSettings(admin, userId)
     const context = await loadContext(admin, userId)
-    const budget: Budget = { remaining: settings.max_companies_per_run }
+    if (limits) context.searchKeywords = context.searchKeywords.slice(0, limits.searchKeywords)
+    const budget: Budget = {
+      remaining: limits ? Math.min(settings.max_companies_per_run, limits.companiesPerRun) : settings.max_companies_per_run,
+    }
     const cursorUpdates: Record<string, string> = {}
 
     const sources: SourceKey[] = only ?? settings.sources.filter((source) => source !== 'tech_users')

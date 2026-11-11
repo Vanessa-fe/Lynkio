@@ -16,12 +16,36 @@
 // passage peut durer plus longtemps que ce qu'accepte l'hébergement de l'application.
 
 import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { runProspection, startRun } from './runner.ts'
+import { accountPlan, NO_ACCESS_MESSAGE, PLAN_LIMITS, PRO_ONLY_MESSAGE, type Plan } from '../_shared/plan.ts'
 
 // Fourni par le runtime Supabase : garde la fonction en vie après la réponse
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
 
 const SCHEDULED_BATCH_SIZE = 20
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+/**
+ * Offre Essentiel : une recherche par semaine. Renvoie la date à partir de laquelle la suivante
+ * est possible, ou null si elle l'est déjà (les passages échoués ne comptent pas).
+ */
+async function nextWeeklyRun(admin: SupabaseClient, userId: string, plan: Plan): Promise<Date | null> {
+  if (PLAN_LIMITS[plan].runsPerWeek === null) return null
+  const { data } = await admin
+    .from('pipeline_runs')
+    .select('started_at')
+    .eq('user_id', userId)
+    .neq('status', 'failed')
+    .gte('started_at', new Date(Date.now() - WEEK_MS).toISOString())
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  return data ? new Date(new Date(data.started_at).getTime() + WEEK_MS) : null
+}
+
+const frenchDay = (date: Date) =>
+  new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Paris' }).format(date)
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -54,6 +78,20 @@ Deno.serve(async (request) => {
       return json({ error: 'Vous devez être connecté' }, 401)
     }
 
+    const plan = await accountPlan(admin, data.user.id)
+    if (!plan) return json({ error: NO_ACCESS_MESSAGE, code: 'no_access' }, 403)
+    if (body.source === 'tech_users' && plan !== 'pro') return json({ error: PRO_ONLY_MESSAGE, code: 'pro_only' }, 403)
+    const nextRun = await nextWeeklyRun(admin, data.user.id, plan)
+    if (nextRun) {
+      return json(
+        {
+          error: `Avec l’offre Essentiel, Sophie cherche une fois par semaine : prochaine recherche possible ${frenchDay(nextRun)}. L’offre Pro la fait chercher jusqu’à 7 jours sur 7.`,
+          code: 'weekly_limit',
+        },
+        429
+      )
+    }
+
     const start = await startRun(admin, data.user.id, 'manual')
     if (!start.ok) {
       return json({ error: start.error }, 409)
@@ -61,7 +99,7 @@ Deno.serve(async (request) => {
 
     // « Recherche par technologie » : seulement cette source, lancée à la demande
     const only = body.source === 'tech_users' ? ['tech_users' as const] : undefined
-    EdgeRuntime.waitUntil(runProspection(admin, data.user.id, start.runId, only))
+    EdgeRuntime.waitUntil(runProspection(admin, data.user.id, start.runId, only, PLAN_LIMITS[plan]))
     return json({ runId: start.runId }, 202)
   }
 
@@ -83,9 +121,12 @@ Deno.serve(async (request) => {
     EdgeRuntime.waitUntil(
       (async () => {
         for (const userId of userIds) {
+          // Essai terminé sans abonnement, ou recherche de la semaine déjà faite (Essentiel) : rien
+          const plan = await accountPlan(admin, userId)
+          if (!plan || (await nextWeeklyRun(admin, userId, plan))) continue
           const start = await startRun(admin, userId, 'schedule')
           if (start.ok) {
-            await runProspection(admin, userId, start.runId)
+            await runProspection(admin, userId, start.runId, undefined, PLAN_LIMITS[plan])
           }
         }
       })()

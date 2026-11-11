@@ -9,6 +9,7 @@
 // Pas d'en-têtes CORS : un navigateur ne peut pas l'appeler depuis une autre page.
 
 import { createClient } from '@supabase/supabase-js'
+import { accountPlan, planDenial } from '../_shared/plan.ts'
 
 const HUNTER_URL = 'https://api.hunter.io/v2'
 const TIMEOUT_MS = 15_000
@@ -49,6 +50,10 @@ Deno.serve(async (request) => {
   const { data: auth } = await admin.auth.getUser(authorization.replace(/^Bearer\s+/i, ''))
   const userId = auth?.user?.id
   if (!userId) return json({ error: 'Vous devez être connecté' }, 401)
+
+  // Recherche d'e-mails : offre Pro
+  const denial = planDenial(await accountPlan(admin, userId), true)
+  if (denial) return json({ error: denial.message, code: denial.code }, 403)
 
   const { data: keys, error } = await admin.rpc('read_user_api_key', { p_user_id: userId, p_provider: 'hunter' })
   if (error) {
