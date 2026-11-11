@@ -31,8 +31,16 @@ export function Footer() {
       </FadeIn>
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 border-t border-ink/[0.07] px-4 py-6 text-xs text-ink/45 sm:flex-row md:px-6">
         <p>© {new Date().getFullYear()} Filonea</p>
-        <p>
-          Sources publiques · Messages relus par vous ·{' '}
+        <p className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+          <Link href="/mentions-legales" className="hover:text-ink">
+            Mentions légales
+          </Link>
+          <Link href="/conditions" className="hover:text-ink">
+            Conditions générales
+          </Link>
+          <Link href="/confidentialite" className="hover:text-ink">
+            Confidentialité
+          </Link>
           <CookieSettingsButton className="hover:text-ink" />
         </p>
       </div>

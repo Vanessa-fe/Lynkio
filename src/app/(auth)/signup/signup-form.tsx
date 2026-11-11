@@ -160,8 +160,16 @@ export function SignupForm() {
             {isLoading ? 'Création...' : 'Créer mon compte'}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            Vous recevrez de temps en temps des nouvelles de Filonea (nouveautés, conseils).
-            Un clic suffit pour vous désinscrire.
+            En créant un compte, vous acceptez les{' '}
+            <Link href="/conditions" className="underline hover:text-primary">
+              conditions générales
+            </Link>{' '}
+            et la{' '}
+            <Link href="/confidentialite" className="underline hover:text-primary">
+              politique de confidentialité
+            </Link>
+            . Vous recevrez de temps en temps des nouvelles de Filonea (nouveautés, conseils) : un clic suffit pour
+            vous désinscrire.
           </p>
           <p className="text-sm text-center text-muted-foreground">
             Vous avez déjà un compte ?{' '}

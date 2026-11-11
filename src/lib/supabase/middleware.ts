@@ -1,3 +1,4 @@
+import { LEGAL_ROUTES } from '@/lib/constants/legal'
 import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 import type { Database } from '@/types/database'
@@ -64,7 +65,9 @@ export async function updateSession(request: NextRequest) {
   )
   // Liens des e-mails : la personne n'est pas encore connectée en arrivant
   const isAuthCallback = ['/auth/callback', '/auth/confirm'].includes(request.nextUrl.pathname)
-  const isPublicRoute = isAuthRoute || isAuthCallback
+  // Pages légales : lisibles par tout le monde, connecté ou non
+  const isLegalRoute = LEGAL_ROUTES.includes(request.nextUrl.pathname)
+  const isPublicRoute = isAuthRoute || isAuthCallback || isLegalRoute
 
   // Redirection si non authentifié et accès à une route protégée
   if (!user && !isPublicRoute && request.nextUrl.pathname !== '/') {
