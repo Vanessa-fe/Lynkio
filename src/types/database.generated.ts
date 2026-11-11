@@ -427,6 +427,33 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          message: string
+          page: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          message: string
+          page?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string
+          page?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       icp_profiles: {
         Row: {
           created_at: string

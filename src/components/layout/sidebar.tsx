@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'motion/react'
-import { LogOut } from 'lucide-react'
+import { Lightbulb, LogOut } from 'lucide-react'
 import posthog from 'posthog-js'
 import { cn } from '@/lib/utils/cn'
 import { logout } from '@/lib/actions/auth'
@@ -58,7 +58,17 @@ export function Sidebar() {
             )
           })}
         </nav>
-        <div className="border-t p-3">
+        <div className="space-y-1 border-t p-3">
+          <Link
+            href="/ideas"
+            className={cn(
+              'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-foreground',
+              isActivePath(pathname, '/ideas') ? 'bg-muted text-foreground' : 'text-muted-foreground'
+            )}
+          >
+            <Lightbulb className="h-5 w-5" />
+            Boîte à idées
+          </Link>
           <button
             type="button"
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"

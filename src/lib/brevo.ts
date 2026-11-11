@@ -89,3 +89,33 @@ export async function removeBrevoContact(email: string): Promise<boolean> {
   }
   return response.ok || response.status === 404
 }
+
+const FEEDBACK_KIND_LABELS: Record<string, string> = {
+  idea: 'Idée de fonction',
+  improvement: 'Point à améliorer',
+  problem: 'Problème',
+  other: 'Autre',
+}
+
+/**
+ * Prévient l'équipe d'un message de la boîte à idées (envoyé après la réponse, sans faire attendre)
+ */
+export function notifyFeedback(feedback: { email: string | null; kind: string; message: string; page: string | null }) {
+  after(() =>
+    brevoRequest('/smtp/email', {
+      sender: { name: 'Filonea', email: process.env.BREVO_FROM_EMAIL || TEAM_INBOX },
+      to: [{ email: TEAM_INBOX }],
+      ...(feedback.email ? { replyTo: { email: feedback.email } } : {}),
+      subject: `Boîte à idées : ${FEEDBACK_KIND_LABELS[feedback.kind] ?? feedback.kind}${feedback.email ? ` de ${feedback.email}` : ''}`,
+      textContent: [
+        feedback.message,
+        '—',
+        `Type : ${FEEDBACK_KIND_LABELS[feedback.kind] ?? feedback.kind}`,
+        feedback.page ? `Envoyé depuis : ${feedback.page}` : null,
+        feedback.email ? `Répondre à : ${feedback.email}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    })
+  )
+}
