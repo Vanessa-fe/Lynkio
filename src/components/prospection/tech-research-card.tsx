@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Code2, Loader2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ProOnlyNotice } from '@/components/billing/pro-only-notice'
 import { launchTechResearch } from '@/lib/actions/prospection'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { technologyLabel } from '@/lib/constants/technologies'
@@ -15,9 +16,11 @@ interface TechResearchCardProps {
   techStack: string[]
   // Un passage est déjà en cours (recherche classique ou par technologie)
   isRunning: boolean
+  // Offre Essentiel : la recherche par technologie est réservée à Pro
+  proOnly?: boolean
 }
 
-export function TechResearchCard({ techStack, isRunning }: TechResearchCardProps) {
+export function TechResearchCard({ techStack, isRunning, proOnly = false }: TechResearchCardProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isLaunching, setIsLaunching] = useState(false)
@@ -63,7 +66,9 @@ export function TechResearchCard({ techStack, isRunning }: TechResearchCardProps
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {labels.length === 0 ? (
+        {proOnly ? (
+          <ProOnlyNotice>La recherche par technologie fait partie de l&apos;offre Pro.</ProOnlyNotice>
+        ) : labels.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Choisissez d&apos;abord vos technologies dans{' '}
             <Link href="/settings/icp" className="underline">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CalendarClock, Loader2, Play, Radar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,10 +17,14 @@ const POLL_INTERVAL_MS = 3000
 
 interface ProspectionStatusProps {
   settings: ProspectionSettings | null
+  // Prochaine recherche automatique qui aura vraiment lieu (null : désactivée)
+  nextRunAt: string | null
   runningRun: PipelineRun | null
+  // Offre Essentiel, recherche de la semaine déjà faite : date de la prochaine possible
+  weeklyRunAvailableAt?: string | null
 }
 
-export function ProspectionStatus({ settings, runningRun }: ProspectionStatusProps) {
+export function ProspectionStatus({ settings, nextRunAt, runningRun, weeklyRunAvailableAt = null }: ProspectionStatusProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isLaunching, setIsLaunching] = useState(false)
@@ -73,13 +78,13 @@ export function ProspectionStatus({ settings, runningRun }: ProspectionStatusPro
                   à jour toute seule.
                 </p>
               </>
-            ) : settings?.is_active && settings.next_run_at ? (
+            ) : nextRunAt ? (
               <>
                 <p className="font-semibold">Prospection automatique activée</p>
                 <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                   <CalendarClock className="w-4 h-4" />
                   Prochaine prospection le{' '}
-                  {formatDate(new Date(settings.next_run_at), "EEEE d MMMM 'à' H'h'")}
+                  {formatDate(new Date(nextRunAt), "EEEE d MMMM 'à' H'h'")}
                 </p>
               </>
             ) : (
@@ -92,13 +97,22 @@ export function ProspectionStatus({ settings, runningRun }: ProspectionStatusPro
                 </p>
               </>
             )}
+            {weeklyRunAvailableAt && !isRunning && (
+              <p className="text-sm text-muted-foreground">
+                Offre Essentiel : une recherche par semaine. Prochaine recherche possible le{' '}
+                {formatDate(new Date(weeklyRunAvailableAt), 'EEEE d MMMM')}.{' '}
+                <Link href="/billing" className="font-medium text-primary underline-offset-4 hover:underline">
+                  Passer à l&apos;offre Pro
+                </Link>
+              </p>
+            )}
           </div>
         </div>
 
         <Button
           size="lg"
           onClick={handleLaunch}
-          disabled={isRunning || isLaunching || !hasDepartments}
+          disabled={isRunning || isLaunching || !hasDepartments || !!weeklyRunAvailableAt}
           className="shrink-0"
         >
           {isLaunching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
