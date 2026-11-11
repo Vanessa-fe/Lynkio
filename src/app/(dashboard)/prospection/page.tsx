@@ -1,5 +1,6 @@
 import { ProspectionStatus } from '@/components/prospection/prospection-status'
-import { ProspectionSettingsForm } from '@/components/prospection/prospection-settings-form'
+import Link from 'next/link'
+import { Settings2 } from 'lucide-react'
 import { PipelineRunsList } from '@/components/prospection/pipeline-runs-list'
 import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers'
 import { TechResearchCard } from '@/components/prospection/tech-research-card'
@@ -37,19 +38,22 @@ export default async function ProspectionPage() {
         <TechResearchCard techStack={icp.techStack} isRunning={!!runningRun} />
       )}
       <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />
-      {/* Premier usage : les réglages d'abord et déjà ouverts, l'historique est encore vide.
-          Ensuite les deux restent repliés pour ne pas encombrer la page */}
-      {runs.length === 0 ? (
-        <>
-          <ProspectionSettingsForm settings={settings} defaultOpen />
-          <PipelineRunsList runs={runs} />
-        </>
-      ) : (
-        <>
-          <PipelineRunsList runs={runs} />
-          <ProspectionSettingsForm settings={settings} />
-        </>
-      )}
+      {/* Premier usage : un rappel bien visible pour régler la recherche, l'historique est encore vide */}
+      <Link
+        href="/settings/prospection"
+        className="flex items-center gap-3 rounded-lg border bg-card p-4 text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <Settings2 className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+        <span>
+          <span className="font-medium">Réglages de la recherche</span>
+          <span className="block text-muted-foreground">
+            {runs.length === 0
+              ? 'Commencez par choisir vos départements, vos jours et ce que Sophie doit chercher.'
+              : 'Départements, jours, sources, intermédiaires acceptés et secteurs ignorés : dans Paramètres.'}
+          </span>
+        </span>
+      </Link>
+      <PipelineRunsList runs={runs} />
     </div>
   )
 }
