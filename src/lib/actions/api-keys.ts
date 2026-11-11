@@ -5,8 +5,9 @@ import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { checkApiKey, checkCustomAiKey } from '@/lib/api-key-checks'
-import { API_KEY_SERVICES, isAiProvider, type ApiKeyProvider } from '@/lib/constants/api-keys'
-import { aiProviderSchema, apiKeySchema, customAiKeySchema, type ApiKeyInput, type CustomAiKeyInput } from '@/lib/validations/api-keys'
+import { CLAUDE_KEY_MESSAGE, detectAiService, UNKNOWN_KEY_MESSAGE } from '@/lib/ai-key-detection'
+import { API_KEY_SERVICES, findAiService, isAiProvider, type ApiKeyProvider } from '@/lib/constants/api-keys'
+import { aiKeySchema, aiProviderSchema, apiKeySchema, type AiKeyInput, type ApiKeyInput } from '@/lib/validations/api-keys'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 
 type ActionResult = { success: boolean; error?: string }
@@ -130,11 +131,29 @@ export async function setAiProvider(provider: string): Promise<ActionResult> {
 }
 
 /**
- * « Autre IA » : vérifie la clé et le modèle auprès du service, puis les enregistre avec l'adresse de l'API
+ * Case unique « Clé de votre IA » : reconnaît le service d'après la clé (ou prend celui choisi),
+ * vérifie la clé et le modèle auprès de ce service seulement, puis l'enregistre chiffrée.
+ * Sophie utilise ensuite cette IA.
  */
-export async function saveCustomAiKey(input: CustomAiKeyInput): Promise<ActionResult> {
+export async function saveAiKey(input: AiKeyInput): Promise<ActionResult & { serviceLabel?: string }> {
   try {
-    const { baseUrl, model, key } = customAiKeySchema.parse(input)
+    const { key, service: chosen, model, baseUrl } = aiKeySchema.parse(input)
+
+    let serviceKey: string = chosen
+    if (chosen === 'auto') {
+      const detection = detectAiService(key)
+      if (!detection.ok) {
+        return { success: false, error: detection.reason === 'anthropic' ? CLAUDE_KEY_MESSAGE : UNKNOWN_KEY_MESSAGE }
+      }
+      serviceKey = detection.service
+    }
+    const service = findAiService(serviceKey)
+    if (!service) return { success: false, error: 'Service inconnu' }
+    const apiUrl = service.key === 'other' ? baseUrl : service.baseUrl
+    if (service.provider === 'custom' && !apiUrl) {
+      return { success: false, error: 'Indiquez l\'adresse de l\'API du service (elle se termine souvent par /v1).' }
+    }
+
     const user = await getAuthUser()
     if (!user) return { success: false, error: 'Vous devez être connecté' }
 
@@ -147,21 +166,32 @@ export async function saveCustomAiKey(input: CustomAiKeyInput): Promise<ActionRe
     if (limitError) throw limitError
     if (!allowed) return { success: false, error: 'Trop d\'essais en une heure : réessayez un peu plus tard.' }
 
-    const check = await checkCustomAiKey(baseUrl, key, model)
-    if (!check.ok) return { success: false, error: check.error }
+    if (service.provider === 'custom' && apiUrl) {
+      const check = await checkCustomAiKey(apiUrl, key, model ?? (service.model || null), service.modelPreferences)
+      if (!check.ok) return { success: false, error: check.error }
+      const { error } = await supabase.rpc('save_my_custom_ai_key', { p_key: key, p_model: check.model, p_base_url: apiUrl })
+      if (error) throw error
+    } else {
+      const check = await checkApiKey(service.provider, key, model ?? service.model)
+      if (!check.ok) return { success: false, error: check.error }
+      const { error } = await supabase.rpc('save_my_api_key', { p_provider: service.provider, p_key: key, p_model: model ?? undefined })
+      if (error) throw error
+    }
 
-    const { error } = await supabase.rpc('save_my_custom_ai_key', { p_key: key, p_model: model, p_base_url: baseUrl })
-    if (error) throw error
-
-    const { error: profileError } = await supabase.from('user_profiles').update({ ai_provider: 'custom' }).eq('id', user.id)
+    const { error: profileError } = await supabase.from('user_profiles').update({ ai_provider: service.provider }).eq('id', user.id)
     if (profileError) throw profileError
 
-    captureServerEvent(user.id, 'api_key_saved', { provider: 'custom', host: new URL(baseUrl).hostname })
+    captureServerEvent(user.id, 'api_key_saved', {
+      provider: service.provider,
+      service: service.key,
+      detected: chosen === 'auto',
+      custom_model: model !== null,
+    })
     revalidatePath('/settings/keys')
-    return { success: true }
+    return { success: true, serviceLabel: service.label }
   } catch (error) {
-    if (error instanceof ZodError) return { success: false, error: error.errors[0]?.message ?? 'Réglage invalide' }
-    captureServerError(error, undefined, { action: 'saveCustomAiKey' })
+    if (error instanceof ZodError) return { success: false, error: error.errors[0]?.message ?? 'Clé invalide' }
+    captureServerError(error, undefined, { action: 'saveAiKey' })
     return { success: false, error: 'Impossible d\'enregistrer la clé pour le moment : réessayez.' }
   }
 }

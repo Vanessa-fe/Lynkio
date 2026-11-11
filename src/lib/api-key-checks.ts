@@ -1,6 +1,7 @@
 import 'server-only'
 import type { ApiKeyProvider } from '@/lib/constants/api-keys'
 import { isSafeApiBaseUrl } from '@/lib/url-safety'
+import { pickModel } from '@/lib/ai-key-detection'
 
 const TIMEOUT_MS = 10_000
 
@@ -74,11 +75,19 @@ async function checkHunter(key: string): Promise<KeyCheck> {
   return { ok: false, error: `Hunter n'a pas pu vérifier la clé (erreur ${response.status}) : réessayez plus tard.` }
 }
 
+export type CustomKeyCheck = { ok: true; model: string } | { ok: false; error: string }
+
 /**
- * « Autre IA » : la liste des modèles du service (GET /models, commune aux API compatibles OpenAI)
- * vérifie la clé et le modèle sans rien dépenser
+ * Services compatibles OpenAI : la liste des modèles du service (GET /models) vérifie la clé et le
+ * modèle sans rien dépenser. Sans modèle indiqué, on prend le premier de la liste qui correspond aux
+ * préférences du service.
  */
-export async function checkCustomAiKey(baseUrl: string, key: string, model: string): Promise<KeyCheck> {
+export async function checkCustomAiKey(
+  baseUrl: string,
+  key: string,
+  model: string | null,
+  preferences: string[] = []
+): Promise<CustomKeyCheck> {
   if (!isSafeApiBaseUrl(baseUrl)) return { ok: false, error: 'Adresse d\'API invalide.' }
   let response: Response
   try {
@@ -106,10 +115,20 @@ export async function checkCustomAiKey(baseUrl: string, key: string, model: stri
 
   const body = (await response.json().catch(() => null)) as { data?: { id?: string }[] } | null
   const ids = (body?.data ?? []).map((entry) => entry.id).filter((id): id is string => typeof id === 'string')
+  if (!model) {
+    const picked = pickModel(ids, preferences)
+    if (!picked) {
+      return {
+        ok: false,
+        error: 'Filonea n\'a pas trouvé de modèle à conseiller chez ce service : indiquez-le dans « Choisir le service moi-même ».',
+      }
+    }
+    return { ok: true, model: picked }
+  }
   // Certains services préfixent leurs modèles (« models/… ») : on compare aussi la fin du nom
   const known = ids.length === 0 || ids.some((id) => id === model || id.endsWith(`/${model}`))
   if (!known) {
     return { ok: false, error: `Le modèle « ${model} » n'est pas proposé par ce service avec cette clé : vérifiez son nom.` }
   }
-  return { ok: true }
+  return { ok: true, model }
 }

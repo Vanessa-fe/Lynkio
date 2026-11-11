@@ -1,6 +1,8 @@
 // Services payants dont chaque utilisateur apporte sa propre clé (Paramètres > Clés).
 // La clé est chiffrée dans la base (Supabase Vault) et ne revient jamais au navigateur.
 
+import type { AiServiceKey } from '@/lib/ai-key-detection'
+
 export type ApiKeyProvider = 'openai' | 'gemini' | 'custom' | 'hunter'
 
 // IA utilisables par Sophie (user_profiles.ai_provider). Ajouter une IA : la brancher aussi
@@ -15,38 +17,98 @@ export function isAiProvider(provider: string): provider is AiProvider {
 // Prochaines IA proposées, dès qu'elles auront été testées avec une vraie clé
 export const AI_PROVIDER_LABELS: Record<AiProvider, string> = { openai: 'OpenAI', gemini: 'Gemini (Google)', custom: 'Autre IA' }
 
-// « Autre IA » : services compatibles avec l'API Chat Completions d'OpenAI. Le modèle conseillé n'est
-// donné que quand son nom est stable ; sinon l'utilisateur l'indique (la vérification de la clé le contrôle).
-export type CustomAiPreset = { key: string; label: string; baseUrl: string; model: string; keysUrl?: string }
+export const OPENAI_DEFAULT_MODEL = 'gpt-5.6-terra'
+export const GEMINI_DEFAULT_MODEL = 'gemini-flash-lite-latest'
 
-// Premier choix proposé, et dernier choix : une adresse libre
-export const DEFAULT_CUSTOM_AI: CustomAiPreset = {
-  key: 'mistral',
-  label: 'Mistral (France)',
-  baseUrl: 'https://api.mistral.ai/v1',
-  model: 'mistral-small-latest',
-  keysUrl: 'https://console.mistral.ai/api-keys',
+// Services reconnus par la case unique « Clé de votre IA » (voir src/lib/ai-key-detection.ts).
+// OpenAI et Gemini sont branchés en direct ; les autres passent par leur API compatible OpenAI
+// (« custom » dans la base, avec l'adresse de l'API). Le modèle conseillé n'est écrit que quand son nom
+// est stable ; sinon il est choisi dans la liste du service d'après modelPreferences (expressions régulières).
+export type AiService = {
+  key: AiServiceKey | 'other'
+  label: string
+  provider: AiProvider
+  baseUrl: string
+  model: string
+  modelPreferences?: string[]
+  keysUrl?: string
 }
-export const OTHER_CUSTOM_AI: CustomAiPreset = { key: 'other', label: 'Autre service compatible OpenAI', baseUrl: '', model: '' }
 
-export const CUSTOM_AI_PRESETS: CustomAiPreset[] = [
-  DEFAULT_CUSTOM_AI,
-  { key: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', keysUrl: 'https://platform.deepseek.com/api_keys' },
-  { key: 'groq', label: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', model: '', keysUrl: 'https://console.groq.com/keys' },
+export const AI_SERVICES: AiService[] = [
+  {
+    key: 'openai',
+    label: 'OpenAI',
+    provider: 'openai',
+    baseUrl: '',
+    model: OPENAI_DEFAULT_MODEL,
+    keysUrl: 'https://platform.openai.com/api-keys',
+  },
+  {
+    key: 'gemini',
+    label: 'Gemini (Google)',
+    provider: 'gemini',
+    baseUrl: '',
+    model: GEMINI_DEFAULT_MODEL,
+    keysUrl: 'https://aistudio.google.com/apikey',
+  },
+  {
+    key: 'mistral',
+    label: 'Mistral',
+    provider: 'custom',
+    baseUrl: 'https://api.mistral.ai/v1',
+    model: 'mistral-small-latest',
+    keysUrl: 'https://console.mistral.ai/api-keys',
+  },
+  {
+    key: 'deepseek',
+    label: 'DeepSeek',
+    provider: 'custom',
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+    keysUrl: 'https://platform.deepseek.com/api_keys',
+  },
+  {
+    key: 'groq',
+    label: 'Groq',
+    provider: 'custom',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    model: '',
+    modelPreferences: ['^llama-3\\.3-70b', '^openai/gpt-oss-120b$', '^llama.*70b'],
+    keysUrl: 'https://console.groq.com/keys',
+  },
   {
     key: 'openrouter',
-    label: 'OpenRouter (Claude, Llama, Mistral… avec un seul compte)',
+    label: 'OpenRouter',
+    provider: 'custom',
     baseUrl: 'https://openrouter.ai/api/v1',
     model: '',
+    modelPreferences: [
+      '^openai/gpt-[\\d.]+-mini$',
+      '^google/gemini-[\\d.]+-flash$',
+      '^anthropic/claude-[\\w.-]*haiku[\\w.-]*$',
+      '^mistralai/mistral-small',
+    ],
     keysUrl: 'https://openrouter.ai/keys',
   },
-  { key: 'xai', label: 'xAI (Grok)', baseUrl: 'https://api.x.ai/v1', model: '', keysUrl: 'https://console.x.ai' },
-  OTHER_CUSTOM_AI,
+  {
+    key: 'xai',
+    label: 'xAI (Grok)',
+    provider: 'custom',
+    baseUrl: 'https://api.x.ai/v1',
+    model: '',
+    modelPreferences: ['^grok-[\\d.]+-mini$', '^grok-[\\d.]+$'],
+    keysUrl: 'https://console.x.ai',
+  },
+  { key: 'other', label: 'Autre service compatible OpenAI', provider: 'custom', baseUrl: '', model: '' },
 ]
 
-/** Nom à afficher pour une clé « Autre IA », d'après son adresse */
+export function findAiService(key: string): AiService | null {
+  return AI_SERVICES.find((service) => service.key === key) ?? null
+}
+
+/** Nom à afficher pour une clé « custom », d'après son adresse */
 export function customAiLabel(baseUrl: string | null): string {
-  const preset = CUSTOM_AI_PRESETS.find((candidate) => candidate.baseUrl && candidate.baseUrl === baseUrl)
+  const preset = AI_SERVICES.find((candidate) => candidate.provider === 'custom' && candidate.baseUrl && candidate.baseUrl === baseUrl)
   if (preset) return preset.label.replace(/ \(.*\)$/, '')
   try {
     return baseUrl ? new URL(baseUrl).hostname.replace(/^api\./, '') : 'Autre IA'
@@ -92,7 +154,7 @@ export const API_KEY_SERVICES: ApiKeyService[] = [
       },
     ],
     cost: 'Environ 1 à 5 centimes par message rédigé : 5 $ suffisent pour une centaine de messages ou plus.',
-    defaultModel: 'gpt-5.6-terra',
+    defaultModel: OPENAI_DEFAULT_MODEL,
   },
   {
     provider: 'gemini',
@@ -113,7 +175,7 @@ export const API_KEY_SERVICES: ApiKeyService[] = [
       },
     ],
     cost: 'Gratuit, dans les limites de Google. Avec l\'offre gratuite, Google peut utiliser les textes envoyés pour améliorer ses services : activez la facturation pour l\'éviter.',
-    defaultModel: 'gemini-flash-lite-latest',
+    defaultModel: GEMINI_DEFAULT_MODEL,
   },
   {
     provider: 'hunter',
