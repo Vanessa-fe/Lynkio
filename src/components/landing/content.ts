@@ -289,7 +289,7 @@ export const faq = [
   {
     question: 'Pourquoi utiliser ma propre clé d’IA ?',
     answer:
-      'Pour payer l’IA au prix coûtant, sans marge : Sophie utilise votre compte OpenAI (quelques centimes par message) ou Gemini de Google (offre gratuite). Votre clé est chiffrée, jamais affichée, et ne sert qu’aux demandes que vous faites à Sophie. La recherche d’e-mails utilise de la même façon votre compte Hunter, gratuit jusqu’à 50 recherches par mois.',
+      'Pour payer l’IA au prix coûtant, sans marge. Sophie utilise le compte de l’IA de votre choix : OpenAI ou Claude d’Anthropic (quelques centimes par message), ou Gemini de Google (offre gratuite pour rédiger). Votre clé est chiffrée, jamais affichée, et ne sert qu’aux demandes que vous faites à Sophie. La recherche d’e-mails utilise de la même façon votre compte Hunter, gratuit jusqu’à 50 recherches par mois.',
   },
   {
     question: 'Puis-je importer mes prospects existants ?',

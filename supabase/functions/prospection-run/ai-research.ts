@@ -1,5 +1,6 @@
-// Recherche web par IA (avec la clé de l'utilisateur, voir _shared/ai.ts) des
-// entreprises dont le site utilise une technologie donnée.
+// Recherche web par IA (avec la clé de l'utilisateur et la recherche sur Internet de son IA :
+// OpenAI, Gemini ou Claude, voir _shared/ai.ts) des entreprises dont le site utilise une
+// technologie donnée.
 //
 // L'IA propose, Sophie vérifie : chaque site est ensuite analysé par
 // site-stack.ts, et une entreprise dont la technologie n'est pas confirmée
@@ -20,14 +21,14 @@ export type TechCandidate = {
   sourceUrl: string | null
 }
 
-const schema = (count: number) => ({
+const schema = () => ({
   type: 'object',
   additionalProperties: false,
   required: ['companies'],
   properties: {
     companies: {
+      // Pas de maxItems : Claude refuse ce mot-clé dans un schéma ; la limite est dans la consigne et dans le code
       type: 'array',
-      maxItems: count,
       items: {
         type: 'object',
         additionalProperties: false,
@@ -84,7 +85,7 @@ export async function findCompaniesUsingTech(
   const { text, consultedUrls: consulted } = await generateJson({
     access,
     name: 'tech_companies',
-    schema: schema(count),
+    schema: schema(),
     input: prompt(technologies, count, excludedDomains.slice(0, MAX_EXCLUDED_DOMAINS)),
     webSearch: true,
     timeoutMs: REQUEST_TIMEOUT_MS,
@@ -96,6 +97,7 @@ export async function findCompaniesUsingTech(
 
   return (parsed.companies ?? [])
     .filter((candidate) => candidate.name?.trim() && candidate.website?.trim())
+    .slice(0, count)
     .map((candidate) => ({
       name: candidate.name.trim(),
       website: candidate.website.trim(),

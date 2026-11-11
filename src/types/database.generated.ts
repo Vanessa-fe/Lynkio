@@ -1273,7 +1273,6 @@ export type Database = {
       }
       user_api_keys: {
         Row: {
-          base_url: string | null
           created_at: string
           key_hint: string
           model: string | null
@@ -1283,7 +1282,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          base_url?: string | null
           created_at?: string
           key_hint: string
           model?: string | null
@@ -1293,7 +1291,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          base_url?: string | null
           created_at?: string
           key_hint?: string
           model?: string | null
@@ -1462,10 +1459,6 @@ export type Database = {
         Returns: string
       }
       initialize_prospection_defaults: { Args: never; Returns: undefined }
-      read_user_api_base_url: {
-        Args: { p_provider: string; p_user_id: string }
-        Returns: string
-      }
       read_user_api_key: {
         Args: { p_provider: string; p_user_id: string }
         Returns: {
@@ -1476,10 +1469,6 @@ export type Database = {
       rescore_companies_with_expired_signals: { Args: never; Returns: number }
       save_my_api_key: {
         Args: { p_key: string; p_model?: string; p_provider: string }
-        Returns: undefined
-      }
-      save_my_custom_ai_key: {
-        Args: { p_base_url: string; p_key: string; p_model: string }
         Returns: undefined
       }
       score_company: { Args: { p_company_id: string }; Returns: undefined }

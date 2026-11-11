@@ -7,8 +7,6 @@ export type SavedApiKey = {
   provider: string
   keyHint: string
   model: string | null
-  // « Autre IA » : adresse de l'API (pas secrète)
-  baseUrl: string | null
   updatedAt: string
 }
 
@@ -22,14 +20,13 @@ export async function getMyApiKeys(): Promise<SavedApiKey[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('user_api_keys')
-    .select('provider, key_hint, model, base_url, updated_at')
+    .select('provider, key_hint, model, updated_at')
     .eq('user_id', user.id)
 
   return (data ?? []).map((row) => ({
     provider: row.provider,
     keyHint: row.key_hint,
     model: row.model,
-    baseUrl: row.base_url,
     updatedAt: row.updated_at,
   }))
 }
