@@ -6,6 +6,7 @@ import { FinalCta } from './final-cta'
 import { Footer } from './footer'
 import { Hero } from './hero'
 import { Nav } from './nav'
+import { Pricing } from './pricing'
 import { Radar } from './radar'
 import { Safeguards } from './safeguards'
 import { Steps } from './steps'
@@ -22,6 +23,7 @@ export function LandingPage() {
           <Features />
           <Steps />
           <Safeguards />
+          <Pricing />
           <Faq />
           <FinalCta />
         </main>
