@@ -21,6 +21,7 @@ import {
   DEFAULT_PROSPECTION_SETTINGS,
   DEPARTMENTS,
   DEPARTMENT_LIST,
+  INTERMEDIARY_OPTIONS,
   MAX_COMPANIES_OPTIONS,
   NAF_SECTIONS,
   PROSPECTION_SOURCES,
@@ -28,6 +29,7 @@ import {
   WEEK_DAYS,
   prospectionSettingsSchema,
   type ProspectionSettingsInput,
+  type IntermediaryKey,
   type ProspectionSourceKey,
 } from '@/lib/validations/prospection'
 import { saveProspectionSettings } from '@/lib/actions/prospection'
@@ -52,6 +54,9 @@ function toFormValues(settings: ProspectionSettings | null): ProspectionSettings
     maxCompaniesPerRun: settings.max_companies_per_run,
     sources: settings.sources.filter((key): key is ProspectionSourceKey =>
       PROSPECTION_SOURCES.some((source) => source.key === key)
+    ),
+    acceptedIntermediaries: settings.accepted_intermediaries.filter((key): key is IntermediaryKey =>
+      INTERMEDIARY_OPTIONS.some((option) => option.key === key)
     ),
   }
 }
@@ -142,6 +147,48 @@ export function ProspectionSettingsForm({ settings, defaultOpen = false }: Prosp
               )}
             />
             {errors.sources && <p className="text-sm text-destructive">{errors.sources.message}</p>}
+          </section>
+
+          {/* Intermédiaires acceptés */}
+          <section className="space-y-3">
+            <div>
+              <h3 className="font-semibold">Intermédiaires acceptés</h3>
+              <p className="text-sm text-muted-foreground">
+                Dans les offres d&apos;emploi, gardez ou écartez celles publiées par un intermédiaire plutôt que par
+                l&apos;entreprise elle-même.
+              </p>
+            </div>
+            <Controller
+              name="acceptedIntermediaries"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-3">
+                  {INTERMEDIARY_OPTIONS.map((option) => {
+                    const checked = field.value.includes(option.key)
+                    return (
+                      <div key={option.key} className="flex items-start gap-2">
+                        <Checkbox
+                          id={`intermediary-${option.key}`}
+                          checked={checked}
+                          onCheckedChange={(value) =>
+                            field.onChange(
+                              value === true
+                                ? [...field.value, option.key]
+                                : field.value.filter((key) => key !== option.key)
+                            )
+                          }
+                          disabled={isSaving}
+                        />
+                        <div>
+                          <Label htmlFor={`intermediary-${option.key}`}>{option.label}</Label>
+                          <p className="text-sm text-muted-foreground">{option.description}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            />
           </section>
 
           {/* Où chercher */}

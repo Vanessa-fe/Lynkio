@@ -137,7 +137,7 @@ export async function runProspection(
 async function loadSettings(admin: SupabaseClient, userId: string): Promise<Settings> {
   const { data, error } = await admin
     .from('prospection_settings')
-    .select('departments, excluded_naf_sections, max_companies_per_run, sources, bodacc_cursor, job_postings_cursor')
+    .select('departments, excluded_naf_sections, accepted_intermediaries, max_companies_per_run, sources, bodacc_cursor, job_postings_cursor')
     .eq('user_id', userId)
     .maybeSingle()
 

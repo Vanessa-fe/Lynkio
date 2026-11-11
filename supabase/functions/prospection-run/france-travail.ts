@@ -35,6 +35,8 @@ export type JobOffer = {
   origineOffre?: { origine?: string; urlOrigine?: string }
   // Ajouté par Filonea : mot-clé de l'utilisateur qui a trouvé l'offre
   matchedKeyword?: string
+  // Ajouté par Filonea : offre d'une ESN ou d'une société de conseil (placement chez ses clients)
+  viaConsulting?: boolean
 }
 
 // Recherche par codes de métier (ROME) ou par un mot-clé (cherché par France Travail dans

@@ -12,6 +12,7 @@ import {
   skip,
   type Budget,
   type Context,
+  type Intermediary,
   type Settings,
   type SourceStats,
 } from './context.ts'
@@ -46,6 +47,8 @@ const MAX_DESCRIPTION_LENGTH = 4000
 const MAX_SEARCH_KEYWORDS = 10
 const MAX_OFFERS_PER_KEYWORD = 150
 const KEYWORD_SIGNAL = 'job_posting_keyword'
+// ESN ou société de conseil qui recrute, quand l'utilisateur accepte les ESN
+const CONSULTING_SIGNAL = 'consulting_hiring'
 // Poids du signal quand le métier ne le prévoit pas
 const DEFAULT_KEYWORD_WEIGHT = 30
 
@@ -78,6 +81,9 @@ const JOB_SIGNAL_ROME_CODES: Record<string, string[]> = {
 
 // Les codes « digital » renvoient aussi des postes commerciaux : l'intitulé doit parler du web
 const DIGITAL_TITLE = /web|site|digital|num[ée]rique|e-?commerce|en ligne|seo|r[ée]f[ée]renc|wordpress|shopify|cms|\bux\b|\bui\b/i
+
+// Comptes enregistrés avant le choix des intermédiaires (11/11/2026) : valeur par défaut de la table
+const DEFAULT_INTERMEDIARIES: Intermediary[] = ['consulting', 'recruiters', 'platforms']
 
 // Division NAF 78 : agences d'intérim et cabinets de recrutement (ils recrutent pour d'autres)
 const RECRUITMENT_DIVISION = '78'
@@ -119,7 +125,7 @@ export async function detectJobPostings(
   )
   stats.until = newest
 
-  const { groups, anonymous } = groupByCompany(offers, stats, romeToSignal, signalWeights)
+  const { groups, anonymous } = groupByCompany(offers, stats, romeToSignal, signalWeights, settings)
 
   // Le quota d'entreprises va d'abord aux signaux qui comptent le plus pour le client idéal
   const priority = (group: OfferGroup) =>
@@ -184,7 +190,7 @@ async function jobSignalWeights(admin: SupabaseClient, context: Context): Promis
       .from('profession_signals')
       .select('signal_type, default_weight')
       .eq('profession_key', context.professionKey)
-      .in('signal_type', [...Object.keys(JOB_SIGNAL_ROME_CODES), KEYWORD_SIGNAL])
+      .in('signal_type', [...Object.keys(JOB_SIGNAL_ROME_CODES), KEYWORD_SIGNAL, CONSULTING_SIGNAL])
 
     if (error) throw error
     for (const row of (data ?? []) as { signal_type: string; default_weight: number }[]) {
@@ -212,27 +218,42 @@ function groupByCompany(
   offers: JobOffer[],
   stats: SourceStats,
   romeToSignal: Map<string, string>,
-  signalWeights: Map<string, number>
+  signalWeights: Map<string, number>,
+  settings: Settings
 ): { groups: OfferGroup[]; anonymous: JobOffer[] } {
   const groups = new Map<string, OfferGroup>()
   const anonymous: JobOffer[] = []
+  const accepts = (intermediary: Intermediary) => (settings.accepted_intermediaries ?? DEFAULT_INTERMEDIARIES).includes(intermediary)
 
   for (const offer of offers) {
     stats.seen++
     const name = offer.entreprise?.nom?.trim()
 
-    if (offer.secteurActivite === RECRUITMENT_DIVISION) {
-      skip(stats, 'Agence d\'intérim')
-      continue
-    }
-    if (offer.typeContrat === 'MIS') {
-      skip(stats, 'Mission d\'intérim')
+    // Intérim : agences (division NAF 78) et missions d'intérim, gardées seulement sur demande,
+    // comme offres à identifier (l'agence recrute pour une entreprise qu'elle ne nomme pas)
+    const isStaffing = offer.secteurActivite === RECRUITMENT_DIVISION || offer.typeContrat === 'MIS'
+    if (isStaffing && !accepts('staffing')) {
+      skip(stats, offer.typeContrat === 'MIS' ? 'Mission d\'intérim' : 'Agence d\'intérim')
       continue
     }
     if (offer.alternance) {
       skip(stats, 'Contrat en alternance')
       continue
     }
+    if (name && isFreelancePlatform(name) && !accepts('platforms')) {
+      skip(stats, 'Plateforme freelance')
+      continue
+    }
+
+    const intermediary = intermediaryFromText(`${offer.description ?? ''} ${offer.entreprise?.description ?? ''}`)
+    if ((name && isConsultingFirm(name)) || intermediary?.kind === 'consulting') {
+      if (!accepts('consulting')) {
+        skip(stats, 'ESN ou régie')
+        continue
+      }
+      offer.viaConsulting = true
+    }
+
     const signalType = offer.matchedKeyword ? KEYWORD_SIGNAL : offer.romeCode ? romeToSignal.get(offer.romeCode) : undefined
     if (!signalType && !isFreelanceOffer(offer)) {
       skip(stats, 'Métier hors recherche')
@@ -243,21 +264,19 @@ function groupByCompany(
       continue
     }
     // Offre de développeur : gardée seulement si sa lecture (renfort d'agence ou de startup,
-    // ou embauche dans l'équipe) compte pour le client idéal
+    // ESN, ou embauche dans l'équipe) compte pour le client idéal
     if (!isFreelanceOffer(offer) && !signalWeights.has(offerSignalType(offer, romeToSignal))) {
-      skip(stats, 'Recrute un développeur pour son équipe (hors agence et startup)')
+      skip(stats, offer.viaConsulting ? 'ESN qui recrute (0 point dans votre client idéal)' : 'Recrute un développeur pour son équipe (hors agence et startup)')
       continue
     }
 
-    const intermediary = intermediaryFromText(`${offer.description ?? ''} ${offer.entreprise?.description ?? ''}`)
-    if ((name && isConsultingFirm(name)) || intermediary?.kind === 'consulting') {
-      skip(stats, 'ESN ou régie')
-      continue
-    }
-
-    // Pas de nom, ou un cabinet qui cache son client : à identifier à la main
+    // Pas de nom, un cabinet qui cache son client ou une agence d'intérim : à identifier à la main
     const hidesClient = (name && isRecruitmentFirm(name)) || intermediary?.kind === 'hidden_client'
-    if (!name || (hidesClient && !isFreelanceOffer(offer))) {
+    if (name && hidesClient && !isFreelanceOffer(offer) && !isStaffing && !accepts('recruiters')) {
+      skip(stats, 'Cabinet de recrutement')
+      continue
+    }
+    if (!name || isStaffing || (hidesClient && !isFreelanceOffer(offer))) {
       anonymous.push(offer)
       continue
     }
@@ -346,6 +365,10 @@ async function processCompany(
   // Avec le code d'activité complet, une ESN (62.02, 62.03) qui recrute un développeur
   // n'est plus lue comme une agence en renfort : sans autre signal qui compte, on l'écarte
   const naf = registry?.activite_principale ?? null
+  // ESN reconnue à son code d'activité : ses offres se lisent « ESN qui recrute » si l'utilisateur les accepte
+  if (naf && CONSULTING_NAF.test(naf) && (settings.accepted_intermediaries ?? DEFAULT_INTERMEDIARIES).includes('consulting')) {
+    for (const offer of group.offers) offer.viaConsulting = true
+  }
   const counts = (offer: JobOffer) => isFreelanceOffer(offer) || signalWeights.has(offerSignalType(offer, romeToSignal, naf))
   if (!group.offers.some(counts)) {
     skipGroup(stats, group, 'Conseil en informatique (ESN probable)')
@@ -450,6 +473,7 @@ function isFreelanceOffer(offer: JobOffer): boolean {
  */
 function offerSignalType(offer: JobOffer, romeToSignal: Map<string, string>, nafCode?: string | null): string {
   if (isFreelanceOffer(offer)) return 'freelance_mission'
+  if (offer.viaConsulting) return CONSULTING_SIGNAL
   if (offer.matchedKeyword) return KEYWORD_SIGNAL
   const type = (offer.romeCode && romeToSignal.get(offer.romeCode)) || 'job_posting_dev'
   if (type === 'job_posting_dev' || type === 'dev_hiring_reinforcement') {
