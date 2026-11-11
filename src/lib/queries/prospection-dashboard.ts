@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import type { PipelineRun, PipelineStage, PipelineStageKind, ReminderWithRelations } from '@/types'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { getCurrentPlan } from '@/lib/queries/billing'
+import { getNextScheduledRun, getWeeklyRunAvailableAt } from '@/lib/queries/prospection'
 
 export type DashboardOpportunity = {
   id: string
@@ -76,7 +78,11 @@ export async function getDashboardData(): Promise<DashboardData | null> {
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .eq('status', 'new'),
-      supabase.from('prospection_settings').select('is_active, next_run_at').eq('user_id', user.id).maybeSingle(),
+      supabase
+        .from('prospection_settings')
+        .select('is_active, next_run_at, days_of_week, run_hour, timezone')
+        .eq('user_id', user.id)
+        .maybeSingle(),
     ])
 
   const companies = companiesResult.data ?? []
@@ -90,6 +96,12 @@ export async function getDashboardData(): Promise<DashboardData | null> {
   const lost = companies.filter((company) => kindOf(company.stage_id) === 'lost').length
   const now = Date.now()
   const reminders = remindersResult.data ?? []
+
+  // Offre Essentiel : la prochaine recherche automatique peut être sautée (une par semaine)
+  const nextRunAt = await getNextScheduledRun(
+    settingsResult.data,
+    await getWeeklyRunAvailableAt(await getCurrentPlan())
+  )
 
   // Meilleures opportunités : pistes en cours, jamais contactées, les mieux notées d'abord
   const candidates = companies
@@ -152,6 +164,6 @@ export async function getDashboardData(): Promise<DashboardData | null> {
     pipeline,
     lastRun: runResult.data ?? null,
     unidentifiedOffers: unidentifiedResult.count ?? 0,
-    nextRunAt: settingsResult.data?.is_active ? settingsResult.data.next_run_at : null,
+    nextRunAt,
   }
 }

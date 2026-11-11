@@ -5,22 +5,30 @@ import { PipelineRunsList } from '@/components/prospection/pipeline-runs-list'
 import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers'
 import { TechResearchCard } from '@/components/prospection/tech-research-card'
 import { getIcpBasics } from '@/lib/queries/icp'
+import { getCurrentPlan } from '@/lib/queries/billing'
+import { PLAN_LIMITS } from '@/lib/billing'
 import {
   getCompanyChoices,
+  getNextScheduledRun,
   getPipelineRuns,
   getProspectionSettings,
   getUnidentifiedOffers,
+  getWeeklyRunAvailableAt,
 } from '@/lib/queries/prospection'
 
 export default async function ProspectionPage() {
-  const [settings, runs, unidentifiedOffers, companyChoices, icp] = await Promise.all([
+  const [settings, runs, unidentifiedOffers, companyChoices, icp, plan] = await Promise.all([
     getProspectionSettings(),
     getPipelineRuns(),
     getUnidentifiedOffers(),
     getCompanyChoices(),
     getIcpBasics(),
+    getCurrentPlan(),
   ])
   const runningRun = runs.find((run) => run.status === 'running') ?? null
+  // Offre Essentiel : une recherche par semaine, et la prochaine automatique peut être sautée
+  const availableAt = await getWeeklyRunAvailableAt(plan)
+  const nextRunAt = await getNextScheduledRun(settings, availableAt)
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -32,10 +40,19 @@ export default async function ProspectionPage() {
         </p>
       </div>
 
-      <ProspectionStatus settings={settings} runningRun={runningRun} />
+      <ProspectionStatus
+        settings={settings}
+        nextRunAt={nextRunAt}
+        runningRun={runningRun}
+        weeklyRunAvailableAt={availableAt}
+      />
       {/* Recherche par technologie : seulement pour la tech (ou des technologies déjà choisies) */}
       {(icp.professionKey === 'web_developer' || icp.techStack.length > 0) && (
-        <TechResearchCard techStack={icp.techStack} isRunning={!!runningRun} />
+        <TechResearchCard
+          techStack={icp.techStack}
+          isRunning={!!runningRun}
+          proOnly={!PLAN_LIMITS[plan ?? 'pro'].techResearch}
+        />
       )}
       <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />
       {/* Premier usage : un rappel bien visible pour régler la recherche, l'historique est encore vide */}
