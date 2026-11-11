@@ -2,10 +2,10 @@ import Link from 'next/link'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings'
-import { getMyApiKeys } from '@/lib/queries/api-keys'
+import { getMyAiProvider, getMyApiKeys } from '@/lib/queries/api-keys'
 
 export default async function ApiKeysSettingsPage() {
-  const savedKeys = await getMyApiKeys()
+  const [savedKeys, aiProvider] = await Promise.all([getMyApiKeys(), getMyAiProvider()])
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -33,7 +33,7 @@ export default async function ApiKeysSettingsPage() {
         </span>
       </p>
 
-      <ApiKeysSettings savedKeys={savedKeys} />
+      <ApiKeysSettings savedKeys={savedKeys} aiProvider={aiProvider} />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { isAiProvider, type AiProvider } from '@/lib/constants/api-keys'
 
 // Ce que le navigateur peut savoir d'une clé : jamais la clé elle-même
 export type SavedApiKey = {
@@ -33,5 +34,14 @@ export async function getMyApiKeys(): Promise<SavedApiKey[]> {
 /** L'utilisateur a-t-il une clé d'IA ? (sans elle, Sophie ne rédige pas) */
 export async function hasAiKey(): Promise<boolean> {
   const keys = await getMyApiKeys()
-  return keys.some((key) => key.provider === 'openai')
+  return keys.some((key) => isAiProvider(key.provider))
+}
+
+/** IA choisie pour Sophie (user_profiles.ai_provider), ou null */
+export async function getMyAiProvider(): Promise<AiProvider | null> {
+  const user = await getAuthUser()
+  if (!user) return null
+  const supabase = await createClient()
+  const { data } = await supabase.from('user_profiles').select('ai_provider').eq('id', user.id).maybeSingle()
+  return data?.ai_provider && isAiProvider(data.ai_provider) ? data.ai_provider : null
 }

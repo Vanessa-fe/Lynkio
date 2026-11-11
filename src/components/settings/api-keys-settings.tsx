@@ -7,17 +7,27 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { API_KEY_SERVICES, UPCOMING_AI_PROVIDERS, type ApiKeyService } from '@/lib/constants/api-keys'
-import { deleteApiKey, saveApiKey } from '@/lib/actions/api-keys'
+import {
+  AI_PROVIDER_LABELS,
+  API_KEY_SERVICES,
+  UPCOMING_AI_PROVIDERS,
+  isAiProvider,
+  type AiProvider,
+  type ApiKeyService,
+} from '@/lib/constants/api-keys'
+import { deleteApiKey, saveApiKey, setAiProvider } from '@/lib/actions/api-keys'
 import type { SavedApiKey } from '@/lib/queries/api-keys'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 
 const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone: 'Europe/Paris' })
 
-export function ApiKeysSettings({ savedKeys }: { savedKeys: SavedApiKey[] }) {
+export function ApiKeysSettings({ savedKeys, aiProvider }: { savedKeys: SavedApiKey[]; aiProvider: AiProvider | null }) {
+  const savedAiProviders = savedKeys.map((saved) => saved.provider).filter(isAiProvider)
+
   return (
     <div className="space-y-4">
+      {savedAiProviders.length > 1 && <AiProviderChoice providers={savedAiProviders} current={aiProvider} />}
       {API_KEY_SERVICES.map((service) => (
         <ApiKeyCard
           key={service.provider}
@@ -188,6 +198,59 @@ function ApiKeyCard({ service, saved }: { service: ApiKeyService; saved: SavedAp
             Vérifier et enregistrer
           </Button>
         </form>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Deux clés d'IA enregistrées : l'utilisateur choisit celle que Sophie utilise
+function AiProviderChoice({ providers, current }: { providers: AiProvider[]; current: AiProvider | null }) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [pending, setPending] = useState<AiProvider | null>(null)
+  const selected = current ?? providers[0]
+
+  const choose = async (provider: AiProvider) => {
+    if (provider === selected) return
+    setPending(provider)
+    try {
+      const result = await setAiProvider(provider)
+      if (!result.success) {
+        toast({ title: 'Changement impossible', description: result.error, variant: 'destructive' })
+        return
+      }
+      toast({ title: `Sophie utilise maintenant ${AI_PROVIDER_LABELS[provider]}` })
+      router.refresh()
+    } catch {
+      toast({ title: 'Changement impossible', description: CONNECTION_ERROR, variant: 'destructive' })
+    } finally {
+      setPending(null)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">IA utilisée par Sophie</CardTitle>
+        <CardDescription>Vous avez enregistré plusieurs IA : choisissez celle qui rédige vos messages.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div role="radiogroup" aria-label="IA utilisée par Sophie" className="flex flex-wrap gap-2">
+          {providers.map((provider) => (
+            <Button
+              key={provider}
+              type="button"
+              role="radio"
+              aria-checked={provider === selected}
+              variant={provider === selected ? 'default' : 'outline'}
+              onClick={() => choose(provider)}
+              disabled={pending !== null}
+            >
+              {pending === provider && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {AI_PROVIDER_LABELS[provider]}
+            </Button>
+          ))}
+        </div>
       </CardContent>
     </Card>
   )

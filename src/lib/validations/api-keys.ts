@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const apiKeySchema = z.object({
-  provider: z.enum(['openai', 'hunter']),
+  provider: z.enum(['openai', 'gemini', 'hunter']),
   key: z
     .string()
     .trim()
@@ -19,3 +19,5 @@ export const apiKeySchema = z.object({
 })
 
 export type ApiKeyInput = z.input<typeof apiKeySchema>
+
+export const aiProviderSchema = z.enum(['openai', 'gemini'])

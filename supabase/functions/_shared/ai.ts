@@ -2,27 +2,30 @@
 // directement son fournisseur. La clé est déchiffrée ici, côté serveur, juste avant l'appel ;
 // elle n'est jamais écrite dans les journaux ni renvoyée au navigateur.
 //
-// Fournisseur disponible : OpenAI (API Responses). Ajouter un fournisseur = une fonction
-// d'appel de plus dans generateJson, et l'ouvrir dans src/lib/constants/api-keys.ts.
+// Fournisseurs : OpenAI (API Responses) et Gemini (API generateContent de Google). Ajouter un
+// fournisseur = une fonction d'appel de plus dans generateJson, et l'ouvrir dans
+// src/lib/constants/api-keys.ts et src/lib/api-key-checks.ts.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { UserFacingError } from './errors.ts'
 
-export type AiProvider = 'openai'
+export type AiProvider = 'openai' | 'gemini'
 
 export type AiAccess = { provider: AiProvider; apiKey: string; model: string }
 
-const AI_PROVIDERS: AiProvider[] = ['openai']
+const AI_PROVIDERS: AiProvider[] = ['openai', 'gemini']
 
-const PROVIDER_LABELS: Record<AiProvider, string> = { openai: 'OpenAI' }
+const PROVIDER_LABELS: Record<AiProvider, string> = { openai: 'OpenAI', gemini: 'Gemini' }
 
-// Modèle conseillé quand l'utilisateur n'en a pas choisi (OPENAI_MODEL le remplace pour tous)
-const DEFAULT_MODELS: Record<AiProvider, string> = { openai: 'gpt-5.6-terra' }
+// Modèle conseillé quand l'utilisateur n'en a pas choisi (OPENAI_MODEL le remplace pour OpenAI).
+// Gemini : Flash-Lite, le seul modèle Flash qui répond avec une clé gratuite (vérifié le 11/11/2026).
+const DEFAULT_MODELS: Record<AiProvider, string> = { openai: 'gpt-5.6-terra', gemini: 'gemini-flash-lite-latest' }
 
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 
 export const MISSING_AI_KEY_MESSAGE =
-  'Ajoutez votre clé OpenAI dans Paramètres > Vos clés : Sophie l\'utilise pour rédiger et pour ses recherches IA.'
+  'Ajoutez votre clé OpenAI ou Gemini dans Paramètres > Vos clés : Sophie l\'utilise pour rédiger et pour ses recherches IA.'
 
 /**
  * Clé et modèle d'IA de l'utilisateur. Le client doit avoir le rôle service_role :
@@ -77,7 +80,64 @@ export async function generateJson(request: JsonRequest): Promise<JsonResult> {
   switch (request.access.provider) {
     case 'openai':
       return openAiJson(request)
+    case 'gemini':
+      return geminiJson(request)
   }
+}
+
+async function geminiJson(request: JsonRequest): Promise<JsonResult> {
+  const { access } = request
+  let response: Response
+  try {
+    response = await fetch(`${GEMINI_URL}/${encodeURIComponent(access.model)}:generateContent`, {
+      method: 'POST',
+      // La clé dans l'en-tête, jamais dans l'adresse (les adresses finissent dans les journaux)
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': access.apiKey },
+      body: JSON.stringify({
+        ...(request.instructions ? { systemInstruction: { parts: [{ text: request.instructions }] } } : {}),
+        contents: [{ role: 'user', parts: [{ text: request.input }] }],
+        ...(request.webSearch ? { tools: [{ google_search: {} }] } : {}),
+        generationConfig: { responseMimeType: 'application/json', responseJsonSchema: request.schema },
+      }),
+      signal: AbortSignal.timeout(request.timeoutMs),
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new UserFacingError(`${request.task} a pris trop de temps : réessayez dans un instant`)
+    }
+    throw error
+  }
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '')
+    // Clé invalide : Google répond 400 « API key not valid »
+    if (response.status === 400 && /api key/i.test(detail)) throw providerError('gemini', 401, detail, request.task)
+    if (response.status === 429 && request.webSearch) {
+      throw new UserFacingError(
+        'La recherche web de Gemini n\'est pas incluse dans l\'offre gratuite de Google : activez la facturation dans Google AI Studio, ou ajoutez une clé OpenAI pour cette recherche.'
+      )
+    }
+    throw providerError('gemini', response.status, detail, request.task)
+  }
+
+  const body = (await response.json()) as {
+    candidates?: {
+      content?: { parts?: { text?: string; thought?: boolean }[] }
+      groundingMetadata?: { groundingChunks?: { web?: { uri?: string } }[] }
+    }[]
+  }
+  const candidate = body.candidates?.[0]
+  const text = (candidate?.content?.parts ?? [])
+    .filter((part) => !part.thought && typeof part.text === 'string')
+    .map((part) => part.text)
+    .join('')
+  const consultedUrls = new Set(
+    (candidate?.groundingMetadata?.groundingChunks ?? [])
+      .map((chunk) => chunk.web?.uri)
+      .filter((uri): uri is string => !!uri)
+      .map(normalizeUrl)
+  )
+  return { text, consultedUrls }
 }
 
 async function openAiJson(request: JsonRequest): Promise<JsonResult> {

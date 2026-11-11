@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { checkApiKey } from '@/lib/api-key-checks'
 import { API_KEY_SERVICES, isAiProvider, type ApiKeyProvider } from '@/lib/constants/api-keys'
-import { apiKeySchema, type ApiKeyInput } from '@/lib/validations/api-keys'
+import { aiProviderSchema, apiKeySchema, type ApiKeyInput } from '@/lib/validations/api-keys'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 
 type ActionResult = { success: boolean; error?: string }
@@ -78,9 +78,12 @@ export async function deleteApiKey(provider: ApiKeyProvider): Promise<ActionResu
     if (error) throw error
 
     if (isAiProvider(provider)) {
+      // L'IA supprimée était celle de Sophie : une autre clé d'IA enregistrée prend le relais
+      const { data: remaining } = await supabase.from('user_api_keys').select('provider').eq('user_id', user.id)
+      const fallback = (remaining ?? []).map((row) => row.provider).find(isAiProvider) ?? null
       const { error: profileError } = await supabase
         .from('user_profiles')
-        .update({ ai_provider: null })
+        .update({ ai_provider: fallback })
         .eq('id', user.id)
         .eq('ai_provider', provider)
       if (profileError) throw profileError
@@ -92,5 +95,36 @@ export async function deleteApiKey(provider: ApiKeyProvider): Promise<ActionResu
   } catch (error) {
     captureServerError(error, undefined, { action: 'deleteApiKey' })
     return { success: false, error: 'Impossible de supprimer la clé pour le moment : réessayez.' }
+  }
+}
+
+/**
+ * Choisit l'IA utilisée par Sophie, parmi celles dont la clé est enregistrée
+ */
+export async function setAiProvider(provider: string): Promise<ActionResult> {
+  try {
+    const chosen = aiProviderSchema.parse(provider)
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+
+    const supabase = await createClient()
+    const { data: key } = await supabase
+      .from('user_api_keys')
+      .select('provider')
+      .eq('user_id', user.id)
+      .eq('provider', chosen)
+      .maybeSingle()
+    if (!key) return { success: false, error: 'Enregistrez d\'abord une clé pour cette IA' }
+
+    const { error } = await supabase.from('user_profiles').update({ ai_provider: chosen }).eq('id', user.id)
+    if (error) throw error
+
+    captureServerEvent(user.id, 'ai_provider_chosen', { provider: chosen })
+    revalidatePath('/settings/keys')
+    return { success: true }
+  } catch (error) {
+    if (error instanceof ZodError) return { success: false, error: 'IA inconnue' }
+    captureServerError(error, undefined, { action: 'setAiProvider' })
+    return { success: false, error: 'Impossible de changer d\'IA pour le moment : réessayez.' }
   }
 }
