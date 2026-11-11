@@ -1,11 +1,11 @@
 // Services payants dont chaque utilisateur apporte sa propre clé (Paramètres > Clés).
 // La clé est chiffrée dans la base (Supabase Vault) et ne revient jamais au navigateur.
 
-export type ApiKeyProvider = 'openai' | 'gemini' | 'hunter'
+export type ApiKeyProvider = 'openai' | 'gemini' | 'custom' | 'hunter'
 
 // IA utilisables par Sophie (user_profiles.ai_provider). Ajouter une IA : la brancher aussi
 // dans supabase/functions/_shared/ai.ts et dans src/lib/api-key-checks.ts.
-export const AI_PROVIDERS = ['openai', 'gemini'] as const
+export const AI_PROVIDERS = ['openai', 'gemini', 'custom'] as const
 export type AiProvider = (typeof AI_PROVIDERS)[number]
 
 export function isAiProvider(provider: string): provider is AiProvider {
@@ -13,12 +13,50 @@ export function isAiProvider(provider: string): provider is AiProvider {
 }
 
 // Prochaines IA proposées, dès qu'elles auront été testées avec une vraie clé
-export const UPCOMING_AI_PROVIDERS = ['Claude (Anthropic)', 'Mistral']
+export const AI_PROVIDER_LABELS: Record<AiProvider, string> = { openai: 'OpenAI', gemini: 'Gemini (Google)', custom: 'Autre IA' }
 
-export const AI_PROVIDER_LABELS: Record<AiProvider, string> = { openai: 'OpenAI', gemini: 'Gemini (Google)' }
+// « Autre IA » : services compatibles avec l'API Chat Completions d'OpenAI. Le modèle conseillé n'est
+// donné que quand son nom est stable ; sinon l'utilisateur l'indique (la vérification de la clé le contrôle).
+export type CustomAiPreset = { key: string; label: string; baseUrl: string; model: string; keysUrl?: string }
+
+// Premier choix proposé, et dernier choix : une adresse libre
+export const DEFAULT_CUSTOM_AI: CustomAiPreset = {
+  key: 'mistral',
+  label: 'Mistral (France)',
+  baseUrl: 'https://api.mistral.ai/v1',
+  model: 'mistral-small-latest',
+  keysUrl: 'https://console.mistral.ai/api-keys',
+}
+export const OTHER_CUSTOM_AI: CustomAiPreset = { key: 'other', label: 'Autre service compatible OpenAI', baseUrl: '', model: '' }
+
+export const CUSTOM_AI_PRESETS: CustomAiPreset[] = [
+  DEFAULT_CUSTOM_AI,
+  { key: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', keysUrl: 'https://platform.deepseek.com/api_keys' },
+  { key: 'groq', label: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', model: '', keysUrl: 'https://console.groq.com/keys' },
+  {
+    key: 'openrouter',
+    label: 'OpenRouter (Claude, Llama, Mistral… avec un seul compte)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: '',
+    keysUrl: 'https://openrouter.ai/keys',
+  },
+  { key: 'xai', label: 'xAI (Grok)', baseUrl: 'https://api.x.ai/v1', model: '', keysUrl: 'https://console.x.ai' },
+  OTHER_CUSTOM_AI,
+]
+
+/** Nom à afficher pour une clé « Autre IA », d'après son adresse */
+export function customAiLabel(baseUrl: string | null): string {
+  const preset = CUSTOM_AI_PRESETS.find((candidate) => candidate.baseUrl && candidate.baseUrl === baseUrl)
+  if (preset) return preset.label.replace(/ \(.*\)$/, '')
+  try {
+    return baseUrl ? new URL(baseUrl).hostname.replace(/^api\./, '') : 'Autre IA'
+  } catch {
+    return 'Autre IA'
+  }
+}
 
 export type ApiKeyService = {
-  provider: ApiKeyProvider
+  provider: Exclude<ApiKeyProvider, 'custom'>
   label: string
   usedFor: string
   // Début habituel de la clé, pour guider la saisie
