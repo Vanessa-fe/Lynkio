@@ -348,6 +348,7 @@ export function CompanyDetail({
         company={company}
         strategy={strategy}
         signalCount={signals.length}
+        signalTypes={signals.map((signal) => signal.signal_type)}
         hasDecisionMaker={contacts.some((contact) => contact.is_decision_maker && !contact.opted_out_at)}
       />
 
