@@ -52,6 +52,8 @@ export function StrategiesCard({ strategies, professionKey, defaultDepartments, 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<StrategyOverview | null>(null)
   const [pending, setPending] = useState<string | null>(null)
+  // Chaque ouverture repart d'un formulaire neuf
+  const [dialogKey, setDialogKey] = useState(0)
 
   const run = async (key: string, action: () => Promise<{ success: boolean; error?: string }>, success?: string) => {
     setPending(key)
@@ -72,6 +74,7 @@ export function StrategiesCard({ strategies, professionKey, defaultDepartments, 
 
   const openNew = () => {
     setEditing(null)
+    setDialogKey((key) => key + 1)
     setDialogOpen(true)
   }
 
@@ -149,6 +152,7 @@ export function StrategiesCard({ strategies, professionKey, defaultDepartments, 
                       <DropdownMenuItem
                         onSelect={() => {
                           setEditing(strategy)
+                          setDialogKey((key) => key + 1)
                           setDialogOpen(true)
                         }}
                       >
@@ -180,7 +184,7 @@ export function StrategiesCard({ strategies, professionKey, defaultDepartments, 
       </CardContent>
 
       <StrategyDialog
-        key={editing?.id ?? 'new'}
+        key={dialogKey}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         professionKey={professionKey}
