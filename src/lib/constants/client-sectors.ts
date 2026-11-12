@@ -97,6 +97,27 @@ export const STRATEGY_SIZES = [
 
 export type StrategySize = (typeof STRATEGY_SIZES)[number]['value']
 
+// Ancienneté de l'entreprise (facultative : rien de coché = toutes). Mêmes bornes que le détecteur
+// (supabase/functions/prospection-run/detect-profile.ts, AGE_RANGES).
+export const STRATEGY_AGES = [
+  { value: 'new', label: 'Créée il y a moins de 2 ans', hint: 'tout est encore à mettre en place' },
+  { value: 'established', label: 'Créée il y a 2 à 10 ans', hint: 'en développement' },
+  { value: 'old', label: 'Créée il y a plus de 10 ans', hint: 'bien installée' },
+] as const
+
+export type StrategyAge = (typeof STRATEGY_AGES)[number]['value']
+
+/** Tranche d'ancienneté d'une date de création (null si inconnue) */
+export function companyAgeRange(foundedOn: string | null, now = new Date()): StrategyAge | null {
+  if (!foundedOn) return null
+  const founded = new Date(foundedOn)
+  if (Number.isNaN(founded.getTime())) return null
+  const years = (now.getTime() - founded.getTime()) / (365.25 * 24 * 3600 * 1000)
+  if (years < 2) return 'new'
+  if (years < 10) return 'established'
+  return 'old'
+}
+
 export const APPROACH_LABELS: Record<'profile' | 'partner', string> = {
   profile: 'Clients directs',
   partner: 'Partenaires qui sous-traitent',

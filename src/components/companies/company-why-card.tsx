@@ -1,6 +1,6 @@
 import { ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { APPROACH_LABELS, nafCodesForGroups, sectorLabelForNaf } from '@/lib/constants/client-sectors'
+import { APPROACH_LABELS, companyAgeRange, nafCodesForGroups, sectorLabelForNaf } from '@/lib/constants/client-sectors'
 import { DEPARTMENTS } from '@/lib/validations/prospection'
 import { formatDate } from '@/lib/utils/dates'
 import { suggestApproachAngle } from '@/lib/utils/approach-angle'
@@ -76,7 +76,12 @@ export function CompanyWhyCard({
     })
   }
   if (company.founded_on) {
-    facts.push({ label: 'Créée le', value: formatDate(new Date(company.founded_on), 'd MMMM yyyy') })
+    const ageRange = companyAgeRange(company.founded_on)
+    facts.push({
+      label: 'Créée le',
+      value: formatDate(new Date(company.founded_on), 'd MMMM yyyy'),
+      match: ageRange && strategy?.ages.includes(ageRange) ? 'ancienneté recherchée' : undefined,
+    })
   }
   if (company.revenue && company.finances_year) {
     facts.push({ label: 'Chiffre d’affaires', value: `${euros(company.revenue)} (comptes ${company.finances_year})` })

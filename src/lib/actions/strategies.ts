@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { ZodError } from 'zod'
+import { ZodError, type z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
@@ -14,12 +14,13 @@ type ActionResult = { success: boolean; error?: string; id?: string }
 
 const UNIQUE_VIOLATION = '23505'
 
-function filtersFrom(input: StrategyInput) {
+function filtersFrom(input: z.output<typeof strategySchema>) {
   return {
     sector_groups: input.sectorGroups,
     // Codes NAF envoyés au registre ; recalculés à chaque enregistrement depuis le catalogue
     naf_codes: nafCodesForGroups(input.sectorGroups),
     sizes: input.sizes,
+    ages: input.ages,
     departments: input.departments,
   }
 }

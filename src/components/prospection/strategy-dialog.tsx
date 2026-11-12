@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { APPROACH_LABELS, STRATEGY_SIZES, sectorGroup } from '@/lib/constants/client-sectors'
+import { APPROACH_LABELS, STRATEGY_AGES, STRATEGY_SIZES, sectorGroup } from '@/lib/constants/client-sectors'
 import { DepartmentPicker, SectorPicker } from './strategy-pickers'
 import { createStrategy, updateStrategy } from '@/lib/actions/strategies'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
@@ -28,6 +28,32 @@ interface StrategyDialogProps {
 }
 
 const STEPS = ['Qui chercher', 'Quelle taille', 'Où chercher'] as const
+
+/** Case à cocher d'une option (taille, ancienneté) */
+function CheckOption({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-3 rounded-lg border p-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        selected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+      )}
+    >
+      <span
+        className={cn(
+          'flex h-5 w-5 shrink-0 items-center justify-center rounded border',
+          selected && 'border-primary bg-primary text-primary-foreground'
+        )}
+        aria-hidden
+      >
+        {selected && <Check className="h-3.5 w-3.5" />}
+      </span>
+      <span>{children}</span>
+    </button>
+  )
+}
 
 const APPROACH_HINTS: Record<Approach, string> = {
   profile: 'Des entreprises qui pourraient avoir besoin de vous directement.',
@@ -53,6 +79,8 @@ export function StrategyDialog({ open, onOpenChange, professionKey, defaultDepar
   const [approach, setApproach] = useState<Approach>(strategy?.approach ?? 'profile')
   const [sectors, setSectors] = useState<string[]>(strategy?.sectorGroups ?? [])
   const [sizes, setSizes] = useState<string[]>(strategy?.sizes ?? ['tpe', 'pme'])
+  // Rien de coché : toutes les anciennetés
+  const [ages, setAges] = useState<string[]>(strategy?.ages ?? [])
   const [departments, setDepartments] = useState<string[]>(strategy?.departments ?? defaultDepartments.slice(0, 20))
   const [name, setName] = useState(strategy?.name ?? '')
   const [nameTouched, setNameTouched] = useState(!!strategy)
@@ -88,7 +116,7 @@ export function StrategyDialog({ open, onOpenChange, professionKey, defaultDepar
     if (message) return
     setIsSaving(true)
     try {
-      const input = { name: effectiveName.trim(), approach, sectorGroups: sectors, sizes, departments }
+      const input = { name: effectiveName.trim(), approach, sectorGroups: sectors, sizes, ages, departments }
       const result = strategy ? await updateStrategy(strategy.id, input) : await createStrategy(input)
       if (!result.success) {
         setError(result.error ?? 'Impossible d’enregistrer la recherche')
@@ -167,40 +195,41 @@ export function StrategyDialog({ open, onOpenChange, professionKey, defaultDepar
         )}
 
         {step === 1 && (
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Quelle taille d’entreprise ?</legend>
-            <p className="text-sm text-muted-foreground">
-              Les entreprises sans salarié et les filiales de grands groupes sont écartées.
-            </p>
-            <div className="grid gap-2">
-              {STRATEGY_SIZES.map((size) => {
-                const selected = sizes.includes(size.value)
-                return (
-                  <button
+          <div className="space-y-5">
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Quelle taille d’entreprise ?</legend>
+              <p className="text-sm text-muted-foreground">
+                Les entreprises sans salarié et les filiales de grands groupes sont écartées.
+              </p>
+              <div className="grid gap-2">
+                {STRATEGY_SIZES.map((size) => (
+                  <CheckOption
                     key={size.value}
-                    type="button"
-                    aria-pressed={selected}
+                    selected={sizes.includes(size.value)}
                     onClick={() => setSizes((current) => toggle(current, size.value))}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg border p-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      selected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                    )}
                   >
-                    <span
-                      className={cn(
-                        'flex h-5 w-5 shrink-0 items-center justify-center rounded border',
-                        selected && 'border-primary bg-primary text-primary-foreground'
-                      )}
-                      aria-hidden
-                    >
-                      {selected && <Check className="h-3.5 w-3.5" />}
-                    </span>
                     {size.label}
-                  </button>
-                )
-              })}
-            </div>
-          </fieldset>
+                  </CheckOption>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Depuis combien de temps existent-elles ? (facultatif)</legend>
+              <p className="text-sm text-muted-foreground">Rien de coché : toutes, quelle que soit leur ancienneté.</p>
+              <div className="grid gap-2">
+                {STRATEGY_AGES.map((age) => (
+                  <CheckOption
+                    key={age.value}
+                    selected={ages.includes(age.value)}
+                    onClick={() => setAges((current) => toggle(current, age.value))}
+                  >
+                    {age.label} <span className="text-muted-foreground">· {age.hint}</span>
+                  </CheckOption>
+                ))}
+              </div>
+            </fieldset>
+          </div>
         )}
 
         {step === 2 && (

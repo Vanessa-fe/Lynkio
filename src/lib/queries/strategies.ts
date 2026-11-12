@@ -9,6 +9,8 @@ export type StrategyOverview = {
   isActive: boolean
   sectorGroups: string[]
   sizes: string[]
+  // Anciennetés choisies (vide : toutes)
+  ages: string[]
   departments: string[]
   lastRunAt: string | null
   // Entreprises trouvées par cette recherche (encore dans vos entreprises)

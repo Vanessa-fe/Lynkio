@@ -6,7 +6,7 @@
 // Aucun signal d'achat n'est inventé : la fiche dit seulement pourquoi elle correspond au profil.
 //
 // Toujours écartées : entreprises qui s'opposent à la prospection commerciale (registre), données
-// non diffusibles, entrepreneurs individuels, siège hors de la zone, secteurs ignorés, mots-clés exclus,
+// non diffusibles, entrepreneurs individuels, siège hors de la zone, ancienneté non choisie, secteurs ignorés, mots-clés exclus,
 // cabinets de recrutement et intérim (sauf si l'utilisateur les accepte), entreprises déjà connues.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -26,11 +26,31 @@ const HEADCOUNT_CODES: Record<string, string[]> = {
   eti: ['32', '41', '42', '51'],
 }
 
+// Ancienneté (même découpage que STRATEGY_AGES dans src/lib/constants/client-sectors.ts)
+const AGE_RANGES = ['new', 'established', 'old'] as const
+type AgeRange = (typeof AGE_RANGES)[number]
+
+export function ageRange(dateCreation: string | null | undefined, now = new Date()): AgeRange | null {
+  if (!dateCreation) return null
+  const founded = new Date(dateCreation)
+  if (Number.isNaN(founded.getTime())) return null
+  const years = (now.getTime() - founded.getTime()) / (365.25 * 24 * 3600 * 1000)
+  if (years < 2) return 'new'
+  if (years < 10) return 'established'
+  return 'old'
+}
+
+/** Anciennetés choisies (vide : toutes) */
+export function strategyAges(strategy: Strategy): Set<AgeRange> {
+  const ages = Array.isArray(strategy.filters.ages) ? strategy.filters.ages : []
+  return new Set(ages.filter((age): age is AgeRange => AGE_RANGES.includes(age as AgeRange)))
+}
+
 export type Strategy = {
   id: string
   name: string
   approach: 'profile' | 'partner'
-  filters: { naf_codes?: unknown; departments?: unknown; sizes?: unknown }
+  filters: { naf_codes?: unknown; departments?: unknown; sizes?: unknown; ages?: unknown }
   cursor: { page?: unknown }
 }
 
@@ -109,6 +129,7 @@ async function runStrategy(
   }
 
   const departments = new Set(query.departments)
+  const ages = strategyAges(strategy)
   const acceptsRecruiters =
     settings.accepted_intermediaries.includes('recruiters') || settings.accepted_intermediaries.includes('staffing')
   let page = typeof strategy.cursor.page === 'number' && strategy.cursor.page >= 1 ? strategy.cursor.page : 1
@@ -131,7 +152,7 @@ async function runStrategy(
       if (created >= share || budget.remaining <= 0) break
       stats.seen++
 
-      const reason = exclusionReason(company, settings, context, departments, acceptsRecruiters, known)
+      const reason = exclusionReason(company, settings, context, departments, ages, acceptsRecruiters, known)
       if (reason) {
         skip(stats, reason)
         continue
@@ -179,6 +200,7 @@ function exclusionReason(
   settings: Settings,
   context: Context,
   departments: Set<string>,
+  ages: Set<AgeRange>,
   acceptsRecruiters: boolean,
   known: Set<string>
 ): string | null {
@@ -190,6 +212,11 @@ function exclusionReason(
   if (isSoleProprietor(company.nature_juridique)) return 'Entrepreneur individuel'
   const department = departmentFromPostalCode(company.siege?.code_postal)
   if (!department || !departments.has(department)) return 'Siège hors de votre zone'
+  if (ages.size > 0) {
+    const range = ageRange(company.date_creation)
+    if (!range) return 'Date de création inconnue'
+    if (!ages.has(range)) return 'Ancienneté hors de votre choix'
+  }
   const section = company.section_activite_principale
   if (section && settings.excluded_naf_sections.includes(section)) return 'Secteur ignoré'
   if (company.activite_principale?.startsWith('78.') && !acceptsRecruiters) return 'Cabinet de recrutement ou intérim'
