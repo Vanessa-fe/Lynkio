@@ -11,6 +11,8 @@ export type StrategyOverview = {
   sizes: string[]
   // Anciennetés choisies (vide : toutes)
   ages: string[]
+  // Critères souples (taille, zone, ancienneté) ; vide : tous obligatoires
+  soft: string[]
   departments: string[]
   lastRunAt: string | null
   // Entreprises trouvées par cette recherche (encore dans vos entreprises)

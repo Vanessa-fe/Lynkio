@@ -6,6 +6,10 @@ const sectorKeys = SECTOR_GROUPS.map((group) => group.key) as [string, ...string
 const sizeValues = STRATEGY_SIZES.map((size) => size.value) as [string, ...string[]]
 const ageValues = STRATEGY_AGES.map((age) => age.value) as [string, ...string[]]
 
+// Critères « souples » : Sophie prend aussi les entreprises proches, avec moins de points
+export const SOFT_CRITERIA = ['sizes', 'departments', 'ages'] as const
+export type SoftCriterion = (typeof SOFT_CRITERIA)[number]
+
 /** « Nouvelle recherche » : approche, secteurs, tailles, ancienneté (facultative), zone */
 export const strategySchema = z.object({
   name: z.string().trim().min(1, 'Donnez un nom à cette recherche').max(80, '80 caractères au plus'),
@@ -17,6 +21,11 @@ export const strategySchema = z.object({
     .array(z.enum(ageValues))
     .default([])
     .transform((ages) => (ages.length === ageValues.length ? [] : [...new Set(ages)])),
+  // Vide : tous les critères sont obligatoires (comportement d'avant)
+  soft: z
+    .array(z.enum(SOFT_CRITERIA))
+    .default([])
+    .transform((soft) => [...new Set(soft)]),
   departments: z
     .array(z.string().refine((code) => code in DEPARTMENTS, 'Département inconnu'))
     .min(1, 'Choisissez au moins un département')
@@ -31,6 +40,7 @@ export function readStrategyFilters(filters: unknown): {
   sizes: string[]
   ages: string[]
   departments: string[]
+  soft: SoftCriterion[]
 } {
   const value = (filters && typeof filters === 'object' ? filters : {}) as Record<string, unknown>
   const strings = (input: unknown) => (Array.isArray(input) ? input.filter((item): item is string => typeof item === 'string') : [])
@@ -38,6 +48,7 @@ export function readStrategyFilters(filters: unknown): {
     sectorGroups: strings(value.sector_groups).filter((key) => sectorKeys.includes(key)),
     sizes: strings(value.sizes).filter((size) => sizeValues.includes(size)),
     ages: strings(value.ages).filter((age) => ageValues.includes(age)),
+    soft: strings(value.soft).filter((item): item is SoftCriterion => (SOFT_CRITERIA as readonly string[]).includes(item)),
     departments: strings(value.departments).filter((code) => code in DEPARTMENTS),
   }
 }
