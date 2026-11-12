@@ -39,6 +39,8 @@ interface CompaniesListProps {
   companies: CompanyWithRelations[]
   stages: PipelineStage[]
   sources: LeadSource[]
+  // Recherches enregistrées, pour filtrer par recherche d'origine (absent : liste déjà filtrée par l'adresse)
+  strategies?: { id: string; name: string }[]
 }
 
 const ALL = 'all'
@@ -47,8 +49,41 @@ const ALL = 'all'
 // Stockage du navigateur, avec une copie en mémoire s'il est indisponible (navigation privée).
 const FILTERS_KEY = 'companies-list-filters'
 
-type Filters = { stage: string; source: string; segment: string; search: string }
-const DEFAULT_FILTERS: Filters = { stage: ALL, source: ALL, segment: ALL, search: '' }
+type Filters = {
+  stage: string
+  source: string
+  segment: string
+  search: string
+  strategy: string
+  score: string
+  contact: string
+}
+const DEFAULT_FILTERS: Filters = {
+  stage: ALL,
+  source: ALL,
+  segment: ALL,
+  search: '',
+  strategy: ALL,
+  score: ALL,
+  contact: ALL,
+}
+
+// Mêmes paliers que la couleur du score (CompanyScore)
+const SCORE_FILTERS = [
+  { value: 'high', label: 'Score élevé (70 et plus)' },
+  { value: 'medium', label: 'Score moyen (40 à 69)' },
+  { value: 'low', label: 'Score faible (moins de 40)' },
+  { value: 'none', label: 'Pas encore notées' },
+] as const
+
+function matchesScore(score: number | null, filter: string): boolean {
+  if (filter === ALL) return true
+  if (score === null) return filter === 'none'
+  if (filter === 'high') return score >= 70
+  if (filter === 'medium') return score >= 40 && score < 70
+  if (filter === 'low') return score < 40
+  return false
+}
 
 let memoryFilters = ''
 const filterListeners = new Set<() => void>()
@@ -86,18 +121,30 @@ function parseFilters(raw: string): Filters {
       source: typeof saved.source === 'string' ? saved.source : ALL,
       segment: typeof saved.segment === 'string' ? saved.segment : ALL,
       search: typeof saved.search === 'string' ? saved.search : '',
+      strategy: typeof saved.strategy === 'string' ? saved.strategy : ALL,
+      score: typeof saved.score === 'string' ? saved.score : ALL,
+      contact: typeof saved.contact === 'string' ? saved.contact : ALL,
     }
   } catch {
     return DEFAULT_FILTERS
   }
 }
 
-export function CompaniesList({ companies, stages, sources }: CompaniesListProps) {
+export function CompaniesList({ companies, stages, sources, strategies }: CompaniesListProps) {
   const router = useRouter()
   const { toast } = useToast()
   // Serveur : filtres par défaut ; navigateur : ceux de la session
   const filters = parseFilters(useSyncExternalStore(subscribeFilters, readFilters, () => ''))
   const { stage: stageFilter, source: sourceFilter, segment: segmentFilter, search } = filters
+  // Une recherche supprimée entre-temps ne doit pas laisser la liste vide sans explication
+  const strategyFilter =
+    strategies && (filters.strategy === ALL || filters.strategy === 'none' || strategies.some((s) => s.id === filters.strategy))
+      ? filters.strategy
+      : ALL
+  const { score: scoreFilter, contact: contactFilter } = filters
+  const setStrategyFilter = (strategy: string) => writeFilters({ ...filters, strategy })
+  const setScoreFilter = (score: string) => writeFilters({ ...filters, score })
+  const setContactFilter = (contact: string) => writeFilters({ ...filters, contact })
   const setStageFilter = (stage: string) => writeFilters({ ...filters, stage })
   const setSourceFilter = (source: string) => writeFilters({ ...filters, source })
   const setSegmentFilter = (segment: string) => writeFilters({ ...filters, segment })
@@ -126,7 +173,20 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
     const matchesSource = sourceFilter === ALL || company.source_id === sourceFilter
     const matchesSegment = segmentFilter === ALL || (company.segment ?? 'none') === segmentFilter
 
-    return matchesSearch && matchesStage && matchesSource && matchesSegment
+    const matchesStrategy = strategyFilter === ALL || (company.strategy_id ?? 'none') === strategyFilter
+    const matchesContact =
+      contactFilter === ALL ||
+      (contactFilter === 'never' ? company.last_interaction_at === null : company.last_interaction_at !== null)
+
+    return (
+      matchesSearch &&
+      matchesStage &&
+      matchesSource &&
+      matchesSegment &&
+      matchesStrategy &&
+      matchesScore(company.score, scoreFilter) &&
+      matchesContact
+    )
   })
 
   const handleDelete = async (company: CompanyWithRelations) => {
@@ -206,14 +266,53 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+      <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
           {filteredCompanies.length} entreprise{filteredCompanies.length !== 1 ? 's' : ''}
           {filteredCompanies.length !== companies.length && ` sur ${companies.length}`}
         </p>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {strategies && strategies.length > 0 && (
+            <Select value={strategyFilter} onValueChange={setStrategyFilter}>
+              <SelectTrigger className="w-full" aria-label="Filtrer par recherche">
+                <SelectValue placeholder="Toutes les recherches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Toutes les recherches</SelectItem>
+                {strategies.map((strategy) => (
+                  <SelectItem key={strategy.id} value={strategy.id}>
+                    {strategy.name}
+                  </SelectItem>
+                ))}
+                <SelectItem value="none">Hors recherche (ajoutées autrement)</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={scoreFilter} onValueChange={setScoreFilter}>
+            <SelectTrigger className="w-full" aria-label="Filtrer par score">
+              <SelectValue placeholder="Tous les scores" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Tous les scores</SelectItem>
+              {SCORE_FILTERS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={contactFilter} onValueChange={setContactFilter}>
+            <SelectTrigger className="w-full" aria-label="Filtrer par prise de contact">
+              <SelectValue placeholder="Contactées ou non" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Contactées ou non</SelectItem>
+              <SelectItem value="never">Jamais contactées</SelectItem>
+              <SelectItem value="contacted">Déjà contactées</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={segmentFilter} onValueChange={setSegmentFilter}>
-            <SelectTrigger className="sm:w-[200px]" aria-label="Filtrer par segment">
+            <SelectTrigger className="w-full" aria-label="Filtrer par segment">
               <SelectValue placeholder="Tous les segments" />
             </SelectTrigger>
             <SelectContent>
@@ -227,7 +326,7 @@ export function CompaniesList({ companies, stages, sources }: CompaniesListProps
             </SelectContent>
           </Select>
           <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="sm:w-[220px]" aria-label="Filtrer par source">
+            <SelectTrigger className="w-full" aria-label="Filtrer par source">
               <SelectValue placeholder="Toutes les sources" />
             </SelectTrigger>
             <SelectContent>
