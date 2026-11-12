@@ -77,6 +77,12 @@ export function checkDraft(
   if (/\d[\d\s.,]*\s?(?:€|euros?\b|k€)|\bTJM\b|\btarifs?\b|\bprix\b/i.test(text)) {
     warnings.push('Le message parle de prix : mieux vaut en parler après un premier échange.')
   }
+  if (/\bcomme convenu\b|suite à notre (?:échange|conversation|appel)|ravie? de vous (?:retrouver|recontacter)|comme nous en avions parlé/i.test(text)) {
+    warnings.push('Le message laisse croire que vous vous connaissez déjà : à reformuler.')
+  }
+  if (/\bgaranti(?:e|s|es)?\b|\bdoubler\b|\btripler\b|\b\d+\s?%|\ben \d+\s?h(?:eures)?\b|\bsans aucun risque\b/i.test(text)) {
+    warnings.push('Le message promet un résultat chiffré ou garanti : à vérifier avant l’envoi.')
+  }
 
   for (const client of options.confidentialClients) {
     if (text.toLowerCase().includes(client.toLowerCase())) {
