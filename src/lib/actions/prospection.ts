@@ -12,7 +12,7 @@ import { createCompany } from '@/lib/actions/companies'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 import { getCurrentPlan } from '@/lib/queries/billing'
-import { NO_ACCESS_MESSAGE, PLAN_LIMITS } from '@/lib/billing'
+import { NO_ACCESS_MESSAGE, PLAN_LIMITS, parisMidnight } from '@/lib/billing'
 
 type ActionResult = {
   success: boolean
@@ -102,6 +102,22 @@ async function invokeProspection(body: { mode: 'manual'; strategyId?: string }):
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté' }
+    }
+
+    // Au plus 5 lancements à la main par jour (heure de Paris) ; les passages automatiques ne comptent pas
+    const plan = await getCurrentPlan()
+    const maxPerDay = PLAN_LIMITS[plan ?? 'pro'].manualRunsPerDay
+    const { count } = await supabase
+      .from('pipeline_runs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('triggered_by', 'manual')
+      .gte('started_at', parisMidnight(new Date()).toISOString())
+    if ((count ?? 0) >= maxPerDay) {
+      return {
+        success: false,
+        error: `Vous avez déjà lancé Sophie ${maxPerDay} fois aujourd’hui : vous pourrez la relancer demain. Ses recherches automatiques continuent.`,
+      }
     }
 
     const { error } = await supabase.functions.invoke('prospection-run', { body })
