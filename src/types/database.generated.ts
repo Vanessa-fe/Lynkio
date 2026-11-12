@@ -115,6 +115,7 @@ export type Database = {
           source_id: string | null
           stack_detected_at: string | null
           stage_id: string | null
+          strategy_id: string | null
           updated_at: string
           user_id: string
           website: string | null
@@ -153,6 +154,7 @@ export type Database = {
           source_id?: string | null
           stack_detected_at?: string | null
           stage_id?: string | null
+          strategy_id?: string | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -191,6 +193,7 @@ export type Database = {
           source_id?: string | null
           stack_detected_at?: string | null
           stage_id?: string | null
+          strategy_id?: string | null
           updated_at?: string
           user_id?: string
           website?: string | null
@@ -1059,6 +1062,48 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      prospect_strategies: {
+        Row: {
+          approach: string
+          created_at: string
+          cursor: Json
+          filters: Json
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          name: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          approach: string
+          created_at?: string
+          cursor?: Json
+          filters?: Json
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          approach?: string
+          created_at?: string
+          cursor?: Json
+          filters?: Json
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
         }
         Relationships: []
       }

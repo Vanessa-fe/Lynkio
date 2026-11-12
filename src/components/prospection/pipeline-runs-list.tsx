@@ -29,6 +29,7 @@ const SOURCE_LABELS: Record<string, string> = {
   job_postings: 'Offres d\'emploi',
   recent_creations: 'Créations récentes',
   tech_users: 'Recherche par technologie',
+  profile_search: 'Vos recherches par profil',
 }
 
 function plural(count: number, singular: string, pluralForm: string) {

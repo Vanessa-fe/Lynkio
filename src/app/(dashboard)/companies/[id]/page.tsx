@@ -12,6 +12,7 @@ import { getCompanyReminders } from '@/lib/queries/reminders'
 import { getIcpBasics } from '@/lib/queries/icp'
 import { getUserProfile } from '@/lib/queries/user-profile'
 import { getContactsOutreach, getOrganizationOptions } from '@/lib/queries/people'
+import { getStrategy } from '@/lib/queries/strategies'
 
 interface CompanyPageProps {
   params: Promise<{
@@ -40,7 +41,10 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
   }
 
   // Personne seule : les entreprises auxquelles on peut la rattacher
-  const organizations = company.kind === 'individual' ? await getOrganizationOptions() : []
+  const [organizations, strategy] = await Promise.all([
+    company.kind === 'individual' ? getOrganizationOptions() : Promise.resolve([]),
+    company.strategy_id ? getStrategy(company.strategy_id) : Promise.resolve(null),
+  ])
 
   return (
     <CompanyDetail
@@ -56,6 +60,7 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       organizations={organizations}
       outreach={outreach}
       openEmailDraft={redaction === 'email'}
+      strategy={strategy}
     />
   )
 }

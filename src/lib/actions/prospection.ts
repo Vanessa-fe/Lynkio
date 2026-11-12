@@ -96,7 +96,14 @@ export async function launchTechResearch(): Promise<ActionResult> {
   return invokeProspection({ mode: 'manual', source: 'tech_users' })
 }
 
-async function invokeProspection(body: { mode: 'manual'; source?: 'tech_users' }): Promise<ActionResult> {
+/**
+ * « Lancer cette recherche » : une seule recherche enregistrée (recherche par profil), tout de suite
+ */
+export async function launchStrategy(strategyId: string): Promise<ActionResult> {
+  return invokeProspection({ mode: 'manual', strategyId })
+}
+
+async function invokeProspection(body: { mode: 'manual'; source?: 'tech_users'; strategyId?: string }): Promise<ActionResult> {
   try {
     const supabase = await createClient()
 
@@ -117,17 +124,17 @@ async function invokeProspection(body: { mode: 'manual'; source?: 'tech_users' }
         }
       }
       console.error('Launch prospection error:', error)
-      captureServerError(error, user.id, { action: 'launch_prospection', source: body.source ?? 'all' })
+      captureServerError(error, user.id, { action: 'launch_prospection', source: body.source ?? (body.strategyId ? 'strategy' : 'all') })
       return { success: false, error: 'Impossible de lancer la prospection' }
     }
 
-    captureServerEvent(user.id, 'prospection_launched', { source: body.source ?? 'all' })
+    captureServerEvent(user.id, 'prospection_launched', { source: body.source ?? (body.strategyId ? 'strategy' : 'all') })
 
     revalidatePath('/prospection')
     return { success: true }
   } catch (error) {
     console.error('Launch prospection error:', error)
-    captureServerError(error, undefined, { action: 'launch_prospection', source: body.source ?? 'all' })
+    captureServerError(error, undefined, { action: 'launch_prospection', source: body.source ?? (body.strategyId ? 'strategy' : 'all') })
     return { success: false, error: 'Une erreur est survenue' }
   }
 }

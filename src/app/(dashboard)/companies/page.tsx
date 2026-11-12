@@ -3,12 +3,18 @@ import { ArrowDownUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CompaniesList } from '@/components/companies/companies-list'
 import { getCompanies, getLeadSources, getPipelineStages } from '@/lib/queries/companies'
+import { getStrategy } from '@/lib/queries/strategies'
 
-export default async function CompaniesPage() {
-  const [companies, stages, sources] = await Promise.all([
-    getCompanies(),
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ strategie?: string }> }) {
+  const { strategie } = await searchParams
+  const strategyId = strategie && UUID.test(strategie) ? strategie : undefined
+  const [companies, stages, sources, strategy] = await Promise.all([
+    getCompanies(200, { strategyId }),
     getPipelineStages(),
     getLeadSources(),
+    strategyId ? getStrategy(strategyId) : Promise.resolve(null),
   ])
 
   return (
@@ -27,6 +33,18 @@ export default async function CompaniesPage() {
           </Link>
         </Button>
       </div>
+
+      {strategyId && (
+        <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            Entreprises trouvées par votre recherche{' '}
+            <span className="font-medium">« {strategy?.name ?? 'supprimée'} »</span>
+          </span>
+          <Link href="/companies" className="font-medium text-primary underline-offset-2 hover:underline">
+            Voir toutes les entreprises
+          </Link>
+        </div>
+      )}
 
       <CompaniesList companies={companies} stages={stages} sources={sources} />
     </div>

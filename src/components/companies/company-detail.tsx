@@ -54,6 +54,8 @@ import { CompanyScore, CompanyStageSelect } from './company-stage-select'
 import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
+import { CompanyWhyCard } from './company-why-card'
+import type { StrategyOverview } from '@/lib/queries/strategies'
 import { CompanyNextStep } from './company-next-step'
 import { CompanySegmentSelect } from './company-segment'
 import { AttachToCompanyDialog } from '@/components/people/attach-to-company-dialog'
@@ -79,6 +81,8 @@ interface CompanyDetailProps {
   outreach: Record<string, PersonRow['outreach']>
   // Arrivée depuis un post LinkedIn (« Écrire un e-mail avec Sophie ») : la rédaction s'ouvre tout de suite
   openEmailDraft?: boolean
+  // Recherche enregistrée qui a trouvé la fiche (« Pourquoi cette entreprise »)
+  strategy?: StrategyOverview | null
 }
 
 /**
@@ -112,6 +116,7 @@ export function CompanyDetail({
   organizations,
   outreach,
   openEmailDraft = false,
+  strategy = null,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -333,6 +338,13 @@ export function CompanyDetail({
           </div>
         </CardContent>
       </Card>
+
+      <CompanyWhyCard
+        company={company}
+        strategy={strategy}
+        signalCount={signals.length}
+        hasDecisionMaker={contacts.some((contact) => contact.is_decision_maker && !contact.opted_out_at)}
+      />
 
       <CompanyScoreCard qualification={qualification} />
 

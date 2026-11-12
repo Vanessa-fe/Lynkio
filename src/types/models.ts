@@ -92,3 +92,4 @@ export type CompanySignalWithType = CompanySignal & {
 export type CompanyInteractionWithContact = CompanyInteraction & {
   contact: Pick<CompanyContact, 'id' | 'first_name' | 'last_name'> | null
 }
+export type ProspectStrategy = Database['public']['Tables']['prospect_strategies']['Row']
