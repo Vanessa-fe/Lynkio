@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "check": "node --experimental-strip-types --test src/lib/__checks__/*.check.ts",
     "supabase:generate-types": "supabase gen types typescript --linked > src/types/database.generated.ts"
   },
   "dependencies": {

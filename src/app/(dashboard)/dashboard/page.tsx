@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getUserProfile } from '@/lib/queries/user-profile'
 import { getDashboardData } from '@/lib/queries/prospection-dashboard'
@@ -23,7 +24,12 @@ export default async function DashboardPage() {
           Bonjour{profile.first_name ? ' ' : ''}
           {profile.first_name && <span className="accent-serif text-primary">{profile.first_name}</span>}
         </h1>
-        <p className="text-muted-foreground mt-2">Où en est votre prospection</p>
+        <p className="text-muted-foreground mt-2">
+          Où en est votre prospection ·{' '}
+          <Link href="/results" className="text-primary underline-offset-2 hover:underline">
+            Voir vos résultats étape par étape
+          </Link>
+        </p>
       </div>
 
       <ProspectionStats stats={data.stats} />
