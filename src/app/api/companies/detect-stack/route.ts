@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { StackDetectionError, detectStack } from '@/lib/detectors/stack'
+import { reserveWebsiteAudit } from '@/lib/detectors/audit-limit'
 import { getAuthUser } from '@/lib/supabase/auth'
 
 /**
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'L\'URL est requise' }, { status: 400 })
     }
 
+    await reserveWebsiteAudit()
     return NextResponse.json(await detectStack(url))
   } catch (error) {
     if (error instanceof StackDetectionError) {
