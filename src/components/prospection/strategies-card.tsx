@@ -133,6 +133,25 @@ export function StrategiesCard({ strategies, professionKey, defaultDepartments, 
                     )}
                     {strategy.lastRunAt && ` · dernière recherche le ${formatDate(new Date(strategy.lastRunAt), "d MMMM 'à' HH:mm")}`}
                   </p>
+                  {strategy.runs.length > 0 && (
+                    <details className="text-xs text-muted-foreground">
+                      <summary className="w-fit cursor-pointer select-none underline-offset-2 hover:text-foreground hover:underline">
+                        Historique des passages
+                      </summary>
+                      <ul className="mt-1 space-y-0.5 pl-4">
+                        {strategy.runs.map((run) => (
+                          <li key={run.runId}>
+                            {formatDate(new Date(run.startedAt), "d MMMM 'à' HH:mm")} ·{' '}
+                            {run.triggeredBy === 'schedule' ? 'automatique' : 'lancé par vous'} · {run.created} entreprise
+                            {run.created > 1 ? 's' : ''} ajoutée{run.created > 1 ? 's' : ''}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-1 pl-4">
+                        Sophie ne vous montre jamais deux fois la même entreprise, quelle que soit la source.
+                      </p>
+                    </details>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
