@@ -44,9 +44,14 @@ export default async function BoampPage({ searchParams }: { searchParams: Params
           <Input name="service" list="boamp-services" defaultValue={filters.service} maxLength={80} placeholder="Ex. formation" />
           <datalist id="boamp-services">{offer?.services.map((s, i) => <option key={i} value={s.name} />)}</datalist>
         </label>
-        <label>Code CPV de la prestation
-          <Input name="cpv" defaultValue={filters.cpv} inputMode="numeric" pattern="[0-9]{8}" placeholder="Ex. 80580000" />
-        </label>
+        <div>
+          <label htmlFor="boamp-cpv">Code CPV (facultatif)</label>
+          <Input id="boamp-cpv" name="cpv" aria-describedby="boamp-cpv-help" defaultValue={filters.cpv} inputMode="numeric" pattern="[0-9]{8}" placeholder="Ex. 80580000" />
+          <p id="boamp-cpv-help" className="mt-1 text-sm text-muted-foreground">
+            Le CPV (vocabulaire commun des marchés publics) est la classification européenne des achats publics.
+            Par exemple, le code 80580000 désigne la formation linguistique. Vous pouvez aussi chercher par mot-clé.
+          </p>
+        </div>
         <label>Département
           <Input name="department" defaultValue={filters.department} maxLength={3} placeholder="Ex. 75" />
         </label>
