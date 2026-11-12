@@ -127,6 +127,35 @@ export async function getCompanyInteractions(
   return data
 }
 
+export type CompanyStageEvent = {
+  id: string
+  changed_at: string
+  changed_by: string
+  from_stage_name: string | null
+  to_stage_name: string | null
+  to_stage_kind: string | null
+}
+
+/**
+ * Historique des étapes d'une fiche (journal écrit par la base, voir 00047), du plus récent au plus ancien
+ */
+export async function getCompanyStageEvents(companyId: string, limit = 50): Promise<CompanyStageEvent[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('company_stage_events')
+    .select('id, changed_at, changed_by, from_stage_name, to_stage_name, to_stage_kind')
+    .eq('company_id', companyId)
+    .order('changed_at', { ascending: false })
+    .limit(limit)
+
+  if (error || !data) {
+    return []
+  }
+
+  return data
+}
+
 /**
  * Étapes du pipeline, dans l'ordre d'affichage
  */
