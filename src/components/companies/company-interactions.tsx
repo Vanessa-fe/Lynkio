@@ -135,7 +135,12 @@ export function CompanyInteractions({
   }
 
   const handleDelete = async (interaction: CompanyInteractionWithContact) => {
-    if (!confirm(`Supprimer cet échange (${companyInteractionTypeLabels[interaction.type]}) ?`)) return
+    if (
+      !confirm(
+        `Supprimer cet échange (${companyInteractionTypeLabels[interaction.type]}) ?\n\nS'il avait fait avancer la fiche d'étape, elle revient à son étape d'avant.`
+      )
+    )
+      return
 
     setDeletingId(interaction.id)
     const result = await deleteCompanyInteraction(interaction.id, companyId)
