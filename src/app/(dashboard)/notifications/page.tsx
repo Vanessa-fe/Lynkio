@@ -96,7 +96,9 @@ export default async function NotificationsPage() {
                     <>
                       <p className="text-xs text-muted-foreground">
                         Du {row.period_start ? formatDate(row.period_start, 'd MMMM') : '?'} au{' '}
-                        {row.period_end ? formatDate(row.period_end, 'd MMMM yyyy') : '?'} · d’après vos échanges notés
+                        {/* La semaine s'arrête le lundi à 0 h (exclu) : on affiche le dernier jour inclus, le dimanche */}
+                        {row.period_end ? formatDate(new Date(new Date(row.period_end).getTime() - 1), 'd MMMM yyyy') : '?'} · d’après
+                        vos échanges notés
                       </p>
                       <p className="text-sm">{digestText(row)}</p>
                       <DigestRewrite id={row.id} />

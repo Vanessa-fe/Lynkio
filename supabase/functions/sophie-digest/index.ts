@@ -23,6 +23,13 @@ function corsHeaders(origin: string | null): Record<string, string> {
   }
 }
 
+/** Jour (AAAA-MM-JJ) à l'heure de Paris ; shiftMs décale l'instant avant conversion */
+function parisDay(value: string | null, shiftMs = 0): string | null {
+  if (!value) return null
+  const date = new Date(new Date(value).getTime() + shiftMs)
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
+}
+
 Deno.serve(async request => {
   const cors = corsHeaders(request.headers.get('Origin'))
   const json = (body: unknown, status = 200) => Response.json(body, { status, headers: cors })
@@ -52,8 +59,10 @@ Deno.serve(async request => {
     const result = await generateJson({
       access, name: 'weekly_digest', timeoutMs: 25000, task: 'La reformulation',
       schema: { type: 'object', properties: { summary: { type: 'string' } }, required: ['summary'], additionalProperties: false },
-      instructions: 'Reformule en français en deux phrases les seuls nombres fournis. outgoing et incoming sont les échanges sortants et entrants, meetings les rendez-vous et notes les notes. Aucun conseil ni déduction.',
-      input: JSON.stringify(report), webSearch: false,
+      instructions: 'Reformule en français en deux phrases les seuls nombres fournis, pour la période du « du » au « au » (dates incluses, à reprendre telles quelles). outgoing et incoming sont les échanges sortants et entrants, meetings les rendez-vous et notes les notes. Aucun conseil ni déduction.',
+      // Dates déjà à l'heure de Paris, dernier jour inclus (la période s'arrête le lundi à 0 h, exclu)
+      input: JSON.stringify({ du: parisDay(report.period_start), au: parisDay(report.period_end, -1), totaux: report.counts }),
+      webSearch: false,
     })
     const summary = JSON.parse(result.text)?.summary
     if (typeof summary !== 'string' || !summary.trim()) throw new Error('Réponse vide')
