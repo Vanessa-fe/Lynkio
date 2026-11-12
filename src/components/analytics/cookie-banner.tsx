@@ -1,6 +1,7 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
+import Link from 'next/link'
 import posthog from 'posthog-js'
 import { Button } from '@/components/ui/button'
 
@@ -50,7 +51,10 @@ export function CookieBanner() {
       <p className="leading-relaxed text-ink/75">
         Filonea mesure son audience avec PostHog, hébergé en Europe, pour comprendre comment le site est utilisé
         et l&apos;améliorer. Rien n&apos;est revendu ni utilisé pour de la publicité. Vous acceptez les cookies de
-        mesure ?
+        mesure ?{' '}
+        <Link href="/confidentialite#cookies" className="font-medium text-ink underline underline-offset-2 hover:text-brand-700">
+          En savoir plus
+        </Link>
       </p>
       <div className="mt-3 flex gap-2">
         <Button type="button" variant="outline" size="sm" className="flex-1" onClick={() => choose(false)}>

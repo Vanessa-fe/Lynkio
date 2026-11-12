@@ -116,7 +116,7 @@ export default function PrivacyPage() {
         compte, sauvegardes chiffrées, règles de sécurité sur toutes les pages du site.
       </p>
 
-      <h2>Cookies</h2>
+      <h2 id="cookies" className="scroll-mt-24">Cookies</h2>
       <ul>
         <li>Un cookie de session, nécessaire pour rester connecté.</li>
         <li>
