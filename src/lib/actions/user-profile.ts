@@ -14,6 +14,15 @@ import {
 } from '@/lib/validations/user-profile'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import { nafCodesForGroups, sectorGroup } from '@/lib/constants/client-sectors'
+
+/** Nom de la première recherche : premier secteur choisi et zone (comme dans « Nouvelle recherche ») */
+function firstSearchName(sectors: string[], departments: string[]): string {
+  const first = sectorGroup(sectors[0] ?? '')?.label ?? 'Ma première recherche'
+  const more = sectors.length > 1 ? ` (+${sectors.length - 1})` : ''
+  const zone = departments.length === 1 ? ` · ${departments[0]}` : ` · ${departments.length} départements`
+  return `${first}${more}${zone}`.slice(0, 80)
+}
 
 /**
  * Type de retour pour les actions de profil
@@ -104,6 +113,44 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       }
     }
 
+    // Première recherche par profil : Sophie a quelque chose à chercher dès le premier jour.
+    // Ses départements deviennent ceux de la prospection (si aucun n'est encore choisi), et la
+    // prospection automatique démarre (lundi et jeudi à 9 h par défaut). Un échec ici ne bloque pas
+    // l'inscription : la recherche peut être créée ensuite dans Prospection.
+    if (validated.firstSearch) {
+      const search = validated.firstSearch
+      const { error: strategyError } = await supabase.from('prospect_strategies').insert({
+        user_id: user.id,
+        name: firstSearchName(search.sectorGroups, search.departments),
+        approach: search.approach,
+        filters: {
+          sector_groups: search.sectorGroups,
+          naf_codes: nafCodesForGroups(search.sectorGroups),
+          sizes: ['tpe', 'pme'],
+          departments: search.departments,
+        },
+      })
+      if (strategyError && strategyError.code !== '23505') console.error('Error creating the first search:', strategyError)
+
+      const { data: settings } = await supabase
+        .from('prospection_settings')
+        .select('departments')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!settings) {
+        const { error: settingsError } = await supabase
+          .from('prospection_settings')
+          .insert({ user_id: user.id, departments: search.departments, is_active: true })
+        if (settingsError) console.error('Error saving the first prospection settings:', settingsError)
+      } else if (settings.departments.length === 0) {
+        const { error: settingsError } = await supabase
+          .from('prospection_settings')
+          .update({ departments: search.departments })
+          .eq('user_id', user.id)
+        if (settingsError) console.error('Error saving the first departments:', settingsError)
+      }
+    }
+
     // 3. Onboarding terminé seulement une fois tout initialisé
     if (isFirstOnboarding) {
       const { error: completeError } = await supabase
@@ -121,7 +168,8 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
       captureServerEvent(user.id, 'onboarding_completed', {
         profession_key: validated.professionKey,
         selected_theme: validated.selectedTheme,
-        search_keywords_count: validated.searchKeywords?.length ?? 0,
+        first_search: validated.firstSearch ? validated.firstSearch.approach : 'none',
+        first_search_sectors: validated.firstSearch?.sectorGroups.length ?? 0,
         $set: { profession_key: validated.professionKey },
       })
     }

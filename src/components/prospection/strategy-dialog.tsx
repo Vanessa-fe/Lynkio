@@ -1,21 +1,14 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Loader2, X } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  APPROACH_LABELS,
-  SECTOR_GROUPS,
-  STRATEGY_SIZES,
-  sectorGroup,
-  sectorSuggestions,
-} from '@/lib/constants/client-sectors'
-import { DEPARTMENTS, DEPARTMENT_LIST } from '@/lib/validations/prospection'
+import { APPROACH_LABELS, STRATEGY_SIZES, sectorGroup } from '@/lib/constants/client-sectors'
+import { DepartmentPicker, SectorPicker } from './strategy-pickers'
 import { createStrategy, updateStrategy } from '@/lib/actions/strategies'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
@@ -63,23 +56,14 @@ export function StrategyDialog({ open, onOpenChange, professionKey, defaultDepar
   const [departments, setDepartments] = useState<string[]>(strategy?.departments ?? defaultDepartments.slice(0, 20))
   const [name, setName] = useState(strategy?.name ?? '')
   const [nameTouched, setNameTouched] = useState(!!strategy)
-  const [showAll, setShowAll] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const suggested = sectorSuggestions(professionKey, approach)
-  const visibleSectors = useMemo(() => {
-    if (showAll || suggested.length === 0) return SECTOR_GROUPS
-    // Suggestions du métier, plus ce qui est déjà coché ailleurs
-    return SECTOR_GROUPS.filter((group) => suggested.includes(group.key) || sectors.includes(group.key))
-  }, [showAll, suggested, sectors])
 
   const effectiveName = nameTouched ? name : suggestedName(sectors, departments)
 
   const reset = () => {
     setStep(0)
     setError(null)
-    setShowAll(false)
   }
 
   const toggle = (list: string[], value: string) => (list.includes(value) ? list.filter((item) => item !== value) : [...list, value])
@@ -177,34 +161,7 @@ export function StrategyDialog({ open, onOpenChange, professionKey, defaultDepar
 
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">Dans quels secteurs ?</legend>
-              {suggested.length > 0 && !showAll && (
-                <p className="text-sm text-muted-foreground">Suggestions pour votre métier :</p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {visibleSectors.map((group) => {
-                  const selected = sectors.includes(group.key)
-                  return (
-                    <button
-                      key={group.key}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => setSectors((current) => toggle(current, group.key))}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                        selected ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted/50'
-                      )}
-                    >
-                      {selected && <Check className="h-3.5 w-3.5" aria-hidden />}
-                      {group.label}
-                    </button>
-                  )
-                })}
-              </div>
-              {suggested.length > 0 && (
-                <Button type="button" variant="link" className="h-auto px-0" onClick={() => setShowAll((value) => !value)}>
-                  {showAll ? 'Voir seulement les suggestions' : 'Voir tous les secteurs'}
-                </Button>
-              )}
+              <SectorPicker value={sectors} onChange={setSectors} professionKey={professionKey} approach={approach} />
             </fieldset>
           </div>
         )}
@@ -250,41 +207,7 @@ export function StrategyDialog({ open, onOpenChange, professionKey, defaultDepar
           <div className="space-y-5">
             <div className="space-y-2">
               <Label>Où se trouve leur siège ?</Label>
-              <Select
-                value=""
-                onValueChange={(code) => setDepartments((current) => [...current, code])}
-                disabled={departments.length >= 20}
-              >
-                <SelectTrigger className="sm:w-80" aria-label="Ajouter un département">
-                  <SelectValue placeholder="Ajouter un département" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DEPARTMENT_LIST.filter(([code]) => !departments.includes(code)).map(([code, label]) => (
-                    <SelectItem key={code} value={code}>
-                      {code} · {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {departments.length > 0 ? (
-                <ul className="flex flex-wrap gap-2" aria-label="Départements choisis">
-                  {departments.map((code) => (
-                    <li key={code} className="inline-flex items-center gap-1 rounded-full border bg-muted/50 py-1 pl-3 pr-1 text-sm">
-                      {code} · {DEPARTMENTS[code] ?? code}
-                      <button
-                        type="button"
-                        onClick={() => setDepartments((current) => current.filter((item) => item !== code))}
-                        className="rounded-full p-1 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        aria-label={`Retirer ${DEPARTMENTS[code] ?? code}`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">Aucun département choisi.</p>
-              )}
+              <DepartmentPicker value={departments} onChange={setDepartments} />
             </div>
 
             <div className="space-y-2">
