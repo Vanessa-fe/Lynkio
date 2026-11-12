@@ -2,14 +2,22 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProspectionSettingsForm } from '@/components/prospection/prospection-settings-form'
-import { getProspectionSettings } from '@/lib/queries/prospection'
+import { TechResearchCard } from '@/components/prospection/tech-research-card'
+import { getPipelineRuns, getProspectionSettings } from '@/lib/queries/prospection'
+import { getIcpBasics } from '@/lib/queries/icp'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { PLAN_LIMITS } from '@/lib/billing'
 import { ProOnlyNotice } from '@/components/billing/pro-only-notice'
 
 export default async function ProspectionSettingsPage() {
-  const [settings, plan] = await Promise.all([getProspectionSettings(), getCurrentPlan()])
+  const [settings, plan, icp, runs] = await Promise.all([
+    getProspectionSettings(),
+    getCurrentPlan(),
+    getIcpBasics(),
+    getPipelineRuns(5),
+  ])
   const limits = PLAN_LIMITS[plan ?? 'pro']
+  const isRunning = runs.some((run) => run.status === 'running')
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -36,6 +44,11 @@ export default async function ProspectionSettingsPage() {
       )}
 
       <ProspectionSettingsForm settings={settings} maxDays={limits.daysPerWeek} maxCompanies={limits.companiesPerRun} />
+
+      {/* Recherche par technologie : seulement pour la tech (ou des technologies déjà choisies) */}
+      {(icp.professionKey === 'web_developer' || icp.techStack.length > 0) && (
+        <TechResearchCard techStack={icp.techStack} isRunning={isRunning} proOnly={!limits.techResearch} />
+      )}
     </div>
   )
 }
