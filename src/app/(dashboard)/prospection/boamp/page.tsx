@@ -47,14 +47,14 @@ export default async function BoampPage({ searchParams }: { searchParams: Params
         <div>
           <div className="relative flex items-center gap-1">
             <label htmlFor="boamp-cpv">Code CPV (facultatif)</label>
-            <details>
-              <summary aria-label="Que signifie le code CPV ?" className="flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <div className="group">
+              <span tabIndex={0} role="img" aria-label="Aide sur le code CPV" aria-describedby="boamp-cpv-help" className="flex h-6 w-6 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-ring">
                 <span aria-hidden="true" className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-xs font-semibold text-muted-foreground">!</span>
-              </summary>
-              <p id="boamp-cpv-help" className="absolute left-0 top-full z-10 mt-1 w-full max-w-xs rounded-md border bg-popover p-3 text-sm text-popover-foreground shadow-md">
+              </span>
+              <p id="boamp-cpv-help" role="tooltip" className="invisible absolute left-0 top-full z-10 group-hover:visible group-has-[:focus-visible]:visible w-full max-w-xs rounded-md border bg-popover p-3 text-sm text-popover-foreground shadow-md">
                 classification européenne des achats publics. Par exemple, le code 80580000 désigne la formation linguistique
               </p>
-            </details>
+            </div>
           </div>
           <Input id="boamp-cpv" name="cpv" aria-describedby="boamp-cpv-help" defaultValue={filters.cpv} inputMode="numeric" pattern="[0-9]{8}" placeholder="Ex. 80580000" />
         </div>
