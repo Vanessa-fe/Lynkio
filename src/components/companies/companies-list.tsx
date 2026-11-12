@@ -216,6 +216,23 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
 
   const noStageCount = countByStage.get('none') ?? 0
 
+  // Libellés des filtres, écrits dès le rendu serveur : sans eux, Radix laisse les listes vides
+  // le temps que la page se charge dans le navigateur
+  const strategyLabel =
+    strategyFilter === ALL
+      ? 'Toutes les recherches'
+      : strategyFilter === 'none'
+        ? 'Hors recherche (ajoutées autrement)'
+        : (strategies?.find((strategy) => strategy.id === strategyFilter)?.name ?? 'Toutes les recherches')
+  const scoreLabel = SCORE_FILTERS.find((option) => option.value === scoreFilter)?.label ?? 'Tous les scores'
+  const contactLabel =
+    contactFilter === 'never' ? 'Jamais contactées' : contactFilter === 'contacted' ? 'Déjà contactées' : 'Contactées ou non'
+  const segmentLabel =
+    segmentFilter === 'none'
+      ? 'Non classées'
+      : ((segmentLabels as Record<string, string>)[segmentFilter] ?? 'Tous les segments')
+  const sourceLabel = sources.find((source) => source.id === sourceFilter)?.name ?? 'Toutes les sources'
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -275,7 +292,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
           {strategies && strategies.length > 0 && (
             <Select value={strategyFilter} onValueChange={setStrategyFilter}>
               <SelectTrigger className="w-full" aria-label="Filtrer par recherche">
-                <SelectValue placeholder="Toutes les recherches" />
+                <SelectValue placeholder="Toutes les recherches">{strategyLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>Toutes les recherches</SelectItem>
@@ -290,7 +307,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
           )}
           <Select value={scoreFilter} onValueChange={setScoreFilter}>
             <SelectTrigger className="w-full" aria-label="Filtrer par score">
-              <SelectValue placeholder="Tous les scores" />
+              <SelectValue placeholder="Tous les scores">{scoreLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Tous les scores</SelectItem>
@@ -303,7 +320,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
           </Select>
           <Select value={contactFilter} onValueChange={setContactFilter}>
             <SelectTrigger className="w-full" aria-label="Filtrer par prise de contact">
-              <SelectValue placeholder="Contactées ou non" />
+              <SelectValue placeholder="Contactées ou non">{contactLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Contactées ou non</SelectItem>
@@ -313,7 +330,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
           </Select>
           <Select value={segmentFilter} onValueChange={setSegmentFilter}>
             <SelectTrigger className="w-full" aria-label="Filtrer par segment">
-              <SelectValue placeholder="Tous les segments" />
+              <SelectValue placeholder="Tous les segments">{segmentLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Tous les segments</SelectItem>
@@ -327,7 +344,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
           </Select>
           <Select value={sourceFilter} onValueChange={setSourceFilter}>
             <SelectTrigger className="w-full" aria-label="Filtrer par source">
-              <SelectValue placeholder="Toutes les sources" />
+              <SelectValue placeholder="Toutes les sources">{sourceLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Toutes les sources</SelectItem>
