@@ -3,18 +3,20 @@ import { ArrowDownUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CompaniesList } from '@/components/companies/companies-list'
 import { getCompanies, getLeadSources, getPipelineStages } from '@/lib/queries/companies'
-import { getStrategy } from '@/lib/queries/strategies'
+import { getStrategies, getStrategy } from '@/lib/queries/strategies'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ strategie?: string }> }) {
   const { strategie } = await searchParams
   const strategyId = strategie && UUID.test(strategie) ? strategie : undefined
-  const [companies, stages, sources, strategy] = await Promise.all([
+  const [companies, stages, sources, strategy, strategies] = await Promise.all([
     getCompanies(200, { strategyId }),
     getPipelineStages(),
     getLeadSources(),
     strategyId ? getStrategy(strategyId) : Promise.resolve(null),
+    // Liste déjà limitée à une recherche par l'adresse : pas de filtre « Recherche » en plus
+    strategyId ? Promise.resolve([]) : getStrategies(),
   ])
 
   return (
@@ -46,7 +48,12 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
         </div>
       )}
 
-      <CompaniesList companies={companies} stages={stages} sources={sources} />
+      <CompaniesList
+        companies={companies}
+        stages={stages}
+        sources={sources}
+        strategies={strategyId ? undefined : strategies.map(({ id, name }) => ({ id, name }))}
+      />
     </div>
   )
 }
