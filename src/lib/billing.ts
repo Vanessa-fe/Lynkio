@@ -13,13 +13,12 @@ export const PLAN_LIMITS: Record<
     companiesPerRun: number
     daysPerWeek: number
     runsPerWeek: number | null
-    techResearch: boolean
     // Recherches enregistrées (recherche par profil), décision du 13/11/2026
     strategies: number
   }
 > = {
-  essentiel: { searchKeywords: 3, companiesPerRun: 10, daysPerWeek: 1, runsPerWeek: 1, techResearch: false, strategies: 5 },
-  pro: { searchKeywords: 10, companiesPerRun: 50, daysPerWeek: 7, runsPerWeek: null, techResearch: true, strategies: 20 },
+  essentiel: { searchKeywords: 3, companiesPerRun: 10, daysPerWeek: 1, runsPerWeek: 1, strategies: 5 },
+  pro: { searchKeywords: 10, companiesPerRun: 50, daysPerWeek: 7, runsPerWeek: null, strategies: 20 },
 }
 
 const PARIS = 'Europe/Paris'

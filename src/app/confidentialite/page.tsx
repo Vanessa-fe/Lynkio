@@ -96,8 +96,7 @@ export default function PrivacyPage() {
           <strong>L&apos;IA et le service de recherche d&apos;e-mails que vous avez choisis</strong> (OpenAI, Anthropic
           Claude ou Google Gemini, et Hunter) : quand vous demandez un message ou une recherche, les informations
           utiles (fiche de l&apos;entreprise, prénom et poste du contact, votre présentation) leur sont envoyées avec
-          votre clé, sous vos propres conditions avec eux. La recherche sur Internet de la recherche par technologie
-          est faite par cette IA.
+          votre clé, sous vos propres conditions avec eux.
         </li>
       </ul>
 

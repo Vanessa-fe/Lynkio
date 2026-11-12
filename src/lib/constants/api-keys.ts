@@ -101,7 +101,7 @@ export const API_KEY_SERVICES: ApiKeyService[] = [
     provider: 'gemini',
     label: 'Gemini (Google)',
     usedFor:
-      'Une IA pour Sophie avec une offre gratuite : elle rédige vos messages. Sa recherche sur Internet (recherche par technologie) demande la facturation de Google.',
+      'Une IA pour Sophie avec une offre gratuite : elle rédige vos messages.',
     keyPlaceholder: 'Votre clé Gemini',
     steps: [
       {
@@ -115,7 +115,7 @@ export const API_KEY_SERVICES: ApiKeyService[] = [
         linkLabel: 'Clés API',
       },
     ],
-    cost: 'Gratuit pour rédiger, dans les limites de Google. La recherche par technologie demande la facturation Google. Avec l\'offre gratuite, Google peut utiliser les textes envoyés pour améliorer ses services : activez la facturation pour l\'éviter.',
+    cost: 'Gratuit pour rédiger, dans les limites de Google. Avec l\'offre gratuite, Google peut utiliser les textes envoyés pour améliorer ses services : activez la facturation pour l\'éviter.',
     defaultModel: GEMINI_DEFAULT_MODEL,
   },
   {
