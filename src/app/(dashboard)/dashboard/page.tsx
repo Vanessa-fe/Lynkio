@@ -6,9 +6,11 @@ import { TodayReminders } from '@/components/dashboard/today-reminders'
 import { TopOpportunities } from '@/components/dashboard/top-opportunities'
 import { PipelineOverview } from '@/components/dashboard/pipeline-overview'
 import { SophieCard } from '@/components/dashboard/sophie-card'
+import { GoalsBarometer } from '@/components/dashboard/goals-barometer'
+import { getGoalProgress } from '@/lib/queries/offer'
 
 export default async function DashboardPage() {
-  const [profile, data] = await Promise.all([getUserProfile(), getDashboardData()])
+  const [profile, data, goals] = await Promise.all([getUserProfile(), getDashboardData(), getGoalProgress()])
 
   if (!profile || !data) {
     redirect('/login')
@@ -27,6 +29,7 @@ export default async function DashboardPage() {
       <ProspectionStats stats={data.stats} />
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {goals && <GoalsBarometer progress={goals} />}
         <TodayReminders reminders={data.todayReminders} />
         <TopOpportunities opportunities={data.opportunities} />
         <PipelineOverview pipeline={data.pipeline} />
