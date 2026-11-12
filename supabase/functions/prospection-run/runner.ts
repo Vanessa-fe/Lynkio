@@ -101,9 +101,17 @@ export async function runProspection(
     const cursorUpdates: Record<string, string> = {}
 
     const sources: SourceKey[] = only ?? settings.sources.filter((source) => source !== 'tech_users')
+    const disabled = await loadDisabledConnectors(admin)
 
     for (const detector of DETECTORS) {
       if (!sources.includes(detector.key)) continue
+
+      // Source coupée pour tout le monde (connector_settings) : on le dit dans l'historique
+      const reason = disabled.get(detector.key)
+      if (reason !== undefined) {
+        results[detector.key] = { ...newSourceStats(), error: reason }
+        continue
+      }
 
       try {
         const { stats, cursor } = await detector.detect(admin, settings, context, budget)
@@ -137,6 +145,24 @@ export async function runProspection(
     console.error('runProspection', error)
     await finishRun(admin, runId, 'failed', results, [], errorMessage(error))
   }
+}
+
+/**
+ * Sources coupées par l'interrupteur global, avec le message à montrer.
+ * Table absente ou illisible : on ne bloque aucune source (comportement d'avant l'interrupteur).
+ */
+async function loadDisabledConnectors(admin: SupabaseClient): Promise<Map<string, string>> {
+  const { data, error } = await admin.from('connector_settings').select('key, provider, disabled_reason').eq('enabled', false)
+  if (error) {
+    console.error('connector_settings', error.message)
+    return new Map()
+  }
+  return new Map(
+    data.map((row) => [
+      row.key,
+      row.disabled_reason || `Source ${row.provider} momentanément désactivée : les autres sources continuent de chercher`,
+    ])
+  )
 }
 
 async function loadSettings(admin: SupabaseClient, userId: string): Promise<Settings> {
