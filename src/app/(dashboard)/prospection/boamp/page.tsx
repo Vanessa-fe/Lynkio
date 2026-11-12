@@ -45,12 +45,18 @@ export default async function BoampPage({ searchParams }: { searchParams: Params
           <datalist id="boamp-services">{offer?.services.map((s, i) => <option key={i} value={s.name} />)}</datalist>
         </label>
         <div>
-          <label htmlFor="boamp-cpv">Code CPV (facultatif)</label>
+          <div className="relative flex items-center gap-1">
+            <label htmlFor="boamp-cpv">Code CPV (facultatif)</label>
+            <details>
+              <summary aria-label="Que signifie le code CPV ?" className="flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                <span aria-hidden="true" className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-xs font-semibold text-muted-foreground">!</span>
+              </summary>
+              <p id="boamp-cpv-help" className="absolute left-0 top-full z-10 mt-1 w-full max-w-xs rounded-md border bg-popover p-3 text-sm text-popover-foreground shadow-md">
+                classification européenne des achats publics. Par exemple, le code 80580000 désigne la formation linguistique
+              </p>
+            </details>
+          </div>
           <Input id="boamp-cpv" name="cpv" aria-describedby="boamp-cpv-help" defaultValue={filters.cpv} inputMode="numeric" pattern="[0-9]{8}" placeholder="Ex. 80580000" />
-          <p id="boamp-cpv-help" className="mt-1 text-sm text-muted-foreground">
-            Le CPV (vocabulaire commun des marchés publics) est la classification européenne des achats publics.
-            Par exemple, le code 80580000 désigne la formation linguistique. Vous pouvez aussi chercher par mot-clé.
-          </p>
         </div>
         <label>Département
           <Input name="department" defaultValue={filters.department} maxLength={3} placeholder="Ex. 75" />
