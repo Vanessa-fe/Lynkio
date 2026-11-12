@@ -15,10 +15,12 @@ export const PLAN_LIMITS: Record<
     runsPerWeek: number | null
     // Recherches enregistrées (recherche par profil), décision du 13/11/2026
     strategies: number
+    // Lancements à la main par jour (heure de Paris), décision du 12/11/2026 ; même plafond en base (00057)
+    manualRunsPerDay: number
   }
 > = {
-  essentiel: { searchKeywords: 3, companiesPerRun: 10, daysPerWeek: 1, runsPerWeek: 1, strategies: 5 },
-  pro: { searchKeywords: 10, companiesPerRun: 50, daysPerWeek: 7, runsPerWeek: null, strategies: 20 },
+  essentiel: { searchKeywords: 3, companiesPerRun: 10, daysPerWeek: 1, runsPerWeek: 1, strategies: 5, manualRunsPerDay: 5 },
+  pro: { searchKeywords: 10, companiesPerRun: 50, daysPerWeek: 7, runsPerWeek: null, strategies: 20, manualRunsPerDay: 5 },
 }
 
 const PARIS = 'Europe/Paris'
