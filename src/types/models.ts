@@ -86,7 +86,7 @@ export type CompanyWithRelations = Company & {
 }
 
 export type CompanySignalWithType = CompanySignal & {
-  type: { label: string; description: string | null } | null
+  type: { label: string; description: string | null; category: string; nature: string; reliability: string } | null
 }
 
 export type CompanyInteractionWithContact = CompanyInteraction & {
