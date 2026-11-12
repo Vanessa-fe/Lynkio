@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { ArrowLeft, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Recommendations } from '@/components/results/recommendations'
 import { FunnelFilters } from '@/components/results/funnel-filters'
 import { getFunnelData } from '@/lib/queries/funnel'
 import { SMALL_SAMPLE } from '@/lib/funnel'
@@ -88,6 +89,8 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
           )}
         </CardContent>
       </Card>
+
+      <Recommendations suggestions={data.suggestions} scope={[data.userId, filters.period, filters.source, filters.sector, filters.strategy].join('/')} />
 
       {found > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
