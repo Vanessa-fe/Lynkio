@@ -69,9 +69,7 @@ export default async function ProspectionPage() {
           <span className="block text-muted-foreground">
             {runs.length === 0
               ? 'Commencez par choisir vos départements, vos jours et ce que Sophie doit chercher.'
-              : icp.professionKey === 'web_developer' || icp.techStack.length > 0
-                ? 'Départements, jours, nombre d’entreprises et recherche par technologie : dans Paramètres.'
-                : 'Départements, jours, nombre d’entreprises et secteurs ignorés : dans Paramètres.'}
+              : 'Départements, jours, nombre d’entreprises et secteurs ignorés : dans Paramètres.'}
           </span>
         </span>
       </Link>

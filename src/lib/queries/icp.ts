@@ -80,8 +80,7 @@ export async function getIcpSettings(): Promise<{
 }
 
 /**
- * Tarif journalier et technologies du client idéal actif (budget des entreprises,
- * recherche par technologie)
+ * Tarif journalier et technologies du client idéal actif (budget des entreprises)
  */
 export async function getIcpBasics(): Promise<{ dayRate: number | null; techStack: string[]; professionKey: string | null }> {
   const supabase = await createClient()

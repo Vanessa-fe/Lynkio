@@ -232,7 +232,7 @@ export const plans = [
       '10 mots-clés de recherche',
       'Messages LinkedIn et relances préparés par Sophie',
       'Extension LinkedIn : le bouton «\u00a0+\u00a0Filonea\u00a0» et vos envois à votre rythme',
-      'Recherche d’e-mails et recherche par technologie',
+      'Recherche d’e-mails des décideurs',
       'Import de vos prospects (CSV, Waalaxy)',
     ],
   },

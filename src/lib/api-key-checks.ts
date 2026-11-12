@@ -7,9 +7,6 @@ const TIMEOUT_MS = 10_000
 // warning : la clé est bonne, mais quelque chose est à savoir (recherche sur Internet impossible…)
 export type KeyCheck = { ok: true; warning?: string } | { ok: false; error: string }
 
-const noWebSearch = (model: string) =>
-  `Clé enregistrée, mais le modèle « ${model} » ne permet pas la recherche sur Internet : la recherche par technologie ne marchera pas. Laissez le champ Modèle vide pour le modèle conseillé.`
-
 /**
  * Vérifie une clé auprès de son service avant de l'enregistrer, sans rien dépenser :
  * lecture de la fiche du modèle (OpenAI, Gemini, Claude) ou du compte (Hunter).
@@ -34,10 +31,7 @@ async function checkOpenAi(key: string, model: string): Promise<KeyCheck> {
     signal: AbortSignal.timeout(TIMEOUT_MS),
     cache: 'no-store',
   })
-  if (response.ok) {
-    // Pas de recherche sur Internet avec les modèles « nano » (documentation OpenAI, 11/11/2026)
-    return /nano/i.test(model) ? { ok: true, warning: noWebSearch(model) } : { ok: true }
-  }
+  if (response.ok) return { ok: true }
   if (response.status === 401) return { ok: false, error: 'OpenAI refuse cette clé : vérifiez que vous l\'avez copiée en entier.' }
   if (response.status === 403) {
     return { ok: false, error: 'Cette clé n\'a pas accès aux modèles : donnez-lui l\'accès complet (« All ») sur OpenAI.' }
@@ -56,14 +50,7 @@ async function checkGemini(key: string, model: string): Promise<KeyCheck> {
     signal: AbortSignal.timeout(TIMEOUT_MS),
     cache: 'no-store',
   })
-  if (response.ok) {
-    if (/gemma/i.test(model)) return { ok: true, warning: noWebSearch(model) }
-    // L'offre gratuite de Google ne comprend pas la recherche sur Internet
-    return {
-      ok: true,
-      warning: 'Bon à savoir : pour la recherche par technologie, Gemini demande d\'activer la facturation dans Google AI Studio.',
-    }
-  }
+  if (response.ok) return { ok: true }
   // Clé invalide : Google répond 400 « API key not valid »
   if (response.status === 400 || response.status === 401 || response.status === 403) {
     return { ok: false, error: 'Google refuse cette clé : vérifiez que vous l\'avez copiée en entier.' }
@@ -75,14 +62,12 @@ async function checkGemini(key: string, model: string): Promise<KeyCheck> {
   return { ok: false, error: `Google n'a pas pu vérifier la clé (erreur ${response.status}) : réessayez plus tard.` }
 }
 
-// Fiche du modèle chez Anthropic (gratuit) : vérifie la clé et dit si le modèle sait chercher sur Internet
+// Fiche du modèle chez Anthropic (gratuit) : vérifie la clé
 async function checkAnthropic(key: string, model: string): Promise<KeyCheck> {
   const client = new Anthropic({ apiKey: key, maxRetries: 0, timeout: TIMEOUT_MS })
   try {
-    const info = (await client.models.retrieve(model)) as {
-      capabilities?: { server_tools?: { web_search?: { supported?: boolean } } }
-    }
-    return info.capabilities?.server_tools?.web_search?.supported === false ? { ok: true, warning: noWebSearch(model) } : { ok: true }
+    await client.models.retrieve(model)
+    return { ok: true }
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {
       return { ok: false, error: 'Anthropic refuse cette clé : vérifiez que vous l\'avez copiée en entier.' }

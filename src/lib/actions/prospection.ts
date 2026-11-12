@@ -88,22 +88,13 @@ export async function launchProspection(): Promise<ActionResult> {
 }
 
 /**
- * Recherche par technologie : l'IA cherche des entreprises dont le site utilise
- * les technologies du client idéal, Sophie vérifie chaque site. Lancée à la
- * demande seulement (elle coûte une recherche IA).
- */
-export async function launchTechResearch(): Promise<ActionResult> {
-  return invokeProspection({ mode: 'manual', source: 'tech_users' })
-}
-
-/**
  * « Lancer cette recherche » : une seule recherche enregistrée (recherche par profil), tout de suite
  */
 export async function launchStrategy(strategyId: string): Promise<ActionResult> {
   return invokeProspection({ mode: 'manual', strategyId })
 }
 
-async function invokeProspection(body: { mode: 'manual'; source?: 'tech_users'; strategyId?: string }): Promise<ActionResult> {
+async function invokeProspection(body: { mode: 'manual'; strategyId?: string }): Promise<ActionResult> {
   try {
     const supabase = await createClient()
 
@@ -124,17 +115,17 @@ async function invokeProspection(body: { mode: 'manual'; source?: 'tech_users'; 
         }
       }
       console.error('Launch prospection error:', error)
-      captureServerError(error, user.id, { action: 'launch_prospection', source: body.source ?? (body.strategyId ? 'strategy' : 'all') })
+      captureServerError(error, user.id, { action: 'launch_prospection', source: body.strategyId ? 'strategy' : 'all' })
       return { success: false, error: 'Impossible de lancer la prospection' }
     }
 
-    captureServerEvent(user.id, 'prospection_launched', { source: body.source ?? (body.strategyId ? 'strategy' : 'all') })
+    captureServerEvent(user.id, 'prospection_launched', { source: body.strategyId ? 'strategy' : 'all' })
 
     revalidatePath('/prospection')
     return { success: true }
   } catch (error) {
     console.error('Launch prospection error:', error)
-    captureServerError(error, undefined, { action: 'launch_prospection', source: body.source ?? (body.strategyId ? 'strategy' : 'all') })
+    captureServerError(error, undefined, { action: 'launch_prospection', source: body.strategyId ? 'strategy' : 'all' })
     return { success: false, error: 'Une erreur est survenue' }
   }
 }
