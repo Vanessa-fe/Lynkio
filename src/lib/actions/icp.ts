@@ -102,3 +102,45 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
     return { success: false, error: 'Une erreur est survenue' }
   }
 }
+
+/**
+ * Ajoute des mots-clés à exclure au client idéal (conversation guidée avec Sophie), sans toucher au reste.
+ * Au plus 30 mots-clés au total, comme dans l'écran du client idéal.
+ */
+export async function addExcludedKeywords(keywords: string[]): Promise<ActionResult> {
+  try {
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+    const cleaned = icpSchema.shape.excludeKeywords.parse(keywords)
+    if (cleaned.length === 0) return { success: true }
+
+    const supabase = await createClient()
+    const { data: icp } = await supabase
+      .from('icp_profiles')
+      .select('id, criteria')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .order('created_at')
+      .limit(1)
+      .maybeSingle()
+    if (!icp) return { success: false, error: 'Client idéal introuvable' }
+
+    const criteria = (icp.criteria ?? {}) as IcpCriteria
+    const merged = [...new Set([...(criteria.exclude_keywords ?? []), ...cleaned])].slice(0, 30)
+    const { error } = await supabase
+      .from('icp_profiles')
+      .update({ criteria: { ...criteria, exclude_keywords: merged } })
+      .eq('id', icp.id)
+      .eq('user_id', user.id)
+    if (error) {
+      console.error('addExcludedKeywords', error)
+      return { success: false, error: 'Impossible d’enregistrer les mots-clés à exclure' }
+    }
+    revalidatePath('/settings')
+    return { success: true }
+  } catch (error) {
+    if (error instanceof ZodError) return { success: false, error: error.errors[0]?.message ?? 'Mots-clés invalides' }
+    console.error('addExcludedKeywords', error)
+    return { success: false, error: 'Une erreur est survenue' }
+  }
+}
