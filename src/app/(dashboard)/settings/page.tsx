@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle, KeyRound, Radar, Lightbulb, CreditCard, Briefcase } from 'lucide-react'
+import { Palette, User, ChevronRight, Target, ListOrdered, MessageSquareText, Puzzle, KeyRound, Radar, Lightbulb, CreditCard, Briefcase, BellRing } from 'lucide-react'
 
 const settingsCards = [
   {
@@ -18,6 +18,14 @@ const settingsCards = [
     href: '/settings/prospection',
     color: 'text-indigo-500',
     bgColor: 'bg-indigo-500/10',
+  },
+  {
+    title: 'Alertes de Sophie',
+    description: 'Nouveaux signaux et bilan de la semaine : fréquence, ou désactivation',
+    icon: BellRing,
+    href: '/notifications',
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-500/10',
   },
   {
     title: 'Mon offre et mes objectifs',

@@ -176,3 +176,6 @@ verify_jwt = true
 # Notifications de Stripe : pas de jeton Supabase, la fonction vérifie la signature de Stripe
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.sophie-digest]
+verify_jwt = true
