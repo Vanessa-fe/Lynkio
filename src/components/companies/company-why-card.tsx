@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { APPROACH_LABELS, nafCodesForGroups, sectorLabelForNaf } from '@/lib/constants/client-sectors'
 import { DEPARTMENTS } from '@/lib/validations/prospection'
 import { formatDate } from '@/lib/utils/dates'
+import { suggestApproachAngle } from '@/lib/utils/approach-angle'
 import type { StrategyOverview } from '@/lib/queries/strategies'
 import type { Company } from '@/types'
 
@@ -35,11 +36,14 @@ export function CompanyWhyCard({
   company,
   strategy,
   signalCount,
+  signalTypes = [],
   hasDecisionMaker,
 }: {
   company: Company
   strategy: StrategyOverview | null
   signalCount: number
+  // Types des signaux observés (pour l'angle d'approche suggéré)
+  signalTypes?: string[]
   hasDecisionMaker: boolean
 }) {
   if (!company.strategy_id) return null
@@ -77,6 +81,14 @@ export function CompanyWhyCard({
   if (company.revenue && company.finances_year) {
     facts.push({ label: 'Chiffre d’affaires', value: `${euros(company.revenue)} (comptes ${company.finances_year})` })
   }
+
+  const suggestion = suggestApproachAngle({
+    approach: strategy?.approach ?? null,
+    sizeCategory: company.size_category,
+    foundedOn: company.founded_on,
+    signalTypes,
+    hasDecisionMaker,
+  })
 
   const unknowns = [
     !company.website && 'son site web',
@@ -140,6 +152,19 @@ export function CompanyWhyCard({
             {signalCount === 0
               ? 'Aucun signal observé pour l’instant : Sophie ne sait pas si cette entreprise a un besoin en ce moment. Elle correspond seulement à votre profil de client.'
               : `${signalCount} signal${signalCount > 1 ? 's' : ''} observé${signalCount > 1 ? 's' : ''} : voir le détail plus bas.`}
+          </p>
+        </section>
+
+        <section className="space-y-1.5 rounded-lg border border-dashed p-3">
+          <h3 className="flex flex-wrap items-center gap-2 font-medium">
+            Angle d’approche suggéré
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+              hypothèse, à adapter
+            </span>
+          </h3>
+          <p>{suggestion.angle}</p>
+          <p className="text-xs text-muted-foreground">
+            Pourquoi : {suggestion.because}. C’est une piste pour votre premier message, pas un besoin constaté.
           </p>
         </section>
 
