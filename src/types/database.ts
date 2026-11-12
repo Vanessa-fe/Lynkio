@@ -34,11 +34,25 @@ export type { Json } from './database.generated'
 // restent optionnels, car MergeDeep conserve le modificateur `?` d'origine.
 type Columns<T> = { Row: T; Insert: Partial<T>; Update: Partial<T> }
 
+export type SophieFrequency = 'off' | 'daily' | 'weekly'
+export type DigestCounts = { outgoing: number; incoming: number; meetings: number; notes: number }
+type SophieNotification = {
+  id: string; user_id: string; kind: 'signal' | 'digest'; delivery_key: string; created_at: string
+  read_at: string | null; company_id: string | null; signal_id: string | null; title: string
+  source: string; source_url: string | null; detected_at: string | null; event_at: string | null
+  period_start: string | null; period_end: string | null; counts: DigestCounts | null
+}
+
 export type Database = MergeDeep<
   GeneratedDatabase,
   {
     public: {
       Tables: {
+        sophie_preferences: Columns<{
+          user_id: string; frequency: SophieFrequency; alerts_since: string | null
+          alerts_through: string | null; digest_from: string | null
+        }> & { Relationships: [] }
+        sophie_notifications: Columns<SophieNotification> & { Relationships: [] }
         reminders: Columns<{ priority: ReminderPriority | null }>
         pipeline_stages: Columns<{ kind: PipelineStageKind; role: PipelineStageRole | null }>
         companies: Columns<{
@@ -59,6 +73,9 @@ export type Database = MergeDeep<
         pipeline_runs: Columns<{ triggered_by: PipelineRunTrigger; status: PipelineRunStatus }>
         linkedin_sequences: Columns<{ status: LinkedinSequenceStatus }>
         linkedin_posts: Columns<{ status: LinkedinPostStatus }>
+      }
+      Functions: {
+        set_sophie_preferences: { Args: { p_frequency: SophieFrequency; p_digest: boolean }; Returns: undefined }
       }
       Views: {
         contact_outreach: { Row: { status: OutreachStatus | null } }

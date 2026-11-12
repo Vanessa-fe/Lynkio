@@ -9,9 +9,15 @@ import { PipelineOverview } from '@/components/dashboard/pipeline-overview'
 import { SophieCard } from '@/components/dashboard/sophie-card'
 import { GoalsBarometer } from '@/components/dashboard/goals-barometer'
 import { getGoalProgress } from '@/lib/queries/offer'
+import { countUnreadNotifications } from '@/lib/queries/notifications'
 
 export default async function DashboardPage() {
-  const [profile, data, goals] = await Promise.all([getUserProfile(), getDashboardData(), getGoalProgress()])
+  const [profile, data, goals, unreadAlerts] = await Promise.all([
+    getUserProfile(),
+    getDashboardData(),
+    getGoalProgress(),
+    countUnreadNotifications(),
+  ])
 
   if (!profile || !data) {
     redirect('/login')
@@ -28,6 +34,12 @@ export default async function DashboardPage() {
           Où en est votre prospection ·{' '}
           <Link href="/results" className="text-primary underline-offset-2 hover:underline">
             Voir vos résultats étape par étape
+          </Link>
+          {' · '}
+          <Link href="/notifications" className="text-primary underline-offset-2 hover:underline">
+            {unreadAlerts > 0
+              ? `${unreadAlerts} nouvelle${unreadAlerts > 1 ? 's' : ''} alerte${unreadAlerts > 1 ? 's' : ''} de Sophie`
+              : 'Alertes de Sophie'}
           </Link>
         </p>
       </div>
