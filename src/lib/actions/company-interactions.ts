@@ -86,6 +86,8 @@ export async function deleteCompanyInteraction(
       return { success: false, error: 'Impossible de supprimer l\'échange' }
     }
 
+    // L'étape de la fiche a pu revenir en arrière (annulation de l'avancement automatique)
+    revalidatePath('/companies')
     revalidatePath(`/companies/${companyId}`)
     return { success: true }
   } catch (error) {
