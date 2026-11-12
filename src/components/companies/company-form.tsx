@@ -238,7 +238,7 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Le site sert aussi à repérer les doublons et à chercher des contacts.
+                Renseignez le site officiel de l’entreprise. Vérifiez que ses conditions autorisent la lecture automatisée avant de lancer l’analyse.
               </p>
             </div>
 

@@ -476,6 +476,11 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
       return
     }
 
+    if (result.data?.cached) {
+      toast({ title: 'Diagnostic déjà disponible', description: 'La fiche reprend la lecture des dernières 24 heures.' })
+      router.refresh()
+      return
+    }
     const detected = result.data?.detected ?? []
     const completed = result.data?.completed ?? []
     toast({
@@ -499,7 +504,7 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-        <p className="font-semibold">Stack technique du site</p>
+        <p className="font-semibold">Diagnostic du site</p>
         {company.website && (
           <Button type="button" variant="outline" size="sm" onClick={handleAnalyze} disabled={isAnalyzing}>
             {isAnalyzing ? (
@@ -511,6 +516,16 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
           </Button>
         )}
       </div>
+      {company.website && <p className="mb-2 text-xs text-muted-foreground">
+        Lancez la lecture sur le site officiel de l’entreprise si ses conditions autorisent cet usage.
+      </p>}
+      {company.website_audit_url && company.website_audited_at && /^https?:\/\//.test(company.website_audit_url) && (
+        <p className="mb-2 text-sm">
+          Page consultée en {company.website_audit_url.startsWith('https:') ? 'HTTPS' : 'HTTP'} le{' '}
+          {formatDate(new Date(company.website_audited_at), 'dd MMMM yyyy à HH:mm')}.{' '}
+          <a className="underline" href={company.website_audit_url} target="_blank" rel="noopener noreferrer">Voir la page source</a>
+        </p>
+      )}
       {company.detected_stack.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {company.detected_stack.map((tech) => (
@@ -526,7 +541,7 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
             : 'Pas encore analysée.'}
         </p>
       )}
-      {company.stack_detected_at && (
+      {company.stack_detected_at && !company.website_audited_at && (
         <p className="text-xs text-muted-foreground mt-2">
           Analysé le {formatDate(new Date(company.stack_detected_at), 'dd MMMM yyyy')}
         </p>

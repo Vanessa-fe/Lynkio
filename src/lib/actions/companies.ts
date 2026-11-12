@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { StackDetectionError, analyzeSite } from '@/lib/detectors/stack'
+import { reserveWebsiteAudit } from '@/lib/detectors/audit-limit'
 import { findSirenOnSite } from '@/lib/detectors/legal-id'
 import { fetchRegistryRecord } from '@/lib/registry'
 import {
@@ -329,7 +330,7 @@ export async function deleteCompany(companyId: string): Promise<ActionResult> {
  */
 export async function analyzeCompanyWebsite(
   companyId: string
-): Promise<ActionResult<{ detected: string[]; siren: string | null; completed: string[] }>> {
+): Promise<ActionResult<{ detected: string[]; siren: string | null; completed: string[]; cached?: boolean }>> {
   try {
     const supabase = await createClient()
 
@@ -339,18 +340,26 @@ export async function analyzeCompanyWebsite(
       return { success: false, error: 'Vous devez être connecté' }
     }
 
-    const { data: company } = await supabase
+    const { data: company, error: readError } = await supabase
       .from('companies')
-      .select('website, registration_id, sector, naf_code, headcount_code, size_category, founded_on, city, postal_code')
+      .select('website, website_audited_at, website_audit_url, detected_stack, registration_id, sector, naf_code, headcount_code, size_category, founded_on, city, postal_code')
       .eq('id', companyId)
       .eq('user_id', user.id)
       .maybeSingle()
 
+    if (readError) return { success: false, error: "Impossible de charger les données du diagnostic." }
     if (!company) return { success: false, error: 'Entreprise introuvable' }
     if (!company.website) return { success: false, error: 'Renseignez d\'abord le site web de l\'entreprise' }
 
+    if (company.website_audit_url && company.website_audited_at && Date.now() - Date.parse(company.website_audited_at) < 86_400_000) {
+      return { success: true, data: { detected: company.detected_stack, siren: company.registration_id, completed: [], cached: true } }
+    }
+    await reserveWebsiteAudit()
     const site = await analyzeSite(company.website)
-    const update: CompanyUpdate = { detected_stack: site.detected, stack_detected_at: site.checkedAt }
+    const update: CompanyUpdate = {
+      detected_stack: site.detected, stack_detected_at: site.checkedAt,
+      website_audit_url: site.url, website_audited_at: site.checkedAt,
+    }
     const completed: string[] = []
 
     // SIREN : celui de la fiche, sinon celui des mentions légales du site
@@ -384,7 +393,10 @@ export async function analyzeCompanyWebsite(
       }
     }
 
-    const { error } = await supabase.from('companies').update(update).eq('id', companyId).eq('user_id', user.id)
+    const { error, data: saved } = await supabase.from('companies').update(update)
+      .eq('id', companyId).eq('user_id', user.id).eq('website', company.website).select('id').maybeSingle()
+    if (!error && !saved) return { success: false, error: 'Le site de la fiche a changé. Rechargez la page.' }
+
 
     if (error) {
       if (error.code === UNIQUE_VIOLATION) {

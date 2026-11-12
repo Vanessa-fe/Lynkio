@@ -42,6 +42,8 @@ export type Database = MergeDeep<
         reminders: Columns<{ priority: ReminderPriority | null }>
         pipeline_stages: Columns<{ kind: PipelineStageKind; role: PipelineStageRole | null }>
         companies: Columns<{
+          website_audit_url: string | null
+          website_audited_at: string | null
           origin: CompanyOrigin
           kind: CompanyKind
           size_category: SizeCategory | null
