@@ -25,6 +25,10 @@ interface StrategyDialogProps {
   defaultDepartments: string[]
   // Recherche à modifier (sinon : nouvelle recherche)
   strategy?: StrategyOverview | null
+  // Nouvelle recherche pré-remplie (conversation guidée avec Sophie)
+  initial?: { name?: string; approach?: Approach; sectorGroups?: string[]; sizes?: string[]; ages?: string[]; departments?: string[] }
+  // Appelé après un enregistrement réussi
+  onSaved?: () => void
 }
 
 const STEPS = ['Qui chercher', 'Quelle taille', 'Où chercher'] as const
@@ -72,18 +76,28 @@ function suggestedName(sectors: string[], departments: string[]): string {
  * « Nouvelle recherche » sans IA : qui chercher (clients ou partenaires, secteurs), quelle taille, où.
  * Sophie la lance ensuite à chaque passage, dans le registre officiel des entreprises.
  */
-export function StrategyDialog({ open, onOpenChange, professionKey, defaultDepartments, strategy }: StrategyDialogProps) {
+export function StrategyDialog({
+  open,
+  onOpenChange,
+  professionKey,
+  defaultDepartments,
+  strategy,
+  initial,
+  onSaved,
+}: StrategyDialogProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [step, setStep] = useState(0)
-  const [approach, setApproach] = useState<Approach>(strategy?.approach ?? 'profile')
-  const [sectors, setSectors] = useState<string[]>(strategy?.sectorGroups ?? [])
-  const [sizes, setSizes] = useState<string[]>(strategy?.sizes ?? ['tpe', 'pme'])
+  const [approach, setApproach] = useState<Approach>(strategy?.approach ?? initial?.approach ?? 'profile')
+  const [sectors, setSectors] = useState<string[]>(strategy?.sectorGroups ?? initial?.sectorGroups ?? [])
+  const [sizes, setSizes] = useState<string[]>(strategy?.sizes ?? initial?.sizes ?? ['tpe', 'pme'])
   // Rien de coché : toutes les anciennetés
-  const [ages, setAges] = useState<string[]>(strategy?.ages ?? [])
-  const [departments, setDepartments] = useState<string[]>(strategy?.departments ?? defaultDepartments.slice(0, 20))
-  const [name, setName] = useState(strategy?.name ?? '')
-  const [nameTouched, setNameTouched] = useState(!!strategy)
+  const [ages, setAges] = useState<string[]>(strategy?.ages ?? initial?.ages ?? [])
+  const [departments, setDepartments] = useState<string[]>(
+    strategy?.departments ?? (initial?.departments?.length ? initial.departments : defaultDepartments.slice(0, 20))
+  )
+  const [name, setName] = useState(strategy?.name ?? initial?.name ?? '')
+  const [nameTouched, setNameTouched] = useState(!!strategy || !!initial?.name)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -126,6 +140,7 @@ export function StrategyDialog({ open, onOpenChange, professionKey, defaultDepar
         title: strategy ? 'Recherche modifiée' : 'Recherche enregistrée',
         description: 'Sophie la lancera à chaque prospection. Vous pouvez aussi la lancer tout de suite.',
       })
+      onSaved?.()
       onOpenChange(false)
       reset()
       router.refresh()
