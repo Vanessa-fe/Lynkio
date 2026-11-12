@@ -55,6 +55,8 @@ import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
 import { CompanyWhyCard } from './company-why-card'
+import { CompanyStageHistory } from './company-stage-history'
+import type { CompanyStageEvent } from '@/lib/queries/companies'
 import type { StrategyOverview } from '@/lib/queries/strategies'
 import { CompanyNextStep } from './company-next-step'
 import { CompanySegmentSelect } from './company-segment'
@@ -83,6 +85,8 @@ interface CompanyDetailProps {
   openEmailDraft?: boolean
   // Recherche enregistrée qui a trouvé la fiche (« Pourquoi cette entreprise »)
   strategy?: StrategyOverview | null
+  // Journal des changements d'étape, du plus récent au plus ancien
+  stageEvents?: CompanyStageEvent[]
 }
 
 /**
@@ -117,6 +121,7 @@ export function CompanyDetail({
   outreach,
   openEmailDraft = false,
   strategy = null,
+  stageEvents = [],
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -414,6 +419,8 @@ export function CompanyDetail({
         hasPitch={hasPitch}
         openEmailDraft={openEmailDraft}
       />
+
+      <CompanyStageHistory events={stageEvents} />
     </div>
   )
 }

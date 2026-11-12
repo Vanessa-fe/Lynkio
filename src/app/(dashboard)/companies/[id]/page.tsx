@@ -5,6 +5,7 @@ import {
   getCompanyContacts,
   getCompanyInteractions,
   getCompanySignals,
+  getCompanyStageEvents,
   getLatestQualification,
   getPipelineStages,
 } from '@/lib/queries/companies'
@@ -23,18 +24,20 @@ interface CompanyPageProps {
 
 export default async function CompanyPage({ params, searchParams }: CompanyPageProps) {
   const [{ id }, { redaction }] = await Promise.all([params, searchParams])
-  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach] = await Promise.all([
-    getCompanyById(id),
-    getPipelineStages(),
-    getCompanyContacts(id),
-    getCompanySignals(id),
-    getCompanyInteractions(id),
-    getLatestQualification(id),
-    getCompanyReminders(id),
-    getIcpBasics(),
-    getUserProfile(),
-    getContactsOutreach(id),
-  ])
+  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach, stageEvents] =
+    await Promise.all([
+      getCompanyById(id),
+      getPipelineStages(),
+      getCompanyContacts(id),
+      getCompanySignals(id),
+      getCompanyInteractions(id),
+      getLatestQualification(id),
+      getCompanyReminders(id),
+      getIcpBasics(),
+      getUserProfile(),
+      getContactsOutreach(id),
+      getCompanyStageEvents(id),
+    ])
 
   if (!company) {
     notFound()
@@ -61,6 +64,7 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       outreach={outreach}
       openEmailDraft={redaction === 'email'}
       strategy={strategy}
+      stageEvents={stageEvents}
     />
   )
 }
