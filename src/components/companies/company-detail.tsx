@@ -64,6 +64,14 @@ import { AttachToCompanyDialog } from '@/components/people/attach-to-company-dia
 import type { OrganizationOption, PersonRow } from '@/lib/queries/people'
 import { RemindersList } from '@/components/reminders/reminders-list'
 import { formatDate } from '@/lib/utils/dates'
+import {
+  SIGNAL_NATURE_LABELS,
+  SIGNAL_NATURE_TONES,
+  SIGNAL_RELIABILITY_LABELS,
+  SIGNAL_SOURCE_LABELS,
+  signalNature,
+  signalReliability,
+} from '@/lib/constants/signals'
 
 interface CompanyDetailProps {
   company: CompanyWithRelations
@@ -361,15 +369,31 @@ export function CompanyDetail({
               <Zap className="w-5 h-5 text-amber-500" />
               Signaux d&apos;achat
             </CardTitle>
-            <CardDescription>Ce qui laisse penser que cette entreprise a un besoin en ce moment</CardDescription>
+            <CardDescription>
+              Ce qui laisse penser que cette entreprise a un besoin en ce moment. Chaque signal dit s’il s’agit d’un fait
+              constaté, d’une hypothèse ou d’un besoin exprimé par l’entreprise.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
               {signals.map((signal) => (
                 <li key={signal.id} className="flex items-start justify-between gap-4 rounded-lg bg-muted p-3">
-                  <div className="min-w-0">
-                    <p className="font-medium">{signal.type?.label ?? signal.signal_type}</p>
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">{signal.type?.label ?? signal.signal_type}</p>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${SIGNAL_NATURE_TONES[signalNature(signal.type?.nature)]}`}
+                      >
+                        {SIGNAL_NATURE_LABELS[signalNature(signal.type?.nature)]}
+                      </span>
+                    </div>
                     <SignalSummary signal={signal} />
+                    <p className="text-xs text-muted-foreground">
+                      Source : {SIGNAL_SOURCE_LABELS[signal.source] ?? SIGNAL_SOURCE_LABELS.unknown}
+                      {signal.source !== 'unknown' && ` (${SIGNAL_RELIABILITY_LABELS[signalReliability(signal.type?.reliability)]})`}
+                      {signal.event_at && ` · événement du ${formatDate(signal.event_at, 'd MMMM yyyy')}`}
+                      {` · collecté le ${formatDate(signal.detected_at, 'd MMMM yyyy')}`}
+                    </p>
                     {signal.source_url && (
                       <a
                         href={signal.source_url}

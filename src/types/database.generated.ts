@@ -437,6 +437,8 @@ export type Database = {
           signal_type: string
           source_url: string | null
           user_id: string
+          event_at: string | null
+          source: string
         }
         Insert: {
           company_id: string
@@ -449,6 +451,8 @@ export type Database = {
           signal_type: string
           source_url?: string | null
           user_id: string
+          event_at?: string | null
+          source?: string
         }
         Update: {
           company_id?: string
@@ -461,6 +465,8 @@ export type Database = {
           signal_type?: string
           source_url?: string | null
           user_id?: string
+          event_at?: string | null
+          source?: string
         }
         Relationships: [
           {
@@ -1312,6 +1318,10 @@ export type Database = {
           is_active: boolean
           key: string
           label: string
+          category: string
+          nature: string
+          reliability: string
+          retention_days: number
         }
         Insert: {
           created_at?: string
@@ -1320,6 +1330,10 @@ export type Database = {
           is_active?: boolean
           key: string
           label: string
+          category?: string
+          nature?: string
+          reliability?: string
+          retention_days?: number
         }
         Update: {
           created_at?: string
@@ -1328,6 +1342,10 @@ export type Database = {
           is_active?: boolean
           key?: string
           label?: string
+          category?: string
+          nature?: string
+          reliability?: string
+          retention_days?: number
         }
         Relationships: []
       }

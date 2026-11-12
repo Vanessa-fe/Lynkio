@@ -95,7 +95,7 @@ export async function getCompanySignals(companyId: string): Promise<CompanySigna
 
   const { data, error } = await supabase
     .from('company_signals')
-    .select('*, type:signal_types(label, description)')
+    .select('*, type:signal_types(label, description, category, nature, reliability)')
     .eq('company_id', companyId)
     .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .order('detected_at', { ascending: false })
