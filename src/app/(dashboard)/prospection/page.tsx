@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { Settings2 } from 'lucide-react'
 import { PipelineRunsList } from '@/components/prospection/pipeline-runs-list'
 import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers'
-import { TechResearchCard } from '@/components/prospection/tech-research-card'
 import { StrategiesCard } from '@/components/prospection/strategies-card'
 import { getStrategies } from '@/lib/queries/strategies'
 import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
@@ -58,14 +57,6 @@ export default async function ProspectionPage() {
         isRunning={!!runningRun}
         maxStrategies={PLAN_LIMITS[plan ?? 'pro'].strategies}
       />
-      {/* Recherche par technologie : seulement pour la tech (ou des technologies déjà choisies) */}
-      {(icp.professionKey === 'web_developer' || icp.techStack.length > 0) && (
-        <TechResearchCard
-          techStack={icp.techStack}
-          isRunning={!!runningRun}
-          proOnly={!PLAN_LIMITS[plan ?? 'pro'].techResearch}
-        />
-      )}
       {JOB_OFFERS_ENABLED && <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />}
       {/* Premier usage : un rappel bien visible pour régler la recherche, l'historique est encore vide */}
       <Link
@@ -78,7 +69,9 @@ export default async function ProspectionPage() {
           <span className="block text-muted-foreground">
             {runs.length === 0
               ? 'Commencez par choisir vos départements, vos jours et ce que Sophie doit chercher.'
-              : 'Départements, jours, nombre d’entreprises et secteurs ignorés : dans Paramètres.'}
+              : icp.professionKey === 'web_developer' || icp.techStack.length > 0
+                ? 'Départements, jours, nombre d’entreprises et recherche par technologie : dans Paramètres.'
+                : 'Départements, jours, nombre d’entreprises et secteurs ignorés : dans Paramètres.'}
           </span>
         </span>
       </Link>

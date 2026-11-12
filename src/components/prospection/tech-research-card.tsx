@@ -43,7 +43,7 @@ export function TechResearchCard({ techStack, isRunning, proOnly = false }: Tech
     if (result.success) {
       toast({
         title: 'Recherche lancée',
-        description: 'Comptez une à deux minutes : l\'IA cherche, puis Sophie vérifie chaque site.',
+        description: 'Comptez une à deux minutes : l\'IA cherche, puis Sophie vérifie chaque site. Le résultat s\'affiche dans Prospection.',
       })
       router.refresh()
     } else {
@@ -84,17 +84,27 @@ export function TechResearchCard({ techStack, isRunning, proOnly = false }: Tech
               disabled={isLaunching || isRunning}
               className="h-auto min-h-10 max-w-full whitespace-normal text-left"
             >
-              {isLaunching || isRunning ? (
+              {/* Seul le lancement d'ici fait tourner le bouton : une autre recherche en cours le grise seulement */}
+              {isLaunching ? (
                 <Loader2 className="w-4 h-4 mr-2 shrink-0 animate-spin" />
               ) : (
                 <Search className="w-4 h-4 mr-2 shrink-0" />
               )}
-              {isRunning ? 'Recherche en cours…' : `Chercher des entreprises ${techList}`}
+              {`Chercher des entreprises ${techList}`}
             </Button>
+            {isRunning && !isLaunching && (
+              <p className="text-sm text-muted-foreground">
+                Une recherche est déjà en cours : attendez qu&apos;elle se termine pour lancer celle-ci.
+              </p>
+            )}
             <p className="text-xs text-muted-foreground">
               Jusqu&apos;à 10 entreprises par recherche, sans celles que vous suivez déjà. Chaque recherche utilise
               votre IA et sa recherche sur Internet : quelques centimes, payés à votre fournisseur. Avec Gemini, la
-              facturation Google doit être activée.
+              facturation Google doit être activée. L&apos;avancement et le résultat s&apos;affichent dans{' '}
+              <Link href="/prospection" className="underline">
+                Prospection
+              </Link>
+              .
             </p>
           </>
         )}
