@@ -1,5 +1,6 @@
 'use client'
 
+import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useWatch, Controller } from 'react-hook-form'
@@ -142,7 +143,12 @@ export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 
         <CardContent className="space-y-8">
           {/* Quoi chercher */}
           <section className="space-y-3">
-            <h3 className="font-semibold">Quoi chercher</h3>
+            <div>
+              <h3 className="font-semibold">En plus de vos recherches</h3>
+              <p className="text-sm text-muted-foreground">
+                Vos recherches par profil (page Prospection) passent à chaque prospection. Vous pouvez y ajouter :
+              </p>
+            </div>
             <Controller
               name="sources"
               control={control}
@@ -178,7 +184,8 @@ export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 
             {errors.sources && <p className="text-sm text-destructive">{errors.sources.message}</p>}
           </section>
 
-          {/* Intermédiaires acceptés */}
+          {/* Intermédiaires acceptés (seulement pour les offres d'emploi, arrêtées le 13/11/2026) */}
+          {JOB_OFFERS_ENABLED && (
           <section className="space-y-3">
             <div>
               <h3 className="font-semibold">Intermédiaires acceptés</h3>
@@ -220,6 +227,7 @@ export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 
               )}
             />
           </section>
+          )}
 
           {/* Où chercher */}
           <section className="space-y-3">

@@ -24,4 +24,4 @@ export const OPEN_GRAPH_BASE = { siteName: 'Filonea', locale: 'fr_FR', type: 'we
 /** Titre et description de la page d'accueil, repris dans les balises de partage */
 export const HOME_TITLE = 'Filonea, l’outil de prospection des freelances'
 export const HOME_DESCRIPTION =
-  'Filonea repère les entreprises qui recrutent, publient une mission ou correspondent à votre client idéal, les note sur 100 et prépare votre premier message.'
+  'Filonea trouve les entreprises qui correspondent à votre client idéal, vous explique pourquoi les contacter, les note sur 100 et prépare votre premier message.'

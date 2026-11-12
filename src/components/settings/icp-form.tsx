@@ -1,5 +1,6 @@
 'use client'
 
+import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useWatch, Controller } from 'react-hook-form'
@@ -179,6 +180,7 @@ export function IcpForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      {JOB_OFFERS_ENABLED && (
       <Card>
         <CardHeader>
           <CardTitle>Mots-clés recherchés</CardTitle>
@@ -203,6 +205,7 @@ export function IcpForm({
           {errors.searchKeywords && <p className="text-sm text-destructive mt-2">{errors.searchKeywords.message}</p>}
         </CardContent>
       </Card>
+      )}
 
       <Card>
         <CardHeader>

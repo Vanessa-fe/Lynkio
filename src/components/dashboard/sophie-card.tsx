@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import type { PipelineRun } from '@/types'
 import { formatDate } from '@/lib/utils/dates'
+import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
 
 interface SophieCardProps {
   lastRun: PipelineRun | null
@@ -56,7 +57,7 @@ export function SophieCard({ lastRun, unidentifiedOffers, nextRunAt }: SophieCar
             .
           </p>
         )}
-        {unidentifiedOffers > 0 && (
+        {JOB_OFFERS_ENABLED && unidentifiedOffers > 0 && (
           <p>
             <Link href="/prospection" className="font-medium hover:underline">
               {unidentifiedOffers} offre{unidentifiedOffers > 1 ? 's' : ''} anonyme{unidentifiedOffers > 1 ? 's' : ''} à identifier

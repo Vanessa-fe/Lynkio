@@ -7,6 +7,8 @@ import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 import { nafCodesForGroups } from '@/lib/constants/client-sectors'
 import { strategySchema, type StrategyInput } from '@/lib/validations/strategy'
+import { getCurrentPlan } from '@/lib/queries/billing'
+import { NO_ACCESS_MESSAGE, PLAN_LIMITS } from '@/lib/billing'
 
 type ActionResult = { success: boolean; error?: string; id?: string }
 
@@ -38,6 +40,25 @@ export async function createStrategy(input: StrategyInput): Promise<ActionResult
   try {
     const validated = strategySchema.parse(input)
     const supabase = await createClient()
+
+    // Nombre de recherches permis par l'offre (5 en Essentiel, 20 en Pro)
+    const plan = await getCurrentPlan()
+    if (!plan) return { success: false, error: NO_ACCESS_MESSAGE }
+    const { count } = await supabase
+      .from('prospect_strategies')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+    const max = PLAN_LIMITS[plan].strategies
+    if ((count ?? 0) >= max) {
+      return {
+        success: false,
+        error:
+          plan === 'pro'
+            ? `Vous avez déjà ${max} recherches : supprimez-en une pour en créer une nouvelle.`
+            : `Vous avez déjà ${max} recherches, le maximum de l’offre Essentiel. Supprimez-en une, ou passez à l’offre Pro (${PLAN_LIMITS.pro.strategies} recherches).`,
+      }
+    }
+
     const { data, error } = await supabase
       .from('prospect_strategies')
       .insert({ user_id: user.id, name: validated.name, approach: validated.approach, filters: filtersFrom(validated) })

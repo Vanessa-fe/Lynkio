@@ -6,6 +6,7 @@ import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers
 import { TechResearchCard } from '@/components/prospection/tech-research-card'
 import { StrategiesCard } from '@/components/prospection/strategies-card'
 import { getStrategies } from '@/lib/queries/strategies'
+import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
 import { getIcpBasics } from '@/lib/queries/icp'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { PLAN_LIMITS } from '@/lib/billing'
@@ -38,8 +39,8 @@ export default async function ProspectionPage() {
       <div>
         <h1 className="text-3xl font-bold">Prospection</h1>
         <p className="text-muted-foreground mt-2">
-          Sophie cherche pour vous les entreprises qui correspondent à votre profil de client, qui recrutent dans
-          votre métier ou viennent d&apos;être créées.
+          Sophie cherche pour vous les entreprises qui correspondent à votre profil de client, dans le registre
+          officiel des entreprises.
           Celles qu&apos;elle retient arrivent dans Entreprises, à l&apos;étape « À qualifier ».
         </p>
       </div>
@@ -55,6 +56,7 @@ export default async function ProspectionPage() {
         professionKey={icp.professionKey}
         defaultDepartments={settings?.departments ?? []}
         isRunning={!!runningRun}
+        maxStrategies={PLAN_LIMITS[plan ?? 'pro'].strategies}
       />
       {/* Recherche par technologie : seulement pour la tech (ou des technologies déjà choisies) */}
       {(icp.professionKey === 'web_developer' || icp.techStack.length > 0) && (
@@ -64,7 +66,7 @@ export default async function ProspectionPage() {
           proOnly={!PLAN_LIMITS[plan ?? 'pro'].techResearch}
         />
       )}
-      <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />
+      {JOB_OFFERS_ENABLED && <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />}
       {/* Premier usage : un rappel bien visible pour régler la recherche, l'historique est encore vide */}
       <Link
         href="/settings/prospection"
@@ -76,7 +78,7 @@ export default async function ProspectionPage() {
           <span className="block text-muted-foreground">
             {runs.length === 0
               ? 'Commencez par choisir vos départements, vos jours et ce que Sophie doit chercher.'
-              : 'Départements, jours, sources, intermédiaires acceptés et secteurs ignorés : dans Paramètres.'}
+              : 'Départements, jours, nombre d’entreprises et secteurs ignorés : dans Paramètres.'}
           </span>
         </span>
       </Link>

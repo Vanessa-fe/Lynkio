@@ -1,5 +1,6 @@
 'use client'
 
+import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
 import { useState } from 'react'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -183,12 +184,12 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Votre métier détermine les postes à cibler et les signaux d&apos;achat
-                  utiles. Vous pourrez affiner votre client idéal ensuite.
+                  Votre métier détermine les secteurs que Sophie vous suggère et les postes à
+                  cibler. Vous pourrez affiner votre client idéal ensuite.
                 </p>
               </fieldset>
 
-              {profession && (
+              {JOB_OFFERS_ENABLED && profession && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium leading-none">Mots-clés recherchés</p>
                   <p className="text-xs text-muted-foreground">

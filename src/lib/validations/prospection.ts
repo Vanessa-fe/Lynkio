@@ -165,12 +165,6 @@ export const MAX_COMPANIES_OPTIONS = [5, 10, 20, 30, 50] as const
 // Sources de Sophie, dans l'ordre où elle les consulte
 export const PROSPECTION_SOURCES = [
   {
-    key: 'job_postings',
-    label: 'Entreprises qui recrutent dans votre métier',
-    description:
-      'Offres d\'emploi publiées sur France Travail (qui relaie aussi de nombreux sites d\'emploi partenaires) dont l\'intitulé contient l\'un de vos mots-clés (Paramètres, Client idéal). Pour la tech, Sophie cherche aussi les postes de développeur, de webmaster, de marketing digital et d\'e-commerce. Une entreprise qui recrute a un besoin et un budget. Vous choisissez plus bas les intermédiaires acceptés (ESN, cabinets, plateformes).',
-  },
-  {
     key: 'recent_creations',
     label: 'Sociétés tout juste créées',
     description:
@@ -219,7 +213,6 @@ export const prospectionSettingsSchema = z
     maxCompaniesPerRun: z.number().int().min(1).max(100),
     sources: z
       .array(z.enum(sourceKeys))
-      .min(1, 'Choisissez au moins une source')
       .transform((keys) => [...new Set(keys)]),
     acceptedIntermediaries: z.array(z.enum(intermediaryKeys)).transform((keys) => [...new Set(keys)]),
   })
@@ -245,6 +238,6 @@ export const DEFAULT_PROSPECTION_SETTINGS: ProspectionSettingsInput = {
   departments: [],
   excludedNafSections: [],
   maxCompaniesPerRun: 20,
-  sources: ['job_postings'],
+  sources: [],
   acceptedIntermediaries: ['consulting', 'recruiters', 'platforms'],
 }
