@@ -44,7 +44,12 @@ function summary(strategy: StrategyOverview): string {
   const sectorText = sectors.length > 2 ? `${sectors.slice(0, 2).join(', ')} et ${sectors.length - 2} autre${sectors.length > 3 ? 's' : ''}` : sectors.join(', ')
   const sizes = strategy.sizes.map((size) => SIZE_SHORT[size] ?? size).join(', ')
   const zone = strategy.departments.length > 3 ? `${strategy.departments.length} départements` : strategy.departments.join(', ')
-  return `${sectorText} · ${sizes} · ${zone}`
+  const softLabels = [
+    strategy.soft.includes('sizes') && 'taille souple',
+    strategy.soft.includes('departments') && 'zone souple',
+    strategy.soft.includes('ages') && 'ancienneté souple',
+  ].filter(Boolean)
+  return `${sectorText} · ${sizes} · ${zone}${softLabels.length > 0 ? ` · ${softLabels.join(', ')}` : ''}`
 }
 
 /**

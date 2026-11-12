@@ -21,6 +21,7 @@ function filtersFrom(input: z.output<typeof strategySchema>) {
     naf_codes: nafCodesForGroups(input.sectorGroups),
     sizes: input.sizes,
     ages: input.ages,
+    soft: input.soft,
     departments: input.departments,
   }
 }

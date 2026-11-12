@@ -46,11 +46,42 @@ export function strategyAges(strategy: Strategy): Set<AgeRange> {
   return new Set(ages.filter((age): age is AgeRange => AGE_RANGES.includes(age as AgeRange)))
 }
 
+// Régions et départements (même liste que src/lib/constants/regions.ts) : une zone « souple »
+// s'étend aux autres départements des mêmes régions
+const REGION_DEPARTMENTS: string[][] = [
+  ['01', '03', '07', '15', '26', '38', '42', '43', '63', '69', '73', '74'],
+  ['21', '25', '39', '58', '70', '71', '89', '90'],
+  ['22', '29', '35', '56'],
+  ['18', '28', '36', '37', '41', '45'],
+  ['2A', '2B'],
+  ['08', '10', '51', '52', '54', '55', '57', '67', '68', '88'],
+  ['02', '59', '60', '62', '80'],
+  ['75', '77', '78', '91', '92', '93', '94', '95'],
+  ['14', '27', '50', '61', '76'],
+  ['16', '17', '19', '23', '24', '33', '40', '47', '64', '79', '86', '87'],
+  ['09', '11', '12', '30', '31', '32', '34', '46', '48', '65', '66', '81', '82'],
+  ['44', '49', '53', '72', '85'],
+  ['04', '05', '06', '13', '83', '84'],
+  ['971'], ['972'], ['973'], ['974'], ['976'],
+]
+
+export function expandToRegions(departments: string[]): string[] {
+  const chosen = new Set(departments)
+  const extra = REGION_DEPARTMENTS.filter((region) => region.some((code) => chosen.has(code))).flat()
+  return [...new Set([...departments, ...extra])]
+}
+
+/** Critères souples de la recherche (taille, zone, ancienneté) */
+export function strategySoft(strategy: Strategy): Set<string> {
+  const soft = Array.isArray(strategy.filters.soft) ? strategy.filters.soft : []
+  return new Set(soft.filter((item): item is string => typeof item === 'string'))
+}
+
 export type Strategy = {
   id: string
   name: string
   approach: 'profile' | 'partner'
-  filters: { naf_codes?: unknown; departments?: unknown; sizes?: unknown; ages?: unknown }
+  filters: { naf_codes?: unknown; departments?: unknown; sizes?: unknown; ages?: unknown; soft?: unknown }
   cursor: { page?: unknown }
 }
 
@@ -67,11 +98,15 @@ export function profileQuery(strategy: Strategy, fallbackDepartments: string[]):
   const strings = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [])
   const nafCodes = strings(strategy.filters.naf_codes).filter((code) => NAF_CODE.test(code))
   const chosenDepartments = strings(strategy.filters.departments).filter((code) => DEPARTMENT.test(code))
-  const departments = chosenDepartments.length > 0 ? chosenDepartments : fallbackDepartments
+  const soft = strategySoft(strategy)
+  const baseDepartments = chosenDepartments.length > 0 ? chosenDepartments : fallbackDepartments
+  // Zone souple : toute la région des départements choisis
+  const departments = soft.has('departments') ? expandToRegions(baseDepartments) : baseDepartments
   const sizes = strings(strategy.filters.sizes).filter((size) => size in HEADCOUNT_CODES)
   if (nafCodes.length === 0 || departments.length === 0) return null
 
-  const effectiveSizes = sizes.length > 0 ? sizes : ['tpe', 'pme']
+  // Taille souple : TPE, PME et ETI (le score départage)
+  const effectiveSizes = soft.has('sizes') ? ['tpe', 'pme', 'eti'] : sizes.length > 0 ? sizes : ['tpe', 'pme']
   return {
     nafCodes,
     departments,
@@ -129,7 +164,8 @@ async function runStrategy(
   }
 
   const departments = new Set(query.departments)
-  const ages = strategyAges(strategy)
+  // Ancienneté souple : on n'écarte rien, le score donne des points à l'ancienneté choisie
+  const ages = strategySoft(strategy).has('ages') ? new Set<AgeRange>() : strategyAges(strategy)
   const acceptsRecruiters =
     settings.accepted_intermediaries.includes('recruiters') || settings.accepted_intermediaries.includes('staffing')
   let page = typeof strategy.cursor.page === 'number' && strategy.cursor.page >= 1 ? strategy.cursor.page : 1

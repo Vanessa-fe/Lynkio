@@ -26,12 +26,38 @@ interface StrategyDialogProps {
   // Recherche à modifier (sinon : nouvelle recherche)
   strategy?: StrategyOverview | null
   // Nouvelle recherche pré-remplie (conversation guidée avec Sophie)
-  initial?: { name?: string; approach?: Approach; sectorGroups?: string[]; sizes?: string[]; ages?: string[]; departments?: string[] }
+  initial?: {
+    name?: string
+    approach?: Approach
+    sectorGroups?: string[]
+    sizes?: string[]
+    ages?: string[]
+    departments?: string[]
+    soft?: string[]
+  }
   // Appelé après un enregistrement réussi
   onSaved?: () => void
 }
 
 const STEPS = ['Qui chercher', 'Quelle taille', 'Où chercher'] as const
+
+/** Critère souple : Sophie prend aussi les entreprises proches, avec moins de points */
+function SoftToggle({ checked, onChange, children }: { checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) {
+  return (
+    <label className="flex items-start gap-2 rounded-md bg-muted/50 p-2 text-sm">
+      <input
+        type="checkbox"
+        className="mt-0.5 h-4 w-4"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span>
+        <span className="font-medium">Critère souple</span>
+        <span className="block text-muted-foreground">{children}</span>
+      </span>
+    </label>
+  )
+}
 
 /** Case à cocher d'une option (taille, ancienneté) */
 function CheckOption({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -93,6 +119,10 @@ export function StrategyDialog({
   const [sizes, setSizes] = useState<string[]>(strategy?.sizes ?? initial?.sizes ?? ['tpe', 'pme'])
   // Rien de coché : toutes les anciennetés
   const [ages, setAges] = useState<string[]>(strategy?.ages ?? initial?.ages ?? [])
+  // Critères souples : taille, zone, ancienneté (vide : tout est obligatoire)
+  const [soft, setSoft] = useState<string[]>(strategy?.soft ?? initial?.soft ?? [])
+  const setSoftFor = (criterion: string, value: boolean) =>
+    setSoft((current) => (value ? [...new Set([...current, criterion])] : current.filter((item) => item !== criterion)))
   const [departments, setDepartments] = useState<string[]>(
     strategy?.departments ?? (initial?.departments?.length ? initial.departments : defaultDepartments.slice(0, 20))
   )
@@ -130,7 +160,15 @@ export function StrategyDialog({
     if (message) return
     setIsSaving(true)
     try {
-      const input = { name: effectiveName.trim(), approach, sectorGroups: sectors, sizes, ages, departments }
+      const input = {
+        name: effectiveName.trim(),
+        approach,
+        sectorGroups: sectors,
+        sizes,
+        ages,
+        departments,
+        soft: soft.filter((item): item is 'sizes' | 'departments' | 'ages' => item === 'sizes' || item === 'departments' || item === 'ages'),
+      }
       const result = strategy ? await updateStrategy(strategy.id, input) : await createStrategy(input)
       if (!result.success) {
         setError(result.error ?? 'Impossible d’enregistrer la recherche')
@@ -227,6 +265,9 @@ export function StrategyDialog({
                   </CheckOption>
                 ))}
               </div>
+              <SoftToggle checked={soft.includes('sizes')} onChange={(value) => setSoftFor('sizes', value)}>
+                Accepter aussi les autres tailles. Elles auront moins de points dans le score.
+              </SoftToggle>
             </fieldset>
 
             <fieldset className="space-y-2">
@@ -243,6 +284,11 @@ export function StrategyDialog({
                   </CheckOption>
                 ))}
               </div>
+              {ages.length > 0 && (
+                <SoftToggle checked={soft.includes('ages')} onChange={(value) => setSoftFor('ages', value)}>
+                  Ne pas écarter les autres anciennetés : l’ancienneté choisie rapportera seulement des points.
+                </SoftToggle>
+              )}
             </fieldset>
           </div>
         )}
@@ -252,6 +298,9 @@ export function StrategyDialog({
             <div className="space-y-2">
               <Label>Où se trouve leur siège ?</Label>
               <DepartmentPicker value={departments} onChange={setDepartments} />
+              <SoftToggle checked={soft.includes('departments')} onChange={(value) => setSoftFor('departments', value)}>
+                Accepter aussi le reste de la région. Ces entreprises auront moins de points (5 au lieu de 10).
+              </SoftToggle>
             </div>
 
             <div className="space-y-2">
