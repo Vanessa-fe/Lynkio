@@ -46,6 +46,10 @@ export default async function ProspectionPage() {
         </p>
       </div>
 
+      <Link href="/prospection/boamp" className="block rounded-lg border bg-card p-4 hover:bg-muted/50">
+        <span className="font-medium">Marchés publics de services</span>
+        <span className="block text-sm text-muted-foreground">Trouver les appels d’offres du BOAMP qui correspondent à vos prestations.</span>
+      </Link>
       <ProspectionStatus
         settings={settings}
         nextRunAt={nextRunAt}
