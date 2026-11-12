@@ -9,6 +9,7 @@ import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
 import { getIcpBasics } from '@/lib/queries/icp'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { PLAN_LIMITS } from '@/lib/billing'
+import { hasAiKey } from '@/lib/queries/api-keys'
 import {
   getCompanyChoices,
   getNextScheduledRun,
@@ -19,7 +20,7 @@ import {
 } from '@/lib/queries/prospection'
 
 export default async function ProspectionPage() {
-  const [settings, runs, unidentifiedOffers, companyChoices, icp, plan, strategies] = await Promise.all([
+  const [settings, runs, unidentifiedOffers, companyChoices, icp, plan, strategies, aiKey] = await Promise.all([
     getProspectionSettings(),
     getPipelineRuns(),
     getUnidentifiedOffers(),
@@ -27,6 +28,7 @@ export default async function ProspectionPage() {
     getIcpBasics(),
     getCurrentPlan(),
     getStrategies(),
+    hasAiKey(),
   ])
   const runningRun = runs.find((run) => run.status === 'running') ?? null
   // Offre Essentiel : une recherche par semaine, et la prochaine automatique peut être sautée
@@ -56,6 +58,7 @@ export default async function ProspectionPage() {
         defaultDepartments={settings?.departments ?? []}
         isRunning={!!runningRun}
         maxStrategies={PLAN_LIMITS[plan ?? 'pro'].strategies}
+        hasAiKey={aiKey}
       />
       {JOB_OFFERS_ENABLED && <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />}
       {/* Premier usage : un rappel bien visible pour régler la recherche, l'historique est encore vide */}
