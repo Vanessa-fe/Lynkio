@@ -78,14 +78,15 @@ function interactionStep(interaction: FunnelInteraction): number {
   return 0
 }
 
-export function computeFunnel(input: {
+type FunnelInput = {
   companies: FunnelCompany[]
   stages: FunnelStage[]
   events: FunnelEvent[]
   interactions: FunnelInteraction[]
-}): FunnelResult {
+}
+
+export function reachedSteps(input: FunnelInput) {
   const steps = stageSteps(input.stages)
-  const kindOf = new Map(input.stages.map((stage) => [stage.id, stage.kind]))
   const cohort = new Set(input.companies.map((company) => company.id))
   const reached = new Map<string, number>(input.companies.map((company) => [company.id, 0]))
   const bump = (companyId: string, step: number) => {
@@ -96,6 +97,12 @@ export function computeFunnel(input: {
   for (const company of input.companies) if (company.stage_id) bump(company.id, steps.get(company.stage_id) ?? 0)
   for (const event of input.events) if (event.to_stage_id) bump(event.company_id, steps.get(event.to_stage_id) ?? 0)
   for (const interaction of input.interactions) bump(interaction.company_id, interactionStep(interaction))
+
+  return reached
+}
+
+export function computeFunnel(input: FunnelInput, reached = reachedSteps(input)): FunnelResult {
+  const kindOf = new Map(input.stages.map((stage) => [stage.id, stage.kind]))
 
   // « Qualifiée » : sortie de l'étape par défaut sans être mise « Hors cible »
   const excludedIds = new Set(
