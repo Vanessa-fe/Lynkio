@@ -18,6 +18,33 @@ export type SignalForMessage = {
   label: string
   details: string[]
   detectedAt: string
+  // Date de l'événement lui-même (parution, publication), quand la source la donne
+  eventAt?: string | null
+  // observed (fait constaté), hypothesis (déduit, à vérifier), explicit_need (besoin exprimé par l'entreprise)
+  nature?: string
+  // high (source officielle), medium (source publique), low (déduit automatiquement)
+  reliability?: string
+}
+
+// Ton choisi par la freelance pour ce message
+export type Tone = 'sober' | 'warm' | 'direct'
+
+const TONE_RULES: Record<Tone, string> = {
+  sober: 'Sobre et professionnel (ton par défaut).',
+  warm: 'Un peu plus chaleureux et personnel, toujours avec le vouvoiement, sans familiarité ni flatterie.',
+  direct: 'Direct : va droit au but, phrases très courtes, aucune formule de politesse superflue.',
+}
+
+const NATURE_LABELS: Record<string, string> = {
+  observed: 'fait constaté',
+  hypothesis: 'hypothèse à vérifier',
+  explicit_need: 'besoin exprimé par l’entreprise',
+}
+
+const RELIABILITY_LABELS: Record<string, string> = {
+  high: 'source officielle',
+  medium: 'source publique',
+  low: 'déduit automatiquement',
 }
 
 export type ReferenceForMessage = {
@@ -39,7 +66,14 @@ export type MessageContext = {
     pitch: string | null
     technologies: string[]
     remoteOnly: boolean
+    // Ses prestations, écrites par elle (sans prix)
+    services: { name: string; description: string }[]
+    missionMode: 'remote' | 'onsite' | 'both' | null
+    maxKm: number | null
   }
+  // Recherche qui a trouvé l'entreprise : client direct (profile) ou partenaire qui sous-traite (partner)
+  approach: 'profile' | 'partner' | null
+  tone: Tone
   references: ReferenceForMessage[]
   company: {
     name: string
@@ -116,7 +150,14 @@ Ce qui fait un bon premier message :
 - il est écrit à la première personne, au nom de la freelance (« je »), jamais en parlant d'elle à la troisième personne ;
 - il est sobre et naturel : vouvoiement, phrases courtes, aucune flatterie, aucun jargon commercial, pas d'emoji, pas de tiret long (—), pas de « J'espère que vous allez bien » ;
 - chaque phrase apporte quelque chose : aucune phrase générique qui pourrait s'adresser à n'importe quelle entreprise ;
+- si elle a listé ses prestations, il en propose au plus une, la plus proche du besoin de l'entreprise, avec ses mots à elle ; n'invente aucune autre prestation ;
 - si la freelance donne des consignes pour ce message, applique-les en priorité et de façon visible.
+
+Selon la nature de chaque signal (indiquée entre crochets) :
+- fait constaté : tu peux le citer simplement, sans l'exagérer ;
+- hypothèse à vérifier : ne l'affirme jamais. Au plus, pose-la comme une question ouverte, ou ne l'utilise pas ;
+- besoin exprimé par l'entreprise : c'est le meilleur point de départ, réponds-y directement.
+Préfère un fait constaté ou un besoin exprimé à une hypothèse, et une source officielle à une source déduite.
 
 Adapte-toi à l'entreprise, d'après son segment :
 - TPE/PME dont le métier n'est pas le numérique : elle n'a souvent personne en interne pour le métier de la freelance et n'en connaît pas le vocabulaire. Parle-lui de son activité, de ses clients et de ce que la freelance peut lui apporter concrètement (son site, si la freelance fait du développement web), sans jargon, et ne propose pas de « renfort d'équipe » ;
@@ -137,6 +178,8 @@ Selon le signal :
 Règles absolues :
 - n'invente jamais rien : ni client, ni chiffre, ni résultat, ni référence, ni lien, ni fait sur l'entreprise. Utilise seulement les informations données ;
 - ne mentionne jamais de tarif ni de prix ;
+- aucune fausse familiarité : ne fais pas comme si vous vous connaissiez ou aviez déjà échangé (pas de « comme convenu », « suite à notre échange », « ravi de vous retrouver »), pas de compliment sur l'entreprise ;
+- aucune surpromesse : aucun résultat chiffré ni garanti (« doubler vos ventes », « garanti », « en 48 h ») ;
 - ne devine jamais le genre du destinataire d'après son prénom : tournures neutres (« la bonne personne », pas « le bon interlocuteur » ni « la bonne interlocutrice ») ;
 - ne dis jamais comment l'entreprise a été repérée (outil, score, « signal », Sophie). Seule exception : le post LinkedIn de la personne, qu'elle a publié pour être contactée ;
 - n'écris aucun champ à compléter (comme [Prénom]) : si le prénom du destinataire est inconnu, commence par « Bonjour, » ;
@@ -185,6 +228,12 @@ function contextPrompt(context: MessageContext): string {
       sender.profession && `Métier : ${sender.profession}`,
       sender.technologies.length > 0 && `Technologies : ${sender.technologies.join(', ')}`,
       sender.remoteOnly && 'Elle travaille uniquement à distance : ne propose jamais de rendez-vous sur place.',
+      sender.missionMode === 'onsite' &&
+        `Elle travaille sur place${sender.maxKm ? `, jusqu'à ${sender.maxKm} km de chez elle` : ''}.`,
+      sender.missionMode === 'both' &&
+        `Elle travaille à distance, et sur place quand c'est proche${sender.maxKm ? ` (jusqu'à ${sender.maxKm} km)` : ''}.`,
+      sender.services.length > 0 &&
+        `Ses prestations :\n${sender.services.map((service) => `- ${service.name}${service.description ? ` : ${service.description}` : ''}`).join('\n')}`,
       sender.pitch && `Sa présentation :\n${sender.pitch}`,
     ]),
     section(
@@ -210,12 +259,15 @@ function contextPrompt(context: MessageContext): string {
       company.city && `Ville : ${company.city}`,
       company.size && `Taille : ${company.size}`,
       company.technologies.length > 0 && `Technologies de son site : ${company.technologies.join(', ')}`,
+      context.approach === 'partner' &&
+        "Trouvée comme partenaire possible (agence ou cabinet qui sous-traite) : propose un renfort sur ses projets, pas une prestation pour elle-même.",
+      context.approach === 'profile' && 'Trouvée comme client direct possible.',
     ]),
     section(
       'Signaux repérés (du plus récent au plus ancien)',
       context.signals.map(
         (signal) =>
-          `- id ${signal.id} : ${signal.label}${signal.details.length > 0 ? ` (${signal.details.join(' ; ')})` : ''}, repéré le ${signal.detectedAt.slice(0, 10)}`
+          `- id ${signal.id} [${NATURE_LABELS[signal.nature ?? 'observed'] ?? 'fait constaté'}, ${RELIABILITY_LABELS[signal.reliability ?? 'medium'] ?? 'source publique'}] : ${signal.label}${signal.details.length > 0 ? ` (${signal.details.join(' ; ')})` : ''}${signal.eventAt ? `, événement du ${signal.eventAt.slice(0, 10)}` : ''}, repéré le ${signal.detectedAt.slice(0, 10)}`
       )
     ),
     section(
@@ -240,6 +292,7 @@ function contextPrompt(context: MessageContext): string {
       context.afterInvitation &&
         "La personne vient d'accepter l'invitation LinkedIn de la freelance, envoyée sans note : elle ne sait pas encore pourquoi elle l'a invitée. N'ouvre pas sur un remerciement pour l'acceptation : entre directement dans le sujet.",
     ]),
+    section('Ton du message', [TONE_RULES[context.tone]]),
     section('Consignes de la freelance pour ce message', [context.instructions]),
   ]
     .filter((part): part is string => part !== null)

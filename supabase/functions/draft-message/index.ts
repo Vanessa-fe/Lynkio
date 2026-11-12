@@ -18,7 +18,7 @@ import { loadAiAccess } from '../_shared/ai.ts'
 import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
 import { checkDraft } from './checks.ts'
 import { fetchSiteText } from './site-text.ts'
-import { UserFacingError, writeDraft, type Channel, type SignalForMessage } from './writer.ts'
+import { UserFacingError, writeDraft, type Channel, type SignalForMessage, type Tone } from './writer.ts'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_INSTRUCTIONS_LENGTH = 500
@@ -90,6 +90,7 @@ Deno.serve(async (request) => {
     instructions?: unknown
     situation?: unknown
     sequence?: unknown
+    tone?: unknown
   }
   try {
     input = await request.json()
@@ -101,6 +102,8 @@ Deno.serve(async (request) => {
   const channel: Channel | null =
     input.channel === 'email' || input.channel === 'linkedin_message' ? input.channel : null
   const contactId = typeof input.contactId === 'string' && UUID.test(input.contactId) ? input.contactId : null
+  // Ton choisi dans la fenêtre de rédaction (sobre par défaut)
+  const tone: Tone = input.tone === 'warm' || input.tone === 'direct' ? input.tone : 'sober'
   const instructions =
     typeof input.instructions === 'string' ? input.instructions.trim().slice(0, MAX_INSTRUCTIONS_LENGTH) || null : null
   const afterInvitation = input.situation === 'after_invitation' && channel === 'linkedin_message'
@@ -132,12 +135,12 @@ Deno.serve(async (request) => {
     const [company, signals, contact, profile, icp, references, lastOutgoing] = await Promise.all([
       supabase
         .from('companies')
-        .select('name, kind, segment, sector, city, size_category, website, detected_stack')
+        .select('name, kind, segment, sector, city, size_category, website, detected_stack, strategy_id')
         .eq('id', companyId)
         .maybeSingle(),
       supabase
         .from('company_signals')
-        .select('id, evidence, detected_at, expires_at, type:signal_types(label)')
+        .select('id, evidence, detected_at, expires_at, source, event_at, type:signal_types(label, nature, reliability)')
         .eq('company_id', companyId)
         .order('detected_at', { ascending: false })
         .limit(MAX_SIGNALS * 2),
@@ -200,7 +203,17 @@ Deno.serve(async (request) => {
       label: (signal.type as { label?: string } | null)?.label ?? 'Signal',
       details: signalDetails((signal.evidence ?? {}) as Record<string, unknown>),
       detectedAt: signal.detected_at,
+      eventAt: (signal as { event_at?: string | null }).event_at ?? null,
+      // Fait constaté, hypothèse à vérifier ou besoin exprimé (catalogue des signaux, 00054)
+      nature: (signal.type as { nature?: string } | null)?.nature ?? 'observed',
+      reliability: (signal.type as { reliability?: string } | null)?.reliability ?? 'medium',
     }))
+
+    // Recherche qui a trouvé la fiche : client direct, ou partenaire qui sous-traite
+    const strategyId = (company.data as { strategy_id?: string | null }).strategy_id ?? null
+    const { data: strategy } = strategyId
+      ? await supabase.from('prospect_strategies').select('approach').eq('id', strategyId).maybeSingle()
+      : { data: null }
 
     // Texte de l'offre d'emploi ou du post LinkedIn le plus récent : de quoi parler du vrai besoin
     const adText = (signal: (typeof active)[number]) => {
@@ -219,7 +232,24 @@ Deno.serve(async (request) => {
         }
       : null
 
-    const criteria = (icp.data?.criteria ?? {}) as { tech_stack?: string[]; remote?: string }
+    const criteria = (icp.data?.criteria ?? {}) as {
+      tech_stack?: string[]
+      remote?: string
+      services?: { name?: unknown; description?: unknown }[]
+      mission_mode?: { mode?: unknown; max_km?: unknown }
+    }
+    // Prestations écrites par la freelance (Mon offre) : nom et description seulement, jamais le prix
+    const services = (Array.isArray(criteria.services) ? criteria.services : [])
+      .filter((service) => typeof service?.name === 'string' && service.name.trim())
+      .slice(0, 15)
+      .map((service) => ({
+        name: String(service.name).trim().slice(0, 80),
+        description: typeof service.description === 'string' ? service.description.trim().slice(0, 200) : '',
+      }))
+    const missionMode = ['remote', 'onsite', 'both'].includes(String(criteria.mission_mode?.mode))
+      ? (String(criteria.mission_mode?.mode) as 'remote' | 'onsite' | 'both')
+      : null
+    const maxKm = typeof criteria.mission_mode?.max_km === 'number' ? criteria.mission_mode.max_km : null
     const senderProfile = profile.data
     const website = company.data.website
     const siteText = website ? await fetchSiteText(website) : null
@@ -233,8 +263,13 @@ Deno.serve(async (request) => {
         profession: (senderProfile?.profession as { label?: string } | null)?.label ?? null,
         pitch: senderProfile?.message_pitch ?? null,
         technologies: (criteria.tech_stack ?? []).map((tech) => TECHNOLOGY_LABELS[tech] ?? tech),
-        remoteOnly: criteria.remote === 'only',
+        remoteOnly: criteria.remote === 'only' || missionMode === 'remote',
+        services,
+        missionMode,
+        maxKm,
       },
+      approach: strategy?.approach === 'partner' ? 'partner' : strategy?.approach === 'profile' ? 'profile' : null,
+      tone,
       // Le nom d'un client confidentiel n'est jamais donné à l'IA
       references: referenceRows.map((reference) => ({
         title: reference.title,

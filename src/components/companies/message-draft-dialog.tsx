@@ -34,6 +34,12 @@ import { LINKEDIN_FIRST_MESSAGE_MAX, LINKEDIN_FIRST_MESSAGE_TARGET } from '@/lib
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact } from '@/types'
 
+const TONE_LABELS = {
+  sober: 'Sobre (par défaut)',
+  warm: 'Plus chaleureux',
+  direct: 'Direct, droit au but',
+} as const
+
 type Channel = 'email' | 'linkedin_message'
 
 // Réponse de la fonction Supabase draft-message
@@ -78,6 +84,8 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
   const [contactId, setContactId] = useState<string | null>(firstContact?.id ?? null)
   const [channel, setChannel] = useState<Channel>(defaultChannel(firstContact))
   const [instructions, setInstructions] = useState('')
+  // Ton du message : sobre par défaut, ou plus chaleureux, ou direct
+  const [tone, setTone] = useState<'sober' | 'warm' | 'direct'>('sober')
   const [draft, setDraft] = useState<Draft | null>(null)
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
@@ -99,7 +107,7 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
       // qu'accorde l'hébergement à une action serveur
       const supabase = createClient()
       const { data, error: invokeError } = await supabase.functions.invoke<Draft>('draft-message', {
-        body: { companyId, channel, contactId, instructions: instructions.trim() || null },
+        body: { companyId, channel, contactId, instructions: instructions.trim() || null, tone },
       })
 
       if (invokeError || !data) {
@@ -117,6 +125,7 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
         channel,
         has_contact: !!contactId,
         has_instructions: !!instructions.trim(),
+        tone,
       })
       setDraft(data)
       setSubject(data.subject ?? '')
@@ -243,6 +252,22 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="draft-tone">Ton du message</Label>
+              <Select value={tone} onValueChange={(value) => setTone(value as typeof tone)} disabled={isWriting}>
+                <SelectTrigger id="draft-tone">
+                  <SelectValue>{TONE_LABELS[tone]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(TONE_LABELS) as (keyof typeof TONE_LABELS)[]).map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {TONE_LABELS[value]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
