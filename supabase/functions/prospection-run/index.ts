@@ -24,6 +24,7 @@ import { accountPlan, NO_ACCESS_MESSAGE, parisMidnight, PLAN_LIMITS, PRO_ONLY_ME
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
 
 const SCHEDULED_BATCH_SIZE = 20
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
  * Offre Essentiel : une recherche par semaine, comptée au jour près (heure de Paris) : après une
@@ -61,7 +62,7 @@ Deno.serve(async (request) => {
     return json({ error: 'Méthode non autorisée' }, 405)
   }
 
-  let body: { mode?: string; source?: string } = {}
+  let body: { mode?: string; source?: string; strategyId?: string } = {}
   try {
     body = await request.json()
   } catch {
@@ -99,9 +100,15 @@ Deno.serve(async (request) => {
       return json({ error: start.error }, 409)
     }
 
-    // « Recherche par technologie » : seulement cette source, lancée à la demande
-    const only = body.source === 'tech_users' ? ['tech_users' as const] : undefined
-    EdgeRuntime.waitUntil(runProspection(admin, data.user.id, start.runId, only, PLAN_LIMITS[plan]))
+    // « Recherche par technologie » ou « Lancer cette recherche » : seulement cette source, à la demande
+    const strategyId = typeof body.strategyId === 'string' && UUID.test(body.strategyId) ? body.strategyId : undefined
+    const only =
+      body.source === 'tech_users'
+        ? ['tech_users' as const]
+        : strategyId
+          ? ['profile_search' as const]
+          : undefined
+    EdgeRuntime.waitUntil(runProspection(admin, data.user.id, start.runId, only, PLAN_LIMITS[plan], strategyId))
     return json({ runId: start.runId }, 202)
   }
 

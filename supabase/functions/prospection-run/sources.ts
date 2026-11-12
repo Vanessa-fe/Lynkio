@@ -147,6 +147,12 @@ export type RegistryCompany = {
   // Catégorie juridique INSEE : 1000 = entrepreneur individuel, 5499 = SARL…
   nature_juridique?: string | null
   etat_administratif: string | null
+  // INSEE : PME (dont TPE), ETI, GE
+  categorie_entreprise?: string | null
+  // O : diffusible ; P : diffusion partielle (personne ayant demandé à ne pas apparaître)
+  statut_diffusion?: string | null
+  // L'entreprise s'oppose à l'utilisation de ses données à des fins de prospection commerciale
+  opposition_diffusion_commerciale?: boolean | null
   dirigeants: CompanyDirector[]
   // Comptes publiés, par année : { "2024": { ca, resultat_net } } (0 ou null si confidentiels)
   finances?: Record<string, { ca?: number | null; resultat_net?: number | null }> | null
@@ -158,7 +164,9 @@ export type RegistryCompany = {
   }
 }
 
-async function searchRegistry(params: Record<string, string>): Promise<RegistryCompany[]> {
+type RegistrySearchBody = { results?: RegistryCompany[]; total_results?: number; total_pages?: number }
+
+async function searchRegistryRaw(params: Record<string, string>): Promise<RegistrySearchBody> {
   const url = `${RECHERCHE_ENTREPRISES_URL}?${new URLSearchParams(params)}`
 
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -183,11 +191,53 @@ async function searchRegistry(params: Record<string, string>): Promise<RegistryC
       throw new Error(`API Recherche d'entreprises indisponible (HTTP ${response.status})`)
     }
 
-    const body = (await response.json()) as { results?: RegistryCompany[] }
-    return body.results ?? []
+    return (await response.json()) as RegistrySearchBody
   }
 
-  return []
+  return {}
+}
+
+async function searchRegistry(params: Record<string, string>): Promise<RegistryCompany[]> {
+  return (await searchRegistryRaw(params)).results ?? []
+}
+
+// L'API ne renvoie jamais plus de 10 000 résultats (page × par page), 25 au plus par page
+export const PROFILE_PAGE_SIZE = 25
+export const PROFILE_MAX_PAGE = 10_000 / PROFILE_PAGE_SIZE
+
+export type ProfileQuery = {
+  nafCodes: string[]
+  departments: string[]
+  // Tranches d'effectif INSEE acceptées (01, 02… 31)
+  headcountCodes: string[]
+  // Catégorie INSEE (PME, ETI, GE) ; vide = toutes
+  categories: string[]
+}
+
+/**
+ * Entreprises actives correspondant à un profil (activité, département, effectif), une page à la fois.
+ * Le département porte sur les établissements : l'appelant vérifie ensuite où est le siège.
+ */
+export async function searchRegistryByProfile(
+  query: ProfileQuery,
+  page: number
+): Promise<{ results: RegistryCompany[]; totalPages: number; total: number }> {
+  const params: Record<string, string> = {
+    activite_principale: query.nafCodes.join(','),
+    departement: query.departments.join(','),
+    etat_administratif: 'A',
+    per_page: String(PROFILE_PAGE_SIZE),
+    page: String(page),
+  }
+  if (query.headcountCodes.length > 0) params.tranche_effectif_salarie = query.headcountCodes.join(',')
+  if (query.categories.length > 0) params.categorie_entreprise = query.categories.join(',')
+
+  const body = await searchRegistryRaw(params)
+  return {
+    results: body.results ?? [],
+    totalPages: Math.min(body.total_pages ?? 0, PROFILE_MAX_PAGE),
+    total: body.total_results ?? 0,
+  }
 }
 
 /**

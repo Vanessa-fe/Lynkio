@@ -4,6 +4,8 @@ import { Settings2 } from 'lucide-react'
 import { PipelineRunsList } from '@/components/prospection/pipeline-runs-list'
 import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers'
 import { TechResearchCard } from '@/components/prospection/tech-research-card'
+import { StrategiesCard } from '@/components/prospection/strategies-card'
+import { getStrategies } from '@/lib/queries/strategies'
 import { getIcpBasics } from '@/lib/queries/icp'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { PLAN_LIMITS } from '@/lib/billing'
@@ -17,13 +19,14 @@ import {
 } from '@/lib/queries/prospection'
 
 export default async function ProspectionPage() {
-  const [settings, runs, unidentifiedOffers, companyChoices, icp, plan] = await Promise.all([
+  const [settings, runs, unidentifiedOffers, companyChoices, icp, plan, strategies] = await Promise.all([
     getProspectionSettings(),
     getPipelineRuns(),
     getUnidentifiedOffers(),
     getCompanyChoices(),
     getIcpBasics(),
     getCurrentPlan(),
+    getStrategies(),
   ])
   const runningRun = runs.find((run) => run.status === 'running') ?? null
   // Offre Essentiel : une recherche par semaine, et la prochaine automatique peut être sautée
@@ -35,7 +38,8 @@ export default async function ProspectionPage() {
       <div>
         <h1 className="text-3xl font-bold">Prospection</h1>
         <p className="text-muted-foreground mt-2">
-          Sophie cherche pour vous les entreprises qui recrutent dans votre métier ou viennent d&apos;être créées.
+          Sophie cherche pour vous les entreprises qui correspondent à votre profil de client, qui recrutent dans
+          votre métier ou viennent d&apos;être créées.
           Celles qu&apos;elle retient arrivent dans Entreprises, à l&apos;étape « À qualifier ».
         </p>
       </div>
@@ -45,6 +49,12 @@ export default async function ProspectionPage() {
         nextRunAt={nextRunAt}
         runningRun={runningRun}
         weeklyRunAvailableAt={availableAt}
+      />
+      <StrategiesCard
+        strategies={strategies}
+        professionKey={icp.professionKey}
+        defaultDepartments={settings?.departments ?? []}
+        isRunning={!!runningRun}
       />
       {/* Recherche par technologie : seulement pour la tech (ou des technologies déjà choisies) */}
       {(icp.professionKey === 'web_developer' || icp.techStack.length > 0) && (

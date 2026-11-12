@@ -4,7 +4,8 @@ import { UserFacingError } from '../_shared/errors.ts'
 
 // tech_users (recherche par technologie) n'est lancée qu'à la demande : elle coûte
 // une recherche IA et ne fait pas partie des sources du planning
-export type SourceKey = 'job_postings' | 'recent_creations' | 'tech_users'
+// profile_search : recherches enregistrées (prospect_strategies), lancées à chaque passage s'il y en a
+export type SourceKey = 'job_postings' | 'recent_creations' | 'tech_users' | 'profile_search'
 
 // Intermédiaires acceptés dans les offres d'emploi (prospection_settings.accepted_intermediaries)
 export type Intermediary = 'consulting' | 'recruiters' | 'platforms' | 'staffing'
@@ -33,6 +34,8 @@ export type Context = {
   sizeCategories: string[] | null
   // Technologies recherchées par le client idéal (criteria.tech_stack)
   techStack: string[]
+  // « Lancer cette recherche » : une seule recherche enregistrée
+  strategyId?: string
 }
 
 // Résultat d'un détecteur, enregistré dans pipeline_runs.details.sources

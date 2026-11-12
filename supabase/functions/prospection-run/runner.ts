@@ -14,6 +14,7 @@ import {
 import { detectJobPostings } from './detect-job-postings.ts'
 import { detectRecentCreations } from './detect-recent-creations.ts'
 import { detectTechUsers } from './detect-tech-users.ts'
+import { detectProfileMatches } from './detect-profile.ts'
 import { UNIQUE_VIOLATION } from './store.ts'
 
 // Au-delà, un passage bloqué (fonction interrompue) est considéré comme échoué
@@ -31,6 +32,8 @@ const DETECTORS: {
   ) => Promise<{ stats: SourceStats; cursor: string | null }>
 }[] = [
   { key: 'job_postings', cursorColumn: 'job_postings_cursor', detect: detectJobPostings },
+  // Recherches enregistrées (curseur dans chaque recherche) : rien à faire si l'utilisateur n'en a pas
+  { key: 'profile_search', cursorColumn: null, detect: detectProfileMatches },
   { key: 'recent_creations', cursorColumn: 'bodacc_cursor', detect: detectRecentCreations },
   // À la demande seulement (voir SourceKey)
   { key: 'tech_users', cursorColumn: null, detect: detectTechUsers },
@@ -87,7 +90,9 @@ export async function runProspection(
   // Sources imposées (lancement « recherche par technologie ») ; sinon celles des réglages
   only?: SourceKey[],
   // Plafonds de l'offre du compte (entreprises par passage, mots-clés de recherche)
-  limits?: { companiesPerRun: number; searchKeywords: number }
+  limits?: { companiesPerRun: number; searchKeywords: number },
+  // « Lancer cette recherche » : une seule recherche enregistrée
+  strategyId?: string
 ) {
   const results: Partial<Record<SourceKey, SourceStats>> = {}
 
@@ -95,12 +100,14 @@ export async function runProspection(
     const settings = await loadSettings(admin, userId)
     const context = await loadContext(admin, userId)
     if (limits) context.searchKeywords = context.searchKeywords.slice(0, limits.searchKeywords)
+    if (strategyId) context.strategyId = strategyId
     const budget: Budget = {
       remaining: limits ? Math.min(settings.max_companies_per_run, limits.companiesPerRun) : settings.max_companies_per_run,
     }
     const cursorUpdates: Record<string, string> = {}
 
-    const sources: SourceKey[] = only ?? settings.sources.filter((source) => source !== 'tech_users')
+    // Les recherches enregistrées passent à chaque fois (le détecteur ne fait rien s'il n'y en a pas)
+    const sources: SourceKey[] = only ?? [...settings.sources.filter((source) => source !== 'tech_users'), 'profile_search']
     const disabled = await loadDisabledConnectors(admin)
 
     for (const detector of DETECTORS) {
@@ -115,6 +122,9 @@ export async function runProspection(
 
       try {
         const { stats, cursor } = await detector.detect(admin, settings, context, budget)
+        // Pas de recherche enregistrée : rien à montrer dans l'historique
+        const idle = stats.seen === 0 && stats.skipped === 0 && !stats.error
+        if (detector.key === 'profile_search' && idle && !only) continue
         results[detector.key] = stats
         if (detector.cursorColumn && cursor && cursor !== settings[detector.cursorColumn]) {
           cursorUpdates[detector.cursorColumn] = cursor

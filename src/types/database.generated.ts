@@ -115,6 +115,7 @@ export type Database = {
           source_id: string | null
           stack_detected_at: string | null
           stage_id: string | null
+          strategy_id: string | null
           updated_at: string
           user_id: string
           website: string | null
@@ -153,6 +154,7 @@ export type Database = {
           source_id?: string | null
           stack_detected_at?: string | null
           stage_id?: string | null
+          strategy_id?: string | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -191,6 +193,7 @@ export type Database = {
           source_id?: string | null
           stack_detected_at?: string | null
           stage_id?: string | null
+          strategy_id?: string | null
           updated_at?: string
           user_id?: string
           website?: string | null
@@ -216,6 +219,13 @@ export type Database = {
             columns: ["stage_id", "user_id"]
             isOneToOne: false
             referencedRelation: "pipeline_stages"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "companies_strategy_id_user_id_fkey"
+            columns: ["strategy_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_strategies"
             referencedColumns: ["id", "user_id"]
           },
         ]
@@ -468,6 +478,83 @@ export type Database = {
             referencedColumns: ["key"]
           },
         ]
+      }
+      company_stage_events: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          company_id: string
+          from_stage_id: string | null
+          from_stage_kind: string | null
+          from_stage_name: string | null
+          id: string
+          to_stage_id: string | null
+          to_stage_kind: string | null
+          to_stage_name: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          company_id: string
+          from_stage_id?: string | null
+          from_stage_kind?: string | null
+          from_stage_name?: string | null
+          id?: string
+          to_stage_id?: string | null
+          to_stage_kind?: string | null
+          to_stage_name?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          company_id?: string
+          from_stage_id?: string | null
+          from_stage_kind?: string | null
+          from_stage_name?: string | null
+          id?: string
+          to_stage_id?: string | null
+          to_stage_kind?: string | null
+          to_stage_name?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_stage_events_company_id_user_id_fkey"
+            columns: ["company_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      connector_settings: {
+        Row: {
+          disabled_reason: string | null
+          enabled: boolean
+          key: string
+          label: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          disabled_reason?: string | null
+          enabled?: boolean
+          key: string
+          label: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          disabled_reason?: string | null
+          enabled?: boolean
+          key?: string
+          label?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       feedback: {
         Row: {
@@ -1062,6 +1149,48 @@ export type Database = {
         }
         Relationships: []
       }
+      prospect_strategies: {
+        Row: {
+          approach: string
+          created_at: string
+          cursor: Json
+          filters: Json
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          name: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          approach: string
+          created_at?: string
+          cursor?: Json
+          filters?: Json
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          approach?: string
+          created_at?: string
+          cursor?: Json
+          filters?: Json
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       prospection_settings: {
         Row: {
           accepted_intermediaries: string[]
@@ -1378,6 +1507,7 @@ export type Database = {
       }
     }
     Functions: {
+      account_plan: { Args: { p_user_id: string }; Returns: string }
       advance_linkedin_sequence: {
         Args: { p_sequence_id: string; p_step: string }
         Returns: {
@@ -1492,6 +1622,62 @@ export type Database = {
   }
   storage: {
     Tables: {
+      bucket_lifecycle_states: {
+        Row: {
+          bucket_id: string
+          claim_id: string | null
+          claim_until: string | null
+          continuation: Json | null
+          failure_count: number
+          generation: string | null
+          last_completed_at: string | null
+          last_error: Json | null
+          last_result: Json | null
+          last_started_at: string | null
+          last_success_at: string | null
+          next_run_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          bucket_id: string
+          claim_id?: string | null
+          claim_until?: string | null
+          continuation?: Json | null
+          failure_count?: number
+          generation?: string | null
+          last_completed_at?: string | null
+          last_error?: Json | null
+          last_result?: Json | null
+          last_started_at?: string | null
+          last_success_at?: string | null
+          next_run_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          claim_id?: string | null
+          claim_until?: string | null
+          continuation?: Json | null
+          failure_count?: number
+          generation?: string | null
+          last_completed_at?: string | null
+          last_error?: Json | null
+          last_result?: Json | null
+          last_started_at?: string | null
+          last_success_at?: string | null
+          next_run_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bucket_lifecycle_states_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: true
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buckets: {
         Row: {
           allowed_mime_types: string[] | null
@@ -1591,6 +1777,30 @@ export type Database = {
           id?: string
           type?: Database["storage"]["Enums"]["buckettype"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      lifecycle_abandoned_artifacts: {
+        Row: {
+          attempted_at: string
+          bucket_id: string
+          key: string
+          name: string
+          version: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          bucket_id: string
+          key: string
+          name: string
+          version?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          bucket_id?: string
+          key?: string
+          name?: string
+          version?: string | null
         }
         Relationships: []
       }
@@ -1839,6 +2049,14 @@ export type Database = {
         Args: { bucketid: string; metadata: Json; name: string; owner: string }
         Returns: undefined
       }
+      delete_lifecycle_objects: {
+        Args: { object_ids: string[] }
+        Returns: {
+          id: string
+          is_delete_marker: boolean
+          metadata: Json
+        }[]
+      }
       extension: { Args: { name: string }; Returns: string }
       filename: { Args: { name: string }; Returns: string }
       foldername: { Args: { name: string }; Returns: string[] }
@@ -1897,6 +2115,10 @@ export type Database = {
         }[]
       }
       operation: { Args: never; Returns: string }
+      reconcile_lifecycle_state: {
+        Args: { policy_changed: boolean; target_bucket_id: string }
+        Returns: undefined
+      }
       search: {
         Args: {
           bucketname: string

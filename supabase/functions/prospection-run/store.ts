@@ -29,6 +29,8 @@ export type CompanyDraft = {
   foundedOn?: string | null
   // Technologies repérées sur le site (crée le signal « stack compatible »)
   detectedStack?: string[]
+  // Recherche enregistrée qui a trouvé l'entreprise (« Pourquoi cette entreprise »)
+  strategyId?: string | null
 }
 
 /**
@@ -130,6 +132,7 @@ export async function insertCompany(
       net_income: finances?.netIncome != null ? Math.round(finances.netIncome) : null,
       finances_year: finances?.year ?? null,
       detected_stack: detectedStack,
+      strategy_id: draft.strategyId ?? null,
       stack_detected_at: detectedStack.length > 0 ? new Date().toISOString() : null,
     })
     .select('id')
