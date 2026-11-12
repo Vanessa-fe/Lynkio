@@ -28,6 +28,8 @@ interface StrategiesCardProps {
   defaultDepartments: string[]
   // Un passage est déjà en cours
   isRunning: boolean
+  // Recherches permises par l'offre (5 en Essentiel, 20 en Pro)
+  maxStrategies: number
 }
 
 const SIZE_SHORT: Record<string, string> = Object.fromEntries(
@@ -46,7 +48,8 @@ function summary(strategy: StrategyOverview): string {
  * Recherches enregistrées (recherche par profil d'entreprise) : Sophie les lance à chaque passage,
  * ou tout de suite avec « Lancer ».
  */
-export function StrategiesCard({ strategies, professionKey, defaultDepartments, isRunning }: StrategiesCardProps) {
+export function StrategiesCard({ strategies, professionKey, defaultDepartments, isRunning, maxStrategies }: StrategiesCardProps) {
+  const atLimit = strategies.length >= maxStrategies
   const router = useRouter()
   const { toast } = useToast()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -92,10 +95,16 @@ export function StrategiesCard({ strategies, professionKey, defaultDepartments, 
               dans le registre officiel, sans IA, et ne vous montre jamais deux fois la même.
             </CardDescription>
           </div>
-          <Button type="button" onClick={openNew} className="shrink-0">
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvelle recherche
-          </Button>
+          <div className="flex shrink-0 flex-col gap-1 sm:items-end">
+            <Button type="button" onClick={openNew} disabled={atLimit}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvelle recherche
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {strategies.length} recherche{strategies.length > 1 ? 's' : ''} sur {maxStrategies}
+              {atLimit && ' : supprimez-en une pour en créer une autre'}
+            </span>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

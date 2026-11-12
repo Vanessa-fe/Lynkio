@@ -19,7 +19,7 @@ export default function TermsPage() {
       <h2>1. Le service</h2>
       <p>
         Filonea est un outil de prospection pour les freelances. Son assistante, Sophie, repère des entreprises à
-        partir de sources publiques (offres d&apos;emploi France Travail, registre officiel des entreprises, BODACC),
+        partir de sources publiques (registre officiel des entreprises, BODACC, sites des entreprises),
         les note selon le client idéal de l&apos;utilisateur et prépare des messages. L&apos;utilisateur suit ensuite
         ses prospects, ses échanges et ses relances. Sophie propose : l&apos;utilisateur relit et décide de chaque
         envoi.

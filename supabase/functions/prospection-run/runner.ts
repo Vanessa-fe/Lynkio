@@ -19,6 +19,8 @@ import { UNIQUE_VIOLATION } from './store.ts'
 
 // Au-delà, un passage bloqué (fonction interrompue) est considéré comme échoué
 const STALE_RUN_MINUTES = 15
+const NOTHING_TO_RUN =
+  'Aucune recherche à lancer : créez une recherche par profil dans Prospection > Vos recherches, Sophie la passera à chaque prospection'
 
 // Ordre de passage : la source la plus utile consomme le quota en premier
 const DETECTORS: {
@@ -113,10 +115,11 @@ export async function runProspection(
     for (const detector of DETECTORS) {
       if (!sources.includes(detector.key)) continue
 
-      // Source coupée pour tout le monde (connector_settings) : on le dit dans l'historique
+      // Source coupée pour tout le monde (connector_settings) : on la saute sans bruit,
+      // sauf si elle a été demandée seule (le message dit alors pourquoi rien ne se passe)
       const reason = disabled.get(detector.key)
       if (reason !== undefined) {
-        results[detector.key] = { ...newSourceStats(), error: reason }
+        if (only) results[detector.key] = { ...newSourceStats(), error: reason }
         continue
       }
 
@@ -140,8 +143,13 @@ export async function runProspection(
     }
 
     const outcomes = Object.values(results)
+    // Rien à lancer (ni recherche enregistrée, ni source active) : on dit quoi faire
+    if (outcomes.length === 0) {
+      await finishRun(admin, runId, 'failed', results, settings.departments, NOTHING_TO_RUN)
+      return
+    }
     const failures = outcomes.filter((stats) => stats.error)
-    const allFailed = outcomes.length > 0 && failures.length === outcomes.length
+    const allFailed = failures.length === outcomes.length
 
     await finishRun(
       admin,

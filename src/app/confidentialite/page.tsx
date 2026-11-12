@@ -45,8 +45,8 @@ export default function PrivacyPage() {
 
       <h2>Les données de vos prospects</h2>
       <p>
-        Filonea réunit des informations sur des entreprises à partir de sources publiques : offres d&apos;emploi
-        publiées sur France Travail, registre officiel des entreprises (dont le nom des dirigeants), annonces du BODACC
+        Filonea réunit des informations sur des entreprises à partir de sources publiques :
+        registre officiel des entreprises (dont le nom des dirigeants), annonces du BODACC
         et sites des entreprises. Vous pouvez y ajouter des personnes, des e-mails professionnels trouvés avec votre
         compte Hunter, vos échanges et vos notes.
       </p>

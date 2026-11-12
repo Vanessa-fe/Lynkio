@@ -81,7 +81,7 @@ export function ImportProspectsDialog() {
                 <Choice
                   icon={<Radar className="w-5 h-5" />}
                   title="Recherches de Sophie"
-                  description="Les entreprises qui recrutent pour le web, les offres anonymes à identifier, les sociétés tout juste créées. Sophie les ajoute toute seule selon votre planning."
+                  description="Vos recherches par profil d’entreprise et, en option, les sociétés tout juste créées. Sophie les ajoute toute seule selon votre planning."
                   href="/prospection"
                   onNavigate={() => changeOpen(false)}
                 />

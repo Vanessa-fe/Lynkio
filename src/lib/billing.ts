@@ -8,10 +8,18 @@ export const PLAN_LABELS: Record<PlanKey, string> = { essentiel: 'Essentiel', pr
 /** Ce que permet chaque offre (mêmes valeurs dans supabase/functions/_shared/plan.ts et sur la page Tarifs) */
 export const PLAN_LIMITS: Record<
   PlanKey,
-  { searchKeywords: number; companiesPerRun: number; daysPerWeek: number; runsPerWeek: number | null; techResearch: boolean }
+  {
+    searchKeywords: number
+    companiesPerRun: number
+    daysPerWeek: number
+    runsPerWeek: number | null
+    techResearch: boolean
+    // Recherches enregistrées (recherche par profil), décision du 13/11/2026
+    strategies: number
+  }
 > = {
-  essentiel: { searchKeywords: 3, companiesPerRun: 10, daysPerWeek: 1, runsPerWeek: 1, techResearch: false },
-  pro: { searchKeywords: 10, companiesPerRun: 50, daysPerWeek: 7, runsPerWeek: null, techResearch: true },
+  essentiel: { searchKeywords: 3, companiesPerRun: 10, daysPerWeek: 1, runsPerWeek: 1, techResearch: false, strategies: 5 },
+  pro: { searchKeywords: 10, companiesPerRun: 50, daysPerWeek: 7, runsPerWeek: null, techResearch: true, strategies: 20 },
 }
 
 const PARIS = 'Europe/Paris'
