@@ -110,6 +110,9 @@ export async function GET() {
       }
     })
 
+    // Journal d'accès du compte : l'échec de l'inscription ne bloque pas l'export
+    await supabase.rpc('log_my_data_access', { p_action: 'export_companies', p_details: { companies: rows.length } })
+
     const csv = Papa.unparse(rows, { delimiter: ';' })
     const date = new Date().toISOString().slice(0, 10)
 

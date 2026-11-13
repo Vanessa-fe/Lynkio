@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
   const contacts = await getWaalaxyContacts(supabase, user.id, listId ?? undefined)
 
   captureServerEvent(user.id, 'waalaxy_exported', { from_list: !!listId, contacts: contacts.length })
+  await supabase.rpc('log_my_data_access', { p_action: 'export_waalaxy', p_details: { contacts: contacts.length, from_list: !!listId } })
 
   const rows = contacts
     .map((contact) => ({

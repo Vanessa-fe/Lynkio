@@ -43,6 +43,21 @@ type SophieNotification = {
   period_start: string | null; period_end: string | null; counts: DigestCounts | null
 }
 
+export type InactiveProspectMonths = 6 | 12 | 24 | 36
+export type LinkedinPostsRetentionDays = 7 | 14 | 30 | 60 | 90
+export type DataAccessAction =
+  | 'export_companies' | 'export_waalaxy' | 'export_account'
+  | 'api_key_saved' | 'api_key_deleted'
+  | 'retention_changed' | 'retention_purge'
+type DataRetentionSettings = {
+  user_id: string; inactive_prospect_months: InactiveProspectMonths; auto_purge_enabled: boolean
+  linkedin_posts_days: LinkedinPostsRetentionDays; last_purge_at: string | null; updated_at: string
+}
+type DataAccessLogEntry = {
+  id: number; user_id: string; action: DataAccessAction; details: Record<string, string | number | boolean | null>
+  created_at: string
+}
+
 export type Database = MergeDeep<
   GeneratedDatabase,
   {
@@ -53,6 +68,8 @@ export type Database = MergeDeep<
           alerts_through: string | null; digest_from: string | null
         }> & { Relationships: [] }
         sophie_notifications: Columns<SophieNotification> & { Relationships: [] }
+        data_retention_settings: Columns<DataRetentionSettings> & { Relationships: [] }
+        data_access_log: Columns<DataAccessLogEntry> & { Relationships: [] }
         reminders: Columns<{ priority: ReminderPriority | null }>
         pipeline_stages: Columns<{ kind: PipelineStageKind; role: PipelineStageRole | null }>
         companies: Columns<{
@@ -76,6 +93,12 @@ export type Database = MergeDeep<
       }
       Functions: {
         set_sophie_preferences: { Args: { p_frequency: SophieFrequency; p_digest: boolean }; Returns: undefined }
+        preview_my_retention: { Args: { p_months: number }; Returns: { companies: number; contacts: number }[] }
+        purge_my_inactive_prospects: { Args: Record<string, never>; Returns: number }
+        log_my_data_access: {
+          Args: { p_action: 'export_companies' | 'export_waalaxy' | 'export_account'; p_details?: Record<string, number | boolean | string> }
+          Returns: undefined
+        }
       }
       Views: {
         contact_outreach: { Row: { status: OutreachStatus | null } }
