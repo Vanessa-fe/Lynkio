@@ -67,6 +67,11 @@ export default function PrivacyPage() {
           Toute personne peut aussi écrire à <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a> pour savoir si des
           données la concernent et s&apos;y opposer.
         </li>
+        <li>
+          Comme responsable du traitement, l&apos;utilisateur informe la personne dès son premier message : d&apos;où
+          viennent ses coordonnées, pourquoi il la contacte, et qu&apos;elle peut s&apos;y opposer d&apos;une simple
+          réponse.
+        </li>
       </ul>
 
       <h2>Avec qui vos données sont partagées</h2>
@@ -102,7 +107,19 @@ export default function PrivacyPage() {
 
       <h2>Combien de temps</h2>
       <ul>
-        <li>Les données de votre compte et de vos prospects : tant que votre compte existe.</li>
+        <li>Les données de votre compte : tant que votre compte existe.</li>
+        <li>
+          Les prospects restés sans suite : vous choisissez la durée (6 mois à 3 ans, 3 ans par défaut, la durée
+          recommandée par la CNIL), comptée depuis le dernier échange, signal ou ajout, et pouvez activer leur
+          effacement automatique (Paramètres &gt; Mon compte). Vos clients, les fiches avec un rappel en cours et les
+          personnes qui ont demandé à ne plus être contactées sont gardés, pour respecter leur demande.
+        </li>
+        <li>
+          Les posts LinkedIn proposés par Sophie et non retenus : 30 jours par défaut (de 7 à 90 jours selon votre
+          choix).
+        </li>
+        <li>Les signaux d&apos;achat : effacés automatiquement après une durée propre à chaque type de signal.</li>
+        <li>Le journal d&apos;accès à vos données (exports, clés, nettoyages) : 12 mois.</li>
         <li>
           À la suppression du compte (Paramètres &gt; Mon compte), tout est effacé immédiatement ; les sauvegardes
           chiffrées, gardées 30 jours, disparaissent ensuite.
@@ -112,8 +129,10 @@ export default function PrivacyPage() {
 
       <h2>Sécurité</h2>
       <p>
-        Connexions chiffrées (HTTPS), clés personnelles chiffrées dans un coffre, accès aux données limité à votre
-        compte, sauvegardes chiffrées, règles de sécurité sur toutes les pages du site.
+        Connexions chiffrées (HTTPS), clés personnelles chiffrées dans un coffre et jamais renvoyées au navigateur,
+        accès aux données limité à votre compte par la base elle-même, sauvegardes chiffrées, règles de sécurité sur
+        toutes les pages du site. Les exports de vos données, les changements de clés et les nettoyages sont inscrits
+        dans un journal que vous consultez dans Paramètres &gt; Mon compte et que personne ne peut modifier.
       </p>
 
       <h2 id="cookies" className="scroll-mt-24">Cookies</h2>
@@ -129,7 +148,8 @@ export default function PrivacyPage() {
       <h2>Vos droits</h2>
       <p>
         Vous pouvez accéder à vos données, les corriger, les exporter, les supprimer, vous opposer à leur traitement ou
-        en demander la limitation. La plupart de ces actions se font directement dans Filonea (Paramètres) ; pour le
+        en demander la limitation. La plupart de ces actions se font directement dans Filonea (Paramètres &gt; Mon compte : export
+        complet de vos données dans un fichier réutilisable, durée de conservation, suppression du compte) ; pour le
         reste, écrivez à <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>. Vous pouvez aussi adresser une
         réclamation à la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">cnil.fr</a>).
       </p>

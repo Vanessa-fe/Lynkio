@@ -84,9 +84,13 @@ export default function TermsPage() {
       <h2>7. Données des prospects</h2>
       <p>
         Pour les données des personnes que l&apos;utilisateur prospecte, l&apos;utilisateur est responsable du
-        traitement et Filonea agit comme sous-traitant : Filonea ne les utilise que pour fournir le service, ne les
-        vend pas et les supprime avec le compte. Les détails figurent dans la{' '}
-        <a href="/confidentialite">politique de confidentialité</a>.
+        traitement et Filonea agit comme sous-traitant : Filonea ne les traite que sur ses instructions et pour
+        fournir le service, ne les vend pas, ne les partage avec aucun autre utilisateur, les protège (accès limité au
+        compte, chiffrement), l&apos;aide à répondre aux demandes des personnes (export, effacement, opposition),
+        l&apos;informe sans tarder en cas de violation de données, et les supprime avec le compte ou à la fin de la
+        durée de conservation choisie. Les prestataires utilisés sont listés dans la{' '}
+        <a href="/confidentialite">politique de confidentialité</a>. L&apos;utilisateur reste chargé d&apos;informer les
+        personnes qu&apos;il contacte et de respecter leur opposition.
       </p>
 
       <h2>8. Disponibilité et responsabilité</h2>
@@ -100,8 +104,8 @@ export default function TermsPage() {
 
       <h2>9. Vos données, à tout moment</h2>
       <p>
-        L&apos;utilisateur peut exporter ses entreprises à tout moment (Paramètres &gt; Mon compte) et supprimer son
-        compte. Les sauvegardes chiffrées du service sont effacées au bout de 30 jours.
+        L&apos;utilisateur peut exporter ses entreprises ou l&apos;ensemble de ses données à tout moment (Paramètres
+        &gt; Mon compte), choisir la durée de conservation de ses prospects et supprimer son compte. Les sauvegardes chiffrées du service sont effacées au bout de 30 jours.
       </p>
 
       <h2>10. Évolution des conditions</h2>

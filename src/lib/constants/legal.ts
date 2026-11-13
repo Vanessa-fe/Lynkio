@@ -7,7 +7,7 @@ export const LEGAL = {
   email: 'contact@filonea.fr',
   vat: 'TVA non applicable, article 293 B du Code général des impôts',
   host: 'Netlify, Inc., 101 2nd Street, San Francisco, CA 94105, États-Unis',
-  updatedAt: '11 novembre 2026',
+  updatedAt: '13 novembre 2026',
 }
 
 export const LEGAL_ROUTES = ['/mentions-legales', '/conditions', '/confidentialite']
