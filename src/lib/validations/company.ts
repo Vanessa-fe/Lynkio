@@ -92,6 +92,11 @@ export const createCompanySchema = z.object({
   estimatedAmount: optionalAmount,
   nextAction: optionalText(300, 'La prochaine action est trop longue'),
   detectedStack: z.array(z.string()).optional(),
+  // Fiche pré-remplie depuis le registre officiel : le serveur relit la fiche du SIREN
+  // pour compléter code NAF, effectif, date de création et chiffres publiés
+  registryLookup: z.boolean().optional(),
+  // Ajouter les dirigeants du registre comme contacts de la nouvelle fiche
+  addDirectors: z.boolean().optional(),
 })
 
 export const updateCompanySchema = createCompanySchema.partial()

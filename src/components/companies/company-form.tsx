@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Search } from 'lucide-react'
 import {
   createCompanySchema,
+  formatEuros,
   sizeCategories,
   sizeCategoryLabels,
   toWebsiteUrl,
@@ -28,6 +29,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { CompanyLookup, type CompanyLookupPick } from '@/components/companies/company-lookup'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
 
@@ -49,6 +52,9 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
   // La stack n'est enregistrée que si une analyse a vraiment eu lieu dans ce formulaire :
   // sinon, chaque enregistrement la marquait « analysée » à la date du jour
   const [hasAnalyzed, setHasAnalyzed] = useState(false)
+  // Entreprise choisie dans « Retrouver l'entreprise » (registre officiel)
+  const [picked, setPicked] = useState<CompanyLookupPick['candidate'] | null>(null)
+  const [addDirectors, setAddDirectors] = useState(true)
 
   const isEditing = !!company
   // Personne seule : son nom suit celui de son contact (synchronisé par la base)
@@ -87,6 +93,31 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
   })
 
   const detectedStack = useWatch({ control, name: 'detectedStack' }) ?? []
+  const registrationId = useWatch({ control, name: 'registrationId' })
+  // Le SIREN a été modifié à la main : la fiche n'est plus celle du registre
+  const pickedStillMatches = !!picked && (registrationId ?? '').replace(/\s/g, '') === picked.siren
+
+  // Pré-remplit le formulaire avec la fiche officielle choisie (tout reste modifiable)
+  const handlePick = ({ candidate, website, detectedStack: stack }: CompanyLookupPick) => {
+    const options = { shouldDirty: true, shouldValidate: true }
+    // « ATELIER DUPONT » → « Atelier Dupont » ; un nom déjà en casse mixte est gardé
+    const name = candidate.name === candidate.name.toUpperCase()
+      ? candidate.name.toLowerCase().replace(/(^|[\s'(-])(\p{L})/gu, (_, sep: string, letter: string) => sep + letter.toUpperCase())
+      : candidate.name
+    setValue('name', name, options)
+    setValue('registrationId', candidate.siren, options)
+    if (candidate.sector) setValue('sector', candidate.sector, options)
+    if (candidate.sizeCategory) setValue('sizeCategory', candidate.sizeCategory, options)
+    if (candidate.city) setValue('city', candidate.city, options)
+    if (candidate.postalCode) setValue('postalCode', candidate.postalCode, options)
+    if (website) setValue('website', website, options)
+    if (stack) {
+      setValue('detectedStack', stack)
+      setHasAnalyzed(true)
+    }
+    setPicked(candidate)
+    setAddDirectors(true)
+  }
 
   // Réutilise l'analyse de site existante (déplacée avec les détecteurs à l'étape 3.3)
   const handleAnalyzeWebsite = async () => {
@@ -146,7 +177,13 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
 
     const { detectedStack, ...fields } = data
     const payload = hasAnalyzed ? { ...fields, detectedStack } : fields
-    const result = isEditing ? await updateCompany(company.id, payload) : await createCompany(payload)
+    const result = isEditing
+      ? await updateCompany(company.id, payload)
+      : await createCompany({
+          ...payload,
+          registryLookup: pickedStillMatches,
+          addDirectors: pickedStillMatches && addDirectors,
+        })
 
     setIsLoading(false)
 
@@ -188,6 +225,43 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
 
           <section className="space-y-4">
             <h2 className="text-lg font-semibold">Identité</h2>
+
+            {!isEditing && <CompanyLookup disabled={isLoading} onPick={handlePick} />}
+
+            {!isEditing && picked && pickedStillMatches && (
+              <div className="rounded-md bg-primary/5 p-3 text-sm space-y-2">
+                <p className="font-medium">Fiche pré-remplie depuis le registre officiel : vérifiez et corrigez si besoin.</p>
+                <ul className="text-xs text-muted-foreground space-y-0.5">
+                  {picked.address && <li>Adresse du siège : {picked.address}</li>}
+                  {picked.nafCode && <li>Code NAF : {picked.nafCode}{picked.sector ? ` (${picked.sector})` : ''}</li>}
+                  {picked.headcountLabel && <li>Effectif : {picked.headcountLabel}</li>}
+                  {picked.foundedOn && (
+                    <li>Création : {new Date(`${picked.foundedOn}T00:00:00`).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</li>
+                  )}
+                  {picked.finances && (
+                    <li>
+                      Chiffre d&apos;affaires {picked.finances.year} : {formatEuros(picked.finances.revenue)}
+                    </li>
+                  )}
+                </ul>
+                {picked.directors.length > 0 && (
+                  <label className="flex items-start gap-2 text-xs cursor-pointer">
+                    <Checkbox
+                      checked={addDirectors}
+                      onCheckedChange={(checked) => setAddDirectors(checked === true)}
+                      disabled={isLoading}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      {picked.directors.length > 1 ? 'Ajouter les dirigeants comme contacts' : 'Ajouter le dirigeant comme contact'} :{' '}
+                      {picked.directors
+                        .map((director) => [director.firstName, director.lastName].filter(Boolean).join(' ') + (director.role ? ` (${director.role})` : ''))
+                        .join(', ')}
+                    </span>
+                  </label>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="name">
