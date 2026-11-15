@@ -86,7 +86,8 @@ export default function PrivacyPage() {
           transferts hors d&apos;Europe).
         </li>
         <li>
-          <strong>Brevo</strong> (France) : e-mails d&apos;information sur Filonea, avec désinscription en un clic.
+          <strong>Brevo</strong> (France) : e-mails d&apos;information sur Filonea, avec désinscription en un clic, et
+          envoi des alertes de Sophie que vous avez activées (adresse e-mail et contenu de l&apos;alerte).
         </li>
         <li>
           <strong>Resend</strong> (États-Unis) : envoi des e-mails de confirmation de compte et de mot de passe.
