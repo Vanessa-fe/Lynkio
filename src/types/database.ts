@@ -41,6 +41,7 @@ type SophieNotification = {
   read_at: string | null; company_id: string | null; signal_id: string | null; title: string
   source: string; source_url: string | null; detected_at: string | null; event_at: string | null
   period_start: string | null; period_end: string | null; counts: DigestCounts | null
+  emailed_at: string | null
 }
 
 export type InactiveProspectMonths = 6 | 12 | 24 | 36
@@ -65,7 +66,7 @@ export type Database = MergeDeep<
       Tables: {
         sophie_preferences: Columns<{
           user_id: string; frequency: SophieFrequency; alerts_since: string | null
-          alerts_through: string | null; digest_from: string | null
+          alerts_through: string | null; digest_from: string | null; by_email: boolean
         }> & { Relationships: [] }
         sophie_notifications: Columns<SophieNotification> & { Relationships: [] }
         data_retention_settings: Columns<DataRetentionSettings> & { Relationships: [] }
@@ -92,7 +93,7 @@ export type Database = MergeDeep<
         linkedin_posts: Columns<{ status: LinkedinPostStatus }>
       }
       Functions: {
-        set_sophie_preferences: { Args: { p_frequency: SophieFrequency; p_digest: boolean }; Returns: undefined }
+        set_sophie_preferences: { Args: { p_frequency: SophieFrequency; p_digest: boolean; p_email: boolean }; Returns: undefined }
         preview_my_retention: { Args: { p_months: number }; Returns: { companies: number; contacts: number }[] }
         purge_my_inactive_prospects: { Args: Record<string, never>; Returns: number }
         log_my_data_access: {

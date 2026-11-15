@@ -179,3 +179,8 @@ verify_jwt = false
 
 [functions.sophie-digest]
 verify_jwt = true
+
+# Envoi des alertes par e-mail : appelée par pg_cron, sans jeton. Elle n'envoie que les alertes
+# en attente, une seule fois chacune : l'appeler en trop n'envoie rien de plus.
+[functions.sophie-email]
+verify_jwt = false

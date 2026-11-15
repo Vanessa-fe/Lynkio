@@ -19,12 +19,12 @@ export type SophieNotificationRow = {
 }
 
 /** Préférences d'alertes (par défaut : tout désactivé, rien n'est envoyé sans accord) */
-export async function getSophiePreferences(): Promise<{ frequency: SophieFrequency; digest: boolean }> {
+export async function getSophiePreferences(): Promise<{ frequency: SophieFrequency; digest: boolean; email: boolean }> {
   const user = await getAuthUser()
-  if (!user) return { frequency: 'off', digest: false }
+  if (!user) return { frequency: 'off', digest: false, email: true }
   const supabase = await createClient()
-  const { data } = await supabase.from('sophie_preferences').select('frequency, digest_from').eq('user_id', user.id).maybeSingle()
-  return { frequency: data?.frequency ?? 'off', digest: !!data?.digest_from }
+  const { data } = await supabase.from('sophie_preferences').select('frequency, digest_from, by_email').eq('user_id', user.id).maybeSingle()
+  return { frequency: data?.frequency ?? 'off', digest: !!data?.digest_from, email: data?.by_email ?? true }
 }
 
 /** Dernières alertes et bilans, les plus récents d'abord */
