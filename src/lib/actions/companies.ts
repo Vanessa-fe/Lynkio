@@ -34,7 +34,7 @@ const UNIQUE_VIOLATION = '23505'
 
 function validationMessage(error: unknown): string | null {
   if (error instanceof ZodError) {
-    return error.errors[0]?.message ?? 'Données invalides'
+    return error.issues[0]?.message ?? 'Données invalides'
   }
   return null
 }

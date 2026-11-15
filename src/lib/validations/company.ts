@@ -56,7 +56,7 @@ export function parseEuroAmount(value: string): number | null {
 const optionalAmount = z.preprocess(
   (value) => (typeof value === 'string' ? parseEuroAmount(value) : value),
   z
-    .number({ invalid_type_error: 'Le montant n\'est pas valide' })
+    .number({ error: 'Le montant n\'est pas valide' })
     .int()
     .min(0, 'Le montant ne peut pas être négatif')
     .max(MAX_ESTIMATED_AMOUNT, 'Le montant est trop élevé')
@@ -79,9 +79,7 @@ export const createCompanySchema = z.object({
     .refine((value) => !value || /^\d{9}$/.test(value), 'Le SIREN doit contenir 9 chiffres'),
   sector: optionalText(200, 'Le secteur est trop long'),
   sizeCategory: z
-    .enum(sizeCategories, {
-      errorMap: () => ({ message: 'La taille n\'est pas valide' }),
-    })
+    .enum(sizeCategories, { error: 'La taille n\'est pas valide' })
     .optional()
     .nullable(),
   city: optionalText(100, 'La ville est trop longue'),
@@ -263,16 +261,12 @@ export const companyInteractionSchema = z
   .object({
     companyId: z.string().uuid('L\'entreprise n\'est pas valide'),
     contactId: z.string().uuid('Le contact n\'est pas valide').optional().nullable(),
-    type: z.enum(companyInteractionTypes, {
-      errorMap: () => ({ message: 'Choisissez un type d\'échange' }),
-    }),
+    type: z.enum(companyInteractionTypes, { error: 'Choisissez un type d\'échange' }),
     status: z.enum(companyInteractionStatuses).default('done'),
     direction: z.enum(['incoming', 'outgoing']).optional().nullable(),
     subject: optionalText(300, 'L\'objet est trop long'),
     content: optionalText(10000, 'Le contenu est trop long'),
-    occurredAt: z.coerce.date({
-      errorMap: () => ({ message: 'La date n\'est pas valide' }),
-    }),
+    occurredAt: z.coerce.date({ error: 'La date n\'est pas valide' }),
   })
   .refine((data) => data.type !== 'note' || !!data.content, {
     message: 'Le contenu est requis pour une note',

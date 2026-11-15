@@ -26,7 +26,7 @@ export const SUGGESTED_GOALS = { contactsPerWeek: 15, clientsPerMonth: 2 } as co
 
 const optionalNumber = (max: number, message: string) =>
   z
-    .number({ invalid_type_error: 'Indiquez un nombre' })
+    .number({ error: 'Indiquez un nombre' })
     .int('Un nombre entier')
     .min(0, 'Pas de nombre négatif')
     .max(max, message)

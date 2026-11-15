@@ -39,7 +39,7 @@ export async function sendFeedback(input: FeedbackInput): Promise<ActionResult> 
     revalidatePath('/ideas')
     return { success: true }
   } catch (error) {
-    if (error instanceof ZodError) return { success: false, error: error.errors[0]?.message ?? 'Message invalide' }
+    if (error instanceof ZodError) return { success: false, error: error.issues[0]?.message ?? 'Message invalide' }
     captureServerError(error, undefined, { action: 'sendFeedback' })
     return { success: false, error: 'Impossible d\'envoyer votre message pour le moment : réessayez.' }
   }

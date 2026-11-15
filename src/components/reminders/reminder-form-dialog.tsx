@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { z } from 'zod'
 import {
   Dialog,
   DialogContent,
@@ -90,7 +91,7 @@ export function ReminderFormDialog({
     formState: { errors },
     setValue,
     reset,
-  } = useForm<CreateReminderInput>({
+  } = useForm<z.input<typeof createReminderSchema>, unknown, CreateReminderInput>({
     resolver: zodResolver(createReminderSchema),
     defaultValues,
   })

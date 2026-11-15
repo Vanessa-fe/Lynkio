@@ -72,7 +72,7 @@ export async function saveProspectionSettings(input: ProspectionSettingsInput): 
     return { success: true }
   } catch (error) {
     if (error instanceof ZodError) {
-      return { success: false, error: error.errors[0]?.message ?? 'Réglages invalides' }
+      return { success: false, error: error.issues[0]?.message ?? 'Réglages invalides' }
     }
     console.error('Save prospection settings error:', error)
     return { success: false, error: 'Une erreur est survenue' }

@@ -96,7 +96,7 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
     return { success: true }
   } catch (error) {
     if (error instanceof ZodError) {
-      return { success: false, error: error.errors[0]?.message ?? 'Réglages invalides' }
+      return { success: false, error: error.issues[0]?.message ?? 'Réglages invalides' }
     }
     console.error('Save ICP error:', error)
     return { success: false, error: 'Une erreur est survenue' }
@@ -139,7 +139,7 @@ export async function addExcludedKeywords(keywords: string[]): Promise<ActionRes
     revalidatePath('/settings')
     return { success: true }
   } catch (error) {
-    if (error instanceof ZodError) return { success: false, error: error.errors[0]?.message ?? 'Mots-clés invalides' }
+    if (error instanceof ZodError) return { success: false, error: error.issues[0]?.message ?? 'Mots-clés invalides' }
     console.error('addExcludedKeywords', error)
     return { success: false, error: 'Une erreur est survenue' }
   }

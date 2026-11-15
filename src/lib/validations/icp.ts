@@ -39,14 +39,14 @@ export const icpSchema = z.object({
   signalWeights: z.record(
     z.string(),
     z
-      .number({ invalid_type_error: 'Indiquez un nombre de points' })
+      .number({ error: 'Indiquez un nombre de points' })
       .int('Les points doivent être un nombre entier')
       .min(0, 'Pas de points négatifs')
       .max(MAX_SIGNAL_WEIGHT, `Au plus ${MAX_SIGNAL_WEIGHT} points par signal`)
   ),
   // Tarif journalier moyen : sert à juger si le chiffre d'affaires d'une entreprise suffit
   dayRate: z
-    .number({ invalid_type_error: 'Indiquez un montant' })
+    .number({ error: 'Indiquez un montant' })
     .int('Un montant entier, en euros')
     .min(50, 'Au moins 50 €')
     .max(5000, 'Au plus 5 000 €')

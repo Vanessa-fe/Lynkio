@@ -27,7 +27,7 @@ function filtersFrom(input: z.output<typeof strategySchema>) {
 }
 
 function errorFrom(error: unknown, fallback: string): string {
-  if (error instanceof ZodError) return error.errors[0]?.message ?? 'Données invalides'
+  if (error instanceof ZodError) return error.issues[0]?.message ?? 'Données invalides'
   if (error && typeof error === 'object' && 'code' in error) {
     if (error.code === UNIQUE_VIOLATION) return 'Vous avez déjà une recherche avec ce nom'
     if (error.code === 'P0001' && 'message' in error && typeof error.message === 'string') return error.message
