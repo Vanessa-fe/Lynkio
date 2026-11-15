@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { startTransition, useActionState, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { savePreferences } from '@/lib/actions/notifications'
 import type { SophieFrequency } from '@/types/database'
@@ -9,12 +9,18 @@ type Props = { frequency: SophieFrequency; digest: boolean; email: boolean }
 
 export function Preferences(props: Props) {
   const [status, save, pending] = useActionState(savePreferences, '')
-  // Champs contrôlés : après une action, React remet le formulaire à ses valeurs de départ,
-  // et le menu revenait sur « Alertes désactivées » alors que le choix était bien enregistré.
+  // Envoi par onSubmit plutôt que par action : avec action, React remet le formulaire à ses
+  // valeurs de départ après l'enregistrement, et le menu ou la case du bilan affichaient
+  // l'ancien choix alors que le nouveau était bien enregistré.
   const [frequency, setFrequency] = useState(props.frequency)
   const [digest, setDigest] = useState(props.digest)
   const [email, setEmail] = useState(props.email)
-  return <form action={save} className="space-y-3 rounded-lg border bg-card p-4">
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const data = new FormData(event.currentTarget)
+    startTransition(() => save(data))
+  }
+  return <form onSubmit={submit} className="space-y-3 rounded-lg border bg-card p-4">
     <label className="block font-medium" htmlFor="signal-frequency">Nouveaux signaux</label>
     <select id="signal-frequency" name="frequency" value={frequency}
       onChange={(e) => setFrequency(e.target.value as SophieFrequency)} className="rounded-md border bg-background p-2">
