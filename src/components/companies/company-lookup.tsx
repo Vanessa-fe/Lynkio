@@ -124,7 +124,7 @@ export function CompanyLookup({ disabled, onPick }: CompanyLookupProps) {
           )}
           {result.source === 'name' && (
             <p className="text-xs text-muted-foreground">
-              Vous ne la voyez pas ? Le nom au registre est parfois différent du nom connu (par exemple « GFT France SAS » pour GFT Technologies). Son SIREN ou son site donnent un résultat exact.
+              Vous ne la voyez pas ? Son nom officiel peut être différent du nom que vous connaissez (par exemple pour la filiale française d’un groupe étranger). Essayez avec son SIREN ou son site : le résultat sera exact.
             </p>
           )}
         </div>
