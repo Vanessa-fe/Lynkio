@@ -10,7 +10,7 @@ export async function savePreferences(_: string, form: FormData) {
   if (!(await getAuthUser())) return 'Reconnectez-vous pour enregistrer vos préférences.'
   const client = await createClient()
   const { error } = await client.rpc('set_sophie_preferences', {
-    p_frequency: frequency, p_digest: form.get('digest') === 'on',
+    p_frequency: frequency, p_digest: form.get('digest') === 'on', p_email: form.get('email') === 'on',
   })
   if (error) return 'Enregistrement impossible. Réessayez.'
   revalidatePath('/notifications')

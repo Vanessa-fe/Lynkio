@@ -35,7 +35,7 @@ export default async function NotificationsPage() {
         </p>
       </div>
 
-      <Preferences frequency={preferences.frequency} digest={preferences.digest} />
+      <Preferences frequency={preferences.frequency} digest={preferences.digest} email={preferences.email} />
 
       <Card>
         <CardHeader>
