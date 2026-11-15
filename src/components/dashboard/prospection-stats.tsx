@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AlertCircle, Building2, Sparkles, Trophy } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Stagger, StaggerItem } from '@/components/motion/reveal'
+import { Counter } from '@/components/motion/counter'
 import { cn } from '@/lib/utils'
 import type { DashboardData } from '@/lib/queries/prospection-dashboard'
 
@@ -10,13 +11,16 @@ function StatTile({
   icon,
   label,
   value,
+  suffix,
   detail,
   alert,
 }: {
   href: string
   icon: React.ReactNode
   label: string
-  value: string
+  // Les nombres défilent jusqu'à leur valeur à l'affichage
+  value: number | string
+  suffix?: string
   detail: string
   alert?: boolean
 }) {
@@ -30,7 +34,9 @@ function StatTile({
             </span>
             {label}
           </div>
-          <p className={cn('font-display text-2xl sm:text-3xl font-bold tracking-tight tabular-nums', alert && 'text-destructive')}>{value}</p>
+          <p className={cn('font-display text-2xl sm:text-3xl font-bold tracking-tight tabular-nums', alert && 'text-destructive')}>
+            {typeof value === 'number' ? <Counter to={value} suffix={suffix} duration={1.2} /> : value}
+          </p>
           <p className="text-xs sm:text-sm text-muted-foreground">{detail}</p>
         </CardContent>
       </Card>
@@ -43,10 +49,10 @@ export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
     <Stagger className="grid gap-3 sm:gap-4 grid-cols-2 xl:grid-cols-4" stagger={0.06}>
       <StaggerItem>
         <StatTile
-          href="/companies"
+          href="/pipeline"
           icon={<Building2 className="w-4 h-4" />}
           label="Pistes en cours"
-          value={String(stats.tracked)}
+          value={stats.tracked}
           detail="Entreprises ni gagnées, ni perdues, ni hors cible"
         />
       </StaggerItem>
@@ -55,7 +61,7 @@ export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
           href="/companies"
           icon={<Sparkles className="w-4 h-4" />}
           label="Nouvelles cette semaine"
-          value={String(stats.addedThisWeek)}
+          value={stats.addedThisWeek}
           detail={
             stats.addedBySophieThisWeek > 0
               ? `Dont ${stats.addedBySophieThisWeek} trouvée${stats.addedBySophieThisWeek > 1 ? 's' : ''} par Sophie`
@@ -68,17 +74,18 @@ export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
           href="/reminders"
           icon={<AlertCircle className="w-4 h-4" />}
           label="Relances en retard"
-          value={String(stats.overdueReminders)}
+          value={stats.overdueReminders}
           detail={stats.overdueReminders > 0 ? 'À traiter en priorité' : 'Rien en retard, bravo'}
           alert={stats.overdueReminders > 0}
         />
       </StaggerItem>
       <StaggerItem>
         <StatTile
-          href="/companies"
+          href="/pipeline"
           icon={<Trophy className="w-4 h-4" />}
           label="Taux de réussite"
-          value={stats.successRate === null ? '–' : `${stats.successRate} %`}
+          value={stats.successRate ?? '–'}
+          suffix=" %"
           detail={
             stats.won + stats.lost === 0
               ? 'Calculé dès la première piste gagnée ou perdue'

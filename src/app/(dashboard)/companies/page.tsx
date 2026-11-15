@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowDownUp } from 'lucide-react'
+import { ArrowDownUp, SquareKanban } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CompaniesList } from '@/components/companies/companies-list'
 import { getCompanies, getLeadSources, getPipelineStages } from '@/lib/queries/companies'
@@ -28,12 +28,20 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
             Votre pipeline de prospection : les entreprises à qualifier, contacter et suivre
           </p>
         </div>
-        <Button variant="outline" asChild className="shrink-0">
-          <Link href="/import-export">
-            <ArrowDownUp className="w-4 h-4 mr-2" />
-            Importer / Exporter
-          </Link>
-        </Button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/pipeline">
+              <SquareKanban className="w-4 h-4 mr-2" />
+              Vue tableau
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/import-export">
+              <ArrowDownUp className="w-4 h-4 mr-2" />
+              Importer / Exporter
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {strategyId && (
