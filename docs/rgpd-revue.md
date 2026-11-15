@@ -33,7 +33,7 @@ _Revue du 13 novembre 2026 (ticket Trello « [P2] Prévoir conformité, rétenti
 - **Information des prospects (art. 14)** : les données sont collectées indirectement. L'utilisateur (responsable) doit informer la personne au premier contact : origine des coordonnées, finalité, droit d'opposition. Ajouté dans la politique de confidentialité et les CGU (§7).
 - **Opposition** : bouton « ne plus contacter » sur la fiche (Sophie ne propose plus de message), contact exclu des exports CSV et Waalaxy, adresse de contact publique pour toute personne concernée.
 - **Accès / portabilité** : nouvel **export complet JSON** (Paramètres > Mon compte) — toutes les tables du compte, sans secret ni identifiant Stripe interne. L'export CSV des entreprises reste.
-- **Effacement** : suppression du compte (fonction `delete-account`, résiliation Stripe puis suppression en cascade, clé retirée du coffre, contact Brevo retiré).
+- **Effacement** : suppression du compte (fonction `delete-account`, résiliation Stripe puis suppression en cascade, clé retirée du coffre, contact Brevo et personne PostHog retirés).
 
 ## 4. Conservation (nouveau)
 
@@ -84,7 +84,7 @@ Lancer : `supabase db query --linked -f supabase/tests/rgpd_isolation_retention.
 
 ## 8. Écarts restants (suivi)
 
-1. **PostHog** : la suppression du compte n'efface pas la personne PostHog (identifiant + e-mail). Il faut une clé personnelle PostHog (droit `person:write`) pour l'automatiser, ou une suppression manuelle sur demande.
+1. ~~PostHog~~ : fait le 15/11/2026. La suppression du compte efface la personne PostHog et ses événements (`erasePostHogPerson`, clé personnelle `POSTHOG_PERSONAL_API_KEY` dans Netlify, droit Person : Write).
 2. **Leaked password protection** Supabase à activer.
 3. ~~Mention d'information dans les messages~~ : fait le 15/11/2026. Le premier e-mail de Sophie se termine par l'origine de l'adresse (site, Hunter, publication LinkedIn, quand elle est connue) et un lien « ne plus être contacté » (page /stop/<jeton>, confirmation par bouton, contact marqué opposé ; table `opt_out_links`, empreinte du jeton seulement, 3 ans). Sans contact enregistré : « répondez « stop » ». Ajoutée par le code, pas par l'IA.
 4. **`pipeline_runs`** sans durée de conservation (données techniques, sans donnée de prospect) : à borner (par ex. 12 mois) quand la page résultats n'en dépendra plus. `sophie_notifications` est déjà effacée après 365 jours (`deliver_sophie_notifications`).

@@ -5,14 +5,15 @@ import { FunctionsHttpError } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { removeBrevoContact } from '@/lib/brevo'
-import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import { after } from 'next/server'
+import { captureServerError, erasePostHogPerson, getPostHogServer } from '@/lib/posthog-server'
 import { ACCOUNT_DELETION_CONFIRMATION } from '@/lib/constants/account'
 
 type ActionResult = { success: boolean; error?: string }
 
 /**
  * Supprime définitivement le compte connecté et toutes ses données (fonction Supabase
- * delete-account), le retire de Brevo, puis le déconnecte.
+ * delete-account), le retire de Brevo et de PostHog, puis le déconnecte.
  */
 export async function deleteAccount(confirmation: string): Promise<ActionResult> {
   if (confirmation.trim().toUpperCase() !== ACCOUNT_DELETION_CONFIRMATION) {
@@ -41,7 +42,19 @@ export async function deleteAccount(confirmation: string): Promise<ActionResult>
 
   // Le compte n'existe plus : le reste ne doit pas bloquer la personne
   if (user.email) await removeBrevoContact(user.email).catch(() => false)
-  captureServerEvent(user.id, 'account_deleted')
+  // L'événement ne recrée pas de personne PostHog ; la personne et ses événements sont ensuite effacés
+  after(async () => {
+    try {
+      await getPostHogServer()?.captureImmediate({
+        distinctId: user.id,
+        event: 'account_deleted',
+        properties: { $process_person_profile: false },
+      })
+    } catch {
+      // Un événement manqué ne doit pas empêcher l'effacement
+    }
+    await erasePostHogPerson(user.id).catch(() => false)
+  })
   await supabase.auth.signOut().catch(() => undefined)
 
   redirect('/login?compte=supprime')

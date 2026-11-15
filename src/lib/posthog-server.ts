@@ -47,3 +47,24 @@ export function captureServerError(error: unknown, distinctId?: string, properti
     await getPostHogServer()?.captureExceptionImmediate(error, distinctId, properties)
   })
 }
+
+// Projet PostHog de Filonea (organisation « Filonea », région UE)
+const POSTHOG_PROJECT_ID = 335408
+const POSTHOG_API_HOST = 'https://eu.posthog.com'
+
+/**
+ * RGPD (droit à l'effacement) : à la suppression d'un compte, efface sa personne PostHog
+ * (identifiant, e-mail) et ses événements. Demande une clé personnelle PostHog avec le droit
+ * « Person : Write » (POSTHOG_PERSONAL_API_KEY). Sans clé, rien n'est fait (renvoie false).
+ */
+export async function erasePostHogPerson(distinctId: string): Promise<boolean> {
+  const apiKey = process.env.POSTHOG_PERSONAL_API_KEY
+  if (!apiKey) return false
+  const response = await fetch(`${POSTHOG_API_HOST}/api/projects/${POSTHOG_PROJECT_ID}/persons/bulk_delete/`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ distinct_ids: [distinctId], delete_events: true }),
+  })
+  if (!response.ok) console.error('PostHog erasure error:', response.status, await response.text())
+  return response.ok
+}
