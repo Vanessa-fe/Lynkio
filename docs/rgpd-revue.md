@@ -64,7 +64,7 @@ Table `data_retention_settings`, réglable dans Paramètres > Mon compte :
 | Netlify | Trafic du site | États-Unis | Clauses contractuelles types / DPF |
 | Stripe | Paiement | UE / États-Unis | DPA Stripe |
 | Resend | E-mails de compte | États-Unis | DPA Resend |
-| Brevo | E-mails d'information | France | DPA Brevo |
+| Brevo | E-mails d'information ; alertes et bilan de Sophie (e-mail, titres d'entreprise, totaux) | France | DPA Brevo |
 | PostHog | Audience | UE (Francfort) | DPA PostHog |
 | OpenAI / Anthropic / Google (BYOK) | Fiche entreprise, prénom/poste du contact, présentation | Selon le fournisseur | **Contrat entre l'utilisateur et le fournisseur** (sa clé, ses conditions) ; les API de ces fournisseurs n'entraînent pas leurs modèles sur ces données par défaut |
 | Hunter (BYOK) | Domaine, nom du dirigeant | France | Contrat de l'utilisateur avec Hunter |
@@ -87,4 +87,4 @@ Lancer : `supabase db query --linked -f supabase/tests/rgpd_isolation_retention.
 1. **PostHog** : la suppression du compte n'efface pas la personne PostHog (identifiant + e-mail). Il faut une clé personnelle PostHog (droit `person:write`) pour l'automatiser, ou une suppression manuelle sur demande.
 2. **Leaked password protection** Supabase à activer.
 3. **Mention d'information dans les messages** : Sophie pourrait proposer une phrase courte d'origine des coordonnées + opposition dans le premier message.
-4. **`pipeline_runs` et `sophie_notifications`** sans durée de conservation (données techniques, sans donnée de prospect pour la première ; titres d'entreprise pour la seconde) : à borner (par ex. 12 mois) quand la page résultats n'en dépendra plus.
+4. **`pipeline_runs`** sans durée de conservation (données techniques, sans donnée de prospect) : à borner (par ex. 12 mois) quand la page résultats n'en dépendra plus. `sophie_notifications` est déjà effacée après 365 jours (`deliver_sophie_notifications`).
