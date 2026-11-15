@@ -7,6 +7,7 @@ import { StackDetectionError, analyzeSite } from '@/lib/detectors/stack'
 import { reserveWebsiteAudit } from '@/lib/detectors/audit-limit'
 import { findSirenOnSite } from '@/lib/detectors/legal-id'
 import { fetchRegistryRecord } from '@/lib/registry'
+import { blockedReason } from '@/lib/registry-parse'
 import {
   createCompanySchema,
   updateCompanySchema,
@@ -114,6 +115,14 @@ export async function createCompany(
 
     const hasStack = !!validated.detectedStack?.length
 
+    // Pré-remplie depuis le registre : les données officielles sont relues ici plutôt que
+    // reçues du navigateur. Une entreprise opposée à la prospection n'est pas enrichie.
+    const registry =
+      validated.registryLookup && validated.registrationId
+        ? await fetchRegistryRecord(validated.registrationId)
+        : null
+    const official = registry && !blockedReason(registry) ? registry : null
+
     const { data, error } = await supabase
       .from('companies')
       .insert({
@@ -133,6 +142,14 @@ export async function createCompany(
         next_action: validated.nextAction,
         detected_stack: validated.detectedStack ?? [],
         stack_detected_at: hasStack ? new Date().toISOString() : null,
+        ...(official && {
+          naf_code: official.nafCode,
+          headcount_code: official.headcountCode,
+          founded_on: official.foundedOn,
+          revenue: official.finances?.revenue ?? null,
+          net_income: official.finances?.netIncome != null ? Math.round(official.finances.netIncome) : null,
+          finances_year: official.finances?.year ?? null,
+        }),
       })
       .select('id')
       .single()
@@ -145,7 +162,23 @@ export async function createCompany(
       return { success: false, error: 'Impossible d\'ajouter l\'entreprise' }
     }
 
+    if (official && validated.addDirectors && official.directors.length > 0) {
+      const { error: contactsError } = await supabase.from('company_contacts').insert(
+        official.directors.map((director) => ({
+          user_id: user.id,
+          company_id: data.id,
+          first_name: director.firstName,
+          last_name: director.lastName,
+          role: director.role,
+          is_decision_maker: true,
+          data_source: 'recherche-entreprises',
+        }))
+      )
+      if (contactsError) console.error('Create company directors error:', contactsError)
+    }
+
     captureServerEvent(user.id, 'company_created', {
+      from_registry: !!official,
       has_website: !!validated.website,
       has_stack: hasStack,
       has_stage: !!validated.stageId,
