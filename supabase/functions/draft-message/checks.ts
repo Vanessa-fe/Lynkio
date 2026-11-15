@@ -47,6 +47,8 @@ export function checkDraft(
     // Noms des clients confidentiels, qui ne doivent jamais apparaître
     confidentialClients: string[]
     signature: string | null
+    // Premier e-mail : origine de l'adresse et droit d'opposition, placés après la signature
+    notice?: string | null
     lastOutgoingAt: string | null
     // Relance d'une séquence LinkedIn : elle peut être un peu plus longue que le premier message
     followUp?: boolean
@@ -116,7 +118,7 @@ export function checkDraft(
 
   return {
     subject,
-    body: options.signature ? `${body}\n${options.signature}` : body,
+    body: [options.signature ? `${body}\n${options.signature}` : body, options.notice].filter(Boolean).join('\n\n'),
     angle: draft.angle,
     signal: signal ? { id: signal.id, label: signal.label } : null,
     warnings,

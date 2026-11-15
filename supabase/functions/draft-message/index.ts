@@ -75,6 +75,22 @@ function signalDetails(evidence: Record<string, unknown>): string[] {
   })
 }
 
+/**
+ * RGPD (art. 14 et 21) : au premier e-mail, d'où vient l'adresse quand on le sait, et comment refuser
+ * la suite. Ajoutée par le code, jamais par l'IA, pour qu'elle soit toujours là et toujours exacte.
+ */
+function originNotice(emailSource: string | null, companyName: string): string {
+  const origin =
+    emailSource === 'website'
+      ? `J'ai trouvé votre adresse sur le site de ${companyName}. `
+      : emailSource === 'hunter'
+        ? 'J\'ai trouvé votre adresse professionnelle via l\'annuaire Hunter. '
+        : emailSource === 'linkedin_post'
+          ? 'J\'ai trouvé votre adresse dans une de vos publications LinkedIn. '
+          : ''
+  return `${origin}Si vous préférez ne plus recevoir de message de ma part, répondez simplement « stop ».`
+}
+
 Deno.serve(async (request) => {
   const cors = corsHeaders(request.headers.get('Origin'))
   const json = (body: unknown, status = 200) =>
@@ -147,7 +163,7 @@ Deno.serve(async (request) => {
       contactId
         ? supabase
             .from('company_contacts')
-            .select('first_name, last_name, role, opted_out_at')
+            .select('first_name, last_name, role, opted_out_at, email_source')
             .eq('id', contactId)
             .eq('company_id', companyId)
             .maybeSingle()
@@ -310,6 +326,7 @@ Deno.serve(async (request) => {
 
     const checks = {
       channel,
+      notice: channel === 'email' && !lastOutgoing.data ? originNotice(contact.data?.email_source ?? null, company.data.name) : null,
       signals: activeSignals,
       knownUrls: [website, ...referenceRows.map((reference) => reference.url)].filter(
         (url): url is string => typeof url === 'string' && url !== ''
