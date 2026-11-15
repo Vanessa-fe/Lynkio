@@ -4,6 +4,12 @@ import { z } from 'zod'
  * Schémas de validation pour l'authentification
  */
 
+// Même règle que Supabase (Authentication > Email > Password requirements) : minuscule, majuscule,
+// chiffre et symbole. Sinon Supabase refuserait un mot de passe que le formulaire a accepté.
+const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~])/
+const STRONG_PASSWORD_MESSAGE =
+  'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un symbole (ex. ! ? @ #)'
+
 export const loginSchema = z.object({
   email: z
     .string()
@@ -24,10 +30,7 @@ export const signupSchema = z.object({
     .string()
     .min(1, 'Le mot de passe est requis')
     .min(10, 'Le mot de passe doit contenir au moins 10 caractères')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
-    ),
+    .regex(STRONG_PASSWORD, STRONG_PASSWORD_MESSAGE),
   confirmPassword: z.string().min(1, 'La confirmation du mot de passe est requise'),
   // Piège à robots : champ caché qu'une personne laisse toujours vide
   website: z.string().max(200).optional(),
@@ -48,10 +51,7 @@ export const updatePasswordSchema = z.object({
     .string()
     .min(1, 'Le mot de passe est requis')
     .min(10, 'Le mot de passe doit contenir au moins 10 caractères')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
-    ),
+    .regex(STRONG_PASSWORD, STRONG_PASSWORD_MESSAGE),
   confirmPassword: z.string().min(1, 'La confirmation du mot de passe est requise'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Les mots de passe ne correspondent pas',

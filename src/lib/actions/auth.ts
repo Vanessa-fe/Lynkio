@@ -125,7 +125,10 @@ export async function signup(data: SignupInput): Promise<ActionResult> {
     if (error) {
       return {
         success: false,
-        error: 'Impossible de créer le compte. Cet email est peut-être déjà utilisé.',
+        error:
+          error.code === 'weak_password'
+            ? 'Mot de passe trop faible ou trop courant : choisissez-en un autre.'
+            : 'Impossible de créer le compte. Cet email est peut-être déjà utilisé.',
       }
     }
 
@@ -242,7 +245,12 @@ export async function updatePassword(data: UpdatePasswordInput): Promise<ActionR
     if (error) {
       return {
         success: false,
-        error: 'Impossible de mettre à jour le mot de passe',
+        error:
+          error.code === 'weak_password'
+            ? 'Mot de passe trop faible ou trop courant : choisissez-en un autre.'
+            : error.code === 'same_password'
+              ? 'Choisissez un mot de passe différent de l’ancien.'
+              : 'Impossible de mettre à jour le mot de passe',
       }
     }
   } catch (error) {
