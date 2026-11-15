@@ -93,6 +93,7 @@ export type Database = MergeDeep<
         linkedin_posts: Columns<{ status: LinkedinPostStatus }>
       }
       Functions: {
+        opt_out_by_token: { Args: { p_token: string }; Returns: 'done' | 'invalid' }
         set_sophie_preferences: { Args: { p_frequency: SophieFrequency; p_digest: boolean; p_email: boolean }; Returns: undefined }
         preview_my_retention: { Args: { p_months: number }; Returns: { companies: number; contacts: number }[] }
         purge_my_inactive_prospects: { Args: Record<string, never>; Returns: number }

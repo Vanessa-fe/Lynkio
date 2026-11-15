@@ -20,6 +20,7 @@ export default function robots(): MetadataRoute.Robots {
         '/onboarding',
         '/reset-password',
         '/update-password',
+        '/stop/',
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
