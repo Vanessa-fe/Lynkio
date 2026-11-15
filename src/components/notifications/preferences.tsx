@@ -20,7 +20,8 @@ export function Preferences(props: Props) {
     const data = new FormData(event.currentTarget)
     startTransition(() => save(data))
   }
-  return <form onSubmit={submit} className="space-y-3 rounded-lg border bg-card p-4">
+  // action reste pour un envoi fait avant le chargement complet de la page ; ensuite onSubmit prend le relais
+  return <form action={save} onSubmit={submit} className="space-y-3 rounded-lg border bg-card p-4">
     <label className="block font-medium" htmlFor="signal-frequency">Nouveaux signaux</label>
     <select id="signal-frequency" name="frequency" value={frequency}
       onChange={(e) => setFrequency(e.target.value as SophieFrequency)} className="rounded-md border bg-background p-2">
