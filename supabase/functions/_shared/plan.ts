@@ -6,7 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type Plan = 'essentiel' | 'pro'
 
 export const PLAN_LIMITS: Record<Plan, { searchKeywords: number; companiesPerRun: number; runsPerWeek: number | null }> = {
-  essentiel: { searchKeywords: 3, companiesPerRun: 10, runsPerWeek: 1 },
+  essentiel: { searchKeywords: 6, companiesPerRun: 20, runsPerWeek: 2 },
   pro: { searchKeywords: 10, companiesPerRun: 50, runsPerWeek: null },
 }
 
@@ -29,7 +29,7 @@ const PARIS = 'Europe/Paris'
 
 /**
  * Minuit (heure de Paris) du jour de `date`, décalé de `days` jours. Sert à la limite Essentiel :
- * une recherche par semaine, comptée au jour près (même règle dans src/lib/billing.ts).
+ * recherches par semaine, comptées au jour près (même règle dans src/lib/billing.ts).
  */
 export function parisMidnight(date: Date, days = 0): Date {
   const [year = 1970, month = 1, day = 1] = new Intl.DateTimeFormat('en-CA', { timeZone: PARIS, year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -38,6 +38,19 @@ export function parisMidnight(date: Date, days = 0): Date {
     .map(Number)
   const utcMidnight = Date.UTC(year, month - 1, day + days)
   return new Date(utcMidnight - parisOffsetMs(new Date(utcMidnight)))
+}
+
+/**
+ * Limite Essentiel : N recherches par semaine, comptées au jour près (heure de Paris). Chaque recherche
+ * libère sa place 7 jours plus tard à minuit : après des recherches lundi et jeudi, la suivante est
+ * possible dès le lundi d'après. Compter 7 jours à la seconde près ferait sauter une recherche planifiée,
+ * qui ne démarre pas toujours à la même seconde. `recentStarts` : débuts des recherches non échouées
+ * depuis parisMidnight(maintenant, -6), les plus récentes d'abord. Renvoie la date à partir de laquelle
+ * la suivante est possible, ou null si elle l'est déjà.
+ */
+export function weeklyRunAvailableAt(recentStarts: Date[], runsPerWeek: number | null): Date | null {
+  if (runsPerWeek === null || recentStarts.length < runsPerWeek) return null
+  return parisMidnight(recentStarts[runsPerWeek - 1]!, 7)
 }
 
 /** Avance de l'heure de Paris sur l'heure UTC à cet instant (1 h en hiver, 2 h en été) */

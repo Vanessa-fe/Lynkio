@@ -18,7 +18,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { runProspection, startRun } from './runner.ts'
-import { accountPlan, NO_ACCESS_MESSAGE, parisMidnight, PLAN_LIMITS, PRO_ONLY_MESSAGE, type Plan } from '../_shared/plan.ts'
+import { accountPlan, NO_ACCESS_MESSAGE, parisMidnight, PLAN_LIMITS, PRO_ONLY_MESSAGE, weeklyRunAvailableAt, type Plan } from '../_shared/plan.ts'
 
 // Fourni par le runtime Supabase : garde la fonction en vie après la réponse
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
@@ -27,14 +27,13 @@ const SCHEDULED_BATCH_SIZE = 20
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * Offre Essentiel : une recherche par semaine, comptée au jour près (heure de Paris) : après une
- * recherche un mercredi, la suivante est possible dès le mercredi d'après à minuit. Compter 7 jours
- * à la seconde près ferait sauter une semaine sur deux la recherche planifiée, qui ne démarre pas
- * toujours à la même seconde. Renvoie la date à partir de laquelle la suivante est possible, ou null
- * si elle l'est déjà (les passages échoués ne comptent pas). Même règle dans src/lib/queries/prospection.ts.
+ * Offre Essentiel : deux recherches par semaine, comptées au jour près (heure de Paris), voir
+ * weeklyRunAvailableAt. Renvoie la date à partir de laquelle la suivante est possible, ou null si elle
+ * l'est déjà (les passages échoués ne comptent pas). Même règle dans src/lib/queries/prospection.ts.
  */
 async function nextWeeklyRun(admin: SupabaseClient, userId: string, plan: Plan): Promise<Date | null> {
-  if (PLAN_LIMITS[plan].runsPerWeek === null) return null
+  const runsPerWeek = PLAN_LIMITS[plan].runsPerWeek
+  if (runsPerWeek === null) return null
   const { data } = await admin
     .from('pipeline_runs')
     .select('started_at')
@@ -42,9 +41,8 @@ async function nextWeeklyRun(admin: SupabaseClient, userId: string, plan: Plan):
     .neq('status', 'failed')
     .gte('started_at', parisMidnight(new Date(), -6).toISOString())
     .order('started_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  return data ? parisMidnight(new Date(data.started_at), 7) : null
+    .limit(runsPerWeek)
+  return weeklyRunAvailableAt((data ?? []).map((run) => new Date(run.started_at)), runsPerWeek)
 }
 
 const frenchDay = (date: Date) =>
@@ -88,7 +86,7 @@ Deno.serve(async (request) => {
     if (nextRun) {
       return json(
         {
-          error: `Avec l’offre Essentiel, Sophie cherche une fois par semaine : prochaine recherche possible ${frenchDay(nextRun)}. L’offre Pro la fait chercher jusqu’à 7 jours sur 7.`,
+          error: `Avec l’offre Essentiel, Sophie cherche deux fois par semaine : prochaine recherche possible ${frenchDay(nextRun)}. L’offre Pro la fait chercher jusqu’à 7 jours sur 7.`,
           code: 'weekly_limit',
         },
         429
@@ -130,7 +128,7 @@ Deno.serve(async (request) => {
     EdgeRuntime.waitUntil(
       (async () => {
         for (const userId of userIds) {
-          // Essai terminé sans abonnement, ou recherche de la semaine déjà faite (Essentiel) : rien
+          // Essai terminé sans abonnement, ou recherches de la semaine déjà faites (Essentiel) : rien
           const plan = await accountPlan(admin, userId)
           if (!plan || (await nextWeeklyRun(admin, userId, plan))) continue
           const start = await startRun(admin, userId, 'schedule')

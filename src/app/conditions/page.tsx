@@ -42,7 +42,7 @@ export default function TermsPage() {
       <h2>4. Offres, prix et paiement</h2>
       <ul>
         <li>
-          <strong>Essentiel</strong> : 9 € par mois ou 90 € par an. <strong>Pro</strong> : 15 € par mois ou 150 € par
+          <strong>Essentiel</strong> : 9 € par mois ou 90 € par an. <strong>Pro</strong> : 20 € par mois ou 200 € par
           an. Le contenu de chaque offre est décrit sur la page d&apos;accueil.
         </li>
         <li>{LEGAL.vat}.</li>

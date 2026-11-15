@@ -30,7 +30,7 @@ export default async function ProspectionSettingsPage() {
 
       {plan === 'essentiel' && (
         <ProOnlyNotice>
-          Offre Essentiel : une recherche par semaine, {limits.companiesPerRun} entreprises au plus. Avec l&apos;offre
+          Offre Essentiel : {limits.daysPerWeek} recherches par semaine, {limits.companiesPerRun} entreprises au plus. Avec l&apos;offre
           Pro, Sophie cherche jusqu&apos;à 7 jours sur 7 et {PLAN_LIMITS.pro.companiesPerRun} entreprises par recherche.
         </ProOnlyNotice>
       )}

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { FadeIn, RevealWords } from '@/components/motion/reveal'
 import { Magnetic } from '@/components/motion/magnetic'
 import { SIGNUPS_OPEN } from '@/lib/constants/signup'
+import { LEGAL } from '@/lib/constants/legal'
 import { cn } from '@/lib/utils/cn'
 import { plans, trialDays } from './content'
 import { CtaLink } from './cta-link'
@@ -141,6 +142,7 @@ export function Pricing() {
             )
           })}
         </div>
+        <p className="mt-8 text-center text-sm text-ink/55">Prix en euros. {LEGAL.vat}.</p>
       </div>
     </section>
   )

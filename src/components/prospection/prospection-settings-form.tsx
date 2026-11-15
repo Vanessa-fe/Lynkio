@@ -334,10 +334,8 @@ export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 
                               field.onChange(
                                 checked
                                   ? field.value.filter((value) => value !== day.value)
-                                  : // Un seul jour permis (offre Essentiel) : le nouveau remplace l'ancien
-                                    maxDays <= 1
-                                    ? [day.value]
-                                    : [...field.value, day.value]
+                                  : // Offre Essentiel (2 jours au plus) : le nouveau jour remplace le plus ancien choisi
+                                    [...field.value, day.value].slice(-maxDays)
                               )
                             }
                             className={cn(
@@ -351,6 +349,11 @@ export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 
                         )
                       })}
                     </div>
+                    {maxDays < WEEK_DAYS.length && (
+                      <p className="text-xs text-muted-foreground">
+                        Offre Essentiel : {maxDays} jours au plus. Un nouveau jour remplace le premier choisi.
+                      </p>
+                    )}
                     {errors.daysOfWeek && (
                       <p className="text-sm text-destructive">{errors.daysOfWeek.message}</p>
                     )}
