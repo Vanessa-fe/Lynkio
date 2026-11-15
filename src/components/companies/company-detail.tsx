@@ -26,6 +26,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Counter } from '@/components/motion/counter'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { analyzeCompanyWebsite, deleteCompany } from '@/lib/actions/companies'
@@ -50,7 +51,7 @@ import type {
   PipelineStage,
   ReminderWithRelations,
 } from '@/types'
-import { CompanyScore, CompanyStageSelect } from './company-stage-select'
+import { CompanyStageSelect } from './company-stage-select'
 import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyScoreCard } from './company-score-card'
@@ -202,250 +203,265 @@ export function CompanyDetail({
         </div>
       </div>
 
+      {/* En-tête : qui est-ce, où en est-on, et la prochaine action */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-            <div className="min-w-0">
-              <CardTitle className="text-3xl break-words">{company.name}</CardTitle>
-              {(isIndividual || company.sector || location) && (
-                <CardDescription className="text-base mt-1">
-                  {[isIndividual && individualLabel(company), company.sector, location].filter(Boolean).join(' · ')}
-                </CardDescription>
-              )}
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-1">Score</p>
-                <CompanyScore score={company.score} />
+        <CardContent className="space-y-5 p-5 sm:p-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch lg:justify-between">
+            <div className="min-w-0 space-y-3">
+              <div>
+                <h1 className="font-display text-3xl font-bold tracking-tight break-words">{company.name}</h1>
+                {(isIndividual || company.sector || location) && (
+                  <p className="text-base text-muted-foreground mt-1">
+                    {[isIndividual && individualLabel(company), company.sector, location].filter(Boolean).join(' · ')}
+                  </p>
+                )}
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap gap-2">
                 <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
                 <CompanySegmentSelect companyId={company.id} segment={company.segment} setBy={company.segment_set_by} />
               </div>
             </div>
+            <CompatibilityTile score={company.score} />
           </div>
-        </CardHeader>
 
-        <CardContent className="space-y-6">
           <CompanyNextStep company={company} />
-
-          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {company.website && (
-              <InfoItem icon={<Globe className="w-5 h-5" />} label="Site web">
-                <a
-                  href={toWebsiteUrl(company.website)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium hover:underline inline-flex items-center gap-1"
-                >
-                  {toWebsiteDomain(company.website)}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </InfoItem>
-            )}
-            {/* Sans site, ni analyse de la stack ni recherche de contact : on aide à le retrouver */}
-            {!company.website && (
-              <InfoItem icon={<Globe className="w-5 h-5" />} label="Site web">
-                <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <a
-                    href={`https://www.google.com/search?q=${encodeURIComponent(
-                      [company.name, company.city, 'site officiel'].filter(Boolean).join(' ')
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium hover:underline inline-flex items-center gap-1"
-                  >
-                    Rechercher le site
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                  <Link href={`/companies/${company.id}/edit`} className="text-sm text-muted-foreground hover:underline">
-                    Ajouter
-                  </Link>
-                </span>
-              </InfoItem>
-            )}
-            {location && (
-              <InfoItem icon={<MapPin className="w-5 h-5" />} label="Adresse">
-                {location}
-              </InfoItem>
-            )}
-            {company.registration_id && (
-              <InfoItem icon={<Hash className="w-5 h-5" />} label="SIREN">
-                <a
-                  href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${company.registration_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium hover:underline inline-flex items-center gap-1"
-                >
-                  {company.registration_id.replace(/(\d{3})(?=\d)/g, '$1 ')}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </InfoItem>
-            )}
-            {age && (
-              <InfoItem icon={<Cake className="w-5 h-5" />} label="Création">
-                {age.since} · {age.age}
-              </InfoItem>
-            )}
-            {(!isIndividual || company.revenue) && (
-              <InfoItem icon={<Euro className="w-5 h-5" />} label="Chiffre d'affaires">
-                {company.revenue && company.finances_year ? (
-                  <>
-                    {formatEuros(company.revenue)} en {company.finances_year}
-                    <BudgetBadge revenue={company.revenue} dayRate={dayRate} />
-                  </>
-                ) : (
-                  <span className="text-muted-foreground font-normal">
-                    Non publié{company.registration_id ? ' (comptes confidentiels ou non encore récupérés)' : ''}
-                  </span>
-                )}
-              </InfoItem>
-            )}
-            {company.size_category && (
-              <InfoItem icon={<Users className="w-5 h-5" />} label="Taille">
-                {sizeCategoryLabels[company.size_category]}
-              </InfoItem>
-            )}
-            {company.source && (
-              <InfoItem icon={<Tag className="w-5 h-5" />} label="Source">
-                {company.source.name}
-              </InfoItem>
-            )}
-            {company.legal_form && (
-              <InfoItem icon={<Building2 className="w-5 h-5" />} label="Forme juridique">
-                {company.legal_form}
-              </InfoItem>
-            )}
-          </dl>
-
-          {(company.website || company.detected_stack.length > 0) && (
-            <CompanyStack company={company} />
-          )}
-
-          {company.notes && (
-            <div>
-              <p className="font-semibold mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                Notes
-              </p>
-              <p className="text-muted-foreground whitespace-pre-wrap">{company.notes}</p>
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground border-t pt-4">
-            <span className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Ajoutée le {formatDate(new Date(company.created_at), 'dd MMMM yyyy')}
-              {company.origin === 'detector' && ' par Sophie'}
-              {company.origin === 'import' && ' par import'}
-            </span>
-            <span className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              {company.last_interaction_at
-                ? `Dernier échange ${formatDistanceToNow(new Date(company.last_interaction_at), {
-                    addSuffix: true,
-                    locale: fr,
-                  })}`
-                : 'Jamais contactée'}
-            </span>
-          </div>
         </CardContent>
       </Card>
 
-      <CompanyWhyCard
-        company={company}
-        strategy={strategy}
-        signalCount={signals.length}
-        signalTypes={signals.map((signal) => signal.signal_type)}
-        hasDecisionMaker={contacts.some((contact) => contact.is_decision_maker && !contact.opted_out_at)}
-      />
+      {/* Deux colonnes sur grand écran : comprendre l'entreprise à gauche, agir à droite */}
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
+        <div className="min-w-0 space-y-6">
+          <CompanyWhyCard
+            company={company}
+            strategy={strategy}
+            signalCount={signals.length}
+            signalTypes={signals.map((signal) => signal.signal_type)}
+            hasDecisionMaker={contacts.some((contact) => contact.is_decision_maker && !contact.opted_out_at)}
+          />
 
-      <CompanyScoreCard qualification={qualification} />
+          <CompanyScoreCard qualification={qualification} />
 
-      {signals.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-amber-500" />
-              Signaux d&apos;achat
-            </CardTitle>
-            <CardDescription>
-              Ce qui laisse penser que cette entreprise a un besoin en ce moment. Chaque signal dit s’il s’agit d’un fait
-              constaté, d’une hypothèse ou d’un besoin exprimé par l’entreprise.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {signals.map((signal) => (
-                <li key={signal.id} className="flex items-start justify-between gap-4 rounded-lg bg-muted p-3">
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium">{signal.type?.label ?? signal.signal_type}</p>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${SIGNAL_NATURE_TONES[signalNature(signal.type?.nature)]}`}
-                      >
-                        {SIGNAL_NATURE_LABELS[signalNature(signal.type?.nature)]}
+          {signals.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-amber-500" />
+                  Signaux d&apos;achat
+                </CardTitle>
+                <CardDescription>
+                  Ce qui laisse penser que cette entreprise a un besoin en ce moment. Chaque signal dit s’il s’agit d’un fait
+                  constaté, d’une hypothèse ou d’un besoin exprimé par l’entreprise.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  {signals.map((signal) => (
+                    <li key={signal.id} className="flex items-start justify-between gap-4 rounded-lg bg-muted p-3">
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium">{signal.type?.label ?? signal.signal_type}</p>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${SIGNAL_NATURE_TONES[signalNature(signal.type?.nature)]}`}
+                          >
+                            {SIGNAL_NATURE_LABELS[signalNature(signal.type?.nature)]}
+                          </span>
+                        </div>
+                        <SignalSummary signal={signal} />
+                        <p className="text-xs text-muted-foreground">
+                          Source : {SIGNAL_SOURCE_LABELS[signal.source] ?? SIGNAL_SOURCE_LABELS.unknown}
+                          {signal.source !== 'unknown' && ` (${SIGNAL_RELIABILITY_LABELS[signalReliability(signal.type?.reliability)]})`}
+                          {signal.event_at && ` · événement du ${formatDate(signal.event_at, 'd MMMM yyyy')}`}
+                          {` · collecté le ${formatDate(signal.detected_at, 'd MMMM yyyy')}`}
+                        </p>
+                        {signal.source_url && (
+                          <a
+                            href={signal.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm hover:underline inline-flex items-center gap-1 break-all"
+                          >
+                            Voir la source
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                          </a>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {formatDistanceToNow(new Date(signal.detected_at), { addSuffix: true, locale: fr })}
                       </span>
-                    </div>
-                    <SignalSummary signal={signal} />
-                    <p className="text-xs text-muted-foreground">
-                      Source : {SIGNAL_SOURCE_LABELS[signal.source] ?? SIGNAL_SOURCE_LABELS.unknown}
-                      {signal.source !== 'unknown' && ` (${SIGNAL_RELIABILITY_LABELS[signalReliability(signal.type?.reliability)]})`}
-                      {signal.event_at && ` · événement du ${formatDate(signal.event_at, 'd MMMM yyyy')}`}
-                      {` · collecté le ${formatDate(signal.detected_at, 'd MMMM yyyy')}`}
-                    </p>
-                    {signal.source_url && (
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-primary" />
+                {isIndividual ? 'En bref' : 'L\'entreprise'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {company.website && (
+                    <InfoItem icon={<Globe className="w-5 h-5" />} label="Site web">
                       <a
-                        href={signal.source_url}
+                        href={toWebsiteUrl(company.website)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm hover:underline inline-flex items-center gap-1 break-all"
+                        className="font-medium hover:underline inline-flex items-center gap-1"
                       >
-                        Voir la source
-                        <ExternalLink className="w-3 h-3 shrink-0" />
+                        {toWebsiteDomain(company.website)}
+                        <ExternalLink className="w-3 h-3" />
                       </a>
-                    )}
+                    </InfoItem>
+                  )}
+                  {/* Sans site, ni analyse de la stack ni recherche de contact : on aide à le retrouver */}
+                  {!company.website && (
+                    <InfoItem icon={<Globe className="w-5 h-5" />} label="Site web">
+                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <a
+                          href={`https://www.google.com/search?q=${encodeURIComponent(
+                            [company.name, company.city, 'site officiel'].filter(Boolean).join(' ')
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium hover:underline inline-flex items-center gap-1"
+                        >
+                          Rechercher le site
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <Link href={`/companies/${company.id}/edit`} className="text-sm text-muted-foreground hover:underline">
+                          Ajouter
+                        </Link>
+                      </span>
+                    </InfoItem>
+                  )}
+                  {location && (
+                    <InfoItem icon={<MapPin className="w-5 h-5" />} label="Adresse">
+                      {location}
+                    </InfoItem>
+                  )}
+                  {company.registration_id && (
+                    <InfoItem icon={<Hash className="w-5 h-5" />} label="SIREN">
+                      <a
+                        href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${company.registration_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium hover:underline inline-flex items-center gap-1"
+                      >
+                        {company.registration_id.replace(/(\d{3})(?=\d)/g, '$1 ')}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </InfoItem>
+                  )}
+                  {age && (
+                    <InfoItem icon={<Cake className="w-5 h-5" />} label="Création">
+                      {age.since} · {age.age}
+                    </InfoItem>
+                  )}
+                  {(!isIndividual || company.revenue) && (
+                    <InfoItem icon={<Euro className="w-5 h-5" />} label="Chiffre d'affaires">
+                      {company.revenue && company.finances_year ? (
+                        <>
+                          {formatEuros(company.revenue)} en {company.finances_year}
+                          <BudgetBadge revenue={company.revenue} dayRate={dayRate} />
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground font-normal">
+                          Non publié{company.registration_id ? ' (comptes confidentiels ou non encore récupérés)' : ''}
+                        </span>
+                      )}
+                    </InfoItem>
+                  )}
+                  {company.size_category && (
+                    <InfoItem icon={<Users className="w-5 h-5" />} label="Taille">
+                      {sizeCategoryLabels[company.size_category]}
+                    </InfoItem>
+                  )}
+                  {company.source && (
+                    <InfoItem icon={<Tag className="w-5 h-5" />} label="Source">
+                      {company.source.name}
+                    </InfoItem>
+                  )}
+                  {company.legal_form && (
+                    <InfoItem icon={<Building2 className="w-5 h-5" />} label="Forme juridique">
+                      {company.legal_form}
+                    </InfoItem>
+                  )}
+                </dl>
+
+                {(company.website || company.detected_stack.length > 0) && (
+                  <CompanyStack company={company} />
+                )}
+
+                {company.notes && (
+                  <div>
+                    <p className="font-semibold mb-2 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      Notes
+                    </p>
+                    <p className="text-muted-foreground whitespace-pre-wrap">{company.notes}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {formatDistanceToNow(new Date(signal.detected_at), { addSuffix: true, locale: fr })}
+                )}
+
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground border-t pt-4">
+                  <span className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Ajoutée le {formatDate(new Date(company.created_at), 'dd MMMM yyyy')}
+                    {company.origin === 'detector' && ' par Sophie'}
+                    {company.origin === 'import' && ' par import'}
                   </span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
+                  <span className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" />
+                    {company.last_interaction_at
+                      ? `Dernier échange ${formatDistanceToNow(new Date(company.last_interaction_at), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}`
+                      : 'Jamais contactée'}
+                  </span>
+                </div>
 
-      <CompanyContacts
-        companyId={company.id}
-        companyName={company.name}
-        website={company.website}
-        contacts={contacts}
-        isIndividual={isIndividual}
-        outreach={outreach}
-      />
+            </CardContent>
+          </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Relances</CardTitle>
-          <CardDescription>
-            {isIndividual ? 'Les rappels liés à cette personne' : 'Les rappels liés à cette entreprise'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RemindersList reminders={reminders} totalCount={reminders.length} companyId={company.id} />
-        </CardContent>
-      </Card>
+        <div className="min-w-0 space-y-6">
+          <CompanyContacts
+            companyId={company.id}
+            companyName={company.name}
+            website={company.website}
+            contacts={contacts}
+            isIndividual={isIndividual}
+            outreach={outreach}
+          />
 
-      <CompanyInteractions
-        companyId={company.id}
-        contacts={contacts}
-        interactions={interactions}
-        hasPitch={hasPitch}
-        openEmailDraft={openEmailDraft}
-      />
+          <Card>
+            <CardHeader>
+              <CardTitle>Relances</CardTitle>
+              <CardDescription>
+                {isIndividual ? 'Les rappels liés à cette personne' : 'Les rappels liés à cette entreprise'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RemindersList reminders={reminders} totalCount={reminders.length} companyId={company.id} />
+            </CardContent>
+          </Card>
 
-      <CompanyStageHistory events={stageEvents} />
+          <CompanyInteractions
+            companyId={company.id}
+            contacts={contacts}
+            interactions={interactions}
+            hasPitch={hasPitch}
+            openEmailDraft={openEmailDraft}
+          />
+
+          <CompanyStageHistory events={stageEvents} />
+
+        </div>
+      </div>
     </div>
   )
 }
@@ -546,6 +562,33 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
           Analysé le {formatDate(new Date(company.stack_detected_at), 'dd MMMM yyyy')}
         </p>
       )}
+    </div>
+  )
+}
+
+const TILE_TONES = {
+  high: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  medium: 'bg-amber-50 text-amber-800 ring-amber-200',
+  low: 'bg-muted text-foreground ring-ink/10',
+} as const
+
+/** Score de compatibilité mis en avant dans l'en-tête de la fiche */
+function CompatibilityTile({ score }: { score: number | null }) {
+  const tone = score === null ? 'low' : score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low'
+  return (
+    <div
+      className={`flex shrink-0 flex-col justify-center rounded-2xl px-5 py-4 ring-1 ring-inset lg:min-w-48 ${TILE_TONES[tone]}`}
+    >
+      <p className="text-sm font-medium opacity-80">Compatibilité</p>
+      {score === null ? (
+        <p className="mt-1 text-lg font-semibold">Pas encore notée</p>
+      ) : (
+        <p className="mt-1 font-display text-4xl font-bold tabular-nums tracking-tight">
+          <Counter to={score} duration={1.2} />
+          <span className="text-xl font-semibold opacity-60"> / 100</span>
+        </p>
+      )}
+      <p className="mt-1 text-xs opacity-70">Selon vos critères de client idéal</p>
     </div>
   )
 }
