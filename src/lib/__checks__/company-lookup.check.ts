@@ -4,6 +4,7 @@ import {
   blockedReason,
   classifyLookupQuery,
   headcountLabel,
+  broaderQuery,
   rankCandidates,
   siteNameFromHtml,
   toRegistryRecord,
@@ -60,14 +61,50 @@ test('opposition à la prospection et données masquées bloquent le pré-rempli
   assert.match(blockedReason(toRegistryRecord({ ...base, nom_complet: '[NON-DIFFUSIBLE]' })) ?? '', /masquées/)
 })
 
-test('les homonymes utilisables passent avant les cessées puis les refus, ordre du registre gardé', () => {
-  const ranked = rankCandidates([
-    toRegistryRecord({ ...base, siren: '1', opposition_diffusion_commerciale: true }),
-    toRegistryRecord({ ...base, siren: '2', etat_administratif: 'C' }),
-    toRegistryRecord({ ...base, siren: '3' }),
-    toRegistryRecord({ ...base, siren: '4' }),
-  ])
+test('les homonymes utilisables passent avant les cessées puis les refus', () => {
+  const ranked = rankCandidates([{
+    query: 'Atelier Dupont',
+    records: [
+      toRegistryRecord({ ...base, siren: '1', opposition_diffusion_commerciale: true }),
+      toRegistryRecord({ ...base, siren: '2', etat_administratif: 'C' }),
+      toRegistryRecord({ ...base, siren: '3' }),
+      toRegistryRecord({ ...base, siren: '4' }),
+    ],
+  }])
   assert.deepEqual(ranked.map((record) => record.siren), ['3', '4', '2', '1'])
+})
+
+test('« GFT » : le nom qui commence par la saisie et l\'employeur passent devant les SCI homonymes', () => {
+  const company = (siren: string, nom_complet: string, tranche_effectif_salarie = 'NN') =>
+    toRegistryRecord({ ...base, siren, nom_complet, tranche_effectif_salarie })
+  const ranked = rankCandidates([{
+    query: 'GFT',
+    records: [
+      company('1', 'GFT'),
+      company('2', 'GOLDEN FOOD TRADING (GFT)', '01'),
+      company('3', 'GFT FRANCE SAS', '21'),
+      company('4', 'GFT 34', '11'),
+      company('5', 'GFTX'),
+    ],
+  }])
+  assert.deepEqual(ranked.map((record) => record.siren), ['3', '4', '1', '2', '5'])
+})
+
+test('une saisie de plusieurs mots est élargie à son premier mot, sans doublons', () => {
+  assert.equal(broaderQuery('GFT technologies'), 'GFT')
+  assert.equal(broaderQuery('GFT'), null)
+  assert.equal(broaderQuery('A b'), null)
+  const ranked = rankCandidates([
+    { query: 'GFT technologies', records: [toRegistryRecord({ ...base, siren: '1', nom_complet: 'GFT TECHNOLOGIES SE' })] },
+    {
+      query: 'GFT',
+      records: [
+        toRegistryRecord({ ...base, siren: '1', nom_complet: 'GFT TECHNOLOGIES SE' }),
+        toRegistryRecord({ ...base, siren: '2', nom_complet: 'GFT FRANCE SAS', tranche_effectif_salarie: '21' }),
+      ],
+    },
+  ])
+  assert.deepEqual(ranked.map((record) => record.siren), ['1', '2'])
 })
 
 test('le nom du site est lu dans og:site_name, sinon dans le titre sans slogan', () => {

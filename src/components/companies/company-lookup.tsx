@@ -20,6 +20,9 @@ interface CompanyLookupProps {
   onPick: (pick: CompanyLookupPick) => void
 }
 
+// Résultats montrés d'abord ; les suivants s'affichent sur demande
+const FIRST_RESULTS = 8
+
 const formatSiren = (siren: string) => siren.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')
 
 /**
@@ -32,6 +35,7 @@ export function CompanyLookup({ disabled, onPick }: CompanyLookupProps) {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CompanyLookupResult | null>(null)
   const [pickedSiren, setPickedSiren] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
   const search = async () => {
     setError(null)
@@ -44,6 +48,7 @@ export function CompanyLookup({ disabled, onPick }: CompanyLookupProps) {
       return
     }
     setPickedSiren(null)
+    setShowAll(false)
     setResult(response.data)
   }
 
@@ -101,7 +106,7 @@ export function CompanyLookup({ disabled, onPick }: CompanyLookupProps) {
             </p>
           ) : (
             <ul className="space-y-2">
-              {result.candidates.map((candidate) => (
+              {(showAll ? result.candidates : result.candidates.slice(0, FIRST_RESULTS)).map((candidate) => (
                 <CandidateRow
                   key={candidate.siren}
                   candidate={candidate}
@@ -111,6 +116,16 @@ export function CompanyLookup({ disabled, onPick }: CompanyLookupProps) {
                 />
               ))}
             </ul>
+          )}
+          {!showAll && result.candidates.length > FIRST_RESULTS && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowAll(true)}>
+              Voir {result.candidates.length - FIRST_RESULTS} autres résultats
+            </Button>
+          )}
+          {result.source === 'name' && (
+            <p className="text-xs text-muted-foreground">
+              Vous ne la voyez pas ? Le nom au registre est parfois différent du nom connu (par exemple « GFT France SAS » pour GFT Technologies). Son SIREN ou son site donnent un résultat exact.
+            </p>
           )}
         </div>
       )}
