@@ -159,16 +159,77 @@ export function blockedReason(record: Pick<RegistryRecord, 'refusesProspecting' 
   return null
 }
 
+// « Société Générale » → « societe generale » : comparaison sans accents ni ponctuation
+export function normalizeName(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+// Le nom commence par la saisie, mot entier : « GFT France SAS » pour « GFT », pas « GFTX »
+function startsWithQuery(name: string, query: string): boolean {
+  const normalizedName = normalizeName(name)
+  const normalizedQuery = normalizeName(query)
+  return !!normalizedQuery && (normalizedName === normalizedQuery || normalizedName.startsWith(`${normalizedQuery} `))
+}
+
+// Effectif INSEE en nombre comparable (inconnu ou 0 salarié : -1)
+function headcountRank(code: string | null): number {
+  return code && /^\d{2}$/.test(code) && code !== '00' ? Number(code) : -1
+}
+
+export type NameSearchBatch = { query: string; records: RegistryRecord[] }
+
 /**
- * Homonymes : les entreprises utilisables d'abord, les cessées et les refus à la fin
- * (l'ordre de pertinence du registre est gardé à l'intérieur de chaque groupe)
+ * Classement des homonymes. Le registre range « GFT » parmi des dizaines de SCI
+ * homonymes : on remet devant ce qu'une freelance cherche vraiment.
+ * 1. utilisables, puis cessées, puis refus / données masquées ;
+ * 2. résultats de la saisie complète avant ceux du premier mot (complément) ;
+ * 3. nom qui commence par la saisie ;
+ * 4. entreprises qui emploient le plus de salariés ;
+ * 5. ordre de pertinence du registre.
+ * Les doublons (même SIREN dans deux recherches) sont retirés.
  */
-export function rankCandidates(records: RegistryRecord[]): RegistryRecord[] {
-  const weight = (record: RegistryRecord) => (blockedReason(record) ? 2 : record.isClosed ? 1 : 0)
-  return records
-    .map((record, index) => ({ record, index }))
-    .sort((a, b) => weight(a.record) - weight(b.record) || a.index - b.index)
+export function rankCandidates(batches: NameSearchBatch[]): RegistryRecord[] {
+  const seen = new Set<string>()
+  const rows: { record: RegistryRecord; key: number[] }[] = []
+
+  batches.forEach((batch, tier) => {
+    batch.records.forEach((record, index) => {
+      if (seen.has(record.siren)) return
+      seen.add(record.siren)
+      const status = blockedReason(record) ? 2 : record.isClosed ? 1 : 0
+      rows.push({
+        record,
+        key: [status, tier, startsWithQuery(record.name, batch.query) ? 0 : 1, -headcountRank(record.headcountCode), index],
+      })
+    })
+  })
+
+  return rows
+    .sort((a, b) => {
+      for (let i = 0; i < a.key.length; i++) {
+        const diff = (a.key[i] ?? 0) - (b.key[i] ?? 0)
+        if (diff !== 0) return diff
+      }
+      return 0
+    })
     .map(({ record }) => record)
+}
+
+/**
+ * Premier mot significatif d'une saisie de plusieurs mots (« GFT technologies » → « GFT »),
+ * pour élargir la recherche quand la saisie complète trouve peu de résultats.
+ * null pour une saisie d'un seul mot.
+ */
+export function broaderQuery(query: string): string | null {
+  const words = query.trim().split(/\s+/)
+  if (words.length < 2) return null
+  const first = words[0] ?? ''
+  return normalizeName(first).length >= 2 ? first : null
 }
 
 export type LookupQuery =
