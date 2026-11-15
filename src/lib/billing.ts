@@ -42,11 +42,24 @@ export function parisMidnight(date: Date, days = 0): Date {
 }
 
 /**
+ * Passages qui comptent dans les limites (recherches par semaine de l'offre Essentiel, lancements à la
+ * main par jour) : celui en cours, sinon on pourrait en lancer plusieurs à la fois, et ceux terminés
+ * avec au moins une entreprise ajoutée. Une recherche sans résultat, ou échouée, ne compte pas.
+ * Même règle dans supabase/functions/_shared/plan.ts et en base (00064_empty_runs_not_counted.sql).
+ */
+export function runCountsTowardLimits(run: { status: string; companies_created: number }): boolean {
+  return run.status === 'running' || (run.status === 'succeeded' && run.companies_created > 0)
+}
+
+/** runCountsTowardLimits, en filtre de requête : .or(COUNTED_RUNS_FILTER) sur pipeline_runs */
+export const COUNTED_RUNS_FILTER = 'status.eq.running,and(status.eq.succeeded,companies_created.gt.0)'
+
+/**
  * Limite Essentiel : N recherches par semaine, comptées au jour près (heure de Paris). Chaque recherche
  * libère sa place 7 jours plus tard à minuit : après des recherches lundi et jeudi, la suivante est
  * possible dès le lundi d'après. Compter 7 jours à la seconde près ferait sauter une recherche planifiée,
- * qui ne démarre pas toujours à la même seconde. `recentStarts` : débuts des recherches non échouées
- * depuis parisMidnight(maintenant, -6), les plus récentes d'abord. Renvoie la date à partir de laquelle
+ * qui ne démarre pas toujours à la même seconde. `recentStarts` : débuts des recherches qui comptent
+ * (runCountsTowardLimits) depuis parisMidnight(maintenant, -6), les plus récentes d'abord. Renvoie la date à partir de laquelle
  * la suivante est possible, ou null si elle l'est déjà.
  */
 export function weeklyRunAvailableAt(recentStarts: Date[], runsPerWeek: number | null): Date | null {

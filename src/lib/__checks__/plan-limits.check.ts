@@ -3,7 +3,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { PLAN_LIMITS, weeklyRunAvailableAt } from '../billing.ts'
+import { COUNTED_RUNS_FILTER, PLAN_LIMITS, runCountsTowardLimits, weeklyRunAvailableAt } from '../billing.ts'
 
 // Heures de Paris en novembre (UTC+1)
 const paris = (iso: string) => new Date(`${iso}+01:00`)
@@ -59,4 +59,26 @@ test('prix affichés : Essentiel 9 € / 90 €, Pro 20 € / 200 €, dans les 
   assert.match(content, /Pro à 20 € par mois \(200 € par an\)/)
   const terms = readFileSync(new URL('../../app/conditions/page.tsx', import.meta.url), 'utf8')
   assert.match(terms, /9 € par mois ou 90 € par an\. <strong>Pro<\/strong> : 20 € par mois ou 200 € par/)
+})
+
+test('une recherche sans résultat ou échouée ne compte pas ; celle en cours compte toujours', () => {
+  assert.equal(runCountsTowardLimits({ status: 'running', companies_created: 0 }), true)
+  assert.equal(runCountsTowardLimits({ status: 'succeeded', companies_created: 3 }), true)
+  assert.equal(runCountsTowardLimits({ status: 'succeeded', companies_created: 0 }), false)
+  assert.equal(runCountsTowardLimits({ status: 'failed', companies_created: 0 }), false)
+})
+
+test('même règle de décompte dans le site, dans Sophie (fonctions Supabase) et en base', () => {
+  const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
+  const shared = read('../../../supabase/functions/_shared/plan.ts')
+  assert.ok(shared.includes(`export const COUNTED_RUNS_FILTER = '${COUNTED_RUNS_FILTER}'`))
+  assert.ok(shared.includes(`return run.status === 'running' || (run.status === 'succeeded' && run.companies_created > 0)`))
+  // Les trois requêtes de décompte utilisent le filtre (plus de simple « non échouée »)
+  for (const path of ['../queries/prospection.ts', '../actions/prospection.ts', '../../../supabase/functions/prospection-run/index.ts']) {
+    const source = read(path)
+    assert.ok(source.includes('.or(COUNTED_RUNS_FILTER)'), path)
+    assert.ok(!source.includes(".neq('status', 'failed')"), path)
+  }
+  const migration = read('../../../supabase/migrations/00064_empty_runs_not_counted.sql')
+  assert.ok(migration.includes(`AND (status = 'running' OR (status = 'succeeded' AND companies_created > 0))`))
 })

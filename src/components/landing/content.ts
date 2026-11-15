@@ -215,7 +215,7 @@ export const plans = [
     yearly: 90,
     highlighted: false,
     features: [
-      `Deux recherches de Sophie par semaine, jusqu’à ${essentiel.companiesPerRun} entreprises chacune`,
+      `Deux recherches de Sophie par semaine, jusqu’à ${essentiel.companiesPerRun} entreprises chacune (une recherche sans résultat ne compte pas)`,
       `${essentiel.searchKeywords} mots-clés de recherche`,
       'Score sur 100 et fiche complète : SIREN, dirigeants, chiffre d’affaires',
       'Premiers e-mails rédigés par Sophie',
