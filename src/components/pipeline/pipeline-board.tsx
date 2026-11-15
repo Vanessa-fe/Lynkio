@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useOptimistic, useState, useTransition } from 'react'
+import { useMemo, useOptimistic, useState, useSyncExternalStore, useTransition } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { differenceInCalendarDays, format } from 'date-fns'
@@ -49,6 +49,47 @@ const KIND_FILTERS: { value: KindFilter; label: string }[] = [
 const PAGE_SIZE = 30
 const NO_STAGE = 'none'
 const NO_STAGE_COLOR = '#94a3b8'
+
+// Colonnes repliées ou dépliées à la main, retenues dans ce navigateur d'une visite à l'autre.
+// Copie en mémoire si le stockage est indisponible (navigation privée).
+const FOLD_KEY = 'pipeline-folded-columns'
+let memoryFold = ''
+const foldListeners = new Set<() => void>()
+
+function subscribeFold(listener: () => void) {
+  foldListeners.add(listener)
+  return () => {
+    foldListeners.delete(listener)
+  }
+}
+
+function readFold(): string {
+  try {
+    return window.localStorage.getItem(FOLD_KEY) ?? memoryFold
+  } catch {
+    return memoryFold
+  }
+}
+
+function writeFold(folded: Record<string, boolean>) {
+  memoryFold = JSON.stringify(folded)
+  try {
+    window.localStorage.setItem(FOLD_KEY, memoryFold)
+  } catch {
+    // stockage indisponible : la copie en mémoire suffit pour la visite
+  }
+  foldListeners.forEach((listener) => listener())
+}
+
+function parseFold(raw: string): Record<string, boolean> {
+  try {
+    const saved: unknown = raw ? JSON.parse(raw) : {}
+    if (!saved || typeof saved !== 'object') return {}
+    return Object.fromEntries(Object.entries(saved).filter(([, value]) => typeof value === 'boolean'))
+  } catch {
+    return {}
+  }
+}
 
 type Column = {
   id: string
@@ -106,7 +147,8 @@ export function PipelineBoard({ cards, stages }: { cards: PipelineCard[]; stages
   const [search, setSearch] = useState('')
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [overColumn, setOverColumn] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const foldRaw = useSyncExternalStore(subscribeFold, readFold, () => '')
+  const folded = useMemo(() => parseFold(foldRaw), [foldRaw])
   const [visible, setVisible] = useState<Record<string, number>>({})
   const [flash, setFlash] = useState<{ column: string; at: number } | null>(null)
 
@@ -212,13 +254,9 @@ export function PipelineBoard({ cards, stages }: { cards: PipelineCard[]; stages
     })
   }
 
-  const toggleExpanded = (columnId: string) =>
-    setExpanded((current) => {
-      const next = new Set(current)
-      if (next.has(columnId)) next.delete(columnId)
-      else next.add(columnId)
-      return next
-    })
+  // Par défaut, seules les étapes fermées (perdu, sans suite, hors cible) sont repliées
+  const isCollapsed = (column: Column) => folded[column.id] ?? (column.kind === 'lost' || column.kind === 'excluded')
+  const toggleCollapsed = (column: Column) => writeFold({ ...folded, [column.id]: !isCollapsed(column) })
 
   const dropHandlers = (column: Column) => ({
     onDragOver: (event: React.DragEvent) => {
@@ -314,8 +352,7 @@ export function PipelineBoard({ cards, stages }: { cards: PipelineCard[]; stages
           <div className="flex items-start gap-3">
             {columns.map((column) => {
               const columnCards = cardsByColumn.get(column.id) ?? []
-              const closed = column.kind === 'lost' || column.kind === 'excluded'
-              const collapsed = closed && !expanded.has(column.id)
+              const collapsed = isCollapsed(column)
               const isOver = overColumn === column.id
               const flashKey = flash?.column === column.id ? flash.at : 0
 
@@ -325,7 +362,7 @@ export function PipelineBoard({ cards, stages }: { cards: PipelineCard[]; stages
                     key={column.id}
                     type="button"
                     layout
-                    onClick={() => toggleExpanded(column.id)}
+                    onClick={() => toggleCollapsed(column)}
                     {...dropHandlers(column)}
                     animate={flashKey ? { scale: [1, 1.06, 1] } : undefined}
                     transition={{ duration: 0.4 }}
@@ -378,16 +415,15 @@ export function PipelineBoard({ cards, stages }: { cards: PipelineCard[]; stages
                         {columnCards.length}
                       </motion.span>
                     </AnimatePresence>
-                    {closed && (
-                      <button
-                        type="button"
-                        onClick={() => toggleExpanded(column.id)}
-                        className="rounded-md p-1 text-muted-foreground hover:bg-white hover:text-foreground"
-                        aria-label={`Replier la colonne ${column.name}`}
-                      >
-                        <ChevronsLeftRight className="size-4" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => toggleCollapsed(column)}
+                      className="rounded-md p-1 text-muted-foreground hover:bg-white hover:text-foreground"
+                      aria-label={`Replier la colonne ${column.name}`}
+                      title="Replier la colonne"
+                    >
+                      <ChevronsLeftRight className="size-4" />
+                    </button>
                   </header>
 
                   <div className="flex max-h-[calc(100dvh-19rem)] min-h-40 flex-col gap-2 overflow-y-auto px-2 pb-2">
