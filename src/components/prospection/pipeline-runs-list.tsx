@@ -7,6 +7,7 @@ import { CardContent } from '@/components/ui/card'
 import { CollapsibleCard } from '@/components/ui/collapsible-card'
 import type { PipelineRun } from '@/types'
 import { formatDate } from '@/lib/utils/dates'
+import { runCountsTowardLimits } from '@/lib/billing'
 
 // Contenu de pipeline_runs.details écrit par la fonction prospection-run
 type SourceDetails = {
@@ -100,6 +101,14 @@ function RunItem({ run }: { run: PipelineRun }) {
               {plural(unidentified, 'offre anonyme à identifier', 'offres anonymes à identifier')}
             </>
           )}
+        </p>
+      )}
+
+      {/* Recherche vide ou échouée : rien n'est décompté (2 par semaine en Essentiel, 5 à la main par jour) */}
+      {run.status !== 'running' && !runCountsTowardLimits(run) && (
+        <p className="text-xs text-muted-foreground">
+          {run.status === 'failed' ? 'Recherche interrompue' : 'Aucune nouvelle entreprise'} : cette recherche n’est pas
+          comptée dans vos limites.
         </p>
       )}
 

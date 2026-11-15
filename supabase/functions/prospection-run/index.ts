@@ -18,7 +18,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { runProspection, startRun } from './runner.ts'
-import { accountPlan, NO_ACCESS_MESSAGE, parisMidnight, PLAN_LIMITS, PRO_ONLY_MESSAGE, weeklyRunAvailableAt, type Plan } from '../_shared/plan.ts'
+import { accountPlan, COUNTED_RUNS_FILTER, NO_ACCESS_MESSAGE, parisMidnight, PLAN_LIMITS, PRO_ONLY_MESSAGE, weeklyRunAvailableAt, type Plan } from '../_shared/plan.ts'
 
 // Fourni par le runtime Supabase : garde la fonction en vie après la réponse
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
@@ -29,7 +29,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 /**
  * Offre Essentiel : deux recherches par semaine, comptées au jour près (heure de Paris), voir
  * weeklyRunAvailableAt. Renvoie la date à partir de laquelle la suivante est possible, ou null si elle
- * l'est déjà (les passages échoués ne comptent pas). Même règle dans src/lib/queries/prospection.ts.
+ * l'est déjà (les recherches échouées ou sans résultat ne comptent pas). Même règle dans src/lib/queries/prospection.ts.
  */
 async function nextWeeklyRun(admin: SupabaseClient, userId: string, plan: Plan): Promise<Date | null> {
   const runsPerWeek = PLAN_LIMITS[plan].runsPerWeek
@@ -38,7 +38,7 @@ async function nextWeeklyRun(admin: SupabaseClient, userId: string, plan: Plan):
     .from('pipeline_runs')
     .select('started_at')
     .eq('user_id', userId)
-    .neq('status', 'failed')
+    .or(COUNTED_RUNS_FILTER)
     .gte('started_at', parisMidnight(new Date(), -6).toISOString())
     .order('started_at', { ascending: false })
     .limit(runsPerWeek)

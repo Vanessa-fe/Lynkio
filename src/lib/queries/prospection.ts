@@ -1,13 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import type { PipelineRun, ProspectionSettings, UnidentifiedJobOffer } from '@/types'
 import { getAuthUser } from '@/lib/supabase/auth'
-import { parisMidnight, PLAN_LIMITS, weeklyRunAvailableAt, type PlanKey } from '@/lib/billing'
+import { COUNTED_RUNS_FILTER, parisMidnight, PLAN_LIMITS, weeklyRunAvailableAt, type PlanKey } from '@/lib/billing'
 
 type Schedule = Pick<ProspectionSettings, 'is_active' | 'next_run_at' | 'days_of_week' | 'run_hour' | 'timezone'>
 
 /**
- * Offre Essentiel : deux recherches par semaine, comptées au jour près (heure de Paris), les passages
- * échoués ne comptent pas. Renvoie la date à partir de laquelle la suivante est possible, ou null si
+ * Offre Essentiel : deux recherches par semaine, comptées au jour près (heure de Paris), les recherches
+ * échouées ou sans résultat ne comptent pas. Renvoie la date à partir de laquelle la suivante est possible, ou null si
  * elle l'est déjà. Même règle que nextWeeklyRun dans supabase/functions/prospection-run.
  */
 export async function getWeeklyRunAvailableAt(plan: PlanKey | null): Promise<string | null> {
@@ -21,7 +21,7 @@ export async function getWeeklyRunAvailableAt(plan: PlanKey | null): Promise<str
     .from('pipeline_runs')
     .select('started_at')
     .eq('user_id', user.id)
-    .neq('status', 'failed')
+    .or(COUNTED_RUNS_FILTER)
     .gte('started_at', parisMidnight(new Date(), -6).toISOString())
     .order('started_at', { ascending: false })
     .limit(runsPerWeek)
