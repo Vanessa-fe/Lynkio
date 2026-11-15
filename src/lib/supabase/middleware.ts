@@ -67,7 +67,9 @@ export async function updateSession(request: NextRequest) {
   const isAuthCallback = ['/auth/callback', '/auth/confirm'].includes(request.nextUrl.pathname)
   // Pages légales : lisibles par tout le monde, connecté ou non
   const isLegalRoute = LEGAL_ROUTES.includes(request.nextUrl.pathname)
-  const isPublicRoute = isAuthRoute || isAuthCallback || isLegalRoute
+  // Lien « ne plus être contacté » des e-mails de prospection : ouvert par des personnes sans compte
+  const isOptOutRoute = request.nextUrl.pathname.startsWith('/stop/')
+  const isPublicRoute = isAuthRoute || isAuthCallback || isLegalRoute || isOptOutRoute
 
   // Redirection si non authentifié et accès à une route protégée
   if (!user && !isPublicRoute && request.nextUrl.pathname !== '/') {

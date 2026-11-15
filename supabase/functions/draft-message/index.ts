@@ -77,9 +77,10 @@ function signalDetails(evidence: Record<string, unknown>): string[] {
 
 /**
  * RGPD (art. 14 et 21) : au premier e-mail, d'où vient l'adresse quand on le sait, et comment refuser
- * la suite. Ajoutée par le code, jamais par l'IA, pour qu'elle soit toujours là et toujours exacte.
+ * la suite (un lien quand le destinataire est un contact enregistré, sinon répondre « stop »).
+ * Ajoutée par le code, jamais par l'IA, pour qu'elle soit toujours là et toujours exacte.
  */
-function originNotice(emailSource: string | null, companyName: string): string {
+function originNotice(emailSource: string | null, companyName: string, optOutUrl: string | null): string {
   const origin =
     emailSource === 'website'
       ? `J'ai trouvé votre adresse sur le site de ${companyName}. `
@@ -88,7 +89,30 @@ function originNotice(emailSource: string | null, companyName: string): string {
         : emailSource === 'linkedin_post'
           ? 'J\'ai trouvé votre adresse dans une de vos publications LinkedIn. '
           : ''
-  return `${origin}Si vous préférez ne plus recevoir de message de ma part, répondez simplement « stop ».`
+  return optOutUrl
+    ? `${origin}Pour ne plus recevoir de message de ma part : ${optOutUrl}`
+    : `${origin}Si vous préférez ne plus recevoir de message de ma part, répondez simplement « stop ».`
+}
+
+/**
+ * Crée un lien « ne plus être contacté » propre à ce contact (page publique /stop/<jeton>).
+ * Seule l'empreinte du jeton est enregistrée. En cas d'échec, l'e-mail garde la phrase « stop ».
+ */
+async function createOptOutLink(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+  contactId: string
+): Promise<string | null> {
+  const bytes = crypto.getRandomValues(new Uint8Array(18))
+  const token = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)))
+  const hash = Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('')
+  const { error } = await admin.from('opt_out_links').insert({ token_hash: hash, user_id: userId, contact_id: contactId })
+  if (error) {
+    console.error('opt-out link', error)
+    return null
+  }
+  return `https://filonea.fr/stop/${token}`
 }
 
 Deno.serve(async (request) => {
@@ -324,9 +348,12 @@ Deno.serve(async (request) => {
           null
         : firstName
 
+    const firstEmail = channel === 'email' && !lastOutgoing.data
+    const optOutUrl = firstEmail && contactId ? await createOptOutLink(admin, user.id, contactId) : null
+    const notice = firstEmail ? originNotice(contact.data?.email_source ?? null, company.data.name, optOutUrl) : null
     const checks = {
       channel,
-      notice: channel === 'email' && !lastOutgoing.data ? originNotice(contact.data?.email_source ?? null, company.data.name) : null,
+      notice,
       signals: activeSignals,
       knownUrls: [website, ...referenceRows.map((reference) => reference.url)].filter(
         (url): url is string => typeof url === 'string' && url !== ''
