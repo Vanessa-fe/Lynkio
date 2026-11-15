@@ -256,6 +256,7 @@ export async function updateCompany(
     }
 
     revalidatePath('/companies')
+    revalidatePath('/pipeline')
     revalidatePath(`/companies/${companyId}`)
     return { success: true }
   } catch (error) {
@@ -308,6 +309,7 @@ export async function updateCompanySegment(
     }
 
     revalidatePath('/companies')
+    revalidatePath('/pipeline')
     revalidatePath(`/companies/${companyId}`)
     revalidatePath('/people')
     return { success: true }
@@ -466,6 +468,7 @@ export async function analyzeCompanyWebsite(
 
     revalidatePath(`/companies/${companyId}`)
     revalidatePath('/companies')
+    revalidatePath('/pipeline')
     return { success: true, data: { detected: site.detected, siren: registry?.siren ?? null, completed } }
   } catch (error) {
     if (error instanceof StackDetectionError) {

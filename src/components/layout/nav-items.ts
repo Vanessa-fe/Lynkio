@@ -1,4 +1,4 @@
-import { Bell, Building2, Home, ListChecks, Radar, Settings, Users, type LucideIcon } from 'lucide-react'
+import { Bell, Building2, Home, ListChecks, Radar, Settings, SquareKanban, Users, type LucideIcon } from 'lucide-react'
 
 type NavItem = {
   href: string
@@ -11,6 +11,7 @@ type NavItem = {
 export const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Tableau de bord', shortLabel: 'Accueil', icon: Home },
   { href: '/prospection', label: 'Prospection', shortLabel: 'Sophie', icon: Radar },
+  { href: '/pipeline', label: 'Pipeline commercial', shortLabel: 'Pipeline', icon: SquareKanban },
   { href: '/companies', label: 'Entreprises', shortLabel: 'Sociétés', icon: Building2 },
   { href: '/people', label: 'Personnes', shortLabel: 'Contacts', icon: Users },
   { href: '/lists', label: 'Listes', shortLabel: 'Listes', icon: ListChecks },

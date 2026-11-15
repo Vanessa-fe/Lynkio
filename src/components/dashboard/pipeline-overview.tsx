@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowRight } from 'lucide-react'
+import { GrowBar } from '@/components/motion/grow-bar'
 import { formatEuros } from '@/lib/validations/company'
 import { cn } from '@/lib/utils'
 import type { DashboardData } from '@/lib/queries/prospection-dashboard'
@@ -24,10 +26,10 @@ export function PipelineOverview({ pipeline }: { pipeline: DashboardData['pipeli
       </CardHeader>
       <CardContent className="space-y-4">
         <ul className="space-y-2.5">
-          {pipeline.map(({ stage, count, amount }) => (
+          {pipeline.map(({ stage, count, amount }, index) => (
             <li key={stage?.id ?? 'none'}>
               <Link
-                href="/companies"
+                href="/pipeline"
                 className={cn(
                   'grid items-center gap-3 rounded-md text-sm hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   hasAmounts
@@ -37,12 +39,10 @@ export function PipelineOverview({ pipeline }: { pipeline: DashboardData['pipeli
               >
                 <span className="truncate">{stage?.name ?? 'Sans étape'}</span>
                 <span className="h-2.5 rounded-full bg-muted overflow-hidden" aria-hidden="true">
-                  <span
-                    className="block h-full rounded-full"
-                    style={{
-                      width: `${(count / max) * 100}%`,
-                      backgroundColor: stage?.color ?? 'hsl(var(--muted-foreground))',
-                    }}
+                  <GrowBar
+                    percent={(count / max) * 100}
+                    color={stage?.color ?? 'hsl(var(--muted-foreground))'}
+                    delay={index * 0.05}
                   />
                 </span>
                 {hasAmounts && (
@@ -55,6 +55,13 @@ export function PipelineOverview({ pipeline }: { pipeline: DashboardData['pipeli
             </li>
           ))}
         </ul>
+        <Link
+          href="/pipeline"
+          className="group inline-flex items-center gap-1.5 text-sm font-medium text-primary"
+        >
+          Ouvrir le tableau du pipeline
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
         {openAmount > 0 && (
           <p className="text-sm border-t pt-3">
             Pistes en cours : <span className="font-semibold">{formatEuros(openAmount)} HT</span> estimés
