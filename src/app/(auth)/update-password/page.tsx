@@ -81,7 +81,7 @@ export default function UpdatePasswordPage() {
               <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Au moins 10 caractères avec majuscule, minuscule et chiffre
+              Au moins 10 caractères avec majuscule, minuscule, chiffre et symbole (ex. ! ? @ #)
             </p>
           </div>
 
