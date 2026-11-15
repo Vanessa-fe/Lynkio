@@ -21,7 +21,7 @@ type Supabase = Awaited<ReturnType<typeof createClient>>
 
 function errorResult(error: unknown, fallback: string): ActionResult<never> {
   if (error instanceof ZodError) {
-    return { success: false, error: error.errors[0]?.message ?? 'Données invalides' }
+    return { success: false, error: error.issues[0]?.message ?? 'Données invalides' }
   }
   console.error(fallback, error)
   return { success: false, error: fallback }

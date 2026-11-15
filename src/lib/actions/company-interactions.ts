@@ -61,7 +61,7 @@ export async function createCompanyInteraction(
     return { success: true }
   } catch (error) {
     if (error instanceof ZodError) {
-      return { success: false, error: error.errors[0]?.message ?? 'Données invalides' }
+      return { success: false, error: error.issues[0]?.message ?? 'Données invalides' }
     }
     console.error('Create company interaction error:', error)
     return { success: false, error: 'Une erreur est survenue' }

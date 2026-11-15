@@ -37,9 +37,7 @@ export const AUTOMATIC_SOURCE_NAME = 'Détection automatique'
 export const stageSchema = z.object({
   name: z.string().trim().min(1, 'Le nom est requis').max(50, 'Le nom est trop long'),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Choisissez une couleur'),
-  kind: z.enum(['open', 'won', 'lost', 'excluded'], {
-    errorMap: () => ({ message: 'Choisissez la nature de l\'étape' }),
-  }),
+  kind: z.enum(['open', 'won', 'lost', 'excluded'], { error: 'Choisissez la nature de l\'étape' }),
 })
 
 export type StageInput = z.input<typeof stageSchema>

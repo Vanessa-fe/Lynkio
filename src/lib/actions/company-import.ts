@@ -213,7 +213,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
       return {
         line,
         status: 'invalid',
-        message: [...new Set(parsed.error.errors.map((issue) => issue.message))].join(', '),
+        message: [...new Set(parsed.error.issues.map((issue) => issue.message))].join(', '),
         row: null,
         name:
           mapped.name?.trim() ||

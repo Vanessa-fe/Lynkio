@@ -61,7 +61,7 @@ export async function saveOffer(input: OfferInput): Promise<ActionResult> {
     revalidatePath('/dashboard')
     return { success: true }
   } catch (error) {
-    if (error instanceof ZodError) return { success: false, error: error.errors[0]?.message ?? 'Données invalides' }
+    if (error instanceof ZodError) return { success: false, error: error.issues[0]?.message ?? 'Données invalides' }
     console.error('saveOffer', error)
     return { success: false, error: 'Une erreur est survenue' }
   }

@@ -63,7 +63,7 @@ export async function saveApiKey(input: ApiKeyInput): Promise<ActionResult> {
     return { success: true }
   } catch (error) {
     if (error instanceof ZodError) {
-      return { success: false, error: error.errors[0]?.message ?? 'Clé invalide' }
+      return { success: false, error: error.issues[0]?.message ?? 'Clé invalide' }
     }
     captureServerError(error, undefined, { action: 'saveApiKey' })
     return { success: false, error: 'Impossible d\'enregistrer la clé pour le moment : réessayez.' }
@@ -182,7 +182,7 @@ export async function saveAiKey(input: AiKeyInput): Promise<ActionResult & { ser
     revalidatePath('/settings/keys')
     return { success: true, serviceLabel: AI_PROVIDER_LABELS[provider], warning: check.warning }
   } catch (error) {
-    if (error instanceof ZodError) return { success: false, error: error.errors[0]?.message ?? 'Clé invalide' }
+    if (error instanceof ZodError) return { success: false, error: error.issues[0]?.message ?? 'Clé invalide' }
     captureServerError(error, undefined, { action: 'saveAiKey' })
     return { success: false, error: 'Impossible d\'enregistrer la clé pour le moment : réessayez.' }
   }

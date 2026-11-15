@@ -17,7 +17,7 @@ export const onboardingSchema = z.object({
     .max(100, 'Le nom de l\'activité est trop long'),
   // Clé d'une ligne de la table professions ; la clé étrangère vérifie qu'elle existe
   professionKey: z
-    .string({ required_error: 'Choisissez votre métier' })
+    .string({ error: 'Choisissez votre métier' })
     .regex(/^[a-z][a-z0-9_]*$/, 'Choisissez votre métier'),
   // Mots-clés de recherche des offres d'emploi (arrêtées le 13/11/2026), rangés dans le premier client idéal
   searchKeywords: searchKeywordsSchema.optional(),
