@@ -86,5 +86,5 @@ Lancer : `supabase db query --linked -f supabase/tests/rgpd_isolation_retention.
 
 1. **PostHog** : la suppression du compte n'efface pas la personne PostHog (identifiant + e-mail). Il faut une clé personnelle PostHog (droit `person:write`) pour l'automatiser, ou une suppression manuelle sur demande.
 2. **Leaked password protection** Supabase à activer.
-3. ~~Mention d'information dans les messages~~ : fait le 15/11/2026. Le premier e-mail de Sophie se termine par l'origine de l'adresse (site, Hunter, publication LinkedIn, quand elle est connue) et « répondez simplement « stop » ». Ajoutée par le code, pas par l'IA.
+3. ~~Mention d'information dans les messages~~ : fait le 15/11/2026. Le premier e-mail de Sophie se termine par l'origine de l'adresse (site, Hunter, publication LinkedIn, quand elle est connue) et un lien « ne plus être contacté » (page /stop/<jeton>, confirmation par bouton, contact marqué opposé ; table `opt_out_links`, empreinte du jeton seulement, 3 ans). Sans contact enregistré : « répondez « stop » ». Ajoutée par le code, pas par l'IA.
 4. **`pipeline_runs`** sans durée de conservation (données techniques, sans donnée de prospect) : à borner (par ex. 12 mois) quand la page résultats n'en dépendra plus. `sophie_notifications` est déjà effacée après 365 jours (`deliver_sophie_notifications`).
