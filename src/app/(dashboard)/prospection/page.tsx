@@ -31,7 +31,7 @@ export default async function ProspectionPage() {
     hasAiKey(),
   ])
   const runningRun = runs.find((run) => run.status === 'running') ?? null
-  // Offre Essentiel : une recherche par semaine, et la prochaine automatique peut être sautée
+  // Offre Essentiel : deux recherches par semaine, et la prochaine automatique peut être sautée
   const availableAt = await getWeeklyRunAvailableAt(plan)
   const nextRunAt = await getNextScheduledRun(settings, availableAt)
 

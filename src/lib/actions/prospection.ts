@@ -41,7 +41,7 @@ export async function saveProspectionSettings(input: ProspectionSettingsInput): 
     if (validated.isActive && validated.daysOfWeek.length > limits.daysPerWeek) {
       return {
         success: false,
-        error: 'Avec l’offre Essentiel, Sophie cherche un jour par semaine : gardez un seul jour, ou passez à l’offre Pro.',
+        error: `Avec l’offre Essentiel, Sophie cherche ${limits.daysPerWeek} jours par semaine au plus : retirez un jour, ou passez à l’offre Pro.`,
       }
     }
     if (validated.maxCompaniesPerRun > limits.companiesPerRun) {

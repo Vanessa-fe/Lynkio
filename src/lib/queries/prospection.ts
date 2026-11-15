@@ -1,17 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import type { PipelineRun, ProspectionSettings, UnidentifiedJobOffer } from '@/types'
 import { getAuthUser } from '@/lib/supabase/auth'
-import { parisMidnight, PLAN_LIMITS, type PlanKey } from '@/lib/billing'
+import { parisMidnight, PLAN_LIMITS, weeklyRunAvailableAt, type PlanKey } from '@/lib/billing'
 
 type Schedule = Pick<ProspectionSettings, 'is_active' | 'next_run_at' | 'days_of_week' | 'run_hour' | 'timezone'>
 
 /**
- * Offre Essentiel : une recherche par semaine, comptée au jour près (heure de Paris), les passages
+ * Offre Essentiel : deux recherches par semaine, comptées au jour près (heure de Paris), les passages
  * échoués ne comptent pas. Renvoie la date à partir de laquelle la suivante est possible, ou null si
  * elle l'est déjà. Même règle que nextWeeklyRun dans supabase/functions/prospection-run.
  */
 export async function getWeeklyRunAvailableAt(plan: PlanKey | null): Promise<string | null> {
-  if (!plan || PLAN_LIMITS[plan].runsPerWeek === null) return null
+  const runsPerWeek = plan ? PLAN_LIMITS[plan].runsPerWeek : null
+  if (runsPerWeek === null) return null
   const user = await getAuthUser()
   if (!user) return null
 
@@ -23,9 +24,8 @@ export async function getWeeklyRunAvailableAt(plan: PlanKey | null): Promise<str
     .neq('status', 'failed')
     .gte('started_at', parisMidnight(new Date(), -6).toISOString())
     .order('started_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  return data ? parisMidnight(new Date(data.started_at), 7).toISOString() : null
+    .limit(runsPerWeek)
+  return weeklyRunAvailableAt((data ?? []).map((run) => new Date(run.started_at)), runsPerWeek)?.toISOString() ?? null
 }
 
 /**

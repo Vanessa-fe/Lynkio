@@ -97,7 +97,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
   const now = Date.now()
   const reminders = remindersResult.data ?? []
 
-  // Offre Essentiel : la prochaine recherche automatique peut être sautée (une par semaine)
+  // Offre Essentiel : la prochaine recherche automatique peut être sautée (deux par semaine)
   const nextRunAt = await getNextScheduledRun(
     settingsResult.data,
     await getWeeklyRunAvailableAt(await getCurrentPlan())

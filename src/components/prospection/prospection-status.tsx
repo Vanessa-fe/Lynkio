@@ -99,7 +99,7 @@ export function ProspectionStatus({ settings, nextRunAt, runningRun, weeklyRunAv
             )}
             {weeklyRunAvailableAt && !isRunning && (
               <p className="text-sm text-muted-foreground">
-                Offre Essentiel : une recherche par semaine. Prochaine recherche possible le{' '}
+                Offre Essentiel : deux recherches par semaine. Prochaine recherche possible le{' '}
                 {formatDate(new Date(weeklyRunAvailableAt), 'EEEE d MMMM')}.{' '}
                 <Link href="/billing" className="font-medium text-primary underline-offset-4 hover:underline">
                   Passer à l&apos;offre Pro

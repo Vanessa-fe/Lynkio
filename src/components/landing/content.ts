@@ -11,6 +11,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
+import { PLAN_LIMITS } from '@/lib/billing'
 import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 
 export const navLinks = [
@@ -198,10 +199,13 @@ export const safeguards = [
 ]
 
 /**
- * Tarifs (11/11/2026) : deux offres. Essentiel, accessible pour démarrer ; Pro, l'offre complète mise en
- * avant. L'IA est payée par l'utilisateur à son fournisseur. Les limites d'Essentiel seront appliquées
- * avec l'abonnement Stripe.
+ * Tarifs (15/11/2026) : deux offres. Essentiel, accessible pour démarrer ; Pro, l'offre complète mise en
+ * avant. L'IA est payée par l'utilisateur à son fournisseur. Les limites viennent de PLAN_LIMITS (appliquées
+ * par l'application et par Sophie) ; les prix doivent correspondre aux prix Stripe (clés essentiel_monthly,
+ * essentiel_yearly, pro_monthly, pro_yearly).
  */
+const { essentiel, pro } = PLAN_LIMITS
+
 export const plans = [
   {
     key: 'essentiel',
@@ -211,8 +215,8 @@ export const plans = [
     yearly: 90,
     highlighted: false,
     features: [
-      'Une recherche de Sophie par semaine, jusqu’à 10 entreprises',
-      '3 mots-clés de recherche',
+      `Deux recherches de Sophie par semaine, jusqu’à ${essentiel.companiesPerRun} entreprises chacune`,
+      `${essentiel.searchKeywords} mots-clés de recherche`,
       'Score sur 100 et fiche complète : SIREN, dirigeants, chiffre d’affaires',
       'Premiers e-mails rédigés par Sophie',
       'Suivi de vos prospects : entreprises, personnes, listes, rappels',
@@ -223,13 +227,13 @@ export const plans = [
     key: 'pro',
     name: 'Pro',
     tagline: 'Pour ne laisser passer aucun client',
-    monthly: 15,
-    yearly: 150,
+    monthly: 20,
+    yearly: 200,
     highlighted: true,
     features: [
       'Tout Essentiel, et :',
-      'Sophie cherche jusqu’à 7 jours sur 7, jusqu’à 50 entreprises par recherche',
-      '10 mots-clés de recherche',
+      `Sophie cherche jusqu’à 7 jours sur 7, jusqu’à ${pro.companiesPerRun} entreprises par recherche`,
+      `${pro.searchKeywords} mots-clés de recherche`,
       'Messages LinkedIn et relances préparés par Sophie',
       'Extension LinkedIn : le bouton «\u00a0+\u00a0Filonea\u00a0» et vos envois à votre rythme',
       'Recherche d’e-mails des décideurs',
@@ -283,7 +287,7 @@ export const faq = [
   {
     question: 'Combien coûte Filonea ?',
     answer:
-      'Deux offres, sans engagement : Essentiel à 9 € par mois (90 € par an) pour démarrer, et Pro à 15 € par mois (150 € par an) avec toute la prospection LinkedIn, plus de recherches et plus de mots-clés. Les 14 premiers jours sont gratuits, sans carte bancaire.',
+      'Deux offres, sans engagement : Essentiel à 9 € par mois (90 € par an) pour démarrer, et Pro à 20 € par mois (200 € par an) avec toute la prospection LinkedIn, plus de recherches et plus de mots-clés. Les 14 premiers jours sont gratuits, sans carte bancaire.',
   },
   {
     question: 'Pourquoi utiliser ma propre clé d’IA ?',

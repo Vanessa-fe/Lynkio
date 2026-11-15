@@ -8,6 +8,7 @@ import { plans } from '@/components/landing/content'
 import { startCheckout } from '@/lib/actions/billing'
 import type { BillingInterval, PlanKey } from '@/lib/billing'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
+import { LEGAL } from '@/lib/constants/legal'
 import { cn } from '@/lib/utils/cn'
 
 const euros = (amount: number) =>
@@ -120,7 +121,7 @@ export function PlanPicker({ firstChargeLabel }: { firstChargeLabel?: string }) 
         </p>
       )}
       <p className="text-sm text-muted-foreground">
-        Paiement sécurisé par Stripe, par carte bancaire. Sans engagement : vous changez d&apos;offre ou vous arrêtez
+        {LEGAL.vat}. Paiement sécurisé par Stripe, par carte bancaire. Sans engagement : vous changez d&apos;offre ou vous arrêtez
         quand vous voulez.{firstChargeLabel ? ` Vous gardez votre essai : premier prélèvement le ${firstChargeLabel}.` : ''}
       </p>
     </div>
