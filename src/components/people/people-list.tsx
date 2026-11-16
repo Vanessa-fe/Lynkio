@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ListMinus, ListPlus, Loader2, Plus, Search, Users, X } from 'lucide-react'
+import { ListMinus, ListPlus, Loader2, MessageCircleReply, Search, Send, Users, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Counter } from '@/components/motion/counter'
 import { Checkbox } from '@/components/ui/checkbox'
 import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -38,6 +39,20 @@ const SCOPES: { value: Scope; label: string }[] = [
   { value: 'individual', label: 'Personnes seules' },
   { value: 'organization', label: 'Dans une entreprise' },
 ]
+
+// Compteurs en haut de page : un clic filtre la liste sur ce statut
+const STAT_TILES: { status: StatusFilter; label: string; detail: string; icon: typeof Users }[] = [
+  { status: 'all', label: 'Contacts', detail: 'Tous vos interlocuteurs', icon: Users },
+  { status: 'to_contact', label: 'À contacter', detail: 'Des conversations à amorcer', icon: Send },
+  { status: 'replied', label: 'Ont répondu', detail: 'À suivre de près', icon: MessageCircleReply },
+]
+
+function initials(person: Pick<PersonRow, 'first_name' | 'last_name' | 'email'>): string {
+  const letters = [person.first_name, person.last_name]
+    .map((part) => part?.trim().charAt(0).toUpperCase() ?? '')
+    .join('')
+  return letters || person.email?.charAt(0).toUpperCase() || '?'
+}
 
 interface PeopleListProps {
   people: PersonRow[]
@@ -121,8 +136,44 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
     router.refresh()
   }
 
+  // Compteurs sur la liste affichée, avant recherche et filtres
+  const tileCount = (status: StatusFilter) =>
+    status === 'all' ? inList.length : inList.filter((person) => person.outreach.status === status).length
+
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4" role="group" aria-label="Filtrer par statut">
+        {STAT_TILES.map(({ status, label, detail, icon: Icon }) => {
+          const active = statusFilter === status
+          return (
+            <button
+              key={status}
+              type="button"
+              onClick={() => setStatusFilter(status)}
+              aria-pressed={active}
+              className={cn(
+                'group flex flex-col justify-start rounded-2xl border border-ink/[0.07] bg-card p-4 text-left shadow-soft transition-[box-shadow,transform,border-color] duration-300 hover:-translate-y-0.5 hover:shadow-lift sm:p-5',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                active && 'border-primary/40 ring-1 ring-primary/30'
+              )}
+            >
+              <span className="flex items-center gap-2 text-xs text-muted-foreground sm:text-sm">
+                <span className="hidden size-7 items-center justify-center rounded-lg bg-secondary text-primary sm:flex">
+                  <Icon className="size-4" />
+                </span>
+                {label}
+              </span>
+              <Counter
+                to={tileCount(status)}
+                duration={1}
+                className="mt-1.5 block font-display text-2xl font-bold tabular-nums tracking-tight sm:text-3xl"
+              />
+              <span className="mt-1 block text-xs text-muted-foreground sm:text-sm">{detail}</span>
+            </button>
+          )
+        })}
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -137,12 +188,6 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
         </div>
         <div className="flex flex-wrap gap-2">
           <ImportProspectsDialog />
-          <Button asChild>
-            <Link href="/people/new">
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter une personne
-            </Link>
-          </Button>
         </div>
       </div>
 
@@ -265,7 +310,13 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
           </CardContent>
         </Card>
       ) : (
-        <div className="border rounded-lg">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-xl">Votre carnet de contacts</CardTitle>
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {filtered.length} personne{filtered.length > 1 ? 's' : ''}
+            </span>
+          </CardHeader>
           <Table>
             <TableHeader>
               <TableRow>
@@ -299,23 +350,33 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Link href={`/companies/${company.id}`} className="font-medium hover:underline">
-                          {name}
-                        </Link>
-                        {person.linkedin_url && (
-                          <a
-                            href={person.linkedin_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Profil LinkedIn de ${name}`}
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <LinkedinIcon className="w-3.5 h-3.5" />
-                          </a>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-800 sm:flex"
+                          aria-hidden="true"
+                        >
+                          {initials(person)}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Link href={`/companies/${company.id}`} className="font-medium hover:underline">
+                              {name}
+                            </Link>
+                            {person.linkedin_url && (
+                              <a
+                                href={person.linkedin_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Profil LinkedIn de ${name}`}
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                <LinkedinIcon className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{person.role || '-'}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">{person.role || '-'}</p>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {company.kind === 'individual' ? (
@@ -357,7 +418,7 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
               })}
             </TableBody>
           </Table>
-        </div>
+        </Card>
       )}
 
       <AddToListDialog
