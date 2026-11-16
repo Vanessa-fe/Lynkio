@@ -316,13 +316,35 @@ function cleanText(value: unknown, max: number): string {
   return typeof value === 'string' ? value.replace(/[<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : ''
 }
 
+/** Nom comparable : minuscules, apostrophes et espaces uniformisés */
+function comparableName(value: string): string {
+  return value.toLowerCase().replace(/[’‘`´]/g, "'").replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Prestation de l'utilisateur citée par l'IA. L'IA recopie parfois le nom avec une autre apostrophe,
+ * ou suivi de sa description (« Conseil RH : organisation… ») : on accepte le nom exact, ou une
+ * réponse qui COMMENCE par un nom connu (le plus long). Jamais une prestation absente de la liste.
+ */
+function matchService(raw: string, serviceNames: string[]): string {
+  const answer = comparableName(raw)
+  if (!answer) return ''
+  const candidates = serviceNames
+    .map((name) => ({ name: name.trim(), key: comparableName(name) }))
+    .filter((service) => service.key.length > 0)
+    .sort((a, b) => b.key.length - a.key.length)
+  const exact = candidates.find((service) => service.key === answer)
+  if (exact) return exact.name
+  const prefix = candidates.find((service) => answer.startsWith(service.key) && /^[\s:,.(—–-]/.test(answer.slice(service.key.length)))
+  return prefix?.name ?? ''
+}
+
 /**
  * Filtre la réponse de l'IA (ou un brouillon renvoyé par le navigateur) : seuls les événements du
  * catalogue, les prestations de l'utilisateur et des points entiers dans les bornes passent.
  */
 export function sanitizeRecommendedEvents(raw: unknown, serviceNames: string[]): RecommendedEvent[] {
   const items = Array.isArray(raw) ? raw : []
-  const services = new Map(serviceNames.map((name) => [name.trim().toLowerCase(), name.trim()]))
   const seen = new Set<string>()
   const events: RecommendedEvent[] = []
   for (const item of items) {
@@ -332,7 +354,7 @@ export function sanitizeRecommendedEvents(raw: unknown, serviceNames: string[]):
     if (!opportunityEvent(key) || seen.has(key)) continue
     const why = cleanText(value.why, 240)
     if (!why) continue
-    const service = services.get(cleanText(value.service, 80).toLowerCase()) ?? ''
+    const service = matchService(cleanText(value.service, 300), serviceNames)
     const number = typeof value.weight === 'number' && Number.isFinite(value.weight) ? value.weight : 0
     const weight = Math.min(MAX_RECOMMENDED_WEIGHT, Math.max(0, Math.round(number / 5) * 5))
     seen.add(key)

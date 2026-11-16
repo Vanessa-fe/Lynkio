@@ -48,6 +48,18 @@ test('l’IA ne peut pas inventer d’événement, de prestation ni de points ho
   ])
 })
 
+test('prestation reconnue malgré une autre apostrophe ou la description recopiée, jamais inventée', () => {
+  const services = ['Conseil RH', 'Création d\'identité visuelle', 'Conseil']
+  const service = (value: string) =>
+    sanitizeRecommendedEvents([{ event: 'expansion', service: value, why: 'r', weight: 10 }], services)[0]?.service
+  assert.equal(service('Création d’identité visuelle'), 'Création d\'identité visuelle')
+  assert.equal(service('Conseil RH : organisation RH pour PME'), 'Conseil RH')
+  assert.equal(service('conseil rh'), 'Conseil RH')
+  assert.equal(service('Conseil'), 'Conseil')
+  assert.equal(service('Conseiller en image'), '')
+  assert.equal(service('Coaching'), '')
+})
+
 test(`au plus ${MAX_RECOMMENDED_EVENTS} événements`, () => {
   const many = OPPORTUNITY_EVENTS.map((event) => ({ event: event.key, service: '', why: 'raison', weight: 10 }))
   assert.equal(sanitizeRecommendedEvents(many, []).length, MAX_RECOMMENDED_EVENTS)
