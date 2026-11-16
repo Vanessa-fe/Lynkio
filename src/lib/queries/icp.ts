@@ -2,20 +2,38 @@ import { createClient } from '@/lib/supabase/server'
 import type { IcpProfile } from '@/types'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { signalAvailability, type SignalAvailability } from '@/lib/constants/signals'
-import { capabilityForSignal } from '../../../supabase/functions/_shared/signal-capabilities'
+import { readOffer } from '@/lib/validations/offer'
+import {
+  capabilityForSignal,
+  opportunityEvent,
+  readSignalRecommendation,
+  servicesFingerprint,
+} from '../../../supabase/functions/_shared/signal-capabilities'
 
 export type SignalWeightOption = {
   key: string
   label: string
   description: string | null
-  // Poids par défaut du métier (0 si le signal ne sert pas à ce métier)
+  // Points recommandés : ceux de Sophie s'il y a une recommandation, sinon ceux du métier (0 sinon)
   defaultWeight: number
-  // Signal utile pour le métier de l'utilisateur
-  isProfessionSignal: boolean
+  // Signal mis en avant : recommandé par Sophie, ou utile au métier en l'absence de recommandation
+  isSuggested: boolean
+  // Pourquoi Sophie le recommande, et pour quelle prestation
+  recommendation: { why: string; service: string } | null
   // Détecté aujourd'hui, ou pas encore (les signaux retirés ne sont pas chargés)
   availability: SignalAvailability
   // Comment Sophie le repère (registre des capacités), null s'il n'est pas détectable
   detection: string | null
+}
+
+/** Recommandation de Sophie telle que l'écran la montre */
+export type RecommendationView = {
+  generatedAt: string
+  summary: string
+  pitch: string
+  // Les prestations ont changé depuis : proposer une nouvelle recommandation
+  isStale: boolean
+  events: { key: string; label: string; service: string; why: string; weight: number; detectable: boolean }[]
 }
 
 /**
@@ -28,6 +46,9 @@ export async function getIcpSettings(): Promise<{
   professionKey: string | null
   // Mots-clés de recherche proposés pour le métier
   suggestedKeywords: string[]
+  recommendation: RecommendationView | null
+  // Noms des prestations (Mon offre)
+  services: string[]
 } | null> {
   const supabase = await createClient()
 
@@ -70,18 +91,56 @@ export async function getIcpSettings(): Promise<{
     : [{ data: [] }, { data: null }]
 
   const defaults = new Map((professionSignals ?? []).map((row) => [row.signal_type, row.default_weight]))
+  const recommendation = readSignalRecommendation(icp.signal_recommendations)
+  const services = readOffer(icp.criteria).services
+
+  // Signal → événement recommandé qui le détecte (raison et prestation)
+  const recommendedBySignal = new Map(
+    (recommendation?.events ?? []).flatMap((event) => {
+      const signal = opportunityEvent(event.event)?.signal
+      return signal ? [[signal, event] as const] : []
+    })
+  )
 
   const signals = (signalTypes ?? [])
-    .map((type) => ({
-      key: type.key,
-      label: type.label,
-      description: type.description,
-      defaultWeight: defaults.get(type.key) ?? 0,
-      isProfessionSignal: defaults.has(type.key),
-      ...detectability(type.key, type.availability),
-    }))
-    // Les signaux du métier d'abord, les plus importants en haut
-    .sort((a, b) => Number(b.isProfessionSignal) - Number(a.isProfessionSignal) || b.defaultWeight - a.defaultWeight)
+    .map((type) => {
+      const recommended = recommendedBySignal.get(type.key)
+      const defaultWeight = recommendation
+        ? (recommendation.weights[type.key] ?? 0)
+        : (defaults.get(type.key) ?? 0)
+      return {
+        key: type.key,
+        label: type.label,
+        description: type.description,
+        defaultWeight,
+        isSuggested: recommendation ? defaultWeight > 0 : defaults.has(type.key),
+        recommendation: recommended ? { why: recommended.why, service: recommended.service } : null,
+        ...detectability(type.key, type.availability),
+      }
+    })
+    // Les signaux mis en avant d'abord, les plus importants en haut
+    .sort((a, b) => Number(b.isSuggested) - Number(a.isSuggested) || b.defaultWeight - a.defaultWeight)
+
+  const recommendationView: RecommendationView | null = recommendation
+    ? {
+        generatedAt: recommendation.generatedAt,
+        summary: recommendation.summary,
+        pitch: recommendation.pitch,
+        isStale: recommendation.servicesFingerprint !== servicesFingerprint(services, recommendation.pitch),
+        events: recommendation.events.map((event) => {
+          const definition = opportunityEvent(event.event)
+          const signal = definition?.signal ?? null
+          return {
+            key: event.event,
+            label: definition?.label ?? event.event,
+            service: event.service,
+            why: event.why,
+            weight: event.weight,
+            detectable: !!signal && signals.some((option) => option.key === signal && option.availability === 'available'),
+          }
+        }),
+      }
+    : null
 
   return {
     icp,
@@ -89,6 +148,8 @@ export async function getIcpSettings(): Promise<{
     companiesCount: count ?? 0,
     professionKey,
     suggestedKeywords: profession?.suggested_keywords ?? [],
+    recommendation: recommendationView,
+    services: services.map((service) => service.name),
   }
 }
 

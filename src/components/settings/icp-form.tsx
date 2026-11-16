@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { RotateCcw, X } from 'lucide-react'
+import { RotateCcw, Sparkles, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,7 +28,8 @@ import { saveIcp } from '@/lib/actions/icp'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { IcpProfile } from '@/types'
-import type { SignalWeightOption } from '@/lib/queries/icp'
+import type { RecommendationView, SignalWeightOption } from '@/lib/queries/icp'
+import { SignalAdvisorDialog } from '@/components/settings/signal-advisor-dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   SIGNAL_STATE_LABELS,
@@ -51,6 +52,11 @@ interface IcpFormProps {
   companiesCount: number
   professionKey: string | null
   suggestedKeywords: string[]
+  /** Dernière recommandation de Sophie appliquée */
+  recommendation: RecommendationView | null
+  /** Noms des prestations (Mon offre) */
+  services: string[]
+  hasAiKey: boolean
 }
 
 function toFormValues(icp: IcpProfile, signals: SignalWeightOption[]): IcpInput {
@@ -81,12 +87,16 @@ export function IcpForm({
   companiesCount,
   professionKey,
   suggestedKeywords,
+  recommendation,
+  services,
+  hasAiKey,
   maxKeywords = MAX_SEARCH_KEYWORDS,
 }: IcpFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
   const [keywordDraft, setKeywordDraft] = useState('')
+  const [advisorOpen, setAdvisorOpen] = useState(false)
 
   const {
     control,
@@ -104,10 +114,22 @@ export function IcpForm({
   const searchKeywords = useWatch({ control, name: 'searchKeywords' }) ?? []
   const isWebDeveloper = professionKey === 'web_developer'
   const {
-    profession: professionSignals,
+    suggested: suggestedSignals,
     other: otherSignals,
     unavailable: unavailableSignals,
   } = groupSignalsForSettings(signals)
+  // Pistes de Sophie qui demandent une recherche sur Internet (pas encore de points)
+  const deepEvents = (recommendation?.events ?? []).filter((event) => !event.detectable)
+  const signalWeights = useWatch({ control, name: 'signalWeights' }) ?? {}
+  const detectableSignals = signals.filter((signal) => signal.availability === 'available')
+  const hasCustomWeights = detectableSignals.some(
+    (signal) => typeof signalWeights[signal.key] === 'number' && signalWeights[signal.key] !== signal.defaultWeight
+  )
+  const restoreRecommended = () => {
+    for (const signal of detectableSignals) {
+      setValue(`signalWeights.${signal.key}`, signal.defaultWeight, { shouldDirty: true })
+    }
+  }
 
   const addKeyword = () => {
     const keyword = keywordDraft.trim().toLowerCase()
@@ -157,7 +179,16 @@ export function IcpForm({
                 <Label htmlFor={`weight-${signal.key}`}>{signal.label}</Label>
                 <SignalStateBadge state={state} />
               </div>
-              {signal.description && <p className="text-sm text-muted-foreground">{signal.description}</p>}
+              {signal.recommendation ? (
+                <p className="text-sm text-muted-foreground">
+                  {signal.recommendation.why}
+                  {signal.recommendation.service && (
+                    <span className="block text-xs mt-0.5">Prestation : {signal.recommendation.service}</span>
+                  )}
+                </p>
+              ) : (
+                signal.description && <p className="text-sm text-muted-foreground">{signal.description}</p>
+              )}
               {signal.detection && (
                 <p className="text-xs text-muted-foreground mt-1">Détection : {signal.detection}</p>
               )}
@@ -183,8 +214,8 @@ export function IcpForm({
                 className={cn('h-8 w-8 p-0', isDefault && 'invisible')}
                 onClick={() => field.onChange(signal.defaultWeight)}
                 disabled={isSaving || isDefault}
-                aria-label={`Revenir à la valeur par défaut (${signal.defaultWeight} points)`}
-                title={`Valeur par défaut : ${signal.defaultWeight} points`}
+                aria-label={`Revenir à la valeur recommandée (${signal.defaultWeight} points)`}
+                title={`Valeur recommandée : ${signal.defaultWeight} points`}
               >
                 <RotateCcw className="w-4 h-4" />
               </Button>
@@ -286,27 +317,93 @@ export function IcpForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Signaux d&apos;opportunité</CardTitle>
-          <CardDescription>
-            Les événements que Sophie sait repérer aujourd&apos;hui, et les points qu&apos;ils apportent tant
-            qu&apos;ils sont valides. À 0 point, un signal est inactif. Plusieurs signaux du même type : +5 par signal
-            supplémentaire, 10 au plus.
-          </CardDescription>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1.5">
+              <CardTitle>Signaux d&apos;opportunité</CardTitle>
+              <CardDescription>
+                Les événements que Sophie sait repérer aujourd&apos;hui, et les points qu&apos;ils apportent tant
+                qu&apos;ils sont valides. À 0 point, un signal est inactif. Plusieurs signaux du même type : +5 par
+                signal supplémentaire, 10 au plus.
+              </CardDescription>
+            </div>
+            <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setAdvisorOpen(true)}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              {recommendation ? 'Redemander à Sophie' : 'Demander à Sophie'}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {professionSignals.length > 0 ? (
-            <div className="divide-y">{professionSignals.map(renderSignal)}</div>
+          {recommendation ? (
+            <div className="rounded-lg bg-muted px-3 py-2 text-sm">
+              <p>
+                <span className="font-medium">Choisis par Sophie</span> le{' '}
+                {new Date(recommendation.generatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                {recommendation.summary && ` : ${recommendation.summary}`}
+              </p>
+              {recommendation.isStale && (
+                <p className="mt-1 text-amber-700 dark:text-amber-400">
+                  Vos prestations ont changé depuis : redemandez à Sophie pour mettre vos signaux à jour.
+                </p>
+              )}
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Aucun signal détectable n&apos;est encore prévu pour votre métier : vous pouvez en activer un parmi les
-              autres signaux.
+              Sophie peut choisir vos signaux à partir de vos prestations : elle explique pourquoi chacun peut créer un
+              besoin chez vos clients. Sans cela, les points par défaut de votre métier s&apos;appliquent.
             </p>
           )}
+
+          <section className="space-y-2" aria-labelledby="signals-suggested">
+            <h3 id="signals-suggested" className="text-sm font-semibold">
+              {recommendation ? 'Personnalisés par Sophie' : 'Signaux de votre métier'}
+            </h3>
+            {suggestedSignals.length > 0 ? (
+              <div className="divide-y">{suggestedSignals.map(renderSignal)}</div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {recommendation
+                  ? 'Aucun des signaux repérés automatiquement ne correspond à vos prestations pour l’instant : vos pistes sont dans l’analyse approfondie.'
+                  : 'Aucun signal détectable n’est prévu pour votre métier : vous pouvez en activer un ci-dessous.'}
+              </p>
+            )}
+          </section>
+
+          {deepEvents.length > 0 && (
+            <section className="space-y-2 rounded-lg border p-4" aria-labelledby="signals-deep">
+              <h3 id="signals-deep" className="text-sm font-semibold">
+                Avec une analyse approfondie ({deepEvents.length})
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Ces événements se trouvent sur Internet (presse, annonces de l&apos;entreprise). Sophie les cherchera
+                sur une fiche quand vous le demanderez, avec « Approfondir avec Sophie » (bientôt disponible) : ils ne
+                rapportent pas de points pour l&apos;instant.
+              </p>
+              <ul className="divide-y">
+                {deepEvents.map((event) => (
+                  <li key={event.key} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium">{event.label}</span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        Bientôt
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{event.why}</p>
+                    {event.service && <p className="text-xs text-muted-foreground mt-0.5">Prestation : {event.service}</p>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {otherSignals.length > 0 && (
             <details className="rounded-lg border p-4">
-              <summary className="cursor-pointer font-medium">Autres signaux détectables ({otherSignals.length})</summary>
+              <summary className="cursor-pointer font-medium">
+                Autres signaux repérés automatiquement ({otherSignals.length})
+              </summary>
               <p className="text-sm text-muted-foreground mt-2 mb-3">
-                Sans points par défaut pour votre métier : activez-les s&apos;ils comptent pour vos prestations.
+                {recommendation
+                  ? 'Sophie ne les a pas retenus pour vos prestations : activez-les si vous pensez qu’ils comptent.'
+                  : 'Sans points par défaut pour votre métier : activez-les s’ils comptent pour vos prestations.'}
               </p>
               <div className="divide-y">{otherSignals.map(renderSignal)}</div>
             </details>
@@ -336,8 +433,22 @@ export function IcpForm({
           {errors.signalWeights && (
             <p className="text-sm text-destructive">Vérifiez les points : entre 0 et {MAX_SIGNAL_WEIGHT}.</p>
           )}
+          {hasCustomWeights && (
+            <Button type="button" variant="ghost" size="sm" onClick={restoreRecommended} disabled={isSaving}>
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Restaurer les valeurs recommandées
+            </Button>
+          )}
         </CardContent>
       </Card>
+
+      <SignalAdvisorDialog
+        open={advisorOpen}
+        onOpenChange={setAdvisorOpen}
+        hasAiKey={hasAiKey}
+        services={services}
+        initialPitch={recommendation?.pitch ?? ''}
+      />
 
       <Card>
         <CardHeader>

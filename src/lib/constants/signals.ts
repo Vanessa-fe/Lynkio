@@ -67,19 +67,20 @@ export function signalState(availability: SignalAvailability, weight: number): S
   return weight > 0 ? 'active' : 'inactive'
 }
 
-type GroupableSignal = { availability: SignalAvailability; isProfessionSignal: boolean }
+type GroupableSignal = { availability: SignalAvailability; isSuggested: boolean }
 
 /**
- * Répartition des signaux dans les réglages : ceux du métier, les autres détectables (repliés),
+ * Répartition des signaux dans les réglages : ceux mis en avant (recommandés par Sophie, ou du métier
+ * sans recommandation), les autres détectables (repliés),
  * et ceux qui ne sont pas encore détectables (repliés, sans curseur). Les signaux retirés disparaissent.
  */
 export function groupSignalsForSettings<T extends GroupableSignal>(
   signals: T[]
-): { profession: T[]; other: T[]; unavailable: T[] } {
+): { suggested: T[]; other: T[]; unavailable: T[] } {
   const detectable = signals.filter((signal) => signal.availability === 'available')
   return {
-    profession: detectable.filter((signal) => signal.isProfessionSignal),
-    other: detectable.filter((signal) => !signal.isProfessionSignal),
+    suggested: detectable.filter((signal) => signal.isSuggested),
+    other: detectable.filter((signal) => !signal.isSuggested),
     unavailable: signals.filter((signal) => signal.availability === 'unavailable'),
   }
 }
