@@ -13,7 +13,7 @@ et les range dans un pipeline. Premier métier pris en charge : développeuse we
 - **Styling** : Tailwind CSS 3, composants shadcn/ui, icônes Lucide
 - **Base de données et authentification** : Supabase (PostgreSQL, RLS, pg_cron, Edge Functions)
 - **Formulaires** : React Hook Form + Zod
-- **Sources de données** : France Travail (offres d'emploi), BODACC et API Recherche d'entreprises,
+- **Sources de données** : BODACC et API Recherche d'entreprises,
   Hunter.io (contacts)
 
 ## Prérequis
@@ -38,12 +38,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 HUNTER_API_KEY=
-FRANCE_TRAVAIL_CLIENT_ID=
-FRANCE_TRAVAIL_CLIENT_SECRET=
 ```
-
-Les clés France Travail servent aussi à la fonction `prospection-run` : elles se déclarent dans les
-secrets Supabase (`npx supabase@latest secrets set ...`).
 
 ## Base de données
 

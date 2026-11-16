@@ -11,7 +11,6 @@ import {
   type SourceKey,
   type SourceStats,
 } from './context.ts'
-import { detectJobPostings } from './detect-job-postings.ts'
 import { detectRecentCreations } from './detect-recent-creations.ts'
 import { detectTechUsers } from './detect-tech-users.ts'
 import { detectProfileMatches } from './detect-profile.ts'
@@ -33,7 +32,8 @@ const DETECTORS: {
     budget: Budget
   ) => Promise<{ stats: SourceStats; cursor: string | null }>
 }[] = [
-  { key: 'job_postings', cursorColumn: 'job_postings_cursor', detect: detectJobPostings },
+  // Les offres d'emploi France Travail (job_postings) ne sont plus utilisées depuis le 13/11/2026 :
+  // leur détecteur a été retiré (00065) ; la clé reste connue pour lire l'historique des passages.
   // Recherches enregistrées (curseur dans chaque recherche) : rien à faire si l'utilisateur n'en a pas
   { key: 'profile_search', cursorColumn: null, detect: detectProfileMatches },
   { key: 'recent_creations', cursorColumn: 'bodacc_cursor', detect: detectRecentCreations },

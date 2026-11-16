@@ -246,7 +246,7 @@ export function CompanyDetail({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="w-5 h-5 text-amber-500" />
-                  Signaux d&apos;achat
+                  Signaux d&apos;opportunité
                 </CardTitle>
                 <CardDescription>
                   Ce qui laisse penser que cette entreprise a un besoin en ce moment. Chaque signal dit s’il s’agit d’un fait

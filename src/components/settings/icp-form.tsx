@@ -31,6 +31,13 @@ import type { IcpProfile } from '@/types'
 import type { SignalWeightOption } from '@/lib/queries/icp'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
+  SIGNAL_STATE_LABELS,
+  SIGNAL_STATE_TONES,
+  groupSignalsForSettings,
+  signalState,
+  type SignalState,
+} from '@/lib/constants/signals'
+import {
   DETECTABLE_TECHNOLOGIES,
   TECHNOLOGY_LABELS,
   type DetectableTechnology,
@@ -96,8 +103,11 @@ export function IcpForm({
   const keywords = useWatch({ control, name: 'excludeKeywords' }) ?? []
   const searchKeywords = useWatch({ control, name: 'searchKeywords' }) ?? []
   const isWebDeveloper = professionKey === 'web_developer'
-  const professionSignals = signals.filter((signal) => signal.isProfessionSignal)
-  const otherSignals = signals.filter((signal) => !signal.isProfessionSignal)
+  const {
+    profession: professionSignals,
+    other: otherSignals,
+    unavailable: unavailableSignals,
+  } = groupSignalsForSettings(signals)
 
   const addKeyword = () => {
     const keyword = keywordDraft.trim().toLowerCase()
@@ -138,11 +148,15 @@ export function IcpForm({
       render={({ field }) => {
         const value = typeof field.value === 'number' ? field.value : signal.defaultWeight
         const isDefault = value === signal.defaultWeight
+        const state = signalState(signal.availability, value)
 
         return (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-2 lg:gap-6 py-3 first:pt-0 last:pb-0">
             <div className="min-w-0">
-              <Label htmlFor={`weight-${signal.key}`}>{signal.label}</Label>
+              <div className="flex flex-wrap items-center gap-2">
+                <Label htmlFor={`weight-${signal.key}`}>{signal.label}</Label>
+                <SignalStateBadge state={state} />
+              </div>
               {signal.description && <p className="text-sm text-muted-foreground">{signal.description}</p>}
             </div>
             <div className="flex items-center gap-3">
@@ -269,21 +283,51 @@ export function IcpForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Signaux d&apos;achat</CardTitle>
+          <CardTitle>Signaux d&apos;opportunité</CardTitle>
           <CardDescription>
-            Les points qu&apos;apporte chaque signal encore valide. Plusieurs signaux du même type : +5 par signal
+            Les événements que Sophie sait repérer aujourd&apos;hui, et les points qu&apos;ils apportent tant
+            qu&apos;ils sont valides. À 0 point, un signal est inactif. Plusieurs signaux du même type : +5 par signal
             supplémentaire, 10 au plus.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="divide-y">{professionSignals.map(renderSignal)}</div>
+          {professionSignals.length > 0 ? (
+            <div className="divide-y">{professionSignals.map(renderSignal)}</div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Aucun signal détectable n&apos;est encore prévu pour votre métier : vous pouvez en activer un parmi les
+              autres signaux.
+            </p>
+          )}
           {otherSignals.length > 0 && (
             <details className="rounded-lg border p-4">
-              <summary className="cursor-pointer font-medium">Autres signaux ({otherSignals.length})</summary>
+              <summary className="cursor-pointer font-medium">Autres signaux détectables ({otherSignals.length})</summary>
               <p className="text-sm text-muted-foreground mt-2 mb-3">
-                Prévus pour d&apos;autres métiers : sans points par défaut pour le vôtre.
+                Sans points par défaut pour votre métier : activez-les s&apos;ils comptent pour vos prestations.
               </p>
               <div className="divide-y">{otherSignals.map(renderSignal)}</div>
+            </details>
+          )}
+          {unavailableSignals.length > 0 && (
+            <details className="rounded-lg border p-4">
+              <summary className="cursor-pointer font-medium">
+                Pas encore détectables ({unavailableSignals.length})
+              </summary>
+              <p className="text-sm text-muted-foreground mt-2 mb-3">
+                Aucune source fiable ne permet encore à Sophie de les repérer : ils ne rapportent aucun point pour
+                l&apos;instant.
+              </p>
+              <ul className="divide-y">
+                {unavailableSignals.map((signal) => (
+                  <li key={signal.key} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium">{signal.label}</span>
+                      <SignalStateBadge state="unavailable" />
+                    </div>
+                    {signal.description && <p className="text-sm text-muted-foreground">{signal.description}</p>}
+                  </li>
+                ))}
+              </ul>
             </details>
           )}
           {errors.signalWeights && (
@@ -460,5 +504,13 @@ export function IcpForm({
         </p>
       </div>
     </form>
+  )
+}
+
+function SignalStateBadge({ state }: { state: SignalState }) {
+  return (
+    <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', SIGNAL_STATE_TONES[state])}>
+      {SIGNAL_STATE_LABELS[state]}
+    </span>
   )
 }

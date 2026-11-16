@@ -152,7 +152,7 @@ export function CompanyWhyCard({
         </section>
 
         <section className="space-y-1">
-          <h3 className="font-medium">Signaux d’achat</h3>
+          <h3 className="font-medium">Signaux d’opportunité</h3>
           <p className="text-muted-foreground">
             {signalCount === 0
               ? 'Aucun signal observé pour l’instant : Sophie ne sait pas si cette entreprise a un besoin en ce moment. Elle correspond seulement à votre profil de client.'

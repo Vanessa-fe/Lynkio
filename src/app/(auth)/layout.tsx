@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 const promises = [
-  'Des entreprises repérées sur des signaux d’achat',
+  'Des entreprises repérées sur des signaux d’opportunité',
   'Un score sur 100 selon votre client idéal',
   'Un premier message prêt à relire',
 ]

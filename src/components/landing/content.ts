@@ -252,7 +252,7 @@ export const faq = [
   {
     question: 'Qu’est-ce que Filonea ?',
     answer:
-      'Filonea est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui montrent un besoin (une offre d’emploi, une mission, un profil proche de votre client idéal), les note sur 100 et prépare un premier message. Filonea suit ensuite vos échanges et vos relances, jusqu’au client signé.',
+      'Filonea est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui correspondent à votre client idéal, avec leurs signaux d’opportunité (une création récente, un site fait avec un outil que vous maîtrisez), les note sur 100 et prépare un premier message. Filonea suit ensuite vos échanges et vos relances, jusqu’au client signé.',
   },
   {
     question: 'À quels freelances s’adresse Filonea ?',
@@ -260,7 +260,7 @@ export const faq = [
       'Aux freelances qui vendent leurs services aux entreprises : tech et IT (développement, DevOps, data, IA…), design et graphisme, rédaction et SEO, marketing et communication, vidéo et photo, assistanat… Vous choisissez votre métier ; Sophie vous suggère les secteurs de clients et de partenaires qui vont avec, et vous gardez la main sur chaque recherche. Un métier absent de la liste ? Choisissez « Autre métier » : tous les secteurs restent disponibles.',
   },
   {
-    question: 'Qu’est-ce qu’un signal d’achat ?',
+    question: 'Qu’est-ce qu’un signal d’opportunité ?',
     answer:
       'C’est un fait public qui laisse penser qu’une entreprise pourrait avoir besoin de vous : une société tout juste créée, ou un site fait avec un outil que vous maîtrisez. Sans signal, Sophie le dit clairement : l’entreprise correspond seulement à votre client idéal.',
   },

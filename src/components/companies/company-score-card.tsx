@@ -16,7 +16,7 @@ type ScoreReason = {
 
 const GROUPS = [
   { key: 'fit', label: 'Adéquation à votre recherche', max: 50 },
-  { key: 'signals', label: 'Signaux d’achat', max: 35 },
+  { key: 'signals', label: 'Signaux d’opportunité', max: 35 },
   { key: 'freshness', label: 'Fraîcheur', max: 10 },
   { key: 'reach', label: 'Joignabilité', max: 5 },
 ] as const
@@ -123,7 +123,7 @@ export function CompanyScoreCard({ qualification }: { qualification: CompanyQual
           <p className="text-sm text-destructive">Écartée : {qualification.elimination_reason}</p>
         ) : reasons.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Aucun critère ne rapporte de points pour l&apos;instant : pas de signal d&apos;achat, taille et
+            Aucun critère ne rapporte de points pour l&apos;instant : pas de signal d&apos;opportunité, taille et
             contacts inconnus.
           </p>
         ) : reasons.some((reason) => reason.group) ? (
