@@ -18,6 +18,7 @@ import { loadAiAccess } from '../_shared/ai.ts'
 import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
 import { checkDraft } from './checks.ts'
 import { fetchSiteText } from './site-text.ts'
+import { opportunityEvent, readSignalRecommendation } from '../_shared/signal-capabilities.ts'
 import { UserFacingError, writeDraft, type Channel, type SignalForMessage, type Tone } from './writer.ts'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -65,6 +66,15 @@ function corsHeaders(origin: string | null): Record<string, string> {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin',
   }
+}
+
+function signalLead(
+  evidence: Record<string, unknown>,
+  advice: { why: string; service: string } | undefined
+): { lead: string | null; service: string | null } {
+  const lead = typeof evidence.relevance === 'string' && evidence.relevance.trim() ? evidence.relevance.trim() : advice?.why
+  const service = typeof evidence.service === 'string' && evidence.service.trim() ? evidence.service.trim() : advice?.service
+  return { lead: lead ? lead.slice(0, 300) : null, service: service ? service.slice(0, 80) : null }
 }
 
 function signalDetails(evidence: Record<string, unknown>): string[] {
@@ -184,7 +194,7 @@ Deno.serve(async (request) => {
         .maybeSingle(),
       supabase
         .from('company_signals')
-        .select('id, evidence, detected_at, expires_at, source, event_at, type:signal_types(label, nature, reliability)')
+        .select('id, signal_type, evidence, detected_at, expires_at, source, source_url, event_at, type:signal_types(label, nature, reliability)')
         .eq('company_id', companyId)
         // Un signal écarté par l'utilisateur (« Ce signal est faux ») ne sert pas au message
         .is('invalidated_at', null)
@@ -205,7 +215,7 @@ Deno.serve(async (request) => {
         .maybeSingle(),
       supabase
         .from('icp_profiles')
-        .select('criteria')
+        .select('criteria, signal_recommendations')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .order('created_at')
@@ -241,8 +251,18 @@ Deno.serve(async (request) => {
     }
 
     const now = Date.now()
+    // Pistes de Sophie par type de signal (recommandation appliquée) : hypothèses, jamais des faits
+    const recommendation = readSignalRecommendation((icp.data as { signal_recommendations?: unknown } | null)?.signal_recommendations)
+    const advice = new Map(
+      (recommendation?.events ?? []).flatMap((event) => {
+        const signal = opportunityEvent(event.event)?.signal
+        return signal ? [[signal, event] as const] : []
+      })
+    )
     const active = (signals.data ?? [])
       .filter((signal) => !signal.expires_at || new Date(signal.expires_at).getTime() > now)
+      // Même règle que le score : un signal sans preuve (source officielle ou page) ne sert pas au message
+      .filter((signal) => signal.source === 'bodacc' || signal.source === 'registry' || !!signal.source_url)
       .slice(0, MAX_SIGNALS)
     const activeSignals: SignalForMessage[] = active.map((signal) => ({
       id: signal.id,
@@ -253,6 +273,8 @@ Deno.serve(async (request) => {
       // Fait constaté, hypothèse à vérifier ou besoin exprimé (catalogue des signaux, 00054)
       nature: (signal.type as { nature?: string } | null)?.nature ?? 'observed',
       reliability: (signal.type as { reliability?: string } | null)?.reliability ?? 'medium',
+      // Piste (hypothèse) et prestation : de l'analyse approfondie, sinon de la recommandation de Sophie
+      ...signalLead((signal.evidence ?? {}) as Record<string, unknown>, advice.get(signal.signal_type as string)),
     }))
 
     // Recherche qui a trouvé la fiche : client direct, ou partenaire qui sous-traite

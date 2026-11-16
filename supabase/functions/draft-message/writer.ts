@@ -22,6 +22,10 @@ export type SignalForMessage = {
   eventAt?: string | null
   // observed (fait constaté), hypothesis (déduit, à vérifier), explicit_need (besoin exprimé par l'entreprise)
   nature?: string
+  // Pourquoi ce fait PEUT créer un besoin pour la freelance : une hypothèse, jamais à affirmer
+  lead?: string | null
+  // Prestation à mettre en avant pour ce signal, quand elle est connue
+  service?: string | null
   // high (source officielle), medium (source publique), low (déduit automatiquement)
   reliability?: string
 }
@@ -144,7 +148,7 @@ const RULES = `Tu es Sophie, l'assistante de prospection d'une freelance. Tu ré
 
 Ce qui fait un bon premier message :
 - il part de l'entreprise, pas de la freelance : la première phrase parle d'un fait précis la concernant (le signal le plus parlant, ce que dit son offre d'emploi ou son site) ;
-- il fait le lien entre ce fait et un besoin probable, puis présente la freelance en une phrase, à partir de sa présentation ;
+- il fait le lien entre ce fait et un besoin POSSIBLE, sans jamais l'affirmer (« c'est souvent le moment où… », « si c'est un sujet pour vous… », jamais « vous avez besoin de »), puis présente la freelance en une phrase, à partir de sa présentation ;
 - dans un e-mail, il cite au plus une référence, seulement si elle est proche de l'activité ou du besoin de l'entreprise ; un message LinkedIn n'en cite aucune ;
 - il se termine par une question simple et facile à accepter (par exemple un court échange de 15 minutes), sans insister ;
 - il est écrit à la première personne, au nom de la freelance (« je »), jamais en parlant d'elle à la troisième personne ;
@@ -165,15 +169,14 @@ Adapte-toi à l'entreprise, d'après son segment :
 - startup ou éditeur de logiciel : propose un renfort sur son produit, pour avancer plus vite, en autonomie ;
 - segment inconnu : déduis-le de ce que tu sais, sans l'affirmer.
 
+Pour chaque signal, une « piste » peut être fournie : c'est l'hypothèse de la freelance sur le besoin que ce fait peut créer. Sers-t'en pour choisir l'angle, mais ne la présente jamais comme un fait sur l'entreprise. Si une « prestation à proposer » est indiquée, c'est celle-là que tu mets en avant.
+
 Selon le signal :
-- agence ou startup qui recrute un développeur : elle a plus de travail que d'équipe. Ne postule pas : propose un renfort freelance pendant qu'elle recrute, ou sur un projet précis ;
-- ESN qui recrute : c'est une société de services ou de conseil qui place des profils chez ses clients. Ne postule pas au poste salarié : présente la freelance comme disponible pour une mission chez l'un de ses clients (en régie) ou un renfort sur un projet, en une phrase sur ce qu'elle sait faire ;
-- offre d'emploi salariée (dont celles trouvées avec les mots-clés de la freelance) : ne postule pas. Propose une aide freelance sur un projet précis, en attendant le bon profil ;
-- mission ouverte aux freelances : réponds directement à la mission ;
-- post LinkedIn où la personne cherche un freelance, dont le texte est fourni : c'est une demande explicite, faite pour être contactée. Réponds directement à son besoin : tu peux dire que tu as vu son post, reprends un ou deux éléments concrets de sa demande (le projet, une technologie, la durée), dis en une phrase pourquoi la freelance correspond, et propose un échange court. Ne reprends ni tarif ni budget, même s'ils sont indiqués ;
-- offre d'emploi dont le texte est fourni : c'est ta meilleure matière. Reprends un ou deux éléments concrets qui montrent que la freelance l'a lue (le projet, le produit, le contexte de l'équipe, une technologie qu'elle connaît), avec tes mots mais sans rien y ajouter, et sans recopier de phrase. Ne parle ni du salaire, ni des avantages, ni du profil demandé (diplôme, années d'expérience) : elle ne postule pas. Ne lui prête jamais une compétence absente de ses technologies, de sa présentation et de ses références ;
+- événement annoncé publiquement (ouverture, lancement, nouvelle marque, levée de fonds, projet, développement, changement de logiciel, réorganisation, campagne) : cite-le simplement, comme un fait public, avec sa date si elle est donnée (« J'ai vu que vous avez ouvert… »). Ne reprends que ce que dit la source, sans rien ajouter ;
 - stack technique compatible : ne fais pas un cours sur la technologie. Dis simplement que son site est fait avec une technologie que la freelance connaît bien, ce qui lui permet de le faire évoluer sans repartir de zéro ;
-- entreprise créée récemment : elle a sans doute tout à construire.
+- site encore servi en HTTP : mentionne-le avec tact, sans alarmisme ni leçon, comme une amélioration simple et utile ;
+- entreprise créée récemment : elle a souvent beaucoup à mettre en place, sans que tu saches quoi : ne suppose aucun besoin précis ;
+- post LinkedIn où la personne cherche un freelance, dont le texte est fourni : c'est une demande explicite, faite pour être contactée. Réponds directement à son besoin, reprends un ou deux éléments concrets de sa demande, et propose un échange court. Ne reprends ni tarif ni budget.
 
 Règles absolues :
 - n'invente jamais rien : ni client, ni chiffre, ni résultat, ni référence, ni lien, ni fait sur l'entreprise. Utilise seulement les informations données ;
@@ -267,7 +270,7 @@ function contextPrompt(context: MessageContext): string {
       'Signaux repérés (du plus récent au plus ancien)',
       context.signals.map(
         (signal) =>
-          `- id ${signal.id} [${NATURE_LABELS[signal.nature ?? 'observed'] ?? 'fait constaté'}, ${RELIABILITY_LABELS[signal.reliability ?? 'medium'] ?? 'source publique'}] : ${signal.label}${signal.details.length > 0 ? ` (${signal.details.join(' ; ')})` : ''}${signal.eventAt ? `, événement du ${signal.eventAt.slice(0, 10)}` : ''}, repéré le ${signal.detectedAt.slice(0, 10)}`
+          `- id ${signal.id} [${NATURE_LABELS[signal.nature ?? 'observed'] ?? 'fait constaté'}, ${RELIABILITY_LABELS[signal.reliability ?? 'medium'] ?? 'source publique'}] : ${signal.label}${signal.details.length > 0 ? ` (${signal.details.join(' ; ')})` : ''}${signal.eventAt ? `, événement du ${signal.eventAt.slice(0, 10)}` : ''}, repéré le ${signal.detectedAt.slice(0, 10)}${signal.lead ? `. Piste (hypothèse de la freelance, à ne jamais affirmer) : ${signal.lead}` : ''}${signal.service ? `. Prestation à proposer : ${signal.service}` : ''}`
       )
     ),
     section(
