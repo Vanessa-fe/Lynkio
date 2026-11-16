@@ -24,7 +24,7 @@ import {
   getReminderUrgency,
   isReminderOverdue,
 } from '@/lib/validations/reminder'
-import { Clock, Building2, Trash2, AlertCircle } from 'lucide-react'
+import { ArrowRight, Clock, Building2, Trash2, AlertCircle } from 'lucide-react'
 import { ReminderFormDialog } from './reminder-form-dialog'
 import { formatDate } from '@/lib/utils/dates'
 
@@ -34,6 +34,8 @@ interface RemindersListProps {
   companyId?: string
   // Entreprises proposées à la création d'une relance (page Relances)
   companies?: { id: string; name: string }[]
+  // Bouton « Nouvelle relance » déjà affiché ailleurs sur la page (en-tête de la page Relances)
+  hideCreate?: boolean
 }
 
 export function RemindersList({
@@ -41,6 +43,7 @@ export function RemindersList({
   totalCount,
   companyId,
   companies,
+  hideCreate = false,
 }: RemindersListProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -161,10 +164,12 @@ export function RemindersList({
             </SelectContent>
           </Select>
 
-          <ReminderFormDialog
-            companyId={companyId}
-            companies={companies}
-          />
+          {!hideCreate && (
+            <ReminderFormDialog
+              companyId={companyId}
+              companies={companies}
+            />
+          )}
         </div>
       </div>
 
@@ -259,11 +264,21 @@ export function RemindersList({
 
                             {/* Actions */}
                             <div className="flex gap-2 mt-3">
+                              {/* Depuis la page Relances : aller préparer le message sur la fiche */}
+                              {reminder.company && !companyId && !isCompleted && (
+                                <Button variant="outline" size="sm" asChild className="group">
+                                  <Link href={`/companies/${reminder.company.id}`}>
+                                    Préparer
+                                    <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5" />
+                                  </Link>
+                                </Button>
+                              )}
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDelete(reminder.id, reminder.title)}
                                 disabled={deletingId === reminder.id}
+                                aria-label={`Supprimer la relance ${reminder.title}`}
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
