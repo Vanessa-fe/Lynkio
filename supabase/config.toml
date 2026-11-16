@@ -155,6 +155,11 @@ verify_jwt = true
 [functions.signal-advisor]
 verify_jwt = true
 
+# « Approfondir avec Sophie » : appelée depuis la fiche avec le jeton de l'utilisatrice ; la recherche
+# web de son IA tourne en arrière-plan et le résultat est écrit dans company_deep_analyses
+[functions.company-deep-dive]
+verify_jwt = true
+
 [functions.extension-connect]
 verify_jwt = true
 

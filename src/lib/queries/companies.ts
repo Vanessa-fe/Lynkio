@@ -9,6 +9,7 @@ import type {
   PipelineStage,
 } from '@/types'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { readDeepAnalysis, type DeepAnalysisView } from '@/lib/deep-analysis'
 
 const COMPANY_RELATIONS = `
   *,
@@ -241,4 +242,20 @@ export async function getPipelineUsage(): Promise<{
     if (company.source_id) usage.bySource[company.source_id] = (usage.bySource[company.source_id] ?? 0) + 1
   }
   return usage
+}
+
+/**
+ * Dernière analyse approfondie de la fiche (« Approfondir avec Sophie »), ou null
+ */
+export async function getLatestDeepAnalysis(companyId: string): Promise<DeepAnalysisView | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('company_deep_analyses')
+    .select('id, status, started_at, finished_at, error, signals_added, result')
+    .eq('company_id', companyId)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return null
+  return readDeepAnalysis(data)
 }

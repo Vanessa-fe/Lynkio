@@ -205,6 +205,27 @@ export const SIGNAL_CAPABILITIES: readonly SignalCapability[] = [
       'supabase/functions/prospection-run/detect-tech-users.ts',
     ],
   },
+  {
+    id: 'company_web_research',
+    label: 'Analyse approfondie d’une entreprise',
+    detectionLabel: 'Analyse approfondie : recherche sur Internet par votre IA, depuis la fiche',
+    family: 'web_research',
+    purpose: 'signal',
+    trigger: 'company_action',
+    inputs: ['company_name', 'siren', 'postal_code', 'website'],
+    method:
+      'Votre IA cherche sur Internet les annonces publiques de l’entreprise liées à vos prestations ; un résultat ne devient un signal que si sa page a vraiment été consultée, si sa date est connue et récente, et si l’identité de l’entreprise est vérifiée',
+    cost: { ai: 'web_search', network: 'ai_provider' },
+    reliability: 'medium',
+    source: 'ai_research',
+    evidence: 'consulted_url',
+    signals: ['new_establishment', 'product_launch', 'funding_round', 'rebranding', 'project_announced', 'expansion', 'digital_transformation', 'software_change', 'event_or_campaign', 'reorganisation'],
+    implementedIn: [
+      'supabase/functions/company-deep-dive/index.ts',
+      'supabase/functions/_shared/deep-dive.ts',
+      'supabase/migrations/00069_company_deep_analyses.sql',
+    ],
+  },
 ]
 
 /**
@@ -213,6 +234,16 @@ export const SIGNAL_CAPABILITIES: readonly SignalCapability[] = [
  */
 export const SIGNAL_TYPE_AVAILABILITY: Readonly<Record<string, 'available' | 'unavailable' | 'retired'>> = {
   recently_created: 'available',
+  new_establishment: 'available',
+  product_launch: 'available',
+  funding_round: 'available',
+  rebranding: 'available',
+  project_announced: 'available',
+  expansion: 'available',
+  digital_transformation: 'available',
+  software_change: 'available',
+  event_or_campaign: 'available',
+  reorganisation: 'available',
   tech_stack_match: 'available',
   website_http_observed: 'available',
   linkedin_post_request: 'unavailable',
@@ -220,7 +251,6 @@ export const SIGNAL_TYPE_AVAILABILITY: Readonly<Record<string, 'available' | 'un
   outdated_website: 'unavailable',
   slow_website: 'unavailable',
   inactive_blog: 'unavailable',
-  funding_round: 'unavailable',
   headcount_growth: 'unavailable',
   job_posting_dev: 'retired',
   job_posting_design: 'retired',
@@ -250,16 +280,16 @@ export function signalCapabilityIds(): string[] {
 // Événements d'opportunité (étape 3) : la liste FERMÉE dans laquelle Sophie choisit.
 //
 // Sophie raisonne : prestation → événement déclencheur → indice observable → capacité → signal.
-// Un événement est soit détectable aujourd'hui (il correspond à un signal créé par une capacité),
-// soit réservé à l'analyse approfondie (recherche web à la demande, étape 5) : il ne rapporte alors
-// aucun point tant que cette analyse n'existe pas.
+// Chaque événement correspond à un signal. Il est repéré soit automatiquement (registre, BODACC,
+// analyse du site), soit par l'analyse approfondie lancée depuis une fiche (company_web_research,
+// recherche web à la demande) : eventDetection le dit.
 
 export type OpportunityEvent = {
   key: string
   label: string
   /** Ce que Sophie doit comprendre de l'événement (envoyé à l'IA) */
   meaning: string
-  /** Signal qui le détecte aujourd'hui, ou null : seulement par une analyse approfondie */
+  /** Signal qui le détecte (null : aucun détecteur) */
   signal: string | null
 }
 
@@ -267,16 +297,16 @@ export const OPPORTUNITY_EVENTS: readonly OpportunityEvent[] = [
   { key: 'company_creation', label: 'Création récente de l’entreprise', meaning: 'société immatriculée il y a moins d’un an (annonce légale)', signal: 'recently_created' },
   { key: 'website_technology', label: 'Site fait avec une technologie que vous maîtrisez', meaning: 'technologie du site repérée dans son code', signal: 'tech_stack_match' },
   { key: 'website_not_secure', label: 'Site encore servi en HTTP', meaning: 'la page d’accueil répond sans HTTPS', signal: 'website_http_observed' },
-  { key: 'new_establishment', label: 'Ouverture d’un établissement', meaning: 'nouveau lieu, boutique, restaurant, agence ou site ouvert ou annoncé', signal: null },
-  { key: 'product_launch', label: 'Lancement d’un produit ou d’une offre', meaning: 'nouveau produit, nouvelle gamme, nouveau service ou nouvelle plateforme annoncés', signal: null },
-  { key: 'funding_round', label: 'Levée de fonds', meaning: 'financement annoncé publiquement', signal: null },
-  { key: 'rebranding', label: 'Nouvelle marque ou nouvelle identité', meaning: 'changement de nom, de logo ou d’identité visuelle annoncé', signal: null },
-  { key: 'project_announced', label: 'Nouveau projet annoncé', meaning: 'projet public précis : chantier, programme, partenariat, appel à projets remporté', signal: null },
-  { key: 'expansion', label: 'Développement annoncé', meaning: 'nouveaux marchés, export, croissance d’équipe annoncée publiquement', signal: null },
-  { key: 'digital_transformation', label: 'Transformation numérique annoncée', meaning: 'modernisation d’outils, de processus ou d’applications annoncée', signal: null },
-  { key: 'software_change', label: 'Changement de logiciel annoncé', meaning: 'déploiement ou remplacement d’un logiciel métier, d’un ERP ou d’un CRM annoncé', signal: null },
-  { key: 'event_or_campaign', label: 'Événement ou campagne annoncés', meaning: 'salon, événement ou campagne de communication annoncés', signal: null },
-  { key: 'reorganisation', label: 'Réorganisation ou déménagement annoncés', meaning: 'fusion, rachat, réorganisation, déménagement ou nouveaux locaux annoncés', signal: null },
+  { key: 'new_establishment', label: 'Ouverture d’un établissement', meaning: 'nouveau lieu, boutique, restaurant, agence ou site ouvert ou annoncé', signal: 'new_establishment' },
+  { key: 'product_launch', label: 'Lancement d’un produit ou d’une offre', meaning: 'nouveau produit, nouvelle gamme, nouveau service ou nouvelle plateforme annoncés', signal: 'product_launch' },
+  { key: 'funding_round', label: 'Levée de fonds', meaning: 'financement annoncé publiquement', signal: 'funding_round' },
+  { key: 'rebranding', label: 'Nouvelle marque ou nouvelle identité', meaning: 'changement de nom, de logo ou d’identité visuelle annoncé', signal: 'rebranding' },
+  { key: 'project_announced', label: 'Nouveau projet annoncé', meaning: 'projet public précis : chantier, programme, partenariat, appel à projets remporté', signal: 'project_announced' },
+  { key: 'expansion', label: 'Développement annoncé', meaning: 'nouveaux marchés, export, croissance d’équipe annoncée publiquement', signal: 'expansion' },
+  { key: 'digital_transformation', label: 'Transformation numérique annoncée', meaning: 'modernisation d’outils, de processus ou d’applications annoncée', signal: 'digital_transformation' },
+  { key: 'software_change', label: 'Changement de logiciel annoncé', meaning: 'déploiement ou remplacement d’un logiciel métier, d’un ERP ou d’un CRM annoncé', signal: 'software_change' },
+  { key: 'event_or_campaign', label: 'Événement ou campagne annoncés', meaning: 'salon, événement ou campagne de communication annoncés', signal: 'event_or_campaign' },
+  { key: 'reorganisation', label: 'Réorganisation ou déménagement annoncés', meaning: 'fusion, rachat, réorganisation, déménagement ou nouveaux locaux annoncés', signal: 'reorganisation' },
 ]
 
 /** Au plus autant d'événements recommandés : l'écran reste simple */
@@ -312,6 +342,21 @@ export function opportunityEvent(key: string): OpportunityEvent | undefined {
   return OPPORTUNITY_EVENTS.find((event) => event.key === key)
 }
 
+/** Capacité de l'analyse approfondie (recherche web sur une entreprise, à la demande) */
+export const DEEP_RESEARCH_CAPABILITY = 'company_web_research'
+
+/** Comment un signal est repéré : automatiquement, par l'analyse approfondie, ou pas du tout */
+export function signalDetection(signalType: string): 'automatic' | 'deep' | null {
+  const capability = capabilityForSignal(signalType)
+  if (!capability) return null
+  return capability.id === DEEP_RESEARCH_CAPABILITY ? 'deep' : 'automatic'
+}
+
+/** Événements que seule l'analyse approfondie peut repérer */
+export function deepResearchEvents(): OpportunityEvent[] {
+  return OPPORTUNITY_EVENTS.filter((event) => !!event.signal && signalDetection(event.signal) === 'deep')
+}
+
 function cleanText(value: unknown, max: number): string {
   return typeof value === 'string' ? value.replace(/[<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : ''
 }
@@ -326,7 +371,7 @@ function comparableName(value: string): string {
  * ou suivi de sa description (« Conseil RH : organisation… ») : on accepte le nom exact, ou une
  * réponse qui COMMENCE par un nom connu (le plus long). Jamais une prestation absente de la liste.
  */
-function matchService(raw: string, serviceNames: string[]): string {
+export function matchService(raw: string, serviceNames: string[]): string {
   const answer = comparableName(raw)
   if (!answer) return ''
   const candidates = serviceNames

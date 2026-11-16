@@ -115,11 +115,10 @@ export function IcpForm({
   const isWebDeveloper = professionKey === 'web_developer'
   const {
     suggested: suggestedSignals,
+    deep: deepSignals,
     other: otherSignals,
     unavailable: unavailableSignals,
   } = groupSignalsForSettings(signals)
-  // Pistes de Sophie qui demandent une recherche sur Internet (pas encore de points)
-  const deepEvents = (recommendation?.events ?? []).filter((event) => !event.detectable)
   const signalWeights = useWatch({ control, name: 'signalWeights' }) ?? {}
   const detectableSignals = signals.filter((signal) => signal.availability === 'available')
   const hasCustomWeights = detectableSignals.some(
@@ -362,36 +361,23 @@ export function IcpForm({
             ) : (
               <p className="text-sm text-muted-foreground">
                 {recommendation
-                  ? 'Aucun des signaux repérés automatiquement ne correspond à vos prestations pour l’instant : vos pistes sont dans l’analyse approfondie.'
-                  : 'Aucun signal détectable n’est prévu pour votre métier : vous pouvez en activer un ci-dessous.'}
+                  ? 'Aucun des signaux repérés automatiquement ne correspond à vos prestations : vos pistes sont dans l’analyse approfondie.'
+                  : 'Aucun signal repéré automatiquement n’est prévu pour votre métier : vous pouvez en activer un ci-dessous.'}
               </p>
             )}
           </section>
 
-          {deepEvents.length > 0 && (
+          {deepSignals.length > 0 && (
             <section className="space-y-2 rounded-lg border p-4" aria-labelledby="signals-deep">
               <h3 id="signals-deep" className="text-sm font-semibold">
-                Avec une analyse approfondie ({deepEvents.length})
+                Avec une analyse approfondie ({deepSignals.length})
               </h3>
               <p className="text-sm text-muted-foreground">
-                Ces événements se trouvent sur Internet (presse, annonces de l&apos;entreprise). Sophie les cherchera
-                sur une fiche quand vous le demanderez, avec « Approfondir avec Sophie » (bientôt disponible) : ils ne
-                rapportent pas de points pour l&apos;instant.
+                Ces événements se trouvent sur Internet (presse, annonces de l&apos;entreprise). Sophie les cherche sur
+                une fiche quand vous cliquez sur « Approfondir avec Sophie », jamais pendant les recherches. Un
+                événement ne rapporte des points que s&apos;il est daté et que sa source a été vérifiée.
               </p>
-              <ul className="divide-y">
-                {deepEvents.map((event) => (
-                  <li key={event.key} className="py-3 first:pt-0 last:pb-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium">{event.label}</span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                        Bientôt
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{event.why}</p>
-                    {event.service && <p className="text-xs text-muted-foreground mt-0.5">Prestation : {event.service}</p>}
-                  </li>
-                ))}
-              </ul>
+              <div className="divide-y">{deepSignals.map(renderSignal)}</div>
             </section>
           )}
 

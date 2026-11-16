@@ -7,6 +7,7 @@ import {
   capabilityForSignal,
   opportunityEvent,
   readSignalRecommendation,
+  signalDetection,
   servicesFingerprint,
 } from '../../../supabase/functions/_shared/signal-capabilities'
 
@@ -24,6 +25,8 @@ export type SignalWeightOption = {
   availability: SignalAvailability
   // Comment Sophie le repère (registre des capacités), null s'il n'est pas détectable
   detection: string | null
+  // Repéré automatiquement, ou par « Approfondir avec Sophie »
+  mode: 'automatic' | 'deep' | null
 }
 
 /** Recommandation de Sophie telle que l'écran la montre */
@@ -33,7 +36,7 @@ export type RecommendationView = {
   pitch: string
   // Les prestations ont changé depuis : proposer une nouvelle recommandation
   isStale: boolean
-  events: { key: string; label: string; service: string; why: string; weight: number; detectable: boolean }[]
+  events: { key: string; label: string; service: string; why: string; weight: number; mode: 'automatic' | 'deep' | null }[]
 }
 
 /**
@@ -136,7 +139,7 @@ export async function getIcpSettings(): Promise<{
             service: event.service,
             why: event.why,
             weight: event.weight,
-            detectable: !!signal && signals.some((option) => option.key === signal && option.availability === 'available'),
+            mode: signal && signals.some((option) => option.key === signal && option.availability === 'available') ? signalDetection(signal) : null,
           }
         }),
       }
@@ -188,9 +191,11 @@ export async function getIcpBasics(): Promise<{ dayRate: number | null; techStac
  * Un signal n'est détectable que si la base le dit disponible ET qu'une capacité du registre le crée :
  * en cas de désaccord, il reste indisponible (jamais de points pour un signal que rien ne vérifie).
  */
-function detectability(key: string, availability: string | null): Pick<SignalWeightOption, 'availability' | 'detection'> {
+function detectability(key: string, availability: string | null): Pick<SignalWeightOption, 'availability' | 'detection' | 'mode'> {
   const capability = capabilityForSignal(key)
   const declared = signalAvailability(availability)
-  if (declared === 'available' && capability) return { availability: 'available', detection: capability.detectionLabel }
-  return { availability: declared === 'retired' ? 'retired' : 'unavailable', detection: null }
+  if (declared === 'available' && capability) {
+    return { availability: 'available', detection: capability.detectionLabel, mode: signalDetection(key) }
+  }
+  return { availability: declared === 'retired' ? 'retired' : 'unavailable', detection: null, mode: null }
 }

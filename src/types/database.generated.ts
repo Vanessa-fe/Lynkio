@@ -230,6 +230,45 @@ export type Database = {
           },
         ]
       }
+      company_deep_analyses: {
+        Row: {
+          company_id: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          provider: string | null
+          result: Json | null
+          signals_added: number
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          provider?: string | null
+          result?: Json | null
+          signals_added?: number
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          provider?: string | null
+          result?: Json | null
+          signals_added?: number
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       company_contacts: {
         Row: {
           collected_at: string

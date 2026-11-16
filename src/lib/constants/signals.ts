@@ -67,7 +67,7 @@ export function signalState(availability: SignalAvailability, weight: number): S
   return weight > 0 ? 'active' : 'inactive'
 }
 
-type GroupableSignal = { availability: SignalAvailability; isSuggested: boolean }
+type GroupableSignal = { availability: SignalAvailability; isSuggested: boolean; mode?: 'automatic' | 'deep' | null }
 
 /**
  * Répartition des signaux dans les réglages : ceux mis en avant (recommandés par Sophie, ou du métier
@@ -76,10 +76,13 @@ type GroupableSignal = { availability: SignalAvailability; isSuggested: boolean 
  */
 export function groupSignalsForSettings<T extends GroupableSignal>(
   signals: T[]
-): { suggested: T[]; other: T[]; unavailable: T[] } {
+): { suggested: T[]; deep: T[]; other: T[]; unavailable: T[] } {
   const detectable = signals.filter((signal) => signal.availability === 'available')
   return {
-    suggested: detectable.filter((signal) => signal.isSuggested),
+    // Repérés automatiquement (registre, BODACC, site) et mis en avant
+    suggested: detectable.filter((signal) => signal.isSuggested && signal.mode !== 'deep'),
+    // Repérés par « Approfondir avec Sophie » et mis en avant
+    deep: detectable.filter((signal) => signal.isSuggested && signal.mode === 'deep'),
     other: detectable.filter((signal) => !signal.isSuggested),
     unavailable: signals.filter((signal) => signal.availability === 'unavailable'),
   }
