@@ -10,6 +10,7 @@ import {
   type IcpInput,
 } from '@/lib/validations/icp'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { mergeSignalWeights } from '@/lib/constants/signals'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { NO_ACCESS_MESSAGE, PLAN_LIMITS } from '@/lib/billing'
 
@@ -45,7 +46,7 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
 
     const { data: icp } = await supabase
       .from('icp_profiles')
-      .select('criteria, profession_key')
+      .select('criteria, profession_key, signal_weights')
       .eq('id', icpId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -62,11 +63,8 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
       : { data: [] }
     const defaultWeights = new Map((defaults ?? []).map((row) => [row.signal_type, row.default_weight]))
 
-    const signalWeights = Object.fromEntries(
-      Object.entries(validated.signalWeights).filter(
-        ([signalType, weight]) => weight !== (defaultWeights.get(signalType) ?? 0)
-      )
-    )
+    // Les réglages des signaux absents de l'écran (retirés) sont conservés
+    const signalWeights = mergeSignalWeights(icp.signal_weights, validated.signalWeights, defaultWeights)
 
     // Les critères non gérés par cet écran (pays, télétravail…) sont conservés
     const criteria: IcpCriteria = {

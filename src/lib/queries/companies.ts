@@ -88,7 +88,7 @@ export async function getCompanyContacts(companyId: string): Promise<CompanyCont
 }
 
 /**
- * Signaux d'achat encore valides (non expirés), les plus récents d'abord
+ * Signaux d'opportunité encore valides (non expirés), les plus récents d'abord
  */
 export async function getCompanySignals(companyId: string): Promise<CompanySignalWithType[]> {
   const supabase = await createClient()

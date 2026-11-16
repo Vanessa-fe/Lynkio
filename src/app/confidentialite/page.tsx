@@ -119,7 +119,7 @@ export default function PrivacyPage() {
           Les posts LinkedIn proposés par Sophie et non retenus : 30 jours par défaut (de 7 à 90 jours selon votre
           choix).
         </li>
-        <li>Les signaux d&apos;achat : effacés automatiquement après une durée propre à chaque type de signal.</li>
+        <li>Les signaux d&apos;opportunité : effacés automatiquement après une durée propre à chaque type de signal.</li>
         <li>Le journal d&apos;accès à vos données (exports, clés, nettoyages) : 12 mois.</li>
         <li>
           À la suppression du compte (Paramètres &gt; Mon compte), tout est effacé immédiatement ; les sauvegardes

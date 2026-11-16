@@ -1322,6 +1322,7 @@ export type Database = {
           nature: string
           reliability: string
           retention_days: number
+          availability: string
         }
         Insert: {
           created_at?: string
@@ -1334,6 +1335,7 @@ export type Database = {
           nature?: string
           reliability?: string
           retention_days?: number
+          availability?: string
         }
         Update: {
           created_at?: string
@@ -1346,6 +1348,7 @@ export type Database = {
           nature?: string
           reliability?: string
           retention_days?: number
+          availability?: string
         }
         Relationships: []
       }

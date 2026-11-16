@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { IcpProfile } from '@/types'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { signalAvailability, type SignalAvailability } from '@/lib/constants/signals'
 
 export type SignalWeightOption = {
   key: string
@@ -10,6 +11,8 @@ export type SignalWeightOption = {
   defaultWeight: number
   // Signal utile pour le métier de l'utilisateur
   isProfessionSignal: boolean
+  // Détecté aujourd'hui, ou pas encore (les signaux retirés ne sont pas chargés)
+  availability: SignalAvailability
 }
 
 /**
@@ -41,7 +44,13 @@ export async function getIcpSettings(): Promise<{
       .limit(1)
       .maybeSingle(),
     supabase.from('user_profiles').select('profession_key').eq('id', user.id).maybeSingle(),
-    supabase.from('signal_types').select('key, label, description').eq('is_active', true).order('label'),
+    // Les types retirés (source arrêtée) sont inactifs : ils ne sont pas proposés
+    supabase
+      .from('signal_types')
+      .select('key, label, description, availability')
+      .eq('is_active', true)
+      .neq('availability', 'retired')
+      .order('label'),
     supabase.from('companies').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
   ])
 
@@ -66,6 +75,7 @@ export async function getIcpSettings(): Promise<{
       description: type.description,
       defaultWeight: defaults.get(type.key) ?? 0,
       isProfessionSignal: defaults.has(type.key),
+      availability: signalAvailability(type.availability),
     }))
     // Les signaux du métier d'abord, les plus importants en haut
     .sort((a, b) => Number(b.isProfessionSignal) - Number(a.isProfessionSignal) || b.defaultWeight - a.defaultWeight)
