@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { IcpProfile } from '@/types'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { signalAvailability, type SignalAvailability } from '@/lib/constants/signals'
+import { capabilityForSignal } from '../../../supabase/functions/_shared/signal-capabilities'
 
 export type SignalWeightOption = {
   key: string
@@ -13,6 +14,8 @@ export type SignalWeightOption = {
   isProfessionSignal: boolean
   // Détecté aujourd'hui, ou pas encore (les signaux retirés ne sont pas chargés)
   availability: SignalAvailability
+  // Comment Sophie le repère (registre des capacités), null s'il n'est pas détectable
+  detection: string | null
 }
 
 /**
@@ -75,7 +78,7 @@ export async function getIcpSettings(): Promise<{
       description: type.description,
       defaultWeight: defaults.get(type.key) ?? 0,
       isProfessionSignal: defaults.has(type.key),
-      availability: signalAvailability(type.availability),
+      ...detectability(type.key, type.availability),
     }))
     // Les signaux du métier d'abord, les plus importants en haut
     .sort((a, b) => Number(b.isProfessionSignal) - Number(a.isProfessionSignal) || b.defaultWeight - a.defaultWeight)
@@ -118,4 +121,15 @@ export async function getIcpBasics(): Promise<{ dayRate: number | null; techStac
       : [],
     professionKey: data?.profession_key ?? null,
   }
+}
+
+/**
+ * Un signal n'est détectable que si la base le dit disponible ET qu'une capacité du registre le crée :
+ * en cas de désaccord, il reste indisponible (jamais de points pour un signal que rien ne vérifie).
+ */
+function detectability(key: string, availability: string | null): Pick<SignalWeightOption, 'availability' | 'detection'> {
+  const capability = capabilityForSignal(key)
+  const declared = signalAvailability(availability)
+  if (declared === 'available' && capability) return { availability: 'available', detection: capability.detectionLabel }
+  return { availability: declared === 'retired' ? 'retired' : 'unavailable', detection: null }
 }
