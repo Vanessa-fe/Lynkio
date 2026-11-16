@@ -76,6 +76,8 @@ import {
 } from '@/lib/constants/signals'
 import { cn } from '@/lib/utils/cn'
 import { SignalValidityButton } from './signal-validity-button'
+import { CompanyDeepDiveCard } from './company-deep-dive-card'
+import type { DeepAnalysisView } from '@/lib/deep-analysis'
 
 interface CompanyDetailProps {
   company: CompanyWithRelations
@@ -99,6 +101,9 @@ interface CompanyDetailProps {
   strategy?: StrategyOverview | null
   // Journal des changements d'étape, du plus récent au plus ancien
   stageEvents?: CompanyStageEvent[]
+  // Dernière analyse approfondie (« Approfondir avec Sophie »)
+  deepAnalysis?: DeepAnalysisView | null
+  hasAiKey?: boolean
 }
 
 /**
@@ -134,6 +139,8 @@ export function CompanyDetail({
   openEmailDraft = false,
   strategy = null,
   stageEvents = [],
+  deepAnalysis = null,
+  hasAiKey = false,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -314,6 +321,10 @@ export function CompanyDetail({
                 </ul>
               </CardContent>
             </Card>
+          )}
+
+          {!isIndividual && (
+            <CompanyDeepDiveCard companyId={company.id} analysis={deepAnalysis} hasAiKey={hasAiKey} />
           )}
 
           <Card>
@@ -618,6 +629,23 @@ function CompatibilityTile({ score }: { score: number | null }) {
 function SignalSummary({ signal }: { signal: CompanySignalWithType }) {
   const evidence = (signal.evidence ?? {}) as Record<string, unknown>
   const title = typeof evidence.intitule === 'string' ? evidence.intitule : null
+
+  // Trouvé par l'analyse approfondie : l'événement, ce qu'en dit la source, et la piste (hypothèse)
+  if (signal.source === 'ai_research' && typeof evidence.title === 'string') {
+    return (
+      <div className="space-y-0.5 text-sm text-muted-foreground">
+        <p className="text-foreground">{evidence.title}</p>
+        {typeof evidence.summary === 'string' && evidence.summary && <p>{evidence.summary}</p>}
+        {typeof evidence.relevance === 'string' && evidence.relevance && (
+          <p>
+            <span className="font-medium">Piste, non confirmée : </span>
+            {evidence.relevance}
+            {typeof evidence.service === 'string' && evidence.service && ` (${evidence.service})`}
+          </p>
+        )}
+      </div>
+    )
+  }
 
   if (title) {
     const contract = typeof evidence.type_contrat === 'string' ? evidence.type_contrat : null

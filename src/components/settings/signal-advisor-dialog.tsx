@@ -13,7 +13,7 @@ import { saveSignalRecommendation } from '@/lib/actions/signal-recommendation'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/lib/hooks/use-toast'
-import { opportunityEvent, type RecommendedEvent } from '../../../supabase/functions/_shared/signal-capabilities'
+import { opportunityEvent, signalDetection, type RecommendedEvent } from '../../../supabase/functions/_shared/signal-capabilities'
 
 type Draft = { summary: string; missing: string[]; events: RecommendedEvent[]; pitch: string }
 
@@ -186,13 +186,13 @@ export function SignalAdvisorDialog({ open, onOpenChange, hasAiKey, services, in
             <ol className="space-y-3">
               {draft.events.map((event) => {
                 const definition = opportunityEvent(event.event)
-                const detectable = !!definition?.signal
+                const mode = definition?.signal ? signalDetection(definition.signal) : null
                 return (
                   <li key={event.event} className="rounded-lg border p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-medium">{definition?.label ?? event.event}</p>
                       <span className="text-xs text-muted-foreground">
-                        {detectable ? `${event.weight} pts · repéré automatiquement` : 'Analyse approfondie (bientôt)'}
+                        {mode === 'automatic' ? `${event.weight} pts · repéré automatiquement` : mode === 'deep' ? `${event.weight} pts · repéré par l’analyse approfondie` : 'Pas encore repérable'}
                       </span>
                     </div>
                     <p className="mt-1 text-muted-foreground">{event.why}</p>

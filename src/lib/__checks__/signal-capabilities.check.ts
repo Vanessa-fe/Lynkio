@@ -4,6 +4,9 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
 import {
+  OPPORTUNITY_EVENTS,
+  deepResearchEvents,
+  signalDetection,
   SIGNAL_CAPABILITIES,
   SIGNAL_TYPE_AVAILABILITY,
   capabilityById,
@@ -79,7 +82,21 @@ test('le code cité existe', () => {
 
 test('outils de lecture', () => {
   assert.equal(capabilityForSignal('recently_created')?.id, 'bodacc_creations')
-  assert.equal(capabilityForSignal('funding_round'), undefined)
+  assert.equal(capabilityForSignal('funding_round')?.id, 'company_web_research')
+  assert.equal(capabilityForSignal('slow_website'), undefined)
   assert.equal(capabilityForSignal('job_posting_dev'), undefined)
-  assert.deepEqual(signalCapabilityIds().sort(), ['bodacc_creations', 'site_technical_protocol', 'site_technical_stack'])
+  assert.deepEqual(signalCapabilityIds().sort(), [
+    'bodacc_creations',
+    'company_web_research',
+    'site_technical_protocol',
+    'site_technical_stack',
+  ])
+})
+
+test('détection : automatique, approfondie ou aucune ; chaque événement a un détecteur', () => {
+  assert.equal(signalDetection('recently_created'), 'automatic')
+  assert.equal(signalDetection('product_launch'), 'deep')
+  assert.equal(signalDetection('slow_website'), null)
+  for (const event of OPPORTUNITY_EVENTS) assert.ok(event.signal && signalDetection(event.signal), event.key)
+  assert.equal(deepResearchEvents().length, 10)
 })

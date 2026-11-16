@@ -5,6 +5,7 @@ import {
   getCompanyContacts,
   getCompanyInteractions,
   getCompanySignals,
+  getLatestDeepAnalysis,
   getCompanyStageEvents,
   getLatestQualification,
   getPipelineStages,
@@ -14,6 +15,7 @@ import { getIcpBasics } from '@/lib/queries/icp'
 import { getUserProfile } from '@/lib/queries/user-profile'
 import { getContactsOutreach, getOrganizationOptions } from '@/lib/queries/people'
 import { getStrategy } from '@/lib/queries/strategies'
+import { hasAiKey } from '@/lib/queries/api-keys'
 
 interface CompanyPageProps {
   params: Promise<{
@@ -24,7 +26,7 @@ interface CompanyPageProps {
 
 export default async function CompanyPage({ params, searchParams }: CompanyPageProps) {
   const [{ id }, { redaction }] = await Promise.all([params, searchParams])
-  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach, stageEvents] =
+  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach, stageEvents, deepAnalysis, aiKey] =
     await Promise.all([
       getCompanyById(id),
       getPipelineStages(),
@@ -37,6 +39,8 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       getUserProfile(),
       getContactsOutreach(id),
       getCompanyStageEvents(id),
+      getLatestDeepAnalysis(id),
+      hasAiKey(),
     ])
 
   if (!company) {
@@ -55,6 +59,8 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       stages={stages}
       contacts={contacts}
       signals={signals}
+      deepAnalysis={deepAnalysis}
+      hasAiKey={aiKey}
       interactions={interactions}
       qualification={qualification}
       reminders={reminders}

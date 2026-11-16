@@ -38,6 +38,17 @@ test('les signaux retirés disparaissent, les indisponibles sont à part', () =>
   assert.ok(!all.includes('job_posting_dev'))
 })
 
+test('les signaux de l’analyse approfondie ont leur propre groupe', () => {
+  const groups = groupSignalsForSettings([
+    { key: 'recently_created', availability: 'available', isSuggested: true, mode: 'automatic' as const },
+    { key: 'product_launch', availability: 'available', isSuggested: true, mode: 'deep' as const },
+    { key: 'rebranding', availability: 'available', isSuggested: false, mode: 'deep' as const },
+  ])
+  assert.deepEqual(groups.suggested.map((s) => s.key), ['recently_created'])
+  assert.deepEqual(groups.deep.map((s) => s.key), ['product_launch'])
+  assert.deepEqual(groups.other.map((s) => s.key), ['rebranding'])
+})
+
 test('preuve : source officielle ou adresse de la page, sinon aucun point', () => {
   assert.equal(hasSignalProof({ source: 'bodacc', source_url: null }), true)
   assert.equal(hasSignalProof({ source: 'registry', source_url: null }), true)

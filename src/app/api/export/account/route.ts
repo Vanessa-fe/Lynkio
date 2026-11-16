@@ -25,6 +25,7 @@ const TABLES: { table: string; columns: string; owner?: 'id' }[] = [
   { table: 'company_contacts', columns: '*' },
   { table: 'company_interactions', columns: '*' },
   { table: 'company_signals', columns: '*' },
+  { table: 'company_deep_analyses', columns: '*' },
   { table: 'company_qualifications', columns: '*' },
   { table: 'company_stage_events', columns: '*' },
   { table: 'prospect_lists', columns: '*' },

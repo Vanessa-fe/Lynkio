@@ -51,6 +51,10 @@ const EVIDENCE_LABELS: Record<string, string> = {
   activite: 'activité',
   date_debut_activite: 'début d\'activité',
   technologies: 'technologies',
+  // Analyse approfondie (company-deep-dive) : l'événement et ce qu'en dit la source vérifiée ;
+  // « relevance » (hypothèse sur le besoin) n'est volontairement pas transmise comme un fait
+  title: 'événement annoncé',
+  summary: 'ce que dit la source',
 }
 
 function corsHeaders(origin: string | null): Record<string, string> {
