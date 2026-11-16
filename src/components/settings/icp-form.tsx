@@ -583,29 +583,31 @@ export function IcpForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Points fixes</CardTitle>
-          <CardDescription>Ils complètent le score et ne se règlent pas.</CardDescription>
+          <CardTitle>Comment le score est calculé</CardTitle>
+          <CardDescription>Sur 100 points, en quatre parties. Le détail de chaque fiche est affiché sur sa page.</CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="space-y-1.5 text-sm">
             <li className="flex justify-between gap-4">
-              <span>Dernier signal de moins de 7 jours (de moins d&apos;un mois)</span>
-              <span className="font-medium tabular-nums">+10 (+5)</span>
+              <span>Adéquation à votre recherche : secteur, taille, zone, ancienneté (sur les critères connus)</span>
+              <span className="font-medium tabular-nums shrink-0">50</span>
             </li>
             <li className="flex justify-between gap-4">
-              <span>Décideur identifié</span>
-              <span className="font-medium tabular-nums">+5</span>
+              <span>
+                Signaux d&apos;opportunité réglés ci-dessus, seulement s&apos;ils sont prouvés. Moitié des points pour une
+                hypothèse ou un signal ancien.
+              </span>
+              <span className="font-medium tabular-nums shrink-0">35</span>
             </li>
             <li className="flex justify-between gap-4">
-              <span>E-mail de contact</span>
-              <span className="font-medium tabular-nums">+5</span>
+              <span>Fraîcheur : dernier signal de moins de 7 jours (1 mois, 3 mois)</span>
+              <span className="font-medium tabular-nums shrink-0">10 (5, 2)</span>
             </li>
             <li className="flex justify-between gap-4">
-              <span>Site web connu</span>
-              <span className="font-medium tabular-nums">+5</span>
+              <span>Joignabilité : décideur identifié 2, e-mail de contact 2, site web connu 1</span>
+              <span className="font-medium tabular-nums shrink-0">5</span>
             </li>
           </ul>
-          <p className="text-sm text-muted-foreground mt-3">Le total est plafonné à 100.</p>
         </CardContent>
       </Card>
 

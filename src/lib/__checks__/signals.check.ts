@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   groupSignalsForSettings,
+  hasSignalProof,
   mergeSignalWeights,
   signalAvailability,
   signalState,
@@ -35,6 +36,15 @@ test('les signaux retirés disparaissent, les indisponibles sont à part', () =>
   assert.deepEqual(groups.unavailable.map((s) => s.key), ['funding_round'])
   const all = [...groups.suggested, ...groups.other, ...groups.unavailable].map((s) => s.key)
   assert.ok(!all.includes('job_posting_dev'))
+})
+
+test('preuve : source officielle ou adresse de la page, sinon aucun point', () => {
+  assert.equal(hasSignalProof({ source: 'bodacc', source_url: null }), true)
+  assert.equal(hasSignalProof({ source: 'registry', source_url: null }), true)
+  assert.equal(hasSignalProof({ source: 'site', source_url: 'https://exemple.fr/' }), true)
+  assert.equal(hasSignalProof({ source: 'site', source_url: null }), false)
+  assert.equal(hasSignalProof({ source: 'ai_research', source_url: null }), false)
+  assert.equal(hasSignalProof({ source: 'unknown', source_url: null }), false)
 })
 
 test('état : actif avec des points, inactif à 0, indisponible sans détecteur', () => {

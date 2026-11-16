@@ -106,6 +106,14 @@ export function mergeSignalWeights(
   return { ...kept, ...changed }
 }
 
+/**
+ * Un signal ne rapporte des points que s'il est prouvé : source officielle (BODACC, registre) ou adresse
+ * de la page qui le montre. Même règle que le score (compute_company_score_v2, migration 00067).
+ */
+export function hasSignalProof(signal: { source: string; source_url: string | null }): boolean {
+  return signal.source === 'bodacc' || signal.source === 'registry' || !!signal.source_url
+}
+
 export function signalNature(value: string | null | undefined): SignalNature {
   return value === 'hypothesis' || value === 'explicit_need' ? value : 'observed'
 }
