@@ -5,7 +5,9 @@ import assert from 'node:assert/strict'
 import {
   MAX_FINDINGS,
   checkIdentity,
+  displayedSummary,
   eventDate,
+  searchWindow,
   filterFindings,
   findingDedupeKey,
   safeHttpUrl,
@@ -124,6 +126,18 @@ test('adresses : seulement http(s), sans identifiants ; dates au bon format', ()
   assert.equal(eventDate('2026-09', TODAY), '2026-09-01')
   assert.equal(eventDate('2026-02-30', TODAY), null)
   assert.equal(eventDate('hier', TODAY), null)
+})
+
+test('période cherchée : la plus longue validité des événements, 30 jours au moins', () => {
+  assert.deepEqual(searchWindow([180, 120], TODAY), { days: 180, since: '2026-05-20' })
+  assert.equal(searchWindow([], TODAY).days, 30)
+  assert.equal(searchWindow([Number.NaN, -5, 10], TODAY).days, 30)
+})
+
+test('le résumé de l’IA n’est gardé que si un résultat est retenu', () => {
+  assert.equal(displayedSummary('Deux événements récents', [{ retained: false }, { retained: false }]), '')
+  assert.equal(displayedSummary('Une ouverture à Lyon', [{ retained: false }, { retained: true }]), 'Une ouverture à Lyon')
+  assert.equal(displayedSummary('Rien', []), '')
 })
 
 test('clé de doublon : même page, même clé, quelle que soit la forme de l’adresse', () => {
