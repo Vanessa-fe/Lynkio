@@ -78,6 +78,7 @@ import { cn } from '@/lib/utils/cn'
 import { SignalValidityButton } from './signal-validity-button'
 import { CompanyDeepDiveCard } from './company-deep-dive-card'
 import type { DeepAnalysisView } from '@/lib/deep-analysis'
+import type { SignalExplanation } from '@/lib/signal-explanation'
 
 interface CompanyDetailProps {
   company: CompanyWithRelations
@@ -104,6 +105,8 @@ interface CompanyDetailProps {
   // Dernière analyse approfondie (« Approfondir avec Sophie »)
   deepAnalysis?: DeepAnalysisView | null
   hasAiKey?: boolean
+  // Constat, piste et prestation de chaque signal, par identifiant (calculés côté serveur)
+  explanations?: Record<string, SignalExplanation>
 }
 
 /**
@@ -141,6 +144,7 @@ export function CompanyDetail({
   stageEvents = [],
   deepAnalysis = null,
   hasAiKey = false,
+  explanations = {},
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -284,7 +288,11 @@ export function CompanyDetail({
                             {SIGNAL_NATURE_LABELS[signalNature(signal.type?.nature)]}
                           </span>
                         </div>
-                        <SignalSummary signal={signal} />
+                        {explanations[signal.id] ? (
+                          <SignalExplanationText explanation={explanations[signal.id]!} />
+                        ) : (
+                          <SignalSummary signal={signal} />
+                        )}
                         <p className="text-xs text-muted-foreground">
                           Source : {SIGNAL_SOURCE_LABELS[signal.source] ?? SIGNAL_SOURCE_LABELS.unknown}
                           {signal.source !== 'unknown' && ` (${SIGNAL_RELIABILITY_LABELS[signalReliability(signal.type?.reliability)]})`}
@@ -626,6 +634,30 @@ function CompatibilityTile({ score }: { score: number | null }) {
 }
 
 // Pour une offre d'emploi, l'intitulé et le contrat parlent plus que la description générique
+/** Constat (le fait), piste (hypothèse) et prestation à proposer */
+function SignalExplanationText({ explanation }: { explanation: SignalExplanation }) {
+  return (
+    <div className="space-y-1 text-sm">
+      <p>
+        <span className="font-medium">Constat : </span>
+        {explanation.fact}
+      </p>
+      {explanation.lead && (
+        <p className="text-muted-foreground">
+          <span className="font-medium">Piste pour vous : </span>
+          {explanation.lead} <span className="italic">Ce besoin n’est pas confirmé.</span>
+        </p>
+      )}
+      {explanation.service && (
+        <p className="text-muted-foreground">
+          <span className="font-medium">Prestation à proposer : </span>
+          {explanation.service}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function SignalSummary({ signal }: { signal: CompanySignalWithType }) {
   const evidence = (signal.evidence ?? {}) as Record<string, unknown>
   const title = typeof evidence.intitule === 'string' ? evidence.intitule : null

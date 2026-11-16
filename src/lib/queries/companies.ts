@@ -10,6 +10,8 @@ import type {
 } from '@/types'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { readDeepAnalysis, type DeepAnalysisView } from '@/lib/deep-analysis'
+import type { SignalAdvice } from '@/lib/signal-explanation'
+import { opportunityEvent, readSignalRecommendation } from '../../../supabase/functions/_shared/signal-capabilities'
 
 const COMPANY_RELATIONS = `
   *,
@@ -258,4 +260,29 @@ export async function getLatestDeepAnalysis(companyId: string): Promise<DeepAnal
     .maybeSingle()
   if (error || !data) return null
   return readDeepAnalysis(data)
+}
+
+/**
+ * Pistes de Sophie par type de signal (dernière recommandation appliquée) : pourquoi ce signal peut
+ * créer un besoin, et pour quelle prestation. Vide sans recommandation.
+ */
+export async function getSignalAdvice(): Promise<Record<string, SignalAdvice>> {
+  const user = await getAuthUser()
+  if (!user) return {}
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('icp_profiles')
+    .select('signal_recommendations')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .order('created_at')
+    .limit(1)
+    .maybeSingle()
+  const recommendation = readSignalRecommendation(data?.signal_recommendations)
+  const advice: Record<string, SignalAdvice> = {}
+  for (const event of recommendation?.events ?? []) {
+    const signal = opportunityEvent(event.event)?.signal
+    if (signal) advice[signal] = { why: event.why, service: event.service }
+  }
+  return advice
 }
