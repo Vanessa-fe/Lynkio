@@ -59,6 +59,22 @@ test('date inconnue, future ou trop ancienne : non retenu', () => {
   assert.match(run([{ ...good, date: '2025-01-10' }])[0]?.rejection ?? '', /ancien/)
 })
 
+test('la création de la société n’est pas recomptée comme une ouverture d’établissement', () => {
+  const withFounding = (date: string, foundedOn: string | null) =>
+    filterFindings({
+      raw: [{ ...good, date }],
+      identity: confirmed,
+      serviceNames: [],
+      wasConsulted: () => true,
+      validityDays: () => 180,
+      today: TODAY,
+      foundedOn,
+    })[0]
+  assert.match(withFounding('2026-09-27', '2026-09-20')?.rejection ?? '', /création de l’entreprise/)
+  assert.equal(withFounding('2026-10-02', '2024-03-01')?.retained, true)
+  assert.equal(withFounding('2026-10-02', null)?.retained, true)
+})
+
 test('confiance faible ou identité non confirmée : non retenu', () => {
   assert.match(run([{ ...good, confidence: 'low' }])[0]?.rejection ?? '', /Confiance/)
   assert.match(run([{ ...good, confidence: 'inconnue' }])[0]?.rejection ?? '', /Confiance/)

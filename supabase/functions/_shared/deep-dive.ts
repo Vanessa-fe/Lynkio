@@ -15,6 +15,11 @@ import { deepResearchEvents, matchService, opportunityEvent } from './signal-cap
 export const MAX_FINDINGS = 10
 /** Durée de validité par défaut (jours) d'un événement trouvé : celle des types créés en 00069 */
 export const DEFAULT_EVENT_VALIDITY_DAYS = 180
+/**
+ * Une « ouverture d'établissement » à moins de 60 jours de la création de la société est sa création :
+ * déjà comptée par le signal « création récente » (BODACC), elle ne doit pas rapporter des points deux fois.
+ */
+export const SAME_AS_CREATION_DAYS = 60
 
 export type Confidence = 'high' | 'medium' | 'low'
 
@@ -121,7 +126,10 @@ export function filterFindings(options: {
   wasConsulted: (url: string) => boolean
   validityDays: (signalType: string) => number
   today: Date
+  /** Date de création de la société (registre) : sa création est déjà comptée par « création récente » */
+  foundedOn?: string | null
 }): DeepFinding[] {
+  const founded = options.foundedOn ? new Date(`${options.foundedOn.slice(0, 10)}T00:00:00Z`) : null
   const allowed = new Set(deepResearchEvents().map((event) => event.key))
   const items = Array.isArray(options.raw) ? options.raw : []
   const seen = new Set<string>()
@@ -153,6 +161,13 @@ export function filterFindings(options: {
     else if (!sourceVerified) rejection = 'Source non vérifiée : la page n’a pas été consultée par la recherche'
     else if (!date) rejection = 'Date de l’événement inconnue'
     else if (options.today.getTime() - new Date(date).getTime() > maxAgeMs) rejection = 'Événement trop ancien'
+    else if (
+      event === 'new_establishment' &&
+      founded &&
+      !Number.isNaN(founded.getTime()) &&
+      Math.abs(new Date(date).getTime() - founded.getTime()) <= SAME_AS_CREATION_DAYS * 86_400_000
+    )
+      rejection = 'Même événement que la création de l’entreprise, déjà comptée'
     else if (confidence === 'low') rejection = 'Confiance trop faible'
 
     findings.push({
