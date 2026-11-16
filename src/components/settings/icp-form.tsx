@@ -158,6 +158,9 @@ export function IcpForm({
                 <SignalStateBadge state={state} />
               </div>
               {signal.description && <p className="text-sm text-muted-foreground">{signal.description}</p>}
+              {signal.detection && (
+                <p className="text-xs text-muted-foreground mt-1">Détection : {signal.detection}</p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <input
