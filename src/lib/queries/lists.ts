@@ -10,6 +10,8 @@ export type ListOverview = {
   linkedinCount: number
   // Personnes de la liste dont l'envoi LinkedIn est en cours (ni réponse, ni arrêt, ni séquence terminée)
   inProgressCount: number
+  // Initiales des premières personnes, pour l'aperçu de la carte
+  initials: string[]
 }
 
 /**
@@ -23,7 +25,7 @@ export async function getListsOverview(): Promise<ListOverview[]> {
   const [listsResult, sequencesResult] = await Promise.all([
     supabase
       .from('prospect_lists')
-      .select('id, name, created_at, members:prospect_list_members(contact:company_contacts!inner(linkedin_url, opted_out_at))')
+      .select('id, name, created_at, members:prospect_list_members(contact:company_contacts!inner(first_name, last_name, linkedin_url, opted_out_at))')
       .eq('user_id', user.id)
       .order('name'),
     supabase
@@ -44,7 +46,7 @@ export async function getListsOverview(): Promise<ListOverview[]> {
 
   return (listsResult.data ?? []).map((list) => {
     const members = (list.members ?? []) as unknown as {
-      contact: { linkedin_url: string | null; opted_out_at: string | null }
+      contact: { first_name: string | null; last_name: string | null; linkedin_url: string | null; opted_out_at: string | null }
     }[]
     return {
       id: list.id,
@@ -53,6 +55,11 @@ export async function getListsOverview(): Promise<ListOverview[]> {
       count: members.length,
       linkedinCount: members.filter(({ contact }) => contact.linkedin_url && !contact.opted_out_at).length,
       inProgressCount: inProgress.get(list.id) ?? 0,
+      initials: members.slice(0, 3).map(({ contact }) =>
+        [contact.first_name, contact.last_name]
+          .map((part) => part?.trim().charAt(0).toUpperCase() ?? '')
+          .join('') || '?'
+      ),
     }
   })
 }
