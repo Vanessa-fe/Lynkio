@@ -8,7 +8,7 @@
 // Garde-fous :
 //   - jamais lancée pendant les recherches standards : seulement par ce bouton ;
 //   - une seule analyse en cours par entreprise (index unique) ; résultat gardé 30 jours (cache) ;
-//   - 20 analyses par jour et par utilisateur ;
+//   - 20 analyses abouties ou en cours par utilisateur sur 24 heures (une analyse échouée ne compte pas) ;
 //   - un résultat ne devient un signal que si sa page a été consultée, sa date connue et récente,
 //     sa confiance suffisante et l'identité de l'entreprise confirmée (_shared/deep-dive.ts) ;
 //   - aucune offre d'emploi ni source de recrutement (sources retirées le 13/11/2026).
@@ -374,13 +374,20 @@ Deno.serve(async (request) => {
     if (fresh && input.force !== true) return json({ analysisId: latest.id, status: 'done', cached: true })
 
     const access = await loadAiAccess(admin, user.id)
-    const { data: allowed, error: limitError } = await supabase.rpc('hit_my_rate_limit', {
-      p_action: 'deep_dive',
-      p_max: DAILY_LIMIT,
-      p_window_seconds: 86_400,
-    })
-    if (limitError) throw limitError
-    if (!allowed) throw new UserFacingError(`Limite atteinte : ${DAILY_LIMIT} analyses approfondies par jour. Réessayez demain.`)
+    // Limite sur 24 heures glissantes : seules comptent les analyses abouties ou en cours. Une analyse
+    // qui échoue (clé refusée, crédit épuisé, recherche indisponible, interruption) ne se décompte pas.
+    const { count: used, error: countError } = await admin
+      .from('company_deep_analyses')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .in('status', ['running', 'done'])
+      .gt('started_at', new Date(Date.now() - 86_400_000).toISOString())
+    if (countError) throw countError
+    if ((used ?? 0) >= DAILY_LIMIT) {
+      throw new UserFacingError(
+        `Limite atteinte : ${DAILY_LIMIT} analyses approfondies sur 24 heures. Réessayez dans quelques heures.`
+      )
+    }
 
     const { data: created, error: insertError } = await admin
       .from('company_deep_analyses')
