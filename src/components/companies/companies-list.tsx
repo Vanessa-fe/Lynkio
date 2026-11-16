@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Search, Plus, Trash2, Eye, Globe, Building2 } from 'lucide-react'
+import { Search, Trash2, Eye, Globe, Building2, Filter, MessagesSquare } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { technologyLabel } from '@/lib/constants/technologies'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Counter } from '@/components/motion/counter'
 import {
   Select,
   SelectContent,
@@ -216,6 +217,35 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
 
   const noStageCount = countByStage.get('none') ?? 0
 
+  // Compteurs du haut (comme la maquette) : tout, l'étape d'arrivée, et « En discussion » si elle existe
+  const defaultStage = stages.find((stage) => stage.is_default) ?? stages[0]
+  const discussionStage = stages.find((stage) => stage.name.trim().toLowerCase() === 'en discussion')
+  const tiles = [
+    { key: ALL, label: 'Entreprises', detail: 'Votre portefeuille', icon: Building2, count: companies.length },
+    ...(defaultStage
+      ? [
+          {
+            key: defaultStage.id,
+            label: defaultStage.name,
+            detail: 'Faites le tri avec Sophie',
+            icon: Filter,
+            count: countByStage.get(defaultStage.id) ?? 0,
+          },
+        ]
+      : []),
+    ...(discussionStage
+      ? [
+          {
+            key: discussionStage.id,
+            label: discussionStage.name,
+            detail: 'Entretenez la relation',
+            icon: MessagesSquare,
+            count: countByStage.get(discussionStage.id) ?? 0,
+          },
+        ]
+      : []),
+  ]
+
   // Libellés des filtres, écrits dès le rendu serveur : sans eux, Radix laisse les listes vides
   // le temps que la page se charge dans le navigateur
   const strategyLabel =
@@ -235,6 +265,38 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
 
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4" role="group" aria-label="Filtrer par étape (raccourcis)">
+        {tiles.map(({ key, label, detail, icon: Icon, count }) => {
+          const active = stageFilter === key
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setStageFilter(key)}
+              aria-pressed={active}
+              className={cn(
+                'group flex flex-col justify-start rounded-2xl border border-ink/[0.07] bg-card p-4 text-left shadow-soft transition-[box-shadow,transform,border-color] duration-300 hover:-translate-y-0.5 hover:shadow-lift sm:p-5',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                active && 'border-primary/40 ring-1 ring-primary/30'
+              )}
+            >
+              <span className="flex items-center gap-2 text-xs text-muted-foreground sm:text-sm">
+                <span className="hidden size-7 items-center justify-center rounded-lg bg-secondary text-primary sm:flex">
+                  <Icon className="size-4" />
+                </span>
+                {label}
+              </span>
+              <Counter
+                to={count}
+                duration={1}
+                className="mt-1.5 block font-display text-2xl font-bold tabular-nums tracking-tight sm:text-3xl"
+              />
+              <span className="mt-1 block text-xs text-muted-foreground sm:text-sm">{detail}</span>
+            </button>
+          )
+        })}
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -247,12 +309,6 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
             aria-label="Rechercher une entreprise"
           />
         </div>
-        <Button asChild>
-          <Link href="/companies/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter une entreprise
-          </Link>
-        </Button>
       </div>
 
       {/* Vue d'ensemble du pipeline : un clic filtre sur l'étape */}
@@ -284,10 +340,6 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          {filteredCompanies.length} entreprise{filteredCompanies.length !== 1 ? 's' : ''}
-          {filteredCompanies.length !== companies.length && ` sur ${companies.length}`}
-        </p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {strategies && strategies.length > 0 && (
             <Select value={strategyFilter} onValueChange={setStrategyFilter}>
@@ -376,7 +428,14 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
           </CardContent>
         </Card>
       ) : (
-        <div className="border rounded-lg">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-xl">Vos entreprises</CardTitle>
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {filteredCompanies.length} entreprise{filteredCompanies.length !== 1 ? 's' : ''}
+              {filteredCompanies.length !== companies.length && ` sur ${companies.length}`}
+            </span>
+          </CardHeader>
           <Table>
             <TableHeader>
               <TableRow>
@@ -493,7 +552,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
               ))}
             </TableBody>
           </Table>
-        </div>
+        </Card>
       )}
     </div>
   )
