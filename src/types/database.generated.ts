@@ -439,6 +439,7 @@ export type Database = {
           user_id: string
           event_at: string | null
           source: string
+          invalidated_at: string | null
         }
         Insert: {
           company_id: string
@@ -453,6 +454,7 @@ export type Database = {
           user_id: string
           event_at?: string | null
           source?: string
+          invalidated_at?: string | null
         }
         Update: {
           company_id?: string
@@ -467,6 +469,7 @@ export type Database = {
           user_id?: string
           event_at?: string | null
           source?: string
+          invalidated_at?: string | null
         }
         Relationships: [
           {

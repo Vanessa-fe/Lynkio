@@ -18,7 +18,7 @@ type ExportedContact = {
   opted_out_at: string | null
 }
 
-type ExportedSignal = { expires_at: string | null; type: { label: string } | null }
+type ExportedSignal = { expires_at: string | null; invalidated_at: string | null; type: { label: string } | null }
 
 /**
  * Protection contre l'injection de formules : Excel exécute une cellule qui commence
@@ -57,7 +57,7 @@ export async function GET() {
          origin, created_at, last_interaction_at,
          stage:pipeline_stages(name), source:lead_sources(name),
          contacts:company_contacts(first_name, last_name, role, email, phone, linkedin_url, is_decision_maker, opted_out_at),
-         signals:company_signals(expires_at, type:signal_types(label))`
+         signals:company_signals(expires_at, invalidated_at, type:signal_types(label))`
       )
       .eq('user_id', user.id)
       .order('score', { ascending: false, nullsFirst: false })
@@ -77,6 +77,7 @@ export async function GET() {
       const contact = contacts.find((item) => item.is_decision_maker) ?? contacts[0]
       const signals = ((company.signals ?? []) as ExportedSignal[])
         .filter((signal) => !signal.expires_at || new Date(signal.expires_at).getTime() > now)
+        .filter((signal) => !signal.invalidated_at)
         .map((signal) => signal.type?.label)
         .filter(Boolean)
 

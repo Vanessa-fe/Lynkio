@@ -70,9 +70,12 @@ import {
   SIGNAL_NATURE_TONES,
   SIGNAL_RELIABILITY_LABELS,
   SIGNAL_SOURCE_LABELS,
+  hasSignalProof,
   signalNature,
   signalReliability,
 } from '@/lib/constants/signals'
+import { cn } from '@/lib/utils/cn'
+import { SignalValidityButton } from './signal-validity-button'
 
 interface CompanyDetailProps {
   company: CompanyWithRelations
@@ -166,6 +169,8 @@ export function CompanyDetail({
 
   const location = [company.postal_code, company.city].filter(Boolean).join(' ')
   const age = companyAge(company.founded_on)
+  // Signaux qui comptent : prouvés et non écartés (même règle que le score)
+  const countedSignals = signals.filter((signal) => !signal.invalidated_at && hasSignalProof(signal))
 
   return (
     <div className="space-y-6">
@@ -234,8 +239,8 @@ export function CompanyDetail({
           <CompanyWhyCard
             company={company}
             strategy={strategy}
-            signalCount={signals.length}
-            signalTypes={signals.map((signal) => signal.signal_type)}
+            signalCount={countedSignals.length}
+            signalTypes={countedSignals.map((signal) => signal.signal_type)}
             hasDecisionMaker={contacts.some((contact) => contact.is_decision_maker && !contact.opted_out_at)}
           />
 
@@ -256,7 +261,13 @@ export function CompanyDetail({
               <CardContent>
                 <ul className="space-y-3">
                   {signals.map((signal) => (
-                    <li key={signal.id} className="flex items-start justify-between gap-4 rounded-lg bg-muted p-3">
+                    <li
+                      key={signal.id}
+                      className={cn(
+                        'flex items-start justify-between gap-4 rounded-lg bg-muted p-3',
+                        signal.invalidated_at && 'opacity-60'
+                      )}
+                    >
                       <div className="min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium">{signal.type?.label ?? signal.signal_type}</p>
@@ -284,10 +295,20 @@ export function CompanyDetail({
                             <ExternalLink className="w-3 h-3 shrink-0" />
                           </a>
                         )}
+                        {signal.invalidated_at ? (
+                          <p className="text-xs font-medium">Écarté par vous : ne compte plus dans le score.</p>
+                        ) : (
+                          !hasSignalProof(signal) && (
+                            <p className="text-xs font-medium">Sans preuve vérifiable : ne compte pas dans le score.</p>
+                          )
+                        )}
                       </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {formatDistanceToNow(new Date(signal.detected_at), { addSuffix: true, locale: fr })}
-                      </span>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(signal.detected_at), { addSuffix: true, locale: fr })}
+                        </span>
+                        <SignalValidityButton signalId={signal.id} invalidated={!!signal.invalidated_at} />
+                      </div>
                     </li>
                   ))}
                 </ul>

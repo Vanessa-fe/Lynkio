@@ -118,6 +118,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
           candidates.map((company) => company.id)
         )
         .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        .is('invalidated_at', null)
         .order('detected_at', { ascending: false })
     : { data: [] }
 

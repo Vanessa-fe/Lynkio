@@ -182,6 +182,8 @@ Deno.serve(async (request) => {
         .from('company_signals')
         .select('id, evidence, detected_at, expires_at, source, event_at, type:signal_types(label, nature, reliability)')
         .eq('company_id', companyId)
+        // Un signal écarté par l'utilisateur (« Ce signal est faux ») ne sert pas au message
+        .is('invalidated_at', null)
         .order('detected_at', { ascending: false })
         .limit(MAX_SIGNALS * 2),
       contactId
