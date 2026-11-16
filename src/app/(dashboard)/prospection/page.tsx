@@ -4,6 +4,7 @@ import { Settings2 } from 'lucide-react'
 import { PipelineRunsList } from '@/components/prospection/pipeline-runs-list'
 import { UnidentifiedOffers } from '@/components/prospection/unidentified-offers'
 import { StrategiesCard } from '@/components/prospection/strategies-card'
+import { ProspectionBand } from '@/components/prospection/prospection-band'
 import { getStrategies } from '@/lib/queries/strategies'
 import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
 import { getIcpBasics } from '@/lib/queries/icp'
@@ -45,6 +46,13 @@ export default async function ProspectionPage() {
           Celles qu&apos;elle retient arrivent dans Entreprises, à l&apos;étape « À qualifier ».
         </p>
       </div>
+
+      <ProspectionBand
+        professionKey={icp.professionKey}
+        defaultDepartments={settings?.departments ?? []}
+        hasAiKey={aiKey}
+        atLimit={strategies.length >= PLAN_LIMITS[plan ?? 'pro'].strategies}
+      />
 
       <Link href="/prospection/boamp" className="block rounded-lg border bg-card p-4 hover:bg-muted/50">
         <span className="font-medium">Marchés publics de services</span>
