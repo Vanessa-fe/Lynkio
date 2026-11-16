@@ -114,7 +114,8 @@ export function CompanyDeepDiveCard({ companyId, analysis, hasAiKey }: CompanyDe
           <div className="space-y-4">
             <p className="text-muted-foreground">
               Analyse du {formatDate(analysis.startedAt, 'd MMMM yyyy')}
-              {analysis.summary && ` : ${analysis.summary}`}
+              {/* Résumé de l'IA seulement si un résultat est retenu : sinon il pourrait contredire le constat */}
+              {retained.length > 0 && analysis.summary && ` : ${analysis.summary}`}
             </p>
             {analysis.identity && !analysis.identity.confirmed && (
               <p className="rounded-lg bg-amber-50 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-200">

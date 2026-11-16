@@ -55,6 +55,21 @@ export type DeepDiveResult = {
   findings: DeepFinding[]
 }
 
+/**
+ * Période à chercher : la plus longue durée de validité des événements cherchés. Chercher plus loin
+ * ne sert à rien, un événement plus ancien serait écarté comme « trop ancien ».
+ */
+export function searchWindow(validityDays: number[], today: Date): { days: number; since: string } {
+  const days = Math.max(30, ...validityDays.filter((value) => Number.isFinite(value) && value > 0))
+  const since = new Date(today.getTime() - days * 86_400_000).toISOString().slice(0, 10)
+  return { days, since }
+}
+
+/** Résumé à afficher : celui de l'IA seulement si un résultat a été retenu (sinon il pourrait contredire) */
+export function displayedSummary(aiSummary: string, findings: { retained: boolean }[]): string {
+  return findings.some((finding) => finding.retained) ? aiSummary : ''
+}
+
 function clean(value: unknown, max: number): string {
   return typeof value === 'string' ? value.replace(/[<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : ''
 }

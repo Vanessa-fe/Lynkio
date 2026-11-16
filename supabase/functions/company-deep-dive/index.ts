@@ -26,9 +26,11 @@ import {
 import {
   DEFAULT_EVENT_VALIDITY_DAYS,
   checkIdentity,
+  displayedSummary,
   filterFindings,
   findingDedupeKey,
   safeHttpUrl,
+  searchWindow,
   siteDomain,
   type DeepDiveResult,
 } from '../_shared/deep-dive.ts'
@@ -83,7 +85,7 @@ Règles :
 - Ne reprends JAMAIS l'immatriculation ou la création de la société elle-même : elle est déjà connue. Une ouverture d'établissement doit être un NOUVEAU lieu, ouvert après la création.
 - N'utilise JAMAIS d'offres d'emploi ni de sites de recrutement (France Travail, Indeed, Welcome to the Jungle, LinkedIn Jobs, HelloWork, Apec…).
 - source_url : l'adresse EXACTE d'une page que tu as réellement consultée et qui annonce l'événement. N'invente jamais d'adresse, de citation ni d'événement.
-- date : date de l'annonce ou de l'événement au format AAAA-MM-JJ (AAAA-MM si le jour est inconnu), chaîne vide si inconnue. Ne retiens que les 12 derniers mois.
+- date : date de l'annonce ou de l'événement au format AAAA-MM-JJ (AAAA-MM si le jour est inconnu), chaîne vide si inconnue. Ne retiens que les événements de la période indiquée : les plus anciens ne servent pas.
 - title : l'événement en quelques mots. summary : ce que dit la source, en une ou deux phrases, sans rien ajouter.
 - relevance : en une phrase, pourquoi cet événement PEUT créer un besoin pour une prestation de la personne. C'est une hypothèse : écris « peut », jamais « a besoin ».
 - service : le nom exact de la prestation concernée, ou chaîne vide.
@@ -196,7 +198,11 @@ async function runAnalysis(admin: SupabaseClient, access: AiAccess, analysisId: 
 
     const ttl = new Map((types ?? []).map((type) => [type.key as string, (type.default_ttl_days as number | null) ?? DEFAULT_EVENT_VALIDITY_DAYS]))
 
+    // Ne pas chercher plus loin que ce qui peut encore être retenu (durée de validité des signaux)
+    const period = searchWindow(events.map((event) => ttl.get(event.signal ?? event.key) ?? DEFAULT_EVENT_VALIDITY_DAYS), new Date())
+
     const prompt = [
+      `## Période\nSeulement les événements annoncés depuis le ${period.since} (${period.days} derniers jours).`,
       `## Événements à chercher (clé : sens)\n${eventLines(events, reasons)}`,
       `## Entreprise\n<entreprise>\nNom : ${company.name}\n${company.registration_id ? `SIREN : ${company.registration_id}\n` : ''}${
         company.city || company.postal_code ? `Siège : ${[company.postal_code, company.city].filter(Boolean).join(' ')}\n` : ''
@@ -284,7 +290,7 @@ async function runAnalysis(admin: SupabaseClient, access: AiAccess, analysisId: 
       }
     }
 
-    const result: DeepDiveResult = { version: 1, identity, summary: text(parsed.summary, 400), findings }
+    const result: DeepDiveResult = { version: 1, identity, summary: displayedSummary(text(parsed.summary, 400), findings), findings }
     await admin
       .from('company_deep_analyses')
       .update({ status: 'done', finished_at: new Date().toISOString(), result, signals_added: added })
