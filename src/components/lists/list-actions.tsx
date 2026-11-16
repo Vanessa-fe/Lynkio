@@ -25,13 +25,15 @@ interface ListActionsProps {
   exportableCount: number
   // Page où aller après la suppression de la liste (sinon : on reste et la page se recharge)
   afterDeleteHref?: string
+  // Version carte (page Listes) : export Waalaxy rangé dans le menu, bouton LinkedIn plus court
+  compact?: boolean
 }
 
 /**
  * Ce qu'on fait d'une liste : l'envoyer sur LinkedIn, l'exporter pour Waalaxy,
  * la renommer, la supprimer. Utilisé sur Personnes (liste affichée) et sur Listes.
  */
-export function ListActions({ list, exportableCount, afterDeleteHref }: ListActionsProps) {
+export function ListActions({ list, exportableCount, afterDeleteHref, compact = false }: ListActionsProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isRenaming, setIsRenaming] = useState(false)
@@ -97,6 +99,14 @@ export function ListActions({ list, exportableCount, afterDeleteHref }: ListActi
             <Pencil className="w-4 h-4 mr-2" />
             Renommer la liste
           </DropdownMenuItem>
+          {compact && exportableCount > 0 && (
+            <DropdownMenuItem asChild>
+              <a href={`/api/export/waalaxy?list=${list.id}`} download>
+                <Download className="w-4 h-4 mr-2" />
+                Exporter pour Waalaxy ({exportableCount})
+              </a>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onSelect={handleDelete} className="text-destructive focus:text-destructive">
             <Trash2 className="w-4 h-4 mr-2" />
             Supprimer la liste
@@ -104,12 +114,17 @@ export function ListActions({ list, exportableCount, afterDeleteHref }: ListActi
         </DropdownMenuContent>
       </DropdownMenu>
       {exportableCount > 0 && (
-        <Button onClick={() => startLinkedin({ listId: list.id })} disabled={isStarting}>
+        <Button
+          onClick={() => startLinkedin({ listId: list.id })}
+          disabled={isStarting}
+          size={compact ? 'sm' : 'default'}
+          title={compact ? `Envoyer sur LinkedIn (${exportableCount})` : undefined}
+        >
           {isStarting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LinkedinIcon className="w-4 h-4 mr-2" />}
-          Envoyer sur LinkedIn ({exportableCount})
+          {compact ? `LinkedIn (${exportableCount})` : `Envoyer sur LinkedIn (${exportableCount})`}
         </Button>
       )}
-      {exportableCount > 0 ? (
+      {compact ? null : exportableCount > 0 ? (
         <Button variant="outline" asChild>
           <a href={`/api/export/waalaxy?list=${list.id}`} download>
             <Download className="w-4 h-4 mr-2" />
