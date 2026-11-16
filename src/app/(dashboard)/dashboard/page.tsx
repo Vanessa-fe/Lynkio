@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getUserProfile } from '@/lib/queries/user-profile'
 import { getDashboardData } from '@/lib/queries/prospection-dashboard'
@@ -7,6 +6,7 @@ import { TodayReminders } from '@/components/dashboard/today-reminders'
 import { TopOpportunities } from '@/components/dashboard/top-opportunities'
 import { PipelineOverview } from '@/components/dashboard/pipeline-overview'
 import { SophieCard } from '@/components/dashboard/sophie-card'
+import { WelcomeBand } from '@/components/dashboard/welcome-band'
 import { GoalsBarometer } from '@/components/dashboard/goals-barometer'
 import { getGoalProgress } from '@/lib/queries/offer'
 import { countUnreadNotifications } from '@/lib/queries/notifications'
@@ -25,24 +25,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold md:text-4xl">
-          Bonjour{profile.first_name ? ' ' : ''}
-          {profile.first_name && <span className="accent-serif text-primary">{profile.first_name}</span>}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Où en est votre prospection ·{' '}
-          <Link href="/results" className="text-primary underline-offset-2 hover:underline">
-            Voir vos résultats étape par étape
-          </Link>
-          {' · '}
-          <Link href="/notifications" className="text-primary underline-offset-2 hover:underline">
-            {unreadAlerts > 0
-              ? `${unreadAlerts} nouvelle${unreadAlerts > 1 ? 's' : ''} alerte${unreadAlerts > 1 ? 's' : ''} de Sophie`
-              : 'Alertes de Sophie'}
-          </Link>
-        </p>
-      </div>
+      <WelcomeBand firstName={profile.first_name} data={data} unreadAlerts={unreadAlerts} />
 
       <ProspectionStats stats={data.stats} />
 
