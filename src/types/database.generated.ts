@@ -598,6 +598,7 @@ export type Database = {
           name: string
           profession_key: string | null
           signal_weights: Json
+          signal_recommendations: Json | null
           updated_at: string
           user_id: string
           version: number
@@ -610,6 +611,7 @@ export type Database = {
           name: string
           profession_key?: string | null
           signal_weights?: Json
+          signal_recommendations?: Json | null
           updated_at?: string
           user_id: string
           version?: number
@@ -622,6 +624,7 @@ export type Database = {
           name?: string
           profession_key?: string | null
           signal_weights?: Json
+          signal_recommendations?: Json | null
           updated_at?: string
           user_id?: string
           version?: number

@@ -150,6 +150,11 @@ verify_jwt = true
 [functions.strategy-assistant]
 verify_jwt = true
 
+# Recommandation des signaux d'opportunité par Sophie : appelée depuis le navigateur avec le jeton
+# de l'utilisatrice, elle appelle son IA (sans recherche web) ; rien n'est enregistré ici
+[functions.signal-advisor]
+verify_jwt = true
+
 [functions.extension-connect]
 verify_jwt = true
 

@@ -11,6 +11,7 @@ import {
 } from '@/lib/validations/icp'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { mergeSignalWeights } from '@/lib/constants/signals'
+import { readSignalRecommendation } from '../../../supabase/functions/_shared/signal-capabilities'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { NO_ACCESS_MESSAGE, PLAN_LIMITS } from '@/lib/billing'
 
@@ -46,7 +47,7 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
 
     const { data: icp } = await supabase
       .from('icp_profiles')
-      .select('criteria, profession_key, signal_weights')
+      .select('criteria, profession_key, signal_weights, signal_recommendations')
       .eq('id', icpId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -61,7 +62,12 @@ export async function saveIcp(icpId: string, input: IcpInput): Promise<ActionRes
     const { data: defaults } = professionKey
       ? await supabase.from('profession_signals').select('signal_type, default_weight').eq('profession_key', professionKey)
       : { data: [] }
-    const defaultWeights = new Map((defaults ?? []).map((row) => [row.signal_type, row.default_weight]))
+    // La recommandation de Sophie remplace le défaut du métier : un point égal à la recommandation
+    // n'est pas un réglage manuel, il suivra donc les prochaines recommandations
+    const defaultWeights = new Map<string, number>([
+      ...(defaults ?? []).map((row): [string, number] => [row.signal_type, row.default_weight]),
+      ...Object.entries(readSignalRecommendation(icp.signal_recommendations)?.weights ?? {}),
+    ])
 
     // Les réglages des signaux absents de l'écran (retirés) sont conservés
     const signalWeights = mergeSignalWeights(icp.signal_weights, validated.signalWeights, defaultWeights)

@@ -245,3 +245,152 @@ export function capabilityForSignal(signalType: string): SignalCapability | unde
 export function signalCapabilityIds(): string[] {
   return SIGNAL_CAPABILITIES.filter((capability) => capability.purpose === 'signal').map((capability) => capability.id)
 }
+
+// ---------------------------------------------------------------------------------------------
+// Événements d'opportunité (étape 3) : la liste FERMÉE dans laquelle Sophie choisit.
+//
+// Sophie raisonne : prestation → événement déclencheur → indice observable → capacité → signal.
+// Un événement est soit détectable aujourd'hui (il correspond à un signal créé par une capacité),
+// soit réservé à l'analyse approfondie (recherche web à la demande, étape 5) : il ne rapporte alors
+// aucun point tant que cette analyse n'existe pas.
+
+export type OpportunityEvent = {
+  key: string
+  label: string
+  /** Ce que Sophie doit comprendre de l'événement (envoyé à l'IA) */
+  meaning: string
+  /** Signal qui le détecte aujourd'hui, ou null : seulement par une analyse approfondie */
+  signal: string | null
+}
+
+export const OPPORTUNITY_EVENTS: readonly OpportunityEvent[] = [
+  { key: 'company_creation', label: 'Création récente de l’entreprise', meaning: 'société immatriculée il y a moins d’un an (annonce légale)', signal: 'recently_created' },
+  { key: 'website_technology', label: 'Site fait avec une technologie que vous maîtrisez', meaning: 'technologie du site repérée dans son code', signal: 'tech_stack_match' },
+  { key: 'website_not_secure', label: 'Site encore servi en HTTP', meaning: 'la page d’accueil répond sans HTTPS', signal: 'website_http_observed' },
+  { key: 'new_establishment', label: 'Ouverture d’un établissement', meaning: 'nouveau lieu, boutique, restaurant, agence ou site ouvert ou annoncé', signal: null },
+  { key: 'product_launch', label: 'Lancement d’un produit ou d’une offre', meaning: 'nouveau produit, nouvelle gamme, nouveau service ou nouvelle plateforme annoncés', signal: null },
+  { key: 'funding_round', label: 'Levée de fonds', meaning: 'financement annoncé publiquement', signal: null },
+  { key: 'rebranding', label: 'Nouvelle marque ou nouvelle identité', meaning: 'changement de nom, de logo ou d’identité visuelle annoncé', signal: null },
+  { key: 'project_announced', label: 'Nouveau projet annoncé', meaning: 'projet public précis : chantier, programme, partenariat, appel à projets remporté', signal: null },
+  { key: 'expansion', label: 'Développement annoncé', meaning: 'nouveaux marchés, export, croissance d’équipe annoncée publiquement', signal: null },
+  { key: 'digital_transformation', label: 'Transformation numérique annoncée', meaning: 'modernisation d’outils, de processus ou d’applications annoncée', signal: null },
+  { key: 'software_change', label: 'Changement de logiciel annoncé', meaning: 'déploiement ou remplacement d’un logiciel métier, d’un ERP ou d’un CRM annoncé', signal: null },
+  { key: 'event_or_campaign', label: 'Événement ou campagne annoncés', meaning: 'salon, événement ou campagne de communication annoncés', signal: null },
+  { key: 'reorganisation', label: 'Réorganisation ou déménagement annoncés', meaning: 'fusion, rachat, réorganisation, déménagement ou nouveaux locaux annoncés', signal: null },
+]
+
+/** Au plus autant d'événements recommandés : l'écran reste simple */
+export const MAX_RECOMMENDED_EVENTS = 8
+/** Même plafond que le curseur des réglages (src/lib/validations/icp.ts, MAX_SIGNAL_WEIGHT) */
+export const MAX_RECOMMENDED_WEIGHT = 60
+
+export type RecommendedEvent = {
+  event: string
+  /** Nom de la prestation concernée (une des prestations de l'utilisateur), '' si générale */
+  service: string
+  /** Pourquoi cet événement peut créer un besoin pour cette prestation (une hypothèse, pas un fait) */
+  why: string
+  /** Points proposés (ne servent que si l'événement est détectable aujourd'hui) */
+  weight: number
+}
+
+export type SignalRecommendation = {
+  version: 1
+  generatedAt: string
+  provider: string
+  /** Empreinte des prestations au moment de la recommandation (pour proposer une mise à jour) */
+  servicesFingerprint: string
+  /** Ce que l'utilisateur a ajouté pour décrire ce qu'il vend */
+  pitch: string
+  summary: string
+  events: RecommendedEvent[]
+  /** Points recommandés pour CHAQUE signal détectable (0 = non recommandé) : lus par le score */
+  weights: Record<string, number>
+}
+
+export function opportunityEvent(key: string): OpportunityEvent | undefined {
+  return OPPORTUNITY_EVENTS.find((event) => event.key === key)
+}
+
+function cleanText(value: unknown, max: number): string {
+  return typeof value === 'string' ? value.replace(/[<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : ''
+}
+
+/**
+ * Filtre la réponse de l'IA (ou un brouillon renvoyé par le navigateur) : seuls les événements du
+ * catalogue, les prestations de l'utilisateur et des points entiers dans les bornes passent.
+ */
+export function sanitizeRecommendedEvents(raw: unknown, serviceNames: string[]): RecommendedEvent[] {
+  const items = Array.isArray(raw) ? raw : []
+  const services = new Map(serviceNames.map((name) => [name.trim().toLowerCase(), name.trim()]))
+  const seen = new Set<string>()
+  const events: RecommendedEvent[] = []
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue
+    const value = item as Record<string, unknown>
+    const key = typeof value.event === 'string' ? value.event : ''
+    if (!opportunityEvent(key) || seen.has(key)) continue
+    const why = cleanText(value.why, 240)
+    if (!why) continue
+    const service = services.get(cleanText(value.service, 80).toLowerCase()) ?? ''
+    const number = typeof value.weight === 'number' && Number.isFinite(value.weight) ? value.weight : 0
+    const weight = Math.min(MAX_RECOMMENDED_WEIGHT, Math.max(0, Math.round(number / 5) * 5))
+    seen.add(key)
+    events.push({ event: key, service, why, weight })
+    if (events.length >= MAX_RECOMMENDED_EVENTS) break
+  }
+  return events
+}
+
+/**
+ * Points recommandés pour chaque signal détectable : ceux des événements recommandés, 0 pour les
+ * autres (Sophie ne les a pas jugés utiles ; l'utilisateur peut toujours les activer à la main).
+ */
+export function recommendedWeights(events: RecommendedEvent[], detectableSignals: string[]): Record<string, number> {
+  const weights: Record<string, number> = Object.fromEntries(detectableSignals.map((signal) => [signal, 0]))
+  for (const recommended of events) {
+    const signal = opportunityEvent(recommended.event)?.signal
+    if (signal && signal in weights) weights[signal] = recommended.weight
+  }
+  return weights
+}
+
+/** Empreinte courte et stable des prestations (nom + description) et de la description libre */
+export function servicesFingerprint(services: { name: string; description: string }[], pitch = ''): string {
+  const text = JSON.stringify([
+    services.map((service) => [service.name.trim().toLowerCase(), service.description.trim().toLowerCase()]),
+    pitch.trim().toLowerCase(),
+  ])
+  let hash = 5381
+  for (let index = 0; index < text.length; index++) hash = ((hash * 33) ^ text.charCodeAt(index)) >>> 0
+  return hash.toString(36)
+}
+
+/** Lecture prudente de icp_profiles.signal_recommendations (JSON libre en base) */
+export function readSignalRecommendation(value: unknown): SignalRecommendation | null {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as Record<string, unknown>
+  if (raw.version !== 1 || typeof raw.generatedAt !== 'string') return null
+  const weights = raw.weights && typeof raw.weights === 'object' ? (raw.weights as Record<string, unknown>) : {}
+  const rawEvents = Array.isArray(raw.events) ? raw.events : []
+  const serviceNames = rawEvents.map((event) =>
+    event && typeof event === 'object' && typeof (event as Record<string, unknown>).service === 'string'
+      ? ((event as Record<string, unknown>).service as string)
+      : ''
+  )
+  return {
+    version: 1,
+    generatedAt: raw.generatedAt,
+    provider: typeof raw.provider === 'string' ? raw.provider : '',
+    servicesFingerprint: typeof raw.servicesFingerprint === 'string' ? raw.servicesFingerprint : '',
+    pitch: cleanText(raw.pitch, 600),
+    summary: cleanText(raw.summary, 400),
+    events: sanitizeRecommendedEvents(rawEvents, serviceNames.filter(Boolean)),
+    weights: Object.fromEntries(
+      Object.entries(weights).filter(
+        (entry): entry is [string, number] =>
+          typeof entry[1] === 'number' && Number.isInteger(entry[1]) && entry[1] >= 0 && entry[1] <= MAX_RECOMMENDED_WEIGHT
+      )
+    ),
+  }
+}

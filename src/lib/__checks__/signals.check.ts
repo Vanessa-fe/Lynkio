@@ -10,10 +10,10 @@ import {
   type SignalAvailability,
 } from '../constants/signals.ts'
 
-const signal = (key: string, availability: SignalAvailability, isProfessionSignal: boolean) => ({
+const signal = (key: string, availability: SignalAvailability, isSuggested: boolean) => ({
   key,
   availability,
-  isProfessionSignal,
+  isSuggested,
 })
 
 test('une disponibilité inconnue est traitée comme indisponible (jamais comme détectable)', () => {
@@ -30,10 +30,10 @@ test('les signaux retirés disparaissent, les indisponibles sont à part', () =>
     signal('funding_round', 'unavailable', true),
     signal('job_posting_dev', 'retired', true),
   ])
-  assert.deepEqual(groups.profession.map((s) => s.key), ['recently_created'])
+  assert.deepEqual(groups.suggested.map((s) => s.key), ['recently_created'])
   assert.deepEqual(groups.other.map((s) => s.key), ['tech_stack_match'])
   assert.deepEqual(groups.unavailable.map((s) => s.key), ['funding_round'])
-  const all = [...groups.profession, ...groups.other, ...groups.unavailable].map((s) => s.key)
+  const all = [...groups.suggested, ...groups.other, ...groups.unavailable].map((s) => s.key)
   assert.ok(!all.includes('job_posting_dev'))
 })
 
