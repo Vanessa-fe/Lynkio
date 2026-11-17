@@ -22,6 +22,7 @@ import { OUTREACH_STATUSES, outreachStatusLabels } from '@/lib/constants/outreac
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { contactDisplayName, individualLabel } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
+import { useSessionState } from '@/lib/hooks/use-session-state'
 import { cn } from '@/lib/utils'
 import type { PersonRow, ProspectListWithCount } from '@/lib/queries/people'
 import type { OutreachStatus, PipelineStage } from '@/types'
@@ -54,6 +55,28 @@ function initials(person: Pick<PersonRow, 'first_name' | 'last_name' | 'email'>)
   return letters || person.email?.charAt(0).toUpperCase() || '?'
 }
 
+type PeopleView = {
+  search: string
+  scope: Scope
+  // Segment de la fiche de la personne : 'all', un segment, ou 'none' (non classée)
+  segment: string
+  statusFilter: StatusFilter
+  selected: string[]
+}
+
+const STATUS_FILTERS: StatusFilter[] = ['all', ...OUTREACH_STATUSES]
+
+function parsePeopleView(raw: unknown): PeopleView {
+  const saved = raw && typeof raw === 'object' ? (raw as Partial<Record<keyof PeopleView, unknown>>) : {}
+  return {
+    search: typeof saved.search === 'string' ? saved.search : '',
+    scope: SCOPES.some((option) => option.value === saved.scope) ? (saved.scope as Scope) : 'all',
+    segment: typeof saved.segment === 'string' ? saved.segment : 'all',
+    statusFilter: STATUS_FILTERS.includes(saved.statusFilter as StatusFilter) ? (saved.statusFilter as StatusFilter) : 'all',
+    selected: Array.isArray(saved.selected) ? saved.selected.filter((id): id is string => typeof id === 'string') : [],
+  }
+}
+
 interface PeopleListProps {
   people: PersonRow[]
   stages: PipelineStage[]
@@ -64,12 +87,17 @@ interface PeopleListProps {
 export function PeopleList({ people, stages, lists, activeListId }: PeopleListProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [search, setSearch] = useState('')
-  const [scope, setScope] = useState<Scope>('all')
-  // Segment de la fiche de la personne : 'all', un segment, ou 'none' (non classée)
-  const [segment, setSegment] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+  // Filtres et sélection gardés pour la session, par liste : on les retrouve en revenant de l'envoi
+  // LinkedIn ou d'une fiche (lot 1.4)
+  const [view, setView] = useSessionState(`filonea:people-view:${activeListId ?? 'all'}`, parsePeopleView)
+  const { search, scope, segment, statusFilter } = view
+  const selected = new Set(view.selected)
+  const setSearch = (value: string) => setView({ ...view, search: value })
+  const setScope = (value: Scope) => setView({ ...view, scope: value })
+  const setSegment = (value: string) => setView({ ...view, segment: value })
+  const setStatusFilter = (value: StatusFilter) => setView({ ...view, statusFilter: value })
+  const setSelected = (next: Set<string> | ((current: Set<string>) => Set<string>)) =>
+    setView({ ...view, selected: [...(typeof next === 'function' ? next(selected) : next)] })
   const [isAddingToList, setIsAddingToList] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
   const { start: startLinkedin, isStarting } = useStartLinkedin()
@@ -258,7 +286,11 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
             <Button
               size="sm"
               onClick={async () => {
-                if (await startLinkedin({ contactIds: selectedIds })) setSelected(new Set())
+                // La sélection reste cochée : on la retrouve en revenant de la page d'envoi
+                await startLinkedin(
+                  { contactIds: selectedIds },
+                  activeList ? { from: 'list', listId: activeList.id } : { from: 'people' }
+                )
               }}
               disabled={isStarting}
             >
