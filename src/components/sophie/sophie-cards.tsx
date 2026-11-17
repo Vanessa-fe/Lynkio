@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, Check, Copy, ExternalLink, Loader2 } from 'lucide-react'
@@ -14,6 +14,9 @@ import { SECTOR_GROUPS, STRATEGY_SIZES } from '@/lib/constants/client-sectors'
 import { DEPARTMENTS } from '@/lib/validations/prospection'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
+import { decideSophieAction, getSophieActionStatus } from '@/lib/actions/sophie'
+import { Checkbox } from '@/components/ui/checkbox'
+import { watchRun } from '@/components/prospection/run-watch'
 
 /**
  * Cartes des réponses de Sophie (phase 3) : ce qu'elle a consulté ou préparé, présenté pour être vérifié.
@@ -37,6 +40,15 @@ export type SophieCard =
       }
     }
   | {
+      type: 'action_proposal'
+      actionId: string
+      kind: 'log_activity' | 'create_reminder' | 'change_stage' | 'start_prospecting' | 'launch_search'
+      title: string
+      lines: string[]
+      companyId: string | null
+      reminder: { id: string; title: string } | null
+    }
+  | {
       type: 'outreach_draft'
       companyId: string
       companyName: string
@@ -48,12 +60,13 @@ export type SophieCard =
 
 export function isSophieCard(value: unknown): value is SophieCard {
   const type = (value as { type?: unknown } | null)?.type
-  return type === 'companies' || type === 'search_proposal' || type === 'outreach_draft'
+  return type === 'companies' || type === 'search_proposal' || type === 'outreach_draft' || type === 'action_proposal'
 }
 
 export function SophieCardView({ card, professionKey }: { card: SophieCard; professionKey: string | null }) {
   if (card.type === 'companies') return <CompaniesCard card={card} />
   if (card.type === 'search_proposal') return <SearchProposalCard card={card} professionKey={professionKey} />
+  if (card.type === 'action_proposal') return <ActionProposalCard card={card} />
   return <OutreachDraftCard card={card} />
 }
 
@@ -238,6 +251,112 @@ function OutreachDraftCard({ card }: { card: Extract<SophieCard, { type: 'outrea
           </Link>
         </Button>
       </div>
+    </CardFrame>
+  )
+}
+
+/**
+ * Récapitulatif d'une action proposée par Sophie (phase 4) : rien n'est fait avant « Confirmer ».
+ * L'état réel est relu sur le serveur (une action confirmée, annulée ou expirée ne se rejoue pas).
+ */
+function ActionProposalCard({ card }: { card: Extract<SophieCard, { type: 'action_proposal' }> }) {
+  const router = useRouter()
+  const [state, setState] = useState<'loading' | 'proposed' | 'busy' | 'done' | 'refused' | 'failed' | 'expired'>('loading')
+  const [message, setMessage] = useState<string | null>(null)
+  const [completeReminder, setCompleteReminder] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void getSophieActionStatus(card.actionId).then((status) => {
+      if (cancelled) return
+      if (!status) return setState('failed')
+      if (status.status === 'proposed') setState('proposed')
+      else if (status.status === 'executed' || status.status === 'confirmed') {
+        setState('done')
+        setMessage(status.message)
+      } else if (status.status === 'refused') setState('refused')
+      else if (status.status === 'expired') setState('expired')
+      else {
+        setState('failed')
+        setMessage(status.error)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [card.actionId])
+
+  const decide = async (decision: 'confirm' | 'refuse') => {
+    setState('busy')
+    try {
+      const result = await decideSophieAction(card.actionId, decision, {
+        completeReminderId: completeReminder && card.reminder ? card.reminder.id : null,
+      })
+      if (!result.success) {
+        setState('failed')
+        setMessage(result.error ?? 'Action impossible')
+        return
+      }
+      setState(decision === 'confirm' ? 'done' : 'refused')
+      setMessage(result.message ?? null)
+      // Recherche lancée : la fenêtre de fin s'ouvrira à la fin, où que l'on soit
+      if (result.runId) watchRun(result.runId)
+      router.refresh()
+    } catch {
+      setState('failed')
+      setMessage(CONNECTION_ERROR)
+    }
+  }
+
+  return (
+    <CardFrame title={card.title}>
+      {card.lines.length > 0 && (
+        <ul className="space-y-0.5 text-sm">
+          {card.lines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
+      {card.reminder && state === 'proposed' && (
+        <label className="flex cursor-pointer items-start gap-2 text-sm">
+          <Checkbox checked={completeReminder} onCheckedChange={(checked) => setCompleteReminder(checked === true)} className="mt-0.5" />
+          <span>Marquer aussi la relance « {card.reminder.title} » comme faite</span>
+        </label>
+      )}
+      {state === 'loading' && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Chargement" />}
+      {(state === 'proposed' || state === 'busy') && (
+        <>
+          <p className="text-xs text-muted-foreground">Rien n’est fait tant que vous ne confirmez pas.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => decide('confirm')} disabled={state === 'busy'}>
+              {state === 'busy' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmer
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => decide('refuse')} disabled={state === 'busy'}>
+              Annuler
+            </Button>
+          </div>
+        </>
+      )}
+      {state === 'done' && (
+        <p className="flex items-center gap-1.5 text-sm font-medium text-green-700 dark:text-green-400" role="status">
+          <Check className="h-4 w-4" aria-hidden="true" />
+          {message ?? 'Fait.'}
+        </p>
+      )}
+      {state === 'refused' && <p className="text-sm text-muted-foreground">Annulé : rien n’a été modifié.</p>}
+      {state === 'expired' && <p className="text-sm text-muted-foreground">Proposition expirée : demandez à Sophie de la reproposer.</p>}
+      {state === 'failed' && (
+        <p className="flex items-start gap-1.5 text-sm text-destructive" role="alert">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          {message ?? 'L’action n’a pas abouti : rien n’a été modifié.'}
+        </p>
+      )}
+      {card.companyId && (state === 'done' || state === 'proposed') && (
+        <Link href={`/companies/${card.companyId}`} className="text-xs text-primary underline-offset-2 hover:underline">
+          Ouvrir la fiche
+        </Link>
+      )}
     </CardFrame>
   )
 }

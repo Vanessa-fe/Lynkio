@@ -177,6 +177,15 @@ Deno.serve(async (request) => {
   // L'IA attend une conversation qui commence par l'utilisateur
   while (turns.length > 0 && turns[0]!.role !== 'user') turns.shift()
 
+  // Sort des actions déjà proposées dans cette conversation : Sophie ne les reprend pas comme si elles attendaient encore
+  const { data: pastActionRows } = await admin
+    .from('sophie_actions')
+    .select('summary, status, created_at')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+    .limit(20)
+  const pastActions = describePastActions(pastActionRows ?? [])
+
   const [{ data: profession }, facts] = await Promise.all([
     profile?.profession_key
       ? admin.from('professions').select('label').eq('key', profile.profession_key).maybeSingle()
@@ -195,14 +204,14 @@ Deno.serve(async (request) => {
       // Un planificateur en panne n'empêche pas de répondre.
       let calls: Awaited<ReturnType<typeof planTools>> = []
       try {
-        calls = await planTools({ access, turns, context })
+        calls = await planTools({ access, turns, context, pastActions })
       } catch (error) {
         console.error('sophie-chat planner', error instanceof Error ? error.message : error)
       }
       const results: ToolResult[] = []
       for (const call of calls) {
         send({ type: 'status', text: TOOL_STATUS[call.tool] })
-        results.push(await runTool({ call, supabase, userId: user.id, context, authorization, lastMessage: message }))
+        results.push(await runTool({ call, supabase, userId: user.id, context, authorization, lastMessage: message, admin, conversationId }))
       }
       const cards = results.flatMap((result) => (result.card ? [result.card] : []))
       for (const card of cards) send({ type: 'card', card })
@@ -214,6 +223,7 @@ Deno.serve(async (request) => {
         facts,
         toolFacts: results.map((result) => `[${result.tool}]\n${result.facts}`).join('\n\n'),
         today: todayInParis(),
+        pastActions,
       })
 
       let text = ''
@@ -280,3 +290,21 @@ Deno.serve(async (request) => {
     headers: { ...cors, 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
   })
 })
+
+const ACTION_STATUS_LABELS: Record<string, string> = {
+  proposed: 'en attente de confirmation',
+  confirmed: 'confirmée par l’utilisateur',
+  executed: 'confirmée par l’utilisateur et faite',
+  failed: 'confirmée mais n’a pas abouti',
+  refused: 'annulée par l’utilisateur (rien n’a été fait)',
+}
+
+/** Liste lisible des propositions précédentes et de leur sort (24 h max pour celles en attente) */
+function describePastActions(rows: { summary: string; status: string; created_at: string }[]): string {
+  return rows
+    .map((row) => {
+      const expired = row.status === 'proposed' && Date.now() - new Date(row.created_at).getTime() > 24 * 60 * 60 * 1000
+      return `- ${row.summary} : ${expired ? 'expirée (non confirmée)' : (ACTION_STATUS_LABELS[row.status] ?? row.status)}`
+    })
+    .join('\n')
+}

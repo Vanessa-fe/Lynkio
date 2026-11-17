@@ -39,6 +39,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      sophie_actions: {
+        Row: {
+          args: Json
+          company_id: string | null
+          conversation_id: string | null
+          created_at: string
+          decided_at: string | null
+          error: string | null
+          executed_at: string | null
+          id: string
+          kind: string
+          result: Json | null
+          status: string
+          summary: string
+          user_id: string
+        }
+        Insert: {
+          args?: Json
+          company_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          error?: string | null
+          executed_at?: string | null
+          id?: string
+          kind: string
+          result?: Json | null
+          status?: string
+          summary: string
+          user_id: string
+        }
+        Update: {
+          args?: Json
+          company_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          error?: string | null
+          executed_at?: string | null
+          id?: string
+          kind?: string
+          result?: Json | null
+          status?: string
+          summary?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sophie_conversations: {
         Row: {
           created_at: string
