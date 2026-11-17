@@ -25,12 +25,12 @@ interface ListActionsProps {
   exportableCount: number
   // Page où aller après la suppression de la liste (sinon : on reste et la page se recharge)
   afterDeleteHref?: string
-  // Version carte (page Listes) : export Waalaxy rangé dans le menu, bouton LinkedIn plus court
+  // Version carte (page Listes) : export CSV rangé dans le menu, bouton LinkedIn plus court
   compact?: boolean
 }
 
 /**
- * Ce qu'on fait d'une liste : l'envoyer sur LinkedIn, l'exporter pour Waalaxy,
+ * Ce qu'on fait d'une liste : l'envoyer sur LinkedIn, l'exporter en CSV (format des outils d'automatisation LinkedIn),
  * la renommer, la supprimer. Utilisé sur Personnes (liste affichée) et sur Listes.
  */
 export function ListActions({ list, exportableCount, afterDeleteHref, compact = false }: ListActionsProps) {
@@ -103,7 +103,7 @@ export function ListActions({ list, exportableCount, afterDeleteHref, compact = 
             <DropdownMenuItem asChild>
               <a href={`/api/export/waalaxy?list=${list.id}`} download>
                 <Download className="w-4 h-4 mr-2" />
-                Exporter pour Waalaxy ({exportableCount})
+                Exporter en CSV ({exportableCount})
               </a>
             </DropdownMenuItem>
           )}
@@ -128,7 +128,7 @@ export function ListActions({ list, exportableCount, afterDeleteHref, compact = 
         <Button variant="outline" asChild>
           <a href={`/api/export/waalaxy?list=${list.id}`} download>
             <Download className="w-4 h-4 mr-2" />
-            Exporter pour Waalaxy ({exportableCount})
+            Exporter en CSV ({exportableCount})
           </a>
         </Button>
       ) : (

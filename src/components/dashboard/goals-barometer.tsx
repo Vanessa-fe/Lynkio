@@ -53,7 +53,7 @@ export function GoalsBarometer({ progress }: { progress: GoalProgress }) {
         </CardTitle>
         <CardDescription>
           {hasGoals
-            ? 'D’après vos échanges notés et vos fiches gagnées.'
+            ? 'D’après vos échanges notés et vos fiches signées.'
             : 'Fixez-vous un rythme : Sophie vous montrera où vous en êtes.'}
         </CardDescription>
       </CardHeader>

@@ -61,7 +61,7 @@ export function describeAccessLogEntry(action: DataAccessAction, details: Record
     case 'export_companies':
       return `Export de vos entreprises (${plural(count('companies'), 'entreprise')})`
     case 'export_waalaxy':
-      return `Export pour Waalaxy (${plural(count('contacts'), 'contact')})`
+      return `Export CSV pour LinkedIn (${plural(count('contacts'), 'contact')})`
     case 'export_account':
       return 'Export complet de vos données'
     case 'api_key_saved':

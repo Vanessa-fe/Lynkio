@@ -139,8 +139,7 @@ export function LinkedinQueue({
       <Card>
         <CardContent className="flex flex-col items-start gap-4 py-10">
           <p className="text-muted-foreground max-w-xl">
-            Aucun envoi en cours. Pour commencer, cochez des personnes dans Personnes (ou ouvrez une de vos listes) et
-            cliquez sur « Envoyer sur LinkedIn » : Sophie préparera les messages de chaque personne.
+            Aucun envoi en cours. Cochez des personnes (ou ouvrez une liste), puis « Envoyer sur LinkedIn ».
           </p>
           <Button asChild>
             <Link href="/people">

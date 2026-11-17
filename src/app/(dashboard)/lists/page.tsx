@@ -95,8 +95,7 @@ export default async function ListsPage() {
             Vos <span className="accent-serif text-primary">listes</span>
           </h1>
           <p className="text-muted-foreground mt-2 max-w-2xl">
-            Des groupes qui donnent du sens à votre prospection : envoi LinkedIn avec les messages de Sophie, ou export
-            pour Waalaxy.
+            Regroupez vos contacts pour les contacter ensemble sur LinkedIn ou les exporter.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">

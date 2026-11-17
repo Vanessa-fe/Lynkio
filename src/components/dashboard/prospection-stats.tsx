@@ -45,15 +45,20 @@ function StatTile({
 }
 
 export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
+  // Taux de réussite masqué tant qu'aucune piste n'est signée ou non concrétisée : pas de tiret à expliquer
+  const hasSuccessRate = stats.successRate !== null && stats.won + stats.lost > 0
   return (
-    <Stagger className="grid gap-3 sm:gap-4 grid-cols-2 xl:grid-cols-4" stagger={0.06}>
+    <Stagger
+      className={cn('grid gap-3 sm:gap-4 grid-cols-2', hasSuccessRate ? 'xl:grid-cols-4' : 'xl:grid-cols-3')}
+      stagger={0.06}
+    >
       <StaggerItem>
         <StatTile
           href="/pipeline"
           icon={<Building2 className="w-4 h-4" />}
           label="Pistes en cours"
           value={stats.tracked}
-          detail="Entreprises ni gagnées, ni perdues, ni hors cible"
+          detail="Démarches commerciales ouvertes"
         />
       </StaggerItem>
       <StaggerItem>
@@ -79,20 +84,18 @@ export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
           alert={stats.overdueReminders > 0}
         />
       </StaggerItem>
-      <StaggerItem>
-        <StatTile
-          href="/pipeline"
-          icon={<Trophy className="w-4 h-4" />}
-          label="Taux de réussite"
-          value={stats.successRate ?? '–'}
-          suffix=" %"
-          detail={
-            stats.won + stats.lost === 0
-              ? 'Calculé dès la première piste gagnée ou perdue'
-              : `${stats.won} gagnée${stats.won > 1 ? 's' : ''}, ${stats.lost} perdue${stats.lost > 1 ? 's' : ''}`
-          }
-        />
-      </StaggerItem>
+      {hasSuccessRate && (
+        <StaggerItem>
+          <StatTile
+            href="/pipeline"
+            icon={<Trophy className="w-4 h-4" />}
+            label="Taux de réussite"
+            value={stats.successRate ?? 0}
+            suffix=" %"
+            detail={`${stats.won} signée${stats.won > 1 ? 's' : ''}, ${stats.lost} non concrétisée${stats.lost > 1 ? 's' : ''}`}
+          />
+        </StaggerItem>
+      )}
     </Stagger>
   )
 }

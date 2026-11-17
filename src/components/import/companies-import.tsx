@@ -202,13 +202,13 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
               <p className="text-sm rounded-md bg-primary/10 p-3">
                 {preview.waalaxy.messages + preview.waalaxy.replies > 0 ? (
                   <>
-                    Export Waalaxy reconnu : {preview.waalaxy.messages} message{preview.waalaxy.messages > 1 ? 's' : ''}{' '}
+                    Export d&apos;outil LinkedIn reconnu : {preview.waalaxy.messages} message{preview.waalaxy.messages > 1 ? 's' : ''}{' '}
                     envoyé{preview.waalaxy.messages > 1 ? 's' : ''} et {preview.waalaxy.replies} réponse
                     {preview.waalaxy.replies > 1 ? 's' : ''} seront notés dans l&apos;historique des personnes. Leur
                     statut et l&apos;étape de leur fiche suivront. Ce qui est déjà noté ne l&apos;est pas deux fois.
                   </>
                 ) : (
-                  <>Export Waalaxy reconnu : aucun nouveau message ni nouvelle réponse, tout est déjà noté.</>
+                  <>Export d&apos;outil LinkedIn reconnu : aucun nouveau message ni nouvelle réponse, tout est déjà noté.</>
                 )}
               </p>
             )}
@@ -220,7 +220,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
                     <th className="p-2 font-medium">Ligne</th>
                     <th className="p-2 font-medium">Entreprise</th>
                     <th className="p-2 font-medium hidden sm:table-cell">Contact</th>
-                    {preview.waalaxy && <th className="p-2 font-medium hidden md:table-cell">Waalaxy</th>}
+                    {preview.waalaxy && <th className="p-2 font-medium hidden md:table-cell">Activité LinkedIn</th>}
                     <th className="p-2 font-medium">État</th>
                   </tr>
                 </thead>
@@ -311,7 +311,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
                 ))}
               </datalist>
               <p className="text-xs text-muted-foreground">
-                Pratique pour retrouver ce fichier dans la page Personnes, ou l&apos;exporter vers Waalaxy.
+                Pratique pour retrouver ce fichier dans la page Personnes, ou l&apos;exporter en CSV.
               </p>
             </div>
 
@@ -349,12 +349,12 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
             )}
             {result.waalaxy && (
               <p className="text-sm">
-                Waalaxy : {result.waalaxy.exchanges} échange{result.waalaxy.exchanges > 1 ? 's' : ''} noté
+                Activité LinkedIn : {result.waalaxy.exchanges} échange{result.waalaxy.exchanges > 1 ? 's' : ''} noté
                 {result.waalaxy.exchanges > 1 ? 's' : ''}
                 {result.waalaxy.enriched > 0 &&
                   `, ${result.waalaxy.enriched} personne${result.waalaxy.enriched > 1 ? 's' : ''} complétée${result.waalaxy.enriched > 1 ? 's' : ''} (profil LinkedIn, e-mail, poste)`}
                 {result.waalaxy.lost > 0 &&
-                  `, ${result.waalaxy.lost} fiche${result.waalaxy.lost > 1 ? 's' : ''} passée${result.waalaxy.lost > 1 ? 's' : ''} en « Perdu » (pas intéressé·e)`}
+                  `, ${result.waalaxy.lost} fiche${result.waalaxy.lost > 1 ? 's' : ''} classée${result.waalaxy.lost > 1 ? 's' : ''} non concrétisée${result.waalaxy.lost > 1 ? 's' : ''} (pas intéressé·e)`}
                 .
               </p>
             )}

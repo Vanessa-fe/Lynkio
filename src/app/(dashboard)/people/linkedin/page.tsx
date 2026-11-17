@@ -19,8 +19,7 @@ export default async function LinkedinOutreachPage() {
       <div>
         <h1 className="text-3xl font-bold">Envoi LinkedIn</h1>
         <p className="text-muted-foreground mt-2 max-w-3xl">
-          Les invitations et les messages de Sophie, personne par personne. Avec l&apos;envoi automatique, l&apos;extension
-          s&apos;en charge ; sinon, tout se fait en un clic.
+          Les invitations et messages préparés par Sophie, personne par personne.
         </p>
       </div>
 

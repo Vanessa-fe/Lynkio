@@ -282,7 +282,7 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="first-search-departments">Où se trouve leur siège ?</Label>
+                    <Label htmlFor="first-search-departments">Où chercher ?</Label>
                     <DepartmentPicker
                       id="first-search-departments"
                       value={departments}

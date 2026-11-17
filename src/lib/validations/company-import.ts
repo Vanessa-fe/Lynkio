@@ -344,28 +344,28 @@ export function waalaxyExchanges(activity: WaalaxyActivity): PlannedExchange[] {
     if (date) exchanges.push({ ...exchange, date })
   }
 
-  add({ type: 'system_event', direction: null, subject: 'Invitation LinkedIn envoyée (Waalaxy)', content: null }, activity.invitedAt)
-  add({ type: 'system_event', direction: null, subject: 'Invitation LinkedIn acceptée (Waalaxy)', content: null }, activity.connectedAt)
-  add({ type: 'linkedin_message', direction: 'outgoing', subject: 'Message LinkedIn (Waalaxy)', content: null }, activity.firstMessageAt)
+  add({ type: 'system_event', direction: null, subject: 'Invitation LinkedIn envoyée (import)', content: null }, activity.invitedAt)
+  add({ type: 'system_event', direction: null, subject: 'Invitation LinkedIn acceptée (import)', content: null }, activity.connectedAt)
+  add({ type: 'linkedin_message', direction: 'outgoing', subject: 'Message LinkedIn (import)', content: null }, activity.firstMessageAt)
   if (activity.lastMessageAt && activity.lastMessageAt !== activity.firstMessageAt) {
-    add({ type: 'linkedin_message', direction: 'outgoing', subject: 'Relance LinkedIn (Waalaxy)', content: null }, activity.lastMessageAt)
+    add({ type: 'linkedin_message', direction: 'outgoing', subject: 'Relance LinkedIn (import)', content: null }, activity.lastMessageAt)
   }
   add(
     {
       type: 'linkedin_message',
       direction: 'incoming',
-      subject: 'Réponse LinkedIn (Waalaxy)',
+      subject: 'Réponse LinkedIn (import)',
       // Le texte de la dernière réponse, quand c'est bien celle-ci
       content: activity.replyAt === activity.linkedinReplyAt ? activity.replyText : null,
     },
     activity.linkedinReplyAt
   )
-  add({ type: 'email', direction: 'outgoing', subject: 'E-mail (Waalaxy)', content: null }, activity.emailSentAt)
+  add({ type: 'email', direction: 'outgoing', subject: 'E-mail (import)', content: null }, activity.emailSentAt)
   add(
     {
       type: 'email',
       direction: 'incoming',
-      subject: 'Réponse par e-mail (Waalaxy)',
+      subject: 'Réponse par e-mail (import)',
       content: activity.replyAt === activity.emailReplyAt && activity.replyAt !== activity.linkedinReplyAt ? activity.replyText : null,
     },
     activity.emailReplyAt
@@ -379,8 +379,16 @@ export function waalaxyExchanges(activity: WaalaxyActivity): PlannedExchange[] {
  */
 export function exchangeKey(exchange: { type: string; direction: string | null; date: string; subject?: string | null }) {
   return exchange.type === 'system_event'
-    ? `${exchange.type}|${exchange.subject ?? ''}`
+    ? `${exchange.type}|${eventSubjectKey(exchange.subject)}`
     : `${exchange.type}|${exchange.direction ?? ''}|${exchange.date}`
+}
+
+/**
+ * Intitulé d'un événement sans sa mention d'origine finale : « Invitation LinkedIn envoyée (Waalaxy) », noté par
+ * les imports d'avant le 17/11/2026, et « Invitation LinkedIn envoyée (import) » sont le même événement.
+ */
+function eventSubjectKey(subject: string | null | undefined): string {
+  return (subject ?? '').replace(/\s*\((?:Waalaxy|import)\)\s*$/i, '').trim()
 }
 
 export const waalaxyStateLabels: Record<WaalaxyState, string> = {

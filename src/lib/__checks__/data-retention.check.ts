@@ -24,7 +24,7 @@ test('par défaut : rien n’est effacé automatiquement, posts gardés 30 jours
 
 test('le journal se lit comme une phrase, au singulier comme au pluriel', () => {
   assert.equal(describeAccessLogEntry('export_companies', { companies: 1 }), 'Export de vos entreprises (1 entreprise)')
-  assert.equal(describeAccessLogEntry('export_waalaxy', { contacts: 12 }), 'Export pour Waalaxy (12 contacts)')
+  assert.equal(describeAccessLogEntry('export_waalaxy', { contacts: 12 }), 'Export CSV pour LinkedIn (12 contacts)')
   assert.equal(describeAccessLogEntry('api_key_saved', { provider: 'hunter' }), 'Clé Hunter enregistrée')
   assert.equal(
     describeAccessLogEntry('retention_purge', { trigger: 'schedule', companies: 3, contacts: 1 }),

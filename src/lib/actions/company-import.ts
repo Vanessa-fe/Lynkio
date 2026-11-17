@@ -242,7 +242,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
     const personName = personKey(row.contactFirstName, row.contactLastName)
     const alone = personName ? fiches.individuals.get(personName) : undefined
     if (alone && 'companyId' in alone.ref) {
-      const hint = row.name ? ` : Waalaxy indique l'entreprise ${row.name}, rattachez-la depuis sa fiche si besoin` : ''
+      const hint = row.name ? ` : le fichier indique l'entreprise ${row.name}, rattachez-la depuis sa fiche si besoin` : ''
       return {
         ...base,
         status: 'known',
@@ -574,7 +574,7 @@ async function applyWaalaxyActivity(
   if (later.length > 0) {
     await supabase
       .from('companies')
-      .update({ next_action: 'Recontacter plus tard (intéressé·e plus tard, d\'après Waalaxy)' })
+      .update({ next_action: 'Recontacter plus tard (intéressé·e plus tard, d\'après votre outil LinkedIn)' })
       .eq('user_id', userId)
       .in('id', later)
       .is('next_action', null)

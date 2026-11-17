@@ -13,7 +13,7 @@ export type Suggestion = {
 const outcomes = [
   { step: 3, label: 'réponses' },
   { step: 4, label: 'rendez-vous' },
-  { step: 6, label: 'clients gagnés' },
+  { step: 6, label: 'clients signés' },
 ]
 
 function evidence(successes: number, contacted: number): Evidence {
