@@ -108,3 +108,19 @@ export function describeStage(stage: MeaningStage, stages: MeaningStage[]): Stag
 export function stageWithRole<T extends MeaningStage>(stages: T[], role: StageRole): T | null {
   return stages.find((stage) => stage.role === role && roleFitsKind(stage.kind, stage.role)) ?? null
 }
+
+/**
+ * « Commencer à prospecter » (lot 1.8b) : une entreprise encore dans l'étape d'arrivée passe dans
+ * l'étape à rôle « À contacter » ; à défaut, dans la première étape en cours qui suit l'arrivée.
+ * Une entreprise déjà ailleurs garde son étape. null : rien à changer.
+ */
+export function prospectingStage<T extends MeaningStage>(stages: T[], currentStageId: string | null): T | null {
+  const current = stages.find((stage) => stage.id === currentStageId) ?? null
+  if (current && !current.is_default) return null
+  const open = stages.filter((stage) => stage.kind === 'open').sort((a, b) => a.order - b.order)
+  const toContact = stageWithRole(open, 'to_contact')
+  // Nouveaux comptes : l'arrivée est déjà « À contacter », l'entreprise y reste
+  if (toContact) return toContact.id === current?.id ? null : toContact
+  const arrivalOrder = current?.order ?? open.find((stage) => stage.is_default)?.order ?? -1
+  return open.find((stage) => !stage.is_default && stage.order > arrivalOrder) ?? null
+}

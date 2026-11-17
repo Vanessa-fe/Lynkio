@@ -95,6 +95,8 @@ export const createCompanySchema = z.object({
   registryLookup: z.boolean().optional(),
   // Ajouter les dirigeants du registre comme contacts de la nouvelle fiche
   addDirectors: z.boolean().optional(),
+  // Ajout à la main : en démarche tout de suite, sauf si décoché (lot 1.8b) ; absent = oui
+  startProspecting: z.boolean().optional(),
 })
 
 export const updateCompanySchema = createCompanySchema.partial()
@@ -189,6 +191,8 @@ export const personSchema = z
     estimatedAmount: optionalAmount,
     // Liste où ranger la personne (existante, ou créée à partir du nom)
     listName: optionalText(100, 'Le nom de la liste est trop long'),
+    // Nouvelle fiche : en démarche tout de suite, sauf si décoché (lot 1.8b) ; absent = oui
+    startProspecting: z.boolean().optional(),
     // linkedin : pré-remplie depuis un profil LinkedIn (bouton « + Filonea ») ;
     // linkedin_post : auteur d'un post « je cherche un freelance » trouvé par Sophie
     origin: z.enum(['manual', 'linkedin', 'linkedin_post']).default('manual'),

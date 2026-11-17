@@ -43,7 +43,7 @@ export default async function ProspectionPage() {
         <p className="text-muted-foreground mt-2">
           Sophie cherche pour vous les entreprises qui correspondent à votre profil de client, dans le registre
           officiel des entreprises.
-          Celles qu&apos;elle retient arrivent dans Entreprises, à l&apos;étape « À qualifier ».
+          Celles qu&apos;elle retient arrivent dans Entreprises, parmi vos découvertes.
         </p>
       </div>
 

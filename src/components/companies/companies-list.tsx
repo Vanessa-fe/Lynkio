@@ -33,6 +33,7 @@ import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
 import { CompanyScore, CompanyStageSelect } from './company-stage-select'
+import { ProspectingToggle } from './prospecting-toggle'
 import { SegmentBadge } from './company-segment'
 import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
 
@@ -51,6 +52,8 @@ const ALL = 'all'
 const FILTERS_KEY = 'companies-list-filters'
 
 type Filters = {
+  // Découvertes, en démarche, terminées (lot 1.8b)
+  pipeline: string
   stage: string
   source: string
   segment: string
@@ -60,6 +63,7 @@ type Filters = {
   contact: string
 }
 const DEFAULT_FILTERS: Filters = {
+  pipeline: ALL,
   stage: ALL,
   source: ALL,
   segment: ALL,
@@ -84,6 +88,14 @@ function matchesScore(score: number | null, filter: string): boolean {
   if (filter === 'medium') return score >= 40 && score < 70
   if (filter === 'low') return score < 40
   return false
+}
+
+// Découverte : pas encore en démarche (ni écartée) ; en démarche : suivi actif ; terminée : signée, perdue, hors cible
+const PIPELINE_FILTERS = [ALL, 'discovered', 'engaged', 'closed']
+
+function pipelineState(company: { engaged_at: string | null }, kind: string | undefined): string {
+  if (!company.engaged_at) return kind === 'excluded' ? 'excluded' : 'discovered'
+  return kind && kind !== 'open' ? 'closed' : 'engaged'
 }
 
 let memoryFilters = ''
@@ -118,6 +130,7 @@ function parseFilters(raw: string): Filters {
   try {
     const saved = raw ? (JSON.parse(raw) as Partial<Filters>) : {}
     return {
+      pipeline: PIPELINE_FILTERS.includes(saved.pipeline as string) ? (saved.pipeline as string) : ALL,
       stage: typeof saved.stage === 'string' ? saved.stage : ALL,
       source: typeof saved.source === 'string' ? saved.source : ALL,
       segment: typeof saved.segment === 'string' ? saved.segment : ALL,
@@ -146,7 +159,13 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
   const setStrategyFilter = (strategy: string) => writeFilters({ ...filters, strategy })
   const setScoreFilter = (score: string) => writeFilters({ ...filters, score })
   const setContactFilter = (contact: string) => writeFilters({ ...filters, contact })
-  const setStageFilter = (stage: string) => writeFilters({ ...filters, stage })
+  // Une étape précise remplace le filtre découvertes / en démarche (et inversement)
+  const setStageFilter = (stage: string) => writeFilters({ ...filters, stage, pipeline: ALL })
+  const pipelineFilter = filters.pipeline
+  const setPipelineFilter = (pipeline: string) => writeFilters({ ...filters, pipeline, stage: ALL })
+  const kindByStage = new Map(stages.map((stage) => [stage.id, stage.kind]))
+  const stateOf = (company: CompanyWithRelations) =>
+    pipelineState(company, company.stage_id ? kindByStage.get(company.stage_id) : undefined)
   const setSourceFilter = (source: string) => writeFilters({ ...filters, source })
   const setSegmentFilter = (segment: string) => writeFilters({ ...filters, segment })
   const setSearch = (value: string) => writeFilters({ ...filters, search: value })
@@ -171,6 +190,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
         .some((value) => value!.toLowerCase().includes(term))
 
     const matchesStage = stageFilter === ALL || (company.stage_id ?? 'none') === stageFilter
+    const matchesPipeline = pipelineFilter === ALL || stateOf(company) === pipelineFilter
     const matchesSource = sourceFilter === ALL || company.source_id === sourceFilter
     const matchesSegment = segmentFilter === ALL || (company.segment ?? 'none') === segmentFilter
 
@@ -181,6 +201,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
 
     return (
       matchesSearch &&
+      matchesPipeline &&
       matchesStage &&
       matchesSource &&
       matchesSegment &&
@@ -217,33 +238,18 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
 
   const noStageCount = countByStage.get('none') ?? 0
 
-  // Compteurs du haut (comme la maquette) : tout, l'étape d'arrivée, et « En discussion » si elle existe
-  const defaultStage = stages.find((stage) => stage.is_default) ?? stages[0]
-  const discussionStage = stages.find((stage) => stage.name.trim().toLowerCase() === 'en discussion')
+  // Compteurs du haut : tout, les découvertes à examiner, et le suivi commercial en cours (lot 1.8b)
+  const countState = (state: string) => companies.filter((company) => stateOf(company) === state).length
   const tiles = [
     { key: ALL, label: 'Entreprises', detail: 'Votre portefeuille', icon: Building2, count: companies.length },
-    ...(defaultStage
-      ? [
-          {
-            key: defaultStage.id,
-            label: defaultStage.name,
-            detail: 'À examiner',
-            icon: Filter,
-            count: countByStage.get(defaultStage.id) ?? 0,
-          },
-        ]
-      : []),
-    ...(discussionStage
-      ? [
-          {
-            key: discussionStage.id,
-            label: discussionStage.name,
-            detail: 'Entretenez la relation',
-            icon: MessagesSquare,
-            count: countByStage.get(discussionStage.id) ?? 0,
-          },
-        ]
-      : []),
+    { key: 'discovered', label: 'Découvertes', detail: 'À examiner', icon: Filter, count: countState('discovered') },
+    {
+      key: 'engaged',
+      label: 'En démarche',
+      detail: 'Votre suivi commercial',
+      icon: MessagesSquare,
+      count: countState('engaged'),
+    },
   ]
 
   // Libellés des filtres, écrits dès le rendu serveur : sans eux, Radix laisse les listes vides
@@ -267,12 +273,12 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-3 sm:gap-4" role="group" aria-label="Filtrer par étape (raccourcis)">
         {tiles.map(({ key, label, detail, icon: Icon, count }) => {
-          const active = stageFilter === key
+          const active = pipelineFilter === key && stageFilter === ALL
           return (
             <button
               key={key}
               type="button"
-              onClick={() => setStageFilter(key)}
+              onClick={() => setPipelineFilter(key)}
               aria-pressed={active}
               className={cn(
                 'group flex flex-col justify-start rounded-2xl border border-ink/[0.07] bg-card p-4 text-left shadow-soft transition-[box-shadow,transform,border-color] duration-300 hover:-translate-y-0.5 hover:shadow-lift sm:p-5',
@@ -416,8 +422,8 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
             <Building2 className="w-10 h-10 mx-auto text-muted-foreground" />
             <p className="font-medium">Aucune entreprise pour l&apos;instant</p>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ajoutez une entreprise à la main. Bientôt, Sophie déposera ici celles qu&apos;elle
-              détecte, dans l&apos;étape « À qualifier ».
+              Ajoutez une entreprise à la main, ou lancez une recherche dans Prospection : les entreprises
+              trouvées arrivent ici comme découvertes, à examiner.
             </p>
           </CardContent>
         </Card>
@@ -471,11 +477,12 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
                     </p>
                   </TableCell>
                   <TableCell>
-                    <CompanyStageSelect
-                      companyId={company.id}
-                      stageId={company.stage_id}
-                      stages={stages}
-                    />
+                    {/* Découverte : on décide d'abord de la prospecter ; ensuite, l'étape se choisit ici */}
+                    {stateOf(company) === 'discovered' ? (
+                      <ProspectingToggle companyId={company.id} engagedAt={null} excluded={false} compact />
+                    ) : (
+                      <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     <CompanyScore score={company.score} />

@@ -96,6 +96,10 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
       next_action: validated.nextAction,
       estimated_amount: validated.estimatedAmount ?? null,
       source_id: sourceId,
+      // Nouvelle fiche ajoutée à la main : en démarche tout de suite, sauf si décoché (lot 1.8b).
+      // Auteur d'un post LinkedIn trouvé par Sophie : une découverte comme les autres
+      engaged_at:
+        validated.startProspecting === false || validated.origin === 'linkedin_post' ? null : new Date().toISOString(),
     }
 
     let companyId: string | null = null

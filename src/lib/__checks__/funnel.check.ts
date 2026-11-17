@@ -75,3 +75,16 @@ test('les événements d’une autre fiche (hors période) sont ignorés', () =>
   })
   assert.equal(result.steps.at(-1)!.count, 0)
 })
+
+test('une entreprise entrée dans le suivi compte « en démarche », même restée dans l’étape d’arrivée', () => {
+  const result = computeFunnel({
+    companies: [
+      { id: 'a', stage_id: 'q', engaged_at: '2026-11-17T10:00:00Z' },
+      { id: 'b', stage_id: 'q', engaged_at: null },
+    ],
+    stages,
+    events: [],
+    interactions: [],
+  })
+  assert.deepEqual(result.steps.map((step) => step.count).slice(0, 3), [2, 1, 0])
+})

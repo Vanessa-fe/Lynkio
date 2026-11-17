@@ -64,7 +64,7 @@ export async function getFunnelData(raw: Partial<FunnelFilters>): Promise<Funnel
 
   let companiesQuery = supabase
     .from('companies')
-    .select('id, stage_id, strategy_id, source_id, naf_code', { count: 'exact' })
+    .select('id, stage_id, engaged_at, strategy_id, source_id, naf_code', { count: 'exact' })
     .eq('user_id', user.id)
     .order('id')
   if (since) companiesQuery = companiesQuery.gte('created_at', since)

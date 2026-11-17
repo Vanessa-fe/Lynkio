@@ -20,6 +20,7 @@ import type { CompanySegment } from '@/types'
 import { SEGMENTS } from '@/lib/constants/segments'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerEvent } from '@/lib/posthog-server'
+import { prospectingStage, type MeaningStage } from '@/lib/stage-meaning'
 
 type CompanyUpdate = Database['public']['Tables']['companies']['Update']
 
@@ -136,6 +137,8 @@ export async function createCompany(
         city: validated.city,
         postal_code: validated.postalCode,
         stage_id: stageId,
+        // Ajout à la main : en démarche tout de suite, sauf si l'utilisateur a décoché (lot 1.8b)
+        engaged_at: validated.startProspecting === false ? null : new Date().toISOString(),
         source_id: validated.sourceId ?? null,
         notes: validated.notes,
         estimated_amount: validated.estimatedAmount ?? null,
@@ -274,6 +277,98 @@ export async function updateCompanyStage(
   stageId: string | null
 ): Promise<ActionResult> {
   return updateCompany(companyId, { stageId })
+}
+
+/**
+ * « Commencer à prospecter » (lot 1.8b) : l'entreprise découverte entre dans le suivi commercial.
+ * Encore dans l'étape d'arrivée, elle passe dans « À contacter » (ou l'étape en cours suivante) ;
+ * l'entrée est notée dans sa chronologie. Rien d'autre ne change.
+ */
+export async function startProspecting(companyId: string): Promise<ActionResult> {
+  try {
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+    const supabase = await createClient()
+
+    const [{ data: company }, { data: stages }] = await Promise.all([
+      supabase.from('companies').select('id, stage_id, engaged_at').eq('id', companyId).eq('user_id', user.id).maybeSingle(),
+      supabase.from('pipeline_stages').select('id, name, kind, role, order, is_default').eq('user_id', user.id),
+    ])
+    if (!company) return { success: false, error: 'Entreprise introuvable' }
+    if (company.engaged_at) return { success: true }
+
+    const target = prospectingStage((stages ?? []) as MeaningStage[], company.stage_id)
+    const { error } = await supabase
+      .from('companies')
+      .update({ engaged_at: new Date().toISOString(), ...(target ? { stage_id: target.id } : {}) })
+      .eq('id', companyId)
+      .eq('user_id', user.id)
+    if (error) {
+      console.error('Start prospecting error:', error)
+      return { success: false, error: 'Impossible de commencer la prospection' }
+    }
+
+    await noteSystemEvent(supabase, user.id, companyId, 'Ajoutée au suivi commercial')
+    captureServerEvent(user.id, 'prospecting_started', { stage_moved: !!target })
+    revalidateProspecting(companyId)
+    return { success: true }
+  } catch (error) {
+    console.error('Start prospecting error:', error)
+    return { success: false, error: 'Impossible de commencer la prospection' }
+  }
+}
+
+/**
+ * « Retirer du suivi » : l'entreprise redevient une découverte. Échanges, étape et historique sont
+ * gardés ; la sortie est notée dans sa chronologie.
+ */
+export async function stopProspecting(companyId: string): Promise<ActionResult> {
+  try {
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from('companies')
+      .update({ engaged_at: null })
+      .eq('id', companyId)
+      .eq('user_id', user.id)
+      .select('id')
+      .maybeSingle()
+    if (error) {
+      console.error('Stop prospecting error:', error)
+      return { success: false, error: 'Impossible de retirer l\'entreprise du suivi' }
+    }
+    if (!data) return { success: false, error: 'Entreprise introuvable' }
+
+    await noteSystemEvent(supabase, user.id, companyId, 'Retirée du suivi commercial')
+    captureServerEvent(user.id, 'prospecting_stopped')
+    revalidateProspecting(companyId)
+    return { success: true }
+  } catch (error) {
+    console.error('Stop prospecting error:', error)
+    return { success: false, error: 'Impossible de retirer l\'entreprise du suivi' }
+  }
+}
+
+// Entrée ou sortie du suivi, dans la chronologie de la fiche (exclue des compteurs d'échanges)
+async function noteSystemEvent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  companyId: string,
+  subject: string
+) {
+  const { error } = await supabase
+    .from('company_interactions')
+    .insert({ user_id: userId, company_id: companyId, type: 'system_event', status: 'done', subject })
+  if (error) console.error('System event error:', error)
+}
+
+function revalidateProspecting(companyId: string) {
+  revalidatePath('/companies')
+  revalidatePath('/pipeline')
+  revalidatePath('/dashboard')
+  revalidatePath(`/companies/${companyId}`)
 }
 
 /**

@@ -12,7 +12,7 @@
 
 export const FUNNEL_STEPS = [
   { key: 'found', label: 'Trouvées', hint: 'ajoutées pendant la période' },
-  { key: 'qualified', label: 'Qualifiées', hint: 'sorties de « À qualifier » (hors « Hors cible »)' },
+  { key: 'qualified', label: 'En démarche', hint: 'entrées dans votre suivi commercial (hors « Hors cible »)' },
   { key: 'contacted', label: 'Contactées', hint: 'au moins un envoi noté' },
   { key: 'replied', label: 'Réponses', hint: 'au moins une réponse reçue notée' },
   { key: 'meeting', label: 'Rendez-vous', hint: 'un rendez-vous noté' },
@@ -34,7 +34,8 @@ export const FUNNEL_PERIODS = [
 export const SMALL_SAMPLE = 30
 
 export type FunnelStage = { id: string; name: string; kind: string; role: string | null; order: number; is_default: boolean }
-export type FunnelCompany = { id: string; stage_id: string | null }
+// engaged_at : en démarche depuis (lot 1.8b) ; absent des anciennes données de test
+export type FunnelCompany = { id: string; stage_id: string | null; engaged_at?: string | null }
 export type FunnelInteraction = { company_id: string; type: string; direction: string | null; status: string }
 export type FunnelEvent = { company_id: string; to_stage_id: string | null }
 
@@ -105,6 +106,8 @@ export function reachedSteps(input: FunnelInput) {
   }
 
   for (const company of input.companies) if (company.stage_id) bump(company.id, steps.get(company.stage_id) ?? 0)
+  // Entrée dans le suivi commercial (bouton, ajout à la main, premier échange…) : au moins « en démarche »
+  for (const company of input.companies) if (company.engaged_at) bump(company.id, 1)
   for (const event of input.events) if (event.to_stage_id) bump(event.company_id, steps.get(event.to_stage_id) ?? 0)
   for (const interaction of input.interactions) bump(interaction.company_id, interactionStep(interaction))
 

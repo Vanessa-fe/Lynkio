@@ -23,6 +23,8 @@ export async function getPipelineCards(limit = 1000): Promise<PipelineCard[]> {
       .from('companies')
       .select('id, name, kind, city, score, stage_id, contacts:company_contacts(id, first_name, last_name)')
       .eq('user_id', user.id)
+      // Pipeline actif : les entreprises en démarche ; les découvertes restent dans la liste (lot 1.8b)
+      .not('engaged_at', 'is', null)
       .order('score', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
       .limit(limit),
