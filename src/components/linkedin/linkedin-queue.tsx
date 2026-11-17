@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { LinkedinAutomation, LinkedinCounters, LinkedinSequenceRow } from '@/lib/queries/linkedin'
+import { useSessionState } from '@/lib/hooks/use-session-state'
 import { AutomationPanel } from './automation-panel'
+import { clearLinkedinFocus, LINKEDIN_FOCUS_KEY, parseLinkedinFocus } from './linkedin-focus'
 import { ReviewPanel } from './review-panel'
 import { notYetDue, pendingSend, SequenceCard } from './sequence-card'
 
@@ -91,6 +93,9 @@ export function LinkedinQueue({
   caps,
   automation,
   now,
+  backHref = '/people',
+  sourceLabel = null,
+  fromSelection = false,
 }: {
   sequences: LinkedinSequenceRow[]
   counters: LinkedinCounters
@@ -98,10 +103,23 @@ export function LinkedinQueue({
   automation: LinkedinAutomation
   // Heure du rendu côté serveur : la même pour tout le monde, pas d'écart à l'hydratation
   now: number
+  // Page d'où l'on vient (Personnes, une liste, Listes)
+  backHref?: string
+  // « de la liste « Agences Lyon » » quand on vient d'une liste
+  sourceLabel?: string | null
+  // Arrivée juste après « Envoyer sur LinkedIn » : on met en avant ces personnes (sinon, toute la file)
+  fromSelection?: boolean
 }) {
+  // Personnes qu'on vient d'envoyer (sélection ou liste) : montrées seules, jusqu'à « Voir toute la file »
+  const [focus] = useSessionState(LINKEDIN_FOCUS_KEY, parseLinkedinFocus)
+  const focusIds = new Set(focus?.contactIds ?? [])
+  const focused = fromSelection && focus ? sequences.filter((sequence) => focusIds.has(sequence.contact.id)) : []
+  const showFocus = focused.length > 0
+  const visible = showFocus ? focused : sequences
+
   const byTab = Object.fromEntries(
     TABS.map((tab) => {
-      const rows = sequences.filter(tab.includes)
+      const rows = visible.filter(tab.includes)
       // Relances : celles à envoyer d'abord, puis par date prévue
       if (tab.key === 'follow') {
         rows.sort((a, b) => (a.nextFollowUpDueAt ?? '').localeCompare(b.nextFollowUpDueAt ?? ''))
@@ -118,12 +136,16 @@ export function LinkedinQueue({
       'review'
   )
 
-  // L'onglet ouvert vient de se vider (tout validé, tout invité…) : on passe à l'étape suivante qui a du monde
+  // L'onglet ouvert vient de se vider (tout validé, tout invité…) : on passe à l'étape suivante qui a du monde.
+  // Même chose quand la mise en avant change (arrivée depuis une sélection, « Voir toute la file »)
   const counts = TABS.map((candidate) => byTab[candidate.key]!.length).join(',')
   const [lastCounts, setLastCounts] = useState(counts)
   if (counts !== lastCounts) {
     setLastCounts(counts)
-    if (byTab[tab]!.length === 0) {
+    const firstTodo = TABS.find((candidate) => candidate.key !== 'done' && todo(candidate.key, byTab[candidate.key]!) > 0)
+    if (showFocus && firstTodo && todo(tab, byTab[tab]!) === 0) {
+      setTab(firstTodo.key)
+    } else if (byTab[tab]!.length === 0) {
       const current = TABS.findIndex((candidate) => candidate.key === tab)
       const ordered = [...TABS.slice(current + 1), ...TABS.slice(0, current)]
       const next = ordered.find((candidate) => byTab[candidate.key]!.length > 0)
@@ -142,7 +164,7 @@ export function LinkedinQueue({
             Aucun envoi en cours. Cochez des personnes (ou ouvrez une liste), puis « Envoyer sur LinkedIn ».
           </p>
           <Button asChild>
-            <Link href="/people">
+            <Link href={backHref}>
               <Users className="w-4 h-4 mr-2" />
               Choisir des personnes
             </Link>
@@ -155,6 +177,18 @@ export function LinkedinQueue({
   return (
     <div className="space-y-6">
       <AutomationPanel automation={automation} now={now} />
+
+      {showFocus && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+          <span className="mr-auto">
+            {focused.length} personne{focused.length > 1 ? 's' : ''}{' '}
+            {sourceLabel ?? (focus?.label === 'list' ? 'de cette liste' : 'de votre sélection')}
+          </span>
+          <Button size="sm" variant="outline" onClick={clearLinkedinFocus}>
+            Voir toute la file ({sequences.length})
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-6 rounded-lg border bg-card p-4">
         <Meter label="Invitations ce mois-ci" value={counters.invitationsThisMonth} max={caps.invitationsPerMonth} />

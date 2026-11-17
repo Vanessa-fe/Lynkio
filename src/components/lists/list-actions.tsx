@@ -115,7 +115,8 @@ export function ListActions({ list, exportableCount, afterDeleteHref, compact = 
       </DropdownMenu>
       {exportableCount > 0 && (
         <Button
-          onClick={() => startLinkedin({ listId: list.id })}
+          // Depuis la page Listes, le Retour de l'envoi LinkedIn y ramène ; depuis Personnes, vers la liste affichée
+          onClick={() => startLinkedin({ listId: list.id }, compact ? { from: 'lists' } : { from: 'list', listId: list.id })}
           disabled={isStarting}
           size={compact ? 'sm' : 'default'}
           title={compact ? `Envoyer sur LinkedIn (${exportableCount})` : undefined}

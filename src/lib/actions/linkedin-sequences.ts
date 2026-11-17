@@ -42,6 +42,9 @@ export type LinkedinTexts = { message?: string; followUp1?: string; followUp2?: 
 
 export type StartSummary = {
   added: number
+  // Personnes demandées qui sont maintenant dans la file : ajoutées à l'instant, ou déjà en cours
+  // (mises en avant sur la page d'envoi)
+  contactIds: string[]
   skipped: { noLinkedin: number; optedOut: number; closed: number; contacted: number; inProgress: number }
 }
 
@@ -125,6 +128,7 @@ export async function startLinkedinSequences(source: StartSource): Promise<Actio
 
     const summary: StartSummary = {
       added: 0,
+      contactIds: [],
       skipped: { noLinkedin: 0, optedOut: 0, closed: 0, contacted: 0, inProgress: 0 },
     }
     const toAdd: string[] = []
@@ -153,6 +157,7 @@ export async function startLinkedinSequences(source: StartSource): Promise<Actio
       }
       summary.added = toAdd.length
     }
+    summary.contactIds = [...toAdd, ...contacts.filter((contact) => inProgress.has(contact.id)).map((contact) => contact.id)]
 
     captureServerEvent(user.id, 'linkedin_sequences_started', {
       from: listId ? 'list' : 'selection',
