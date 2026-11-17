@@ -12,6 +12,7 @@ import { createCompany } from '@/lib/actions/companies'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 import { getCurrentPlan } from '@/lib/queries/billing'
+import type { RunForOutcome } from '@/lib/run-outcome'
 import { COUNTED_RUNS_FILTER, NO_ACCESS_MESSAGE, PLAN_LIMITS, parisMidnight } from '@/lib/billing'
 
 type ActionResult = {
@@ -83,18 +84,21 @@ export async function saveProspectionSettings(input: ProspectionSettingsInput): 
  * Lance un passage tout de suite. La fonction Supabase répond dès que le passage
  * est créé et continue en arrière-plan : la page suit ensuite son avancement.
  */
-export async function launchProspection(): Promise<ActionResult> {
+// Lancement : identifiant du passage, pour suivre la recherche jusqu'à la fenêtre de fin
+type LaunchResult = ActionResult & { runId?: string }
+
+export async function launchProspection(): Promise<LaunchResult> {
   return invokeProspection({ mode: 'manual' })
 }
 
 /**
  * « Lancer cette recherche » : une seule recherche enregistrée (recherche par profil), tout de suite
  */
-export async function launchStrategy(strategyId: string): Promise<ActionResult> {
+export async function launchStrategy(strategyId: string): Promise<LaunchResult> {
   return invokeProspection({ mode: 'manual', strategyId })
 }
 
-async function invokeProspection(body: { mode: 'manual'; strategyId?: string }): Promise<ActionResult> {
+async function invokeProspection(body: { mode: 'manual'; strategyId?: string }): Promise<LaunchResult> {
   try {
     const supabase = await createClient()
 
@@ -122,7 +126,7 @@ async function invokeProspection(body: { mode: 'manual'; strategyId?: string }):
       }
     }
 
-    const { error } = await supabase.functions.invoke('prospection-run', { body })
+    const { data, error } = await supabase.functions.invoke('prospection-run', { body })
 
     if (error) {
       // Message métier renvoyé par la fonction (« déjà en cours », etc.)
@@ -140,7 +144,8 @@ async function invokeProspection(body: { mode: 'manual'; strategyId?: string }):
     captureServerEvent(user.id, 'prospection_launched', { source: body.strategyId ? 'strategy' : 'all' })
 
     revalidatePath('/prospection')
-    return { success: true }
+    const runId = (data as { runId?: unknown } | null)?.runId
+    return { success: true, runId: typeof runId === 'string' ? runId : undefined }
   } catch (error) {
     console.error('Launch prospection error:', error)
     captureServerError(error, undefined, { action: 'launch_prospection', source: body.strategyId ? 'strategy' : 'all' })
@@ -260,4 +265,23 @@ export async function linkUnidentifiedOffer(
     console.error('Link unidentified offer error:', error)
     return { success: false, error: 'Une erreur est survenue' }
   }
+}
+
+/**
+ * Fin d'une recherche lancée à la main : état du passage, lu avec les droits de l'utilisateur (RLS).
+ * null si le passage n'existe pas ou n'est pas le sien.
+ */
+export async function getRunOutcome(runId: string): Promise<RunForOutcome | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(runId)) return null
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('pipeline_runs')
+    .select('status, companies_created, error, details')
+    .eq('id', runId)
+    .maybeSingle()
+  if (error) {
+    console.error('Run outcome error:', error)
+    return null
+  }
+  return data as RunForOutcome | null
 }

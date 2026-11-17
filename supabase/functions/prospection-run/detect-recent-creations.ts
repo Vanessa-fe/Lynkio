@@ -137,6 +137,7 @@ async function processCreation(
       postalCode: address?.codePostal ?? record.cp,
       notes: activity ? `Activité déclarée : ${summarizeActivity(activity)}` : null,
       foundedOn: bodaccActivityStart(record),
+      discoveredBy: 'bodacc',
     },
     registry
   )

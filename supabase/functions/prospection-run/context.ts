@@ -36,6 +36,8 @@ export type Context = {
   techStack: string[]
   // « Lancer cette recherche » : une seule recherche enregistrée
   strategyId?: string
+  // Passage en cours (companies.pipeline_run_id des entreprises ajoutées)
+  runId?: string
 }
 
 // Résultat d'un détecteur, enregistré dans pipeline_runs.details.sources

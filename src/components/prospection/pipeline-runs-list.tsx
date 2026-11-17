@@ -68,12 +68,15 @@ function RunItem({ run }: { run: PipelineRun }) {
     <li className="py-4 first:pt-0 last:pb-0 space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         {run.status === 'running' && <Loader2 className="w-4 h-4 animate-spin text-primary" aria-hidden="true" />}
-        {run.status === 'succeeded' && <CheckCircle2 className="w-4 h-4 text-green-600" aria-hidden="true" />}
+        {run.status === 'succeeded' && !run.error && <CheckCircle2 className="w-4 h-4 text-green-600" aria-hidden="true" />}
+        {/* Une source en échec, une autre a répondu : terminée en partie (jamais affichée comme une réussite complète) */}
+        {run.status === 'succeeded' && run.error && <AlertTriangle className="w-4 h-4 text-amber-600" aria-hidden="true" />}
         {run.status === 'failed' && <AlertTriangle className="w-4 h-4 text-destructive" aria-hidden="true" />}
         <span className="font-medium">
           {formatDate(startedAt, "EEEE d MMMM 'à' HH:mm")}
         </span>
         <Badge variant="outline">{run.triggered_by === 'manual' ? 'Lancée par vous' : 'Planifiée'}</Badge>
+        {run.status === 'succeeded' && run.error && <Badge variant="secondary">Terminée en partie</Badge>}
         {run.finished_at && (
           <span className="text-xs text-muted-foreground">
             en {formatDistanceStrict(new Date(run.finished_at), startedAt, { locale: fr })}

@@ -88,6 +88,18 @@ export async function getPipelineRuns(limit = 20): Promise<PipelineRun[]> {
 }
 
 /**
+ * Un passage de l'utilisateur (bandeau « Entreprises ajoutées par la recherche du… »)
+ */
+export async function getPipelineRun(runId: string): Promise<PipelineRun | null> {
+  const user = await getAuthUser()
+  if (!user) return null
+
+  const supabase = await createClient()
+  const { data } = await supabase.from('pipeline_runs').select('*').eq('id', runId).eq('user_id', user.id).maybeSingle()
+  return data
+}
+
+/**
  * Offres sans nom d'entreprise encore à traiter, les plus récentes d'abord
  */
 export async function getUnidentifiedOffers(limit = 50): Promise<UnidentifiedJobOffer[]> {

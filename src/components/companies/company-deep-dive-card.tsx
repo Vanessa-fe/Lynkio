@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate } from '@/lib/utils/dates'
+import { ProvenanceBadge } from './provenance-badge'
 import { DEEP_ANALYSIS_CACHE_DAYS, type DeepAnalysisFinding, type DeepAnalysisView } from '@/lib/deep-analysis'
 
 const POLL_MS = 4000
@@ -190,6 +191,7 @@ function FindingItem({ finding }: { finding: DeepAnalysisFinding }) {
       <div className="flex flex-wrap items-center gap-2">
         <CheckCircle2 className="h-4 w-4 text-green-700 dark:text-green-400" aria-hidden />
         <span className="font-medium">{finding.eventLabel}</span>
+        <ProvenanceBadge kind="ai" />
         <span className="text-xs text-muted-foreground">
           Signal ajouté · {CONFIDENCE_LABELS[finding.confidence]}
         </span>
@@ -198,6 +200,7 @@ function FindingItem({ finding }: { finding: DeepAnalysisFinding }) {
       {finding.summary && <p className="text-muted-foreground">{finding.summary}</p>}
       {finding.relevance && (
         <p className="text-muted-foreground">
+          <ProvenanceBadge kind="hypothesis" className="mr-1.5" />
           <span className="font-medium">Piste, non confirmée : </span>
           {finding.relevance}
           {finding.service && ` (${finding.service})`}

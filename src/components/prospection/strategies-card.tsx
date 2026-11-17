@@ -21,6 +21,7 @@ import { useToast } from '@/lib/hooks/use-toast'
 import { formatDate } from '@/lib/utils/dates'
 import type { StrategyOverview } from '@/lib/queries/strategies'
 import { StrategyDialog } from './strategy-dialog'
+import { watchRun } from './run-watch'
 import { StrategyAssistantDialog } from './strategy-assistant-dialog'
 
 interface StrategiesCardProps {
@@ -75,7 +76,11 @@ export function StrategiesCard({
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [assistantKey, setAssistantKey] = useState(0)
 
-  const run = async (key: string, action: () => Promise<{ success: boolean; error?: string }>, success?: string) => {
+  const run = async (
+    key: string,
+    action: () => Promise<{ success: boolean; error?: string; runId?: string }>,
+    success?: string
+  ) => {
     setPending(key)
     try {
       const result = await action()
@@ -83,6 +88,8 @@ export function StrategiesCard({
         toast({ variant: 'destructive', title: 'Action impossible', description: result.error })
         return
       }
+      // Recherche lancée : la fenêtre de fin s'ouvrira quand elle sera terminée
+      if (result.runId) watchRun(result.runId)
       if (success) toast({ title: success })
       router.refresh()
     } catch {
@@ -191,7 +198,7 @@ export function StrategiesCard({
                     variant="outline"
                     disabled={isRunning || pending !== null}
                     onClick={() =>
-                      run(`launch:${strategy.id}`, () => launchStrategy(strategy.id), 'Sophie cherche : les entreprises arrivent dans « À qualifier »')
+                      run(`launch:${strategy.id}`, () => launchStrategy(strategy.id), 'Sophie a lancé la recherche : je vous préviens dès qu’elle est terminée')
                     }
                   >
                     {pending === `launch:${strategy.id}` ? (

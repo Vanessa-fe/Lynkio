@@ -78,6 +78,7 @@ import { cn } from '@/lib/utils/cn'
 import { SignalValidityButton } from './signal-validity-button'
 import { CompanyDeepDiveCard } from './company-deep-dive-card'
 import type { DeepAnalysisView } from '@/lib/deep-analysis'
+import { ProvenanceBadge, companyProvenance } from './provenance-badge'
 import type { SignalExplanation } from '@/lib/signal-explanation'
 
 interface CompanyDetailProps {
@@ -152,6 +153,8 @@ export function CompanyDetail({
 
   // Personne seule (indépendant, ou entreprise inconnue) : sa fiche tient lieu d'entreprise
   const isIndividual = company.kind === 'individual'
+  // Source de l'entreprise : officielle, analyse IA ou saisie (badge sous le nom)
+  const provenance = companyProvenance(company)
 
   const handleDelete = async () => {
     const consequence = isIndividual
@@ -236,6 +239,7 @@ export function CompanyDetail({
                 <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
                 <CompanySegmentSelect companyId={company.id} segment={company.segment} setBy={company.segment_set_by} />
               </div>
+              {provenance && <ProvenanceBadge kind={provenance.kind} detail={provenance.detail} />}
             </div>
             <CompatibilityTile score={company.score} />
           </div>
@@ -644,6 +648,7 @@ function SignalExplanationText({ explanation }: { explanation: SignalExplanation
       </p>
       {explanation.lead && (
         <p className="text-muted-foreground">
+          <ProvenanceBadge kind="hypothesis" className="mr-1.5" />
           <span className="font-medium">Piste pour vous : </span>
           {explanation.lead} <span className="italic">Ce besoin n’est pas confirmé.</span>
         </p>
@@ -666,10 +671,14 @@ function SignalSummary({ signal }: { signal: CompanySignalWithType }) {
   if (signal.source === 'ai_research' && typeof evidence.title === 'string') {
     return (
       <div className="space-y-0.5 text-sm text-muted-foreground">
-        <p className="text-foreground">{evidence.title}</p>
+        <p className="text-foreground">
+          <ProvenanceBadge kind="ai" className="mr-1.5" />
+          {evidence.title}
+        </p>
         {typeof evidence.summary === 'string' && evidence.summary && <p>{evidence.summary}</p>}
         {typeof evidence.relevance === 'string' && evidence.relevance && (
           <p>
+            <ProvenanceBadge kind="hypothesis" className="mr-1.5" />
             <span className="font-medium">Piste, non confirmée : </span>
             {evidence.relevance}
             {typeof evidence.service === 'string' && evidence.service && ` (${evidence.service})`}

@@ -19,6 +19,7 @@ export type DashboardData = {
     tracked: number
     addedThisWeek: number
     addedBySophieThisWeek: number
+    addedByAiThisWeek: number
     overdueReminders: number
     won: number
     lost: number
@@ -55,7 +56,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
     await Promise.all([
       supabase
         .from('companies')
-        .select('id, name, score, stage_id, origin, city, sector, created_at, last_interaction_at, estimated_amount')
+        .select('id, name, score, stage_id, origin, discovered_by, city, sector, created_at, last_interaction_at, estimated_amount')
         .eq('user_id', user.id),
       supabase.from('pipeline_stages').select('id, name, color, kind').eq('user_id', user.id).order('order'),
       supabase
@@ -148,6 +149,9 @@ export async function getDashboardData(): Promise<DashboardData | null> {
       tracked: companies.filter((company) => kindOf(company.stage_id) === 'open').length,
       addedThisWeek: addedThisWeek.length,
       addedBySophieThisWeek: addedThisWeek.filter((company) => company.origin === 'detector').length,
+      // Parmi elles, celles trouvées par l'IA de l'utilisateur (recherche par technologie) : les autres
+      // viennent des sources officielles, sans IA
+      addedByAiThisWeek: addedThisWeek.filter((company) => company.discovered_by === 'tech_ai').length,
       overdueReminders: reminders.filter((reminder) => new Date(reminder.due_at).getTime() < now).length,
       won,
       lost,
