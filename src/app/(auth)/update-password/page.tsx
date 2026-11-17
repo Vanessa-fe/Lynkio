@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { isNavigationError } from '@/lib/utils/navigation-error'
 
 export default function UpdatePasswordPage() {
   const [error, setError] = useState<string | null>(null)
@@ -43,7 +44,9 @@ export default function UpdatePasswordPage() {
       if (result && !result.success && result.error) {
         setError(result.error)
       }
-    } catch {
+    } catch (err) {
+      // Mot de passe changé : la redirection vers le tableau de bord arrive comme une « erreur »
+      if (isNavigationError(err)) return
       setError('Une erreur inattendue est survenue')
     } finally {
       setIsLoading(false)

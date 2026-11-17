@@ -32,6 +32,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { isNavigationError } from '@/lib/utils/navigation-error'
 
 type ProfessionChoice = Pick<Profession, 'key' | 'label' | 'description'> & {
   suggestedKeywords: string[]
@@ -105,6 +106,8 @@ export function OnboardingForm({ professions, defaultValues, isReturningUser, em
         setError(result.error)
       }
     } catch (err) {
+      // Onboarding terminé : la redirection vers le tableau de bord arrive comme une « erreur »
+      if (isNavigationError(err)) return
       setError('Une erreur inattendue est survenue')
     } finally {
       setIsLoading(false)

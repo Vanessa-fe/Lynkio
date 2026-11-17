@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { deleteAccount } from '@/lib/actions/account'
 import { ACCOUNT_DELETION_CONFIRMATION } from '@/lib/constants/account'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
+import { isNavigationError } from '@/lib/utils/navigation-error'
 
 export function DeleteAccount() {
   const [isOpen, setIsOpen] = useState(false)
@@ -26,7 +27,9 @@ export function DeleteAccount() {
       // Réussite : le serveur déconnecte la personne et la renvoie vers l'accueil
       const result = await deleteAccount(confirmation)
       if (result && !result.success) setError(result.error ?? 'Suppression impossible')
-    } catch {
+    } catch (err) {
+      // Compte supprimé : la redirection vers la connexion arrive comme une « erreur »
+      if (isNavigationError(err)) return
       setError(CONNECTION_ERROR)
     } finally {
       setIsDeleting(false)
