@@ -238,7 +238,7 @@ function LinkOfferDialog({
                 ? 'Vos entreprises vous sont proposées pendant la saisie.'
                 : existing
                   ? `L'offre sera ajoutée à ${existing.name}, que vous suivez déjà.`
-                  : 'Nouvelle entreprise : elle arrivera dans « À qualifier », avec l\'offre comme signal.'}
+                  : 'Nouvelle entreprise : elle arrivera parmi vos découvertes, avec l\'offre comme signal.'}
             </p>
           </div>
 
