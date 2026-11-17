@@ -17,7 +17,7 @@ export type AiAccess = { provider: AiProvider; apiKey: string; model: string }
 
 const AI_PROVIDERS: AiProvider[] = ['openai', 'gemini', 'anthropic']
 
-const PROVIDER_LABELS: Record<AiProvider, string> = { openai: 'OpenAI', gemini: 'Gemini', anthropic: 'Claude' }
+export const PROVIDER_LABELS: Record<AiProvider, string> = { openai: 'OpenAI', gemini: 'Gemini', anthropic: 'Claude' }
 
 // Modèle conseillé quand l'utilisateur n'en a pas choisi (OPENAI_MODEL le remplace pour OpenAI).
 // Gemini : Flash-Lite, le seul modèle Flash qui répond avec une clé gratuite (vérifié le 11/11/2026).
@@ -34,8 +34,8 @@ const BILLING_PAGES: Record<AiProvider, string> = {
   anthropic: 'platform.claude.com (Settings > Billing)',
 }
 
-const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
+export const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
+export const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 
 export const MISSING_AI_KEY_MESSAGE =
   'Ajoutez la clé de votre IA dans Paramètres > Vos clés : Sophie l\'utilise pour rédiger et pour ses recherches IA.'
@@ -138,7 +138,7 @@ function extractJson(text: string): string {
   return start >= 0 && end > start ? candidate.slice(start, end + 1) : candidate
 }
 
-function timeoutError(task: string): UserFacingError {
+export function timeoutError(task: string): UserFacingError {
   return new UserFacingError(`${task} a pris trop de temps : réessayez dans un instant`)
 }
 
@@ -146,21 +146,21 @@ function timeoutError(task: string): UserFacingError {
 // Messages d'erreur, les mêmes pour les trois fournisseurs : clé refusée, crédit épuisé ou
 // facturation à activer, trop de demandes, modèle inconnu ou incompatible avec la recherche web.
 
-function keyRefused(provider: AiProvider): UserFacingError {
+export function keyRefused(provider: AiProvider): UserFacingError {
   return new UserFacingError(`${PROVIDER_LABELS[provider]} refuse votre clé : vérifiez-la dans Paramètres > Vos clés`)
 }
 
-function noCredit(provider: AiProvider): UserFacingError {
+export function noCredit(provider: AiProvider): UserFacingError {
   return new UserFacingError(
     `Votre compte ${PROVIDER_LABELS[provider]} n'a plus de crédit : ajoutez-en sur ${BILLING_PAGES[provider]}, puis réessayez.`
   )
 }
 
-function tooManyRequests(provider: AiProvider): UserFacingError {
+export function tooManyRequests(provider: AiProvider): UserFacingError {
   return new UserFacingError(`${PROVIDER_LABELS[provider]} reçoit trop de demandes de votre compte en même temps : réessayez dans une minute.`)
 }
 
-function unknownModel(provider: AiProvider, model: string): UserFacingError {
+export function unknownModel(provider: AiProvider, model: string): UserFacingError {
   return new UserFacingError(
     `${PROVIDER_LABELS[provider]} ne connaît pas le modèle « ${model} » : laissez le champ Modèle vide dans Paramètres > Vos clés pour prendre le modèle conseillé.`
   )
@@ -172,12 +172,12 @@ function noWebSearchModel(provider: AiProvider, model: string): UserFacingError 
   )
 }
 
-function unavailable(provider: AiProvider): UserFacingError {
+export function unavailable(provider: AiProvider): UserFacingError {
   return new UserFacingError(`${PROVIDER_LABELS[provider]} est surchargé ou indisponible pour le moment : réessayez dans quelques minutes.`)
 }
 
 // Le détail peut citer la requête, jamais la clé (elle n'est envoyée que dans l'en-tête)
-function unexpected(provider: AiProvider, status: number, detail: string, task: string): Error {
+export function unexpected(provider: AiProvider, status: number, detail: string, task: string): Error {
   return new Error(`${task} : ${PROVIDER_LABELS[provider]} a répondu HTTP ${status} ${detail.slice(0, 200)}`)
 }
 
@@ -251,7 +251,7 @@ function geminiNeedsBilling(request: JsonRequest): UserFacingError {
     : new UserFacingError('Votre compte Gemini demande d\'activer la facturation dans Google AI Studio (aistudio.google.com).')
 }
 
-function geminiFreeLimit(): UserFacingError {
+export function geminiFreeLimit(): UserFacingError {
   return new UserFacingError(
     'Vous avez atteint la limite gratuite de Gemini : réessayez plus tard, ou activez la facturation dans Google AI Studio (aistudio.google.com).'
   )
@@ -313,7 +313,7 @@ async function openAiJson(request: JsonRequest): Promise<JsonResult> {
   return { text: openAiOutputText(body), consultedUrls: openAiConsultedUrls(body) }
 }
 
-function openAiErrorCode(detail: string): string | null {
+export function openAiErrorCode(detail: string): string | null {
   try {
     const parsed = JSON.parse(detail) as { error?: { code?: string | null; type?: string | null } }
     return parsed.error?.code ?? parsed.error?.type ?? null

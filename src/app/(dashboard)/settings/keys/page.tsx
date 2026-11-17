@@ -3,9 +3,18 @@ import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings'
 import { getMyAiProvider, getMyApiKeys } from '@/lib/queries/api-keys'
+import { SophieSettings } from '@/components/settings/sophie-settings'
+import { getUserProfile } from '@/lib/queries/user-profile'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function ApiKeysSettingsPage() {
-  const [savedKeys, aiProvider] = await Promise.all([getMyApiKeys(), getMyAiProvider()])
+  const supabase = await createClient()
+  const [savedKeys, aiProvider, profile, { data: retention }] = await Promise.all([
+    getMyApiKeys(),
+    getMyAiProvider(),
+    getUserProfile(),
+    supabase.from('data_retention_settings').select('sophie_chat_months').maybeSingle(),
+  ])
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -34,6 +43,12 @@ export default async function ApiKeysSettingsPage() {
       </p>
 
       <ApiKeysSettings savedKeys={savedKeys} aiProvider={aiProvider} />
+
+      <SophieSettings
+        autoOpen={profile?.sophie_auto_open ?? true}
+        dailyMessages={profile?.sophie_daily_messages ?? 100}
+        chatMonths={retention?.sophie_chat_months ?? 12}
+      />
     </div>
   )
 }

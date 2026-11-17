@@ -14,6 +14,7 @@ import {
 } from '@/lib/validations/user-profile'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import { SOPHIE_CHAT_MONTHS, SOPHIE_DAILY_OPTIONS } from '@/lib/constants/sophie'
 import { nafCodesForGroups, sectorGroup } from '@/lib/constants/client-sectors'
 
 /** Nom de la première recherche : premier secteur choisi et zone (comme dans « Nouvelle recherche ») */
@@ -296,5 +297,44 @@ export async function saveCompaniesView(view: 'table' | 'kanban'): Promise<Actio
     console.error('Save companies view error:', error)
     return { success: false, error: 'Impossible de mémoriser la vue' }
   }
+  return { success: true }
+}
+
+
+/**
+ * Réglages de la conversation avec Sophie : ouverture automatique sur l'accueil, plafond de messages par
+ * jour (consommation de la clé IA de l'utilisateur), conservation des conversations.
+ */
+export async function saveSophieSettings(input: {
+  autoOpen: boolean
+  dailyMessages: number
+  chatMonths: number
+}): Promise<ActionResult> {
+  if (
+    !(SOPHIE_DAILY_OPTIONS as readonly number[]).includes(input.dailyMessages) ||
+    !(SOPHIE_CHAT_MONTHS as readonly number[]).includes(input.chatMonths)
+  ) {
+    return { success: false, error: 'Valeur non prévue' }
+  }
+  const user = await getAuthUser()
+  if (!user) return { success: false, error: 'Vous devez être connecté' }
+  const supabase = await createClient()
+
+  const [{ error: profileError }, { error: retentionError }] = await Promise.all([
+    supabase
+      .from('user_profiles')
+      .update({ sophie_auto_open: input.autoOpen === true, sophie_daily_messages: input.dailyMessages })
+      .eq('id', user.id),
+    supabase
+      .from('data_retention_settings')
+      .upsert({ user_id: user.id, sophie_chat_months: input.chatMonths, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }),
+  ])
+  if (profileError || retentionError) {
+    captureServerError(profileError ?? retentionError, user.id, { action: 'save_sophie_settings' })
+    return { success: false, error: 'Enregistrement impossible. Réessayez.' }
+  }
+  captureServerEvent(user.id, 'sophie_settings_saved', { ...input })
+  revalidatePath('/settings/keys')
+  revalidatePath('/', 'layout')
   return { success: true }
 }

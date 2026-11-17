@@ -38,6 +38,8 @@ const TABLES: { table: string; columns: string; owner?: 'id' }[] = [
   { table: 'pipeline_runs', columns: '*' },
   { table: 'sophie_preferences', columns: '*' },
   { table: 'sophie_notifications', columns: '*' },
+  { table: 'sophie_conversations', columns: '*' },
+  { table: 'sophie_messages', columns: 'conversation_id, role, content, context, status, error, provider, model, created_at' },
   { table: 'feedback', columns: '*' },
   { table: 'billing', columns: 'plan, billing_interval, status, trial_ends_at, current_period_end, cancel_at_period_end, updated_at' },
   { table: 'user_api_keys', columns: 'provider, key_hint, model, created_at, updated_at' },
