@@ -6,6 +6,7 @@ import { ArrowLeft, History, KeyRound, Loader2, MessageSquarePlus, Pencil, Send,
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils/dates'
 import { cn } from '@/lib/utils'
+import { SophieSuggestions, useSuggestionCount } from './sophie-suggestions'
 import { useSophie } from './sophie-provider'
 import { SophieMessageBubble } from './sophie-message'
 
@@ -157,6 +158,7 @@ function SophieChat() {
                   : 'Pour discuter avec moi, ajoutez la clé de votre IA (OpenAI, Gemini ou Claude). Tout le reste de Filonéa fonctionne sans elle : recherches, scores, suivi et relances.'}
               </p>
             </div>
+            <SophieSuggestions />
             {hasAiKey ? (
               <div className="flex flex-col items-start gap-2">
                 {starters(context.page, isCompany).map((starter) => (
@@ -180,13 +182,16 @@ function SophieChat() {
             )}
           </div>
         ) : (
-          messages.map((message) => (
-            <SophieMessageBubble
-              key={message.id}
-              message={message}
-              otherCompany={message.role === 'assistant' && !!message.entityId && message.entityId !== context.entityId}
-            />
-          ))
+          <>
+            <SophieSuggestions compact />
+            {messages.map((message) => (
+              <SophieMessageBubble
+                key={message.id}
+                message={message}
+                otherCompany={message.role === 'assistant' && !!message.entityId && message.entityId !== context.entityId}
+              />
+            ))}
+          </>
         )}
       </div>
 
@@ -293,16 +298,22 @@ function SophieHistory() {
 /** Bouton pour ouvrir Sophie, présent sur toutes les pages connectées */
 export function SophieLauncher() {
   const { open, openPanel } = useSophie()
+  const count = useSuggestionCount()
   if (open) return null
   return (
     <button
       type="button"
       onClick={openPanel}
       className="fixed bottom-24 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-wine px-4 py-3 text-sm font-semibold text-cream shadow-lift transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:bottom-6 md:right-6"
-      aria-label="Ouvrir Sophie"
+      aria-label={count > 0 ? `Ouvrir Sophie : ${count} suggestion${count > 1 ? 's' : ''}` : 'Ouvrir Sophie'}
     >
       <Sparkles className="h-4 w-4" aria-hidden="true" />
       Sophie
+      {count > 0 && (
+        <span className="-mr-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-peach px-1.5 text-xs font-bold text-wine" aria-hidden="true">
+          {count}
+        </span>
+      )}
     </button>
   )
 }

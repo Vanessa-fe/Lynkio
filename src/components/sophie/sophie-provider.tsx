@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useSessionState, writeSessionState } from '@/lib/hooks/use-session-state'
 import { askSophie, type SophiePageContext } from './sophie-stream'
 import { isSophieCard, type SophieCard } from './sophie-cards'
+import { dismissSophieSuggestion, loadSophieSuggestions } from '@/lib/actions/sophie-suggestions'
+import type { SophieWelcome } from '@/lib/sophie-suggestions'
 
 /**
  * État partagé du panneau Sophie (phase 2 de la refonte), monté une fois dans la mise en page :
@@ -53,6 +55,10 @@ type SophieState = {
   loadHistory: () => Promise<void>
   renameConversation: (id: string, title: string) => Promise<boolean>
   deleteConversation: (id: string) => Promise<boolean>
+  // Suggestions proactives (phase 5) : undefined = pas encore lues, null = désactivées
+  suggestions: SophieWelcome | null | undefined
+  refreshSuggestions: () => void
+  dismissSuggestion: (key: string) => void
 }
 
 const SophieContext = createContext<SophieState | null>(null)
@@ -123,6 +129,30 @@ export function SophieProvider({
   const [conversations, setConversations] = useState<SophieConversation[] | null>(null)
   const resumed = useRef(false)
   const abort = useRef<AbortController | null>(null)
+  const [suggestions, setSuggestions] = useState<SophieWelcome | null | undefined>(undefined)
+
+  const refreshSuggestions = useCallback(() => {
+    loadSophieSuggestions()
+      .then(setSuggestions)
+      .catch(() => setSuggestions((current) => current ?? null))
+  }, [])
+
+  const dismissSuggestion = useCallback((key: string) => {
+    // Retirée tout de suite ; mémorisée côté serveur
+    setSuggestions((current) =>
+      current ? { ...current, suggestions: current.suggestions.filter((suggestion) => suggestion.key !== key) } : current
+    )
+    void dismissSophieSuggestion(key).catch(() => undefined)
+  }, [])
+
+  // Lues à l'arrivée (pastille du bouton Sophie) puis à chaque ouverture du panneau : elles suivent les
+  // relances faites, les échanges notés, les nouvelles entreprises
+  useEffect(() => {
+    if (!open && suggestions !== undefined) return
+    const timer = setTimeout(refreshSuggestions, 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- relecture à l'ouverture seulement
+  }, [open, refreshSuggestions])
 
   const loadConversation = useCallback(async (id: string, showLoading = true) => {
     if (showLoading) setLoadingConversation(true)
@@ -336,6 +366,9 @@ export function SophieProvider({
     loadHistory,
     renameConversation,
     deleteConversation,
+    suggestions,
+    refreshSuggestions,
+    dismissSuggestion,
   }
 
   return <SophieContext.Provider value={value}>{children}</SophieContext.Provider>
