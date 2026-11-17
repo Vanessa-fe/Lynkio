@@ -75,7 +75,7 @@ export default async function RemindersPage() {
         <div>
           <h1 className="text-3xl font-bold md:text-4xl">Relances</h1>
           <p className="text-muted-foreground mt-2">
-            Gardez le fil, sans rien garder en tête. Une piste qu&apos;on ne relance pas est une piste perdue.
+            Gardez le fil, sans rien garder en tête. Une piste qu&apos;on ne relance pas finit par s&apos;éteindre.
           </p>
         </div>
         <div className="shrink-0">

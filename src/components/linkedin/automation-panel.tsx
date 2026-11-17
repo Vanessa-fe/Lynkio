@@ -97,9 +97,11 @@ export function AutomationPanel({ automation, now }: { automation: LinkedinAutom
         </p>
       )}
 
+      {/* On ne promet l'envoi automatique que si l'extension s'est manifestée récemment */}
       <p className="text-sm text-muted-foreground max-w-3xl">
-        L&apos;extension envoie les invitations, repère celles qui sont acceptées et envoie le premier message, du lundi au
-        vendredi de 9 h à 18 h, quand Chrome est ouvert. Les relances restent en un clic pour l&apos;instant.
+        {seenRecently
+          ? 'Invitations et premiers messages partent du lundi au vendredi, de 9 h à 18 h, quand Chrome est ouvert. Les relances se font en un clic.'
+          : 'L’envoi automatique demande l’extension Chrome de Filonéa. Sans elle, tout se fait en un clic.'}
       </p>
 
       <p className="text-xs text-muted-foreground">

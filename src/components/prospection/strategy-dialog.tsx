@@ -296,7 +296,7 @@ export function StrategyDialog({
         {step === 2 && (
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label>Où se trouve leur siège ?</Label>
+              <Label>Où chercher ?</Label>
               <DepartmentPicker value={departments} onChange={setDepartments} />
               <SoftToggle checked={soft.includes('departments')} onChange={(value) => setSoftFor('departments', value)}>
                 Accepter aussi le reste de la région. Ces entreprises auront moins de points (5 au lieu de 10).

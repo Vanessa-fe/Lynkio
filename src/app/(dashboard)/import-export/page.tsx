@@ -28,7 +28,7 @@ export default async function ImportExportPage() {
         <CompaniesImport sources={sources} lists={lists} />
       ) : (
         <ProOnlyNotice>
-          L&apos;import de vos prospects (fichier CSV, export Waalaxy) fait partie de l&apos;offre Pro. L&apos;export
+          L&apos;import de vos prospects (fichier CSV, y compris l&apos;export de votre outil LinkedIn) fait partie de l&apos;offre Pro. L&apos;export
           de vos données reste ouvert à tous.
         </ProOnlyNotice>
       )}

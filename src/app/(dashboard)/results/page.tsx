@@ -103,7 +103,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Perdues</p>
+              <p className="text-sm text-muted-foreground">Non concrétisées</p>
               <p className="text-2xl font-semibold tabular-nums">{result.lost}</p>
               <p className="text-xs text-muted-foreground">sur {found} ajoutées</p>
             </CardContent>

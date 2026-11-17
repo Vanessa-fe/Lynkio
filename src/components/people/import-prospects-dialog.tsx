@@ -58,7 +58,7 @@ export function ImportProspectsDialog() {
                 <Choice
                   icon={<FileSpreadsheet className="w-5 h-5" />}
                   title="Depuis un fichier CSV"
-                  description="Entreprises et personnes, avec aperçu et repérage des doublons. Export Waalaxy accepté."
+                  description="Entreprises et personnes, avec aperçu et repérage des doublons. Export d&apos;outil LinkedIn accepté."
                   href="/import-export"
                   onNavigate={() => changeOpen(false)}
                 />

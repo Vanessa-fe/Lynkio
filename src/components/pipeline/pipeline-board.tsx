@@ -234,7 +234,7 @@ export function PipelineBoard({ cards, stages }: { cards: PipelineCard[]; stages
 
       const previousColumn = columns.find((item) => item.stageId === previousStageId) ?? columns.find((item) => item.id === NO_STAGE)
       toast({
-        title: column.kind === 'won' ? `${card.name} : piste gagnée, bravo !` : `${card.name} → ${column.name}`,
+        title: column.kind === 'won' ? `${card.name} : piste signée, bravo !` : `${card.name} → ${column.name}`,
         action:
           previousColumn || previousStageId === null ? (
             <ToastAction
@@ -302,7 +302,7 @@ export function PipelineBoard({ cards, stages }: { cards: PipelineCard[]; stages
           value={stats.overdue}
           tone={stats.overdue > 0 ? 'alert' : undefined}
         />
-        <StatPill icon={<Trophy className="size-4" />} label="Gagnées" value={stats.won} tone={stats.won > 0 ? 'success' : undefined} />
+        <StatPill icon={<Trophy className="size-4" />} label="Signées" value={stats.won} tone={stats.won > 0 ? 'success' : undefined} />
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

@@ -227,7 +227,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
           {
             key: defaultStage.id,
             label: defaultStage.name,
-            detail: 'Faites le tri avec Sophie',
+            detail: 'À examiner',
             icon: Filter,
             count: countByStage.get(defaultStage.id) ?? 0,
           },

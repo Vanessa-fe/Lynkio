@@ -17,7 +17,7 @@ export const FUNNEL_STEPS = [
   { key: 'replied', label: 'Réponses', hint: 'au moins une réponse reçue notée' },
   { key: 'meeting', label: 'Rendez-vous', hint: 'un rendez-vous noté' },
   { key: 'proposal', label: 'Propositions', hint: 'passées à « Proposition envoyée »' },
-  { key: 'won', label: 'Gagnées', hint: 'passées à une étape « gagnée »' },
+  { key: 'won', label: 'Signées', hint: 'passées à une étape « signée »' },
 ] as const
 
 export type FunnelStepKey = (typeof FUNNEL_STEPS)[number]['key']

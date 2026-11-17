@@ -7,8 +7,8 @@ import type { PipelineStageKind } from '@/types'
 
 export const STAGE_KINDS: { value: PipelineStageKind; label: string; description: string }[] = [
   { value: 'open', label: 'En cours', description: 'La prospection continue' },
-  { value: 'won', label: 'Gagné', description: 'Mission obtenue' },
-  { value: 'lost', label: 'Perdu', description: 'L\'entreprise a dit non' },
+  { value: 'won', label: 'Signé', description: 'Mission obtenue' },
+  { value: 'lost', label: 'Non concrétisé', description: 'L\'entreprise a dit non, ou rien n\'a abouti' },
   { value: 'excluded', label: 'Hors cible', description: 'Ne correspond pas à ce que vous cherchez' },
 ]
 
