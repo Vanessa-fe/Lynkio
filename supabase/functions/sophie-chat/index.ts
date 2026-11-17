@@ -10,7 +10,8 @@
 //
 // Garde-fous : compte vérifié, offre active, plafond de messages par jour (réglable, 100 par défaut),
 // 10 messages par minute, message de 4 000 caractères au plus, contexte relu côté serveur avec les
-// droits de l'utilisateur, 20 derniers messages seulement envoyés à l'IA. Une réponse qui échoue est
+// droits de l'utilisateur ; l'IA relit les messages écrits depuis le dernier résumé (30 au plus) et ce
+// résumé, mis à jour en arrière-plan après la réponse (summary.ts). Une réponse qui échoue est
 // enregistrée comme une erreur, jamais comme une réponse.
 
 import { createClient } from '@supabase/supabase-js'
@@ -21,11 +22,10 @@ import { UserFacingError } from '../_shared/errors.ts'
 import { loadPageFacts, readPageContext } from './context.ts'
 import { sophieInstructions } from './prompt.ts'
 import { planTools, runTool, TOOL_STATUS, type ToolResult } from './tools.ts'
+import { MAX_RECENT, rowsToSummarize, updateSummary, type HistoryRow } from './summary.ts'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_MESSAGE_LENGTH = 4000
-// Fenêtre de conversation envoyée à l'IA : les messages plus anciens restent dans l'historique affiché
-const HISTORY_WINDOW = 20
 const MAX_OUTPUT_TOKENS = 1200
 const REQUEST_TIMEOUT_MS = 90_000
 const PER_MINUTE = 10
@@ -134,12 +134,23 @@ Deno.serve(async (request) => {
   // Conversation : celle demandée si elle appartient bien à l'utilisateur, sinon une nouvelle
   let conversationId: string
   let title: string
+  let summary: string | null = null
+  let summaryUntil: string | null = null
   const existing = requestedConversation
-    ? (await admin.from('sophie_conversations').select('id, title').eq('id', requestedConversation).eq('user_id', user.id).maybeSingle()).data
+    ? (
+        await admin
+          .from('sophie_conversations')
+          .select('id, title, summary, summary_until')
+          .eq('id', requestedConversation)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      ).data
     : null
   if (existing) {
     conversationId = existing.id
     title = existing.title
+    summary = existing.summary
+    summaryUntil = existing.summary_until
   } else {
     title = titleFrom(message)
     const { data: created, error } = await admin
@@ -163,17 +174,19 @@ Deno.serve(async (request) => {
     return json({ error: 'Impossible d’enregistrer votre message' }, 500)
   }
 
-  // Les 20 derniers messages réussis, du plus ancien au plus récent (le nouveau message compris)
-  const { data: history } = await admin
+  // Messages écrits depuis le dernier résumé (30 au plus), du plus ancien au plus récent, le nouveau compris
+  let historyQuery = admin
     .from('sophie_messages')
-    .select('role, content, status')
+    .select('role, content, status, created_at')
     .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: false })
-    .limit(HISTORY_WINDOW)
-  const turns: ChatTurn[] = (history ?? [])
+  if (summaryUntil) historyQuery = historyQuery.gt('created_at', summaryUntil)
+  const { data: history } = await historyQuery.order('created_at', { ascending: false }).limit(MAX_RECENT)
+  const recent = ((history ?? []) as HistoryRow[]).reverse()
+  const turns: ChatTurn[] = recent
     .filter((row) => row.status === 'done' && row.content)
-    .reverse()
     .map((row) => ({ role: row.role as ChatTurn['role'], content: row.content as string }))
+  // Trop de messages depuis le dernier résumé : les plus anciens seront condensés après la réponse
+  const toSummarize = rowsToSummarize(recent)
   // L'IA attend une conversation qui commence par l'utilisateur
   while (turns.length > 0 && turns[0]!.role !== 'user') turns.shift()
 
@@ -224,6 +237,7 @@ Deno.serve(async (request) => {
         toolFacts: results.map((result) => `[${result.tool}]\n${result.facts}`).join('\n\n'),
         today: todayInParis(),
         pastActions,
+        conversationSummary: summary,
       })
 
       let text = ''
@@ -282,6 +296,15 @@ Deno.serve(async (request) => {
       } finally {
         await admin.from('sophie_conversations').update({ updated_at: new Date().toISOString() }).eq('id', conversationId)
         controller.close()
+      }
+      // Résumé des anciens messages, après la réponse : l'utilisateur n'attend pas
+      if (toSummarize.length > 0) {
+        const job = updateSummary({ admin, access, conversationId, previous: summary, rows: toSummarize }).catch((error) =>
+          console.error('sophie-chat summary', error instanceof Error ? error.message : error)
+        )
+        const runtime = (globalThis as { EdgeRuntime?: { waitUntil: (promise: Promise<unknown>) => void } }).EdgeRuntime
+        if (runtime) runtime.waitUntil(job)
+        else await job
       }
     },
   })

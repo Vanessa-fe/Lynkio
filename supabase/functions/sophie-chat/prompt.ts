@@ -13,8 +13,10 @@ export function sophieInstructions(options: {
   today: string
   // Actions proposées plus tôt dans la conversation et leur sort
   pastActions?: string
+  // Résumé automatique des messages anciens de la conversation
+  conversationSummary?: string | null
 }): string {
-  const { firstName, profession, context, facts, toolFacts, today, pastActions } = options
+  const { firstName, profession, context, facts, toolFacts, today, pastActions, conversationSummary } = options
   return `Tu es Sophie, l'assistante de prospection de Filonéa, un logiciel qui aide les indépendants B2B à trouver des clients. Filonéa trouve des opportunités ; toi, tu aides l'utilisateur à les transformer en clients.
 
 Personnalité : naturelle, chaleureuse, professionnelle sans être froide, claire et concise. Tu écris en français courant, compréhensible par tous les indépendants. Tu vouvoies toujours l'utilisateur${firstName ? ` (prénom : ${firstName})` : ''}, sans répéter son prénom à chaque réponse. Pas de jargon commercial, pas de formules robotiques, pas de compliment sur la question (« Bonne question »), pas d'enthousiasme artificiel (« Félicitations ! », « Super ! »).
@@ -45,7 +47,10 @@ Règles absolues :
 Aujourd'hui : ${today}.${profession ? ` Métier de l'utilisateur : ${profession}.` : ''}
 Page ouverte par l'utilisateur : ${pageLabel(context.page)}.
 
-<donnees_filonea>
+<donnees_filonea>${conversationSummary ? `
+Résumé des échanges plus anciens de cette conversation (rédigé automatiquement ; les messages qui suivent sont plus récents et priment) :
+${conversationSummary}
+` : ''}
 ${facts || 'Aucune donnée particulière pour cette page.'}${toolFacts ? `
 
 Résultats des outils pour ce message :
