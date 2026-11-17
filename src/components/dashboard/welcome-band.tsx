@@ -1,62 +1,21 @@
 import Link from 'next/link'
+import { formatDistanceToNow } from 'date-fns'
+import { fr } from 'date-fns/locale'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils/dates'
+import { dashboardWelcome } from '@/lib/dashboard-suggestions'
 import type { DashboardData } from '@/lib/queries/prospection-dashboard'
 
-type Message = { headline: string; detail: string; href: string; action: string }
-
-function plural(count: number, word: string) {
-  return `${count} ${word}${count > 1 ? 's' : ''}`
+function plural(count: number, singular: string, pluralForm: string) {
+  return `${count} ${count > 1 ? pluralForm : singular}`
 }
 
 /**
- * Le message du jour suit ce qui compte le plus maintenant : d'abord les relances
- * en retard, puis celles du jour, puis les nouvelles pistes de Sophie
+ * Accueil de Sophie (lot 1.5) : bonjour, ce qui compte aujourd'hui d'après les chiffres réels, et au plus
+ * trois suggestions issues de règles (pas d'IA). Rien à signaler : une phrase, sans bouton artificiel.
  */
-function messageFor(data: DashboardData): Message {
-  const { overdueReminders, addedBySophieThisWeek, addedThisWeek } = data.stats
-  if (overdueReminders > 0) {
-    return {
-      headline: 'Quelques relances vous attendent.',
-      detail: `${plural(overdueReminders, 'relance')} en retard : c'est le bon moment pour reprendre contact.`,
-      href: '/reminders',
-      action: 'Voir mes relances',
-    }
-  }
-  if (data.todayReminders.length > 0) {
-    return {
-      headline: 'Une belle journée pour faire avancer vos pistes.',
-      detail: `${plural(data.todayReminders.length, 'relance')} prévue${data.todayReminders.length > 1 ? 's' : ''} aujourd'hui.`,
-      href: '/reminders',
-      action: 'Voir mes relances',
-    }
-  }
-  if (addedBySophieThisWeek > 0) {
-    return {
-      headline: 'Votre prochaine belle opportunité est peut-être ici.',
-      detail: `Sophie a repéré ${plural(addedBySophieThisWeek, 'entreprise')} à découvrir cette semaine.`,
-      href: '/companies',
-      action: 'Voir les nouvelles pistes',
-    }
-  }
-  if (addedThisWeek > 0) {
-    return {
-      headline: 'Votre prochaine belle opportunité est peut-être ici.',
-      detail: `${plural(addedThisWeek, 'nouvelle entreprise')} ajoutée${addedThisWeek > 1 ? 's' : ''} cette semaine.`,
-      href: '/companies',
-      action: 'Voir les entreprises',
-    }
-  }
-  return {
-    headline: 'Votre prochain client commence par une bonne conversation.',
-    detail: 'Décrivez à Sophie les entreprises que vous aimeriez rencontrer, elle les cherche pour vous.',
-    href: '/prospection',
-    action: 'Aller à la prospection',
-  }
-}
-
-/** Bandeau d'accueil du tableau de bord : un bonjour, et la chose à faire maintenant */
 export function WelcomeBand({
   firstName,
   data,
@@ -66,44 +25,70 @@ export function WelcomeBand({
   data: DashboardData
   unreadAlerts: number
 }) {
-  const message = messageFor(data)
+  const { stats, todayReminders, lastRun, nextRunAt } = data
+  const welcome = dashboardWelcome({
+    overdueReminders: stats.overdueReminders,
+    todayReminders: Math.max(0, todayReminders.length - stats.overdueReminders),
+    newDiscoveries: stats.newDiscoveriesThisWeek,
+    unreadAlerts,
+    lastRunFailed: lastRun?.status === 'failed',
+  })
 
   return (
     <section className="overflow-hidden rounded-3xl bg-wine px-6 py-7 text-cream shadow-lift sm:px-8 sm:py-8">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 space-y-2">
-          <h1 className="accent-serif text-3xl text-cream md:text-4xl">
-            Bonjour{firstName ? ` ${firstName}` : ''},
-          </h1>
-          <p className="font-display text-xl font-semibold tracking-tight md:text-2xl">{message.headline}</p>
-          <p className="text-sm text-cream/75 md:text-base">{message.detail}</p>
-        </div>
-        <Button asChild size="lg" className="group shrink-0 self-start lg:self-center">
-          <Link href={message.href}>
-            {message.action}
-            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </Button>
+      <div className="min-w-0 space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cream/60">Sophie</p>
+        <h1 className="accent-serif text-3xl text-cream md:text-4xl">Bonjour{firstName ? ` ${firstName}` : ''},</h1>
+        <p className="font-display text-xl font-semibold tracking-tight md:text-2xl">{welcome.summary}</p>
       </div>
 
+      {welcome.suggestions.length > 0 && (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {welcome.suggestions.map((suggestion, index) => (
+            <Button
+              key={suggestion.key}
+              asChild
+              size={index === 0 ? 'lg' : 'default'}
+              variant={index === 0 ? 'default' : 'outline'}
+              // Texte long sur mobile : le bouton passe à la ligne au lieu de déborder du bandeau
+              className={cn(
+                'group h-auto min-h-10 max-w-full whitespace-normal py-2 text-left',
+                index === 0
+                  ? 'px-5 sm:px-8'
+                  : 'border-cream/30 bg-transparent text-cream hover:border-cream/60 hover:bg-cream/10 hover:text-cream'
+              )}
+            >
+              <Link href={suggestion.href}>
+                {suggestion.label}
+                <ArrowRight className="ml-2 size-4 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              </Link>
+            </Button>
+          ))}
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-cream/15 pt-4 text-sm text-cream/75">
-        {data.nextRunAt && (
+        {nextRunAt ? (
           <span className="inline-flex items-center gap-2">
             <span className="relative flex size-2" aria-hidden="true">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-peach opacity-60 motion-reduce:hidden" />
               <span className="relative inline-flex size-2 rounded-full bg-peach" />
             </span>
-            Sophie travaille pour vous · prochaine recherche le{' '}
-            {formatDate(new Date(data.nextRunAt), "EEEE d MMMM 'à' H'h'")}
+            Prochaine recherche le {formatDate(new Date(nextRunAt), "EEEE d MMMM 'à' H'h'")}
+          </span>
+        ) : (
+          <Link href="/prospection" className="underline-offset-2 hover:text-cream hover:underline">
+            Recherche automatique désactivée
+          </Link>
+        )}
+        {lastRun?.status === 'succeeded' && lastRun.finished_at && (
+          <span>
+            Dernière recherche {formatDistanceToNow(new Date(lastRun.started_at), { addSuffix: true, locale: fr })} :{' '}
+            {plural(lastRun.companies_created, 'entreprise ajoutée', 'entreprises ajoutées')}
           </span>
         )}
         <Link href="/results" className="underline-offset-2 hover:text-cream hover:underline">
           Vos résultats étape par étape
-        </Link>
-        <Link href="/notifications" className="underline-offset-2 hover:text-cream hover:underline">
-          {unreadAlerts > 0
-            ? `${unreadAlerts} nouvelle${unreadAlerts > 1 ? 's' : ''} alerte${unreadAlerts > 1 ? 's' : ''} de Sophie`
-            : 'Alertes de Sophie'}
         </Link>
       </div>
     </section>

@@ -20,6 +20,8 @@ export type DashboardData = {
     addedThisWeek: number
     addedBySophieThisWeek: number
     addedByAiThisWeek: number
+    // Découvertes de la semaine encore à examiner (ni en démarche, ni écartées)
+    newDiscoveriesThisWeek: number
     overdueReminders: number
     won: number
     lost: number
@@ -153,6 +155,9 @@ export async function getDashboardData(): Promise<DashboardData | null> {
       // Parmi elles, celles trouvées par l'IA de l'utilisateur (recherche par technologie) : les autres
       // viennent des sources officielles, sans IA
       addedByAiThisWeek: addedThisWeek.filter((company) => company.discovered_by === 'tech_ai').length,
+      newDiscoveriesThisWeek: addedThisWeek.filter(
+        (company) => !company.engaged_at && kindOf(company.stage_id) !== 'excluded'
+      ).length,
       overdueReminders: reminders.filter((reminder) => new Date(reminder.due_at).getTime() < now).length,
       won,
       lost,
