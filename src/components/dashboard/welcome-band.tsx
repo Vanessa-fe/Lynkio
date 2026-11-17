@@ -36,7 +36,7 @@ function messageFor(data: DashboardData): Message {
     return {
       headline: 'Votre prochaine belle opportunité est peut-être ici.',
       detail: `Sophie a repéré ${plural(addedBySophieThisWeek, 'entreprise')} à découvrir cette semaine.`,
-      href: '/pipeline',
+      href: '/companies',
       action: 'Voir les nouvelles pistes',
     }
   }
@@ -44,8 +44,8 @@ function messageFor(data: DashboardData): Message {
     return {
       headline: 'Votre prochaine belle opportunité est peut-être ici.',
       detail: `${plural(addedThisWeek, 'nouvelle entreprise')} ajoutée${addedThisWeek > 1 ? 's' : ''} cette semaine.`,
-      href: '/pipeline',
-      action: 'Ouvrir le pipeline',
+      href: '/companies',
+      action: 'Voir les entreprises',
     }
   }
   return {

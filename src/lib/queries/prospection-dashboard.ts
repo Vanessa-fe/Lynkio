@@ -56,7 +56,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
     await Promise.all([
       supabase
         .from('companies')
-        .select('id, name, score, stage_id, origin, discovered_by, city, sector, created_at, last_interaction_at, estimated_amount')
+        .select('id, name, score, stage_id, origin, discovered_by, engaged_at, city, sector, created_at, last_interaction_at, estimated_amount')
         .eq('user_id', user.id),
       supabase.from('pipeline_stages').select('id, name, color, kind').eq('user_id', user.id).order('order'),
       supabase
@@ -104,9 +104,9 @@ export async function getDashboardData(): Promise<DashboardData | null> {
     await getWeeklyRunAvailableAt(await getCurrentPlan())
   )
 
-  // Meilleures opportunités : pistes en cours, jamais contactées, les mieux notées d'abord
+  // Meilleures opportunités : découvertes pas encore en démarche (ni écartées), les mieux notées d'abord
   const candidates = companies
-    .filter((company) => kindOf(company.stage_id) === 'open' && !company.last_interaction_at)
+    .filter((company) => !company.engaged_at && kindOf(company.stage_id) !== 'excluded' && !company.last_interaction_at)
     .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
     .slice(0, 5)
 
@@ -131,7 +131,8 @@ export async function getDashboardData(): Promise<DashboardData | null> {
 
   const countByStage = new Map<string | null, number>()
   const amountByStage = new Map<string | null, number>()
-  for (const company of companies) {
+  // Pipeline actif : seulement les entreprises en démarche (les découvertes n'y sont pas, lot 1.8b)
+  for (const company of companies.filter((candidate) => candidate.engaged_at)) {
     countByStage.set(company.stage_id, (countByStage.get(company.stage_id) ?? 0) + 1)
     amountByStage.set(company.stage_id, (amountByStage.get(company.stage_id) ?? 0) + (company.estimated_amount ?? 0))
   }
@@ -146,7 +147,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
 
   return {
     stats: {
-      tracked: companies.filter((company) => kindOf(company.stage_id) === 'open').length,
+      tracked: companies.filter((company) => company.engaged_at && kindOf(company.stage_id) === 'open').length,
       addedThisWeek: addedThisWeek.length,
       addedBySophieThisWeek: addedThisWeek.filter((company) => company.origin === 'detector').length,
       // Parmi elles, celles trouvées par l'IA de l'utilisateur (recherche par technologie) : les autres

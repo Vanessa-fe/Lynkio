@@ -79,6 +79,7 @@ import { SignalValidityButton } from './signal-validity-button'
 import { CompanyDeepDiveCard } from './company-deep-dive-card'
 import type { DeepAnalysisView } from '@/lib/deep-analysis'
 import { ProvenanceBadge, companyProvenance } from './provenance-badge'
+import { ProspectingToggle } from './prospecting-toggle'
 import type { SignalExplanation } from '@/lib/signal-explanation'
 
 interface CompanyDetailProps {
@@ -240,6 +241,11 @@ export function CompanyDetail({
                 <CompanySegmentSelect companyId={company.id} segment={company.segment} setBy={company.segment_set_by} />
               </div>
               {provenance && <ProvenanceBadge kind={provenance.kind} detail={provenance.detail} />}
+              <ProspectingToggle
+                companyId={company.id}
+                engagedAt={company.engaged_at}
+                excluded={stages.find((stage) => stage.id === company.stage_id)?.kind === 'excluded'}
+              />
             </div>
             <CompatibilityTile score={company.score} />
           </div>

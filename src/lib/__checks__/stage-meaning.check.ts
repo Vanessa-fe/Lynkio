@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { describeStage, roleFitsKind, stageWithRole, type MeaningStage } from '../stage-meaning.ts'
+import { describeStage, prospectingStage, roleFitsKind, stageWithRole, type MeaningStage } from '../stage-meaning.ts'
 
 // Pipeline personnalisé : noms changés, « Relancé » retirée, une étape ajoutée sans rôle
 const stages: MeaningStage[] = [
@@ -54,4 +54,24 @@ test('un rôle incohérent avec la nature est ignoré', () => {
 test('retrouver l’étape qui porte un rôle, quel que soit son nom', () => {
   assert.equal(stageWithRole(stages, 'proposal')?.name, 'Devis envoyé')
   assert.equal(stageWithRole(stages, 'followed_up'), null)
+})
+
+test('commencer à prospecter : de l’arrivée vers « À contacter », sinon l’étape suivante', () => {
+  const withRole: MeaningStage[] = [
+    { id: 'arr', name: 'À qualifier', kind: 'open', role: null, order: 0, is_default: true },
+    { id: 'tc', name: 'Premiers pas', kind: 'open', role: 'to_contact', order: 1, is_default: false },
+    { id: 'ct', name: 'Contacté', kind: 'open', role: 'contacted', order: 2, is_default: false },
+  ]
+  assert.equal(prospectingStage(withRole, 'arr')?.id, 'tc')
+  assert.equal(prospectingStage(withRole, null)?.id, 'tc')
+  // Déjà ailleurs : on ne touche pas à l'étape
+  assert.equal(prospectingStage(withRole, 'ct'), null)
+  // Pipeline sans rôle « À contacter » : première étape en cours après l'arrivée
+  assert.equal(prospectingStage(stages, 'a')?.id, 'b')
+  // Nouveau compte : l'arrivée EST « À contacter » : rien à changer
+  const arrivalIsToContact: MeaningStage[] = [
+    { id: 'x', name: 'À contacter', kind: 'open', role: 'to_contact', order: 0, is_default: true },
+    { id: 'y', name: 'Contacté', kind: 'open', role: 'contacted', order: 1, is_default: false },
+  ]
+  assert.equal(prospectingStage(arrivalIsToContact, 'x'), null)
 })

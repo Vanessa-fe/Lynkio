@@ -47,6 +47,8 @@ export function PersonForm({ organizations, stages, lists, initial = {} }: Perso
   // Personne déjà suivie : lien vers sa fiche
   const [existingId, setExistingId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  // Nouvelle fiche : en démarche tout de suite, sauf si l'on décoche (décision du 17/11/2026)
+  const [startNow, setStartNow] = useState(true)
   const defaultStage = stages.find((stage) => stage.is_default) ?? stages[0]
 
   const {
@@ -93,7 +95,7 @@ export function PersonForm({ organizations, stages, lists, initial = {} }: Perso
     setIsLoading(true)
     let result: Awaited<ReturnType<typeof createPerson>>
     try {
-      result = await createPerson(data)
+      result = await createPerson({ ...data, startProspecting: startNow })
     } catch {
       setError(CONNECTION_ERROR)
       return
@@ -279,6 +281,21 @@ export function PersonForm({ organizations, stages, lists, initial = {} }: Perso
           {!existing && (
             <section className="space-y-4">
               <h2 className="text-lg font-semibold">Suivi</h2>
+
+              <label className="flex items-start gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={startNow}
+                  onCheckedChange={(checked) => setStartNow(checked === true)}
+                  disabled={isLoading}
+                  className="mt-0.5"
+                />
+                <span>
+                  Commencer à prospecter tout de suite
+                  <span className="block text-xs text-muted-foreground">
+                    Décochez pour garder la fiche parmi vos découvertes, hors du suivi commercial.
+                  </span>
+                </span>
+              </label>
 
               <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-4">
                 <div className="space-y-2">

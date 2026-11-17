@@ -115,6 +115,7 @@ export type Database = {
           source_id: string | null
           stack_detected_at: string | null
           stage_id: string | null
+          engaged_at: string | null
           discovered_by: string | null
           pipeline_run_id: string | null
           strategy_id: string | null
@@ -156,6 +157,7 @@ export type Database = {
           source_id?: string | null
           stack_detected_at?: string | null
           stage_id?: string | null
+          engaged_at?: string | null
           discovered_by?: string | null
           pipeline_run_id?: string | null
           strategy_id?: string | null
@@ -197,6 +199,7 @@ export type Database = {
           source_id?: string | null
           stack_detected_at?: string | null
           stage_id?: string | null
+          engaged_at?: string | null
           discovered_by?: string | null
           pipeline_run_id?: string | null
           strategy_id?: string | null

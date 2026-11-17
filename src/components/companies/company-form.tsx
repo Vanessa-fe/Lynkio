@@ -55,6 +55,8 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
   // Entreprise choisie dans « Retrouver l'entreprise » (registre officiel)
   const [picked, setPicked] = useState<CompanyLookupPick['candidate'] | null>(null)
   const [addDirectors, setAddDirectors] = useState(true)
+  // Ajout à la main : l'entreprise entre dans le suivi commercial, sauf si l'on décoche (décision du 17/11/2026)
+  const [startNow, setStartNow] = useState(true)
 
   const isEditing = !!company
   // Personne seule : son nom suit celui de son contact (synchronisé par la base)
@@ -183,6 +185,7 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
           ...payload,
           registryLookup: pickedStillMatches,
           addDirectors: pickedStillMatches && addDirectors,
+          startProspecting: startNow,
         })
 
     setIsLoading(false)
@@ -396,6 +399,23 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
 
           <section className="space-y-4">
             <h2 className="text-lg font-semibold">Suivi</h2>
+
+            {!isEditing && (
+              <label className="flex items-start gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={startNow}
+                  onCheckedChange={(checked) => setStartNow(checked === true)}
+                  disabled={isLoading}
+                  className="mt-0.5"
+                />
+                <span>
+                  Commencer à prospecter tout de suite
+                  <span className="block text-xs text-muted-foreground">
+                    Décochez pour la garder parmi vos découvertes, hors du suivi commercial.
+                  </span>
+                </span>
+              </label>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

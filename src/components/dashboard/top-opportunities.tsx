@@ -11,7 +11,7 @@ export function TopOpportunities({ opportunities }: { opportunities: DashboardOp
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <CardTitle>Meilleures opportunités</CardTitle>
-            <CardDescription>Les pistes les mieux notées que vous n&apos;avez pas encore contactées</CardDescription>
+            <CardDescription>Les découvertes les mieux notées, avant de commencer à les prospecter</CardDescription>
           </div>
           <Button variant="outline" size="sm" asChild>
             <Link href="/companies">Toutes</Link>
