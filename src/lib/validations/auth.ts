@@ -32,6 +32,8 @@ export const signupSchema = z.object({
     .min(10, 'Le mot de passe doit contenir au moins 10 caractères')
     .regex(STRONG_PASSWORD, STRONG_PASSWORD_MESSAGE),
   confirmPassword: z.string().min(1, 'La confirmation du mot de passe est requise'),
+  // Accord pour les conseils et nouveautés par e-mail (case non cochée par défaut)
+  marketingOptIn: z.boolean().optional(),
   // Piège à robots : champ caché qu'une personne laisse toujours vide
   website: z.string().max(200).optional(),
 }).refine((data) => data.password === data.confirmPassword, {

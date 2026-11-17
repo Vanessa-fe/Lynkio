@@ -152,6 +152,16 @@ export function SignupForm() {
             )}
           </div>
 
+          {/* Accord marketing : jamais coché d'office ; les e-mails liés à l'essai et au compte partent sans */}
+          <label className="flex cursor-pointer items-start gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-primary"
+              {...register('marketingOptIn')}
+            />
+            <span>Recevoir par e-mail les conseils de prospection et les nouveautés de Filonea (désinscription en un clic).</span>
+          </label>
+
           {/* Piège à robots : invisible et hors de la navigation au clavier, une personne le laisse vide */}
           <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
             <label htmlFor="website">Laissez ce champ vide</label>
@@ -171,8 +181,7 @@ export function SignupForm() {
             <Link href="/confidentialite" className="underline hover:text-primary">
               politique de confidentialité
             </Link>
-            . Vous recevrez de temps en temps des nouvelles de Filonea (nouveautés, conseils) : un clic suffit pour
-            vous désinscrire.
+.
           </p>
           <p className="text-sm text-center text-muted-foreground">
             Vous avez déjà un compte ?{' '}

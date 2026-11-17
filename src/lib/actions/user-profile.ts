@@ -14,6 +14,7 @@ import {
 } from '@/lib/validations/user-profile'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import { syncBrevoContact } from '@/lib/brevo'
 import { SOPHIE_CHAT_MONTHS, SOPHIE_DAILY_OPTIONS } from '@/lib/constants/sophie'
 import { nafCodesForGroups, sectorGroup } from '@/lib/constants/client-sectors'
 
@@ -173,6 +174,8 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
         first_search_sectors: validated.firstSearch?.sectorGroups.length ?? 0,
         $set: { profession_key: validated.professionKey },
       })
+      // Prénom, activité et métier connus : la fiche Brevo est complétée (e-mails de l'essai)
+      syncBrevoContact(supabase, user.id)
     }
   } catch (error) {
     captureServerError(error, undefined, { action: 'complete_onboarding' })
@@ -233,6 +236,8 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
         error: 'Impossible de mettre à jour votre profil',
       }
     }
+
+    if (validated.firstName !== undefined || validated.businessName !== undefined) syncBrevoContact(supabase, user.id)
 
     revalidatePath('/', 'layout')
     revalidatePath('/settings/profile')

@@ -4,6 +4,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { syncSubscription, verifyStripeSignature } from '../_shared/stripe.ts'
+import { syncBrevoContact } from '../_shared/brevo.ts'
 
 type StripeEvent = {
   id: string
@@ -41,6 +42,13 @@ Deno.serve(async (request) => {
   try {
     const userId = await syncSubscription(admin, subscriptionId)
     console.log('stripe-webhook', event.type, subscriptionId, userId ? 'à jour' : 'compte introuvable')
+    // Statut et offre à jour dans Brevo (e-mails de fin d'essai, de remerciement), sans retarder la réponse
+    if (userId) {
+      const job = syncBrevoContact(admin, userId)
+      const runtime = (globalThis as { EdgeRuntime?: { waitUntil: (promise: Promise<unknown>) => void } }).EdgeRuntime
+      if (runtime) runtime.waitUntil(job)
+      else await job
+    }
     return new Response(JSON.stringify({ received: true }), { status: 200, headers: { 'Content-Type': 'application/json' } })
   } catch (error) {
     console.error('stripe-webhook', event.type, error instanceof Error ? error.message : error)
