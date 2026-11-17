@@ -13,6 +13,8 @@ export async function getReminders(options?: {
   companyId?: string
   priority?: ReminderPriority
   includeCompleted?: boolean
+  // Historique : seulement les relances terminées (la liste les trie, les plus récentes d'abord)
+  onlyCompleted?: boolean
 }): Promise<ReminderWithRelations[]> {
   const supabase = await createClient()
 
@@ -37,7 +39,9 @@ export async function getReminders(options?: {
     query = query.eq('priority', options.priority)
   }
 
-  if (!options?.includeCompleted) {
+  if (options?.onlyCompleted) {
+    query = query.filter('completed_at', 'not.is', null)
+  } else if (!options?.includeCompleted) {
     query = query.is('completed_at', null)
   }
 
