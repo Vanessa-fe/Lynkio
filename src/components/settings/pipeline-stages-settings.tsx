@@ -58,13 +58,15 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
     }
   }
 
+  const [deleting, setDeleting] = useState<PipelineStage | null>(null)
+
+  // Étape vide : une simple confirmation ; sinon, on choisit où vont ses entreprises
   const handleDelete = (stage: PipelineStage) => {
-    const count = usage[stage.id] ?? 0
-    const message =
-      count > 0
-        ? `Supprimer l'étape « ${stage.name} » ? ${companiesLabel(count)} y ${count > 1 ? 'sont' : 'est'} : elle${count > 1 ? 's' : ''} passera${count > 1 ? 'ont' : ''} « Sans étape », sans être supprimée${count > 1 ? 's' : ''}.`
-        : `Supprimer l'étape « ${stage.name} » ?`
-    if (!confirm(message)) return
+    if ((usage[stage.id] ?? 0) > 0) {
+      setDeleting(stage)
+      return
+    }
+    if (!confirm(`Supprimer l'étape « ${stage.name} » ?`)) return
     run(stage.id, () => deleteStage(stage.id), 'Étape supprimée')
   }
 
@@ -169,6 +171,21 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
         </p>
       </CardContent>
 
+      {deleting && (
+        <DeleteStageDialog
+          stage={deleting}
+          stages={stages}
+          count={usage[deleting.id] ?? 0}
+          busy={busyId !== null}
+          onCancel={() => setDeleting(null)}
+          onConfirm={(moveTo) => {
+            const stage = deleting
+            setDeleting(null)
+            run(stage.id, () => deleteStage(stage.id, moveTo), 'Étape supprimée')
+          }}
+        />
+      )}
+
       {editing && (
         <StageDialog
           stage={editing === 'new' ? undefined : editing}
@@ -179,6 +196,70 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
     </Card>
   )
 }
+
+// Suppression d'une étape qui contient des entreprises : elles vont dans l'étape choisie
+// (par défaut celle d'avant, comme « Contacté » pour « Relancé »), ou « Sans étape »
+function DeleteStageDialog({
+  stage,
+  stages,
+  count,
+  busy,
+  onCancel,
+  onConfirm,
+}: {
+  stage: PipelineStage
+  stages: PipelineStage[]
+  count: number
+  busy: boolean
+  onCancel: () => void
+  onConfirm: (moveTo: string | null) => void
+}) {
+  const others = stages.filter((other) => other.id !== stage.id)
+  const index = stages.findIndex((other) => other.id === stage.id)
+  const suggested = stages[index - 1] ?? stages[index + 1] ?? null
+  const [moveTo, setMoveTo] = useState<string>(suggested?.id ?? NO_STAGE)
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Supprimer « {stage.name} » ?</DialogTitle>
+          <DialogDescription>
+            {companiesLabel(count)} y {count > 1 ? 'sont' : 'est'}. Elle{count > 1 ? 's' : ''} ne{' '}
+            {count > 1 ? 'seront' : 'sera'} pas supprimée{count > 1 ? 's' : ''} : choisissez où {count > 1 ? 'les' : 'la'}{' '}
+            déplacer. Leurs échanges et leur historique sont gardés.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="moveTo">Déplacer vers</Label>
+          <Select value={moveTo} onValueChange={setMoveTo} disabled={busy}>
+            <SelectTrigger id="moveTo">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {others.map((other) => (
+                <SelectItem key={other.id} value={other.id}>
+                  {other.name}
+                </SelectItem>
+              ))}
+              <SelectItem value={NO_STAGE}>Sans étape</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
+            Annuler
+          </Button>
+          <Button type="button" variant="destructive" onClick={() => onConfirm(moveTo === NO_STAGE ? null : moveTo)} disabled={busy}>
+            Supprimer l&apos;étape
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+const NO_STAGE = 'none'
 
 // Ce à quoi correspond l'étape (rôle), quand il est connu et cohérent avec sa nature
 function roleLabel(stage: PipelineStage): string | null {

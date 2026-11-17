@@ -4,6 +4,7 @@ import {
   getCompanyById,
   getCompanyContacts,
   getCompanyInteractions,
+  getCompanyFollowUps,
   getCompanySignals,
   getLatestDeepAnalysis,
   getSignalAdvice,
@@ -28,7 +29,7 @@ interface CompanyPageProps {
 
 export default async function CompanyPage({ params, searchParams }: CompanyPageProps) {
   const [{ id }, { redaction }] = await Promise.all([params, searchParams])
-  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach, stageEvents, deepAnalysis, aiKey, advice] =
+  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach, stageEvents, deepAnalysis, aiKey, advice, followUps] =
     await Promise.all([
       getCompanyById(id),
       getPipelineStages(),
@@ -44,6 +45,7 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       getLatestDeepAnalysis(id),
       hasAiKey(),
       getSignalAdvice(),
+      getCompanyFollowUps(id),
     ])
 
   if (!company) {
@@ -68,6 +70,7 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       )}
       hasAiKey={aiKey}
       interactions={interactions}
+      followUps={followUps}
       qualification={qualification}
       reminders={reminders}
       dayRate={icp.dayRate}

@@ -88,6 +88,8 @@ interface CompanyDetailProps {
   contacts: CompanyContact[]
   signals: CompanySignalWithType[]
   interactions: CompanyInteractionWithContact[]
+  // Relances (lot 1.8c) : rang de chaque envoi resté sans réponse, par identifiant d'échange
+  followUps: Record<string, number>
   qualification: CompanyQualification | null
   reminders: ReminderWithRelations[]
   // Tarif journalier du client idéal : sert à juger le budget de l'entreprise
@@ -135,6 +137,7 @@ export function CompanyDetail({
   contacts,
   signals,
   interactions,
+  followUps,
   qualification,
   reminders,
   dayRate,
@@ -504,6 +507,7 @@ export function CompanyDetail({
             companyId={company.id}
             contacts={contacts}
             interactions={interactions}
+            followUps={followUps}
             hasPitch={hasPitch}
             openEmailDraft={openEmailDraft}
           />

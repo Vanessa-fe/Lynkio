@@ -1560,6 +1560,17 @@ export type Database = {
       }
     }
     Views: {
+      exchange_follow_ups: {
+        Row: {
+          company_id: string | null
+          contact_id: string | null
+          follow_up_number: number | null
+          interaction_id: string | null
+          occurred_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       contact_outreach: {
         Row: {
           company_id: string | null
