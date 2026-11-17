@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PipelineStagesSettings } from '@/components/settings/pipeline-stages-settings'
 import { LeadSourcesSettings } from '@/components/settings/lead-sources-settings'
+import { PipelineSimplifyAssistant } from '@/components/settings/pipeline-simplify-assistant'
 import { getLeadSources, getPipelineStages, getPipelineUsage } from '@/lib/queries/companies'
 
 export default async function PipelineSettingsPage() {
@@ -24,6 +25,7 @@ export default async function PipelineSettingsPage() {
         </p>
       </div>
 
+      <PipelineSimplifyAssistant stages={stages} usage={usage.byStage} />
       <PipelineStagesSettings stages={stages} usage={usage.byStage} />
       <LeadSourcesSettings sources={sources} usage={usage.bySource} />
     </div>

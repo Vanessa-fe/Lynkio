@@ -11,6 +11,8 @@ import {
   type StageInput,
 } from '@/lib/validations/pipeline-settings'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import type { SimplifyStepId } from '@/lib/pipeline-simplify'
 
 type ActionResult = {
   success: boolean
@@ -285,6 +287,30 @@ export async function setDefaultStage(stageId: string): Promise<ActionResult> {
 
   revalidate()
   return { success: true }
+}
+
+/**
+ * Assistant « Simplifier mon pipeline » (lot 1.11) : applique les propositions cochées par l'utilisateur
+ * après l'aperçu, en une seule transaction (fonction SQL simplify_pipeline, qui revérifie chaque condition).
+ */
+const SIMPLIFY_STEPS: readonly SimplifyStepId[] = ['arrival', 'followed_up', 'negotiation', 'rename']
+
+export async function simplifyPipeline(steps: SimplifyStepId[]): Promise<ActionResult & { applied?: string[] }> {
+  const chosen = steps.filter((step) => SIMPLIFY_STEPS.includes(step))
+  if (chosen.length === 0) return { success: false, error: 'Cochez au moins une proposition' }
+  const { supabase, userId } = await currentUserId()
+  if (!userId) return { success: false, error: 'Vous devez être connecté' }
+
+  const { data, error } = await supabase.rpc('simplify_pipeline', { p_steps: chosen })
+  if (error) {
+    captureServerError(error, userId, { action: 'simplify_pipeline' })
+    return { success: false, error: 'La simplification n’a pas pu se faire : rien n’a été modifié.' }
+  }
+  const applied = ((data as { applied?: string[] } | null)?.applied ?? []) as string[]
+  captureServerEvent(userId, 'pipeline_simplified', { chosen, applied })
+  revalidate()
+  revalidatePath('/', 'layout')
+  return { success: true, applied }
 }
 
 // ---------------------------------------------------------------------
