@@ -23,7 +23,6 @@ import {
   Tag,
   Trash2,
   Users,
-  Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Counter } from '@/components/motion/counter'
@@ -54,9 +53,9 @@ import type {
 import { CompanyStageSelect } from './company-stage-select'
 import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
-import { CompanyScoreCard } from './company-score-card'
 import { CompanyWhyCard } from './company-why-card'
 import { CompanyStageHistory } from './company-stage-history'
+import { CollapsibleCard } from '@/components/ui/collapsible-card'
 import type { CompanyStageEvent } from '@/lib/queries/companies'
 import type { StrategyOverview } from '@/lib/queries/strategies'
 import { CompanyNextStep } from './company-next-step'
@@ -266,22 +265,15 @@ export function CompanyDetail({
             signalCount={countedSignals.length}
             signalTypes={countedSignals.map((signal) => signal.signal_type)}
             hasDecisionMaker={contacts.some((contact) => contact.is_decision_maker && !contact.opted_out_at)}
+            qualification={qualification}
           />
 
-          <CompanyScoreCard qualification={qualification} />
-
           {signals.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-amber-500" />
-                  Signaux d&apos;opportunité
-                </CardTitle>
-                <CardDescription>
-                  Ce qui laisse penser que cette entreprise a un besoin en ce moment. Chaque signal dit s’il s’agit d’un fait
-                  constaté, d’une hypothèse ou d’un besoin exprimé par l’entreprise.
-                </CardDescription>
-              </CardHeader>
+            // Section secondaire (lot 1.7) : le résumé est déjà dans « Pourquoi cette entreprise »
+            <CollapsibleCard
+              title={`Signaux d’opportunité (${signals.length})`}
+              description="Le détail de chaque signal : fait constaté ou hypothèse, source et date."
+            >
               <CardContent>
                 <ul className="space-y-3">
                   {signals.map((signal) => (
@@ -341,20 +333,17 @@ export function CompanyDetail({
                   ))}
                 </ul>
               </CardContent>
-            </Card>
+            </CollapsibleCard>
           )}
 
           {!isIndividual && (
             <CompanyDeepDiveCard companyId={company.id} analysis={deepAnalysis} hasAiKey={hasAiKey} />
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-primary" />
-                {isIndividual ? 'En bref' : 'L\'entreprise'}
-              </CardTitle>
-            </CardHeader>
+          <CollapsibleCard
+            title={isIndividual ? 'Informations' : 'Informations sur l’entreprise'}
+            description={isIndividual ? 'Coordonnées, source et notes.' : 'Site, SIREN, création, chiffre d’affaires, taille et notes.'}
+          >
             <CardContent className="space-y-6">
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {company.website && (
@@ -478,7 +467,7 @@ export function CompanyDetail({
                 </div>
 
             </CardContent>
-          </Card>
+          </CollapsibleCard>
         </div>
 
         <div className="min-w-0 space-y-6">

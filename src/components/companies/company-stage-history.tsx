@@ -1,5 +1,5 @@
-import { History } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent } from '@/components/ui/card'
+import { CollapsibleCard } from '@/components/ui/collapsible-card'
 import { formatDate } from '@/lib/utils/dates'
 import type { CompanyStageEvent } from '@/lib/queries/companies'
 
@@ -27,14 +27,11 @@ export function CompanyStageHistory({ events }: { events: CompanyStageEvent[] })
   if (events.length === 0) return null
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <History className="w-5 h-5 text-muted-foreground" />
-          Historique des étapes
-        </CardTitle>
-        <CardDescription>Chaque changement d&apos;étape, daté. Les changements faits avant la mise en place du suivi ne sont pas connus.</CardDescription>
-      </CardHeader>
+    // Section secondaire, repliée (lot 1.7)
+    <CollapsibleCard
+      title={`Historique des étapes (${events.length})`}
+      description="Chaque changement d’étape, daté. Les changements d’avant la mise en place du suivi ne sont pas connus."
+    >
       <CardContent>
         <ol className="space-y-3">
           {events.map((event) => (
@@ -65,6 +62,6 @@ export function CompanyStageHistory({ events }: { events: CompanyStageEvent[] })
           ))}
         </ol>
       </CardContent>
-    </Card>
+    </CollapsibleCard>
   )
 }
