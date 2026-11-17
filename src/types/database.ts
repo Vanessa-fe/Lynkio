@@ -53,6 +53,8 @@ export type DataAccessAction =
 type DataRetentionSettings = {
   user_id: string; inactive_prospect_months: InactiveProspectMonths; auto_purge_enabled: boolean
   linkedin_posts_days: LinkedinPostsRetentionDays; last_purge_at: string | null; updated_at: string
+  // Conversations avec Sophie (00076)
+  sophie_chat_months: number
 }
 type DataAccessLogEntry = {
   id: number; user_id: string; action: DataAccessAction; details: Record<string, string | number | boolean | null>

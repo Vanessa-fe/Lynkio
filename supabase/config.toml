@@ -160,6 +160,11 @@ verify_jwt = true
 [functions.company-deep-dive]
 verify_jwt = true
 
+# Conversation avec Sophie : appelée depuis le navigateur avec le jeton de l'utilisateur ; la réponse
+# arrive au fil de l'eau (text/event-stream)
+[functions.sophie-chat]
+verify_jwt = true
+
 [functions.extension-connect]
 verify_jwt = true
 

@@ -39,6 +39,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      sophie_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          title_set_by: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string
+          title_set_by?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          title_set_by?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sophie_messages: {
+        Row: {
+          content: string
+          context: Json
+          conversation_id: string
+          created_at: string
+          error: string | null
+          id: string
+          input_tokens: number | null
+          latency_ms: number | null
+          model: string | null
+          output_tokens: number | null
+          provider: string | null
+          role: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          context?: Json
+          conversation_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          role: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          context?: Json
+          conversation_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          role?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       billing: {
         Row: {
           billing_interval: string | null
@@ -1507,6 +1585,8 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          sophie_auto_open: boolean
+          sophie_daily_messages: number
           companies_view: string
           ai_provider: string | null
           avatar_url: string | null
@@ -1522,6 +1602,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          sophie_auto_open?: boolean
+          sophie_daily_messages?: number
           companies_view?: string
           ai_provider?: string | null
           avatar_url?: string | null
@@ -1537,6 +1619,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          sophie_auto_open?: boolean
+          sophie_daily_messages?: number
           companies_view?: string
           ai_provider?: string | null
           avatar_url?: string | null
