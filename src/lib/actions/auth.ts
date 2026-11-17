@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 import { SITE_URL, toOrigin } from '@/lib/site'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
-import { addToSignupList, notifySignup } from '@/lib/brevo'
+import { notifySignup, syncBrevoContact } from '@/lib/brevo'
 import {
   loginSchema,
   signupSchema,
@@ -119,6 +119,8 @@ export async function signup(data: SignupInput): Promise<ActionResult> {
       password: validated.password,
       options: {
         emailRedirectTo: `${await requestOrigin()}/auth/callback`,
+        // Accord marketing, recopié dans Brevo (OPT_IN) à la confirmation de l'adresse
+        data: { marketing_opt_in: validated.marketingOptIn === true },
       },
     })
 
@@ -148,7 +150,7 @@ export async function signup(data: SignupInput): Promise<ActionResult> {
       captureServerEvent(authData.user.id, 'user_signed_up', { email_confirmation_required: !authData.session })
       notifySignup({ email: validated.email, confirmationRequired: !authData.session })
       // Adresse à confirmer : l'ajout à la liste se fait au clic sur le lien (/auth/confirm)
-      if (authData.session) addToSignupList(validated.email)
+      if (authData.session) syncBrevoContact(supabase, authData.user.id, { withOptIn: true })
     }
 
     // Sans session, Supabase attend la confirmation de l'adresse email.

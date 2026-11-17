@@ -86,11 +86,11 @@ export default function PrivacyPage() {
           transferts hors d&apos;Europe).
         </li>
         <li>
-          <strong>Brevo</strong> (France) : e-mails d&apos;information sur Filonea, avec désinscription en un clic, et
-          envoi des alertes de Sophie que vous avez activées (adresse e-mail et contenu de l&apos;alerte).
-        </li>
-        <li>
-          <strong>Resend</strong> (États-Unis) : envoi des e-mails de confirmation de compte et de mot de passe.
+          <strong>Brevo</strong> (France) : e-mails liés à votre compte (confirmation d&apos;adresse, mot de passe,
+          essai gratuit, abonnement), alertes de Sophie que vous avez activées et, seulement si vous l&apos;avez
+          accepté à l&apos;inscription, conseils et nouveautés de Filonea, avec désinscription en un clic. Brevo
+          reçoit pour cela votre adresse e-mail, votre prénom, le nom de votre activité, votre métier, vos dates
+          d&apos;inscription et de fin d&apos;essai, votre offre et le fait que vous ayez lancé une recherche.
         </li>
         <li>
           <strong>PostHog</strong> : mesure d&apos;audience, avec des serveurs en Europe (voir « Cookies »).

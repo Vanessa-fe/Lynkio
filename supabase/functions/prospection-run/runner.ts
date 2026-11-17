@@ -1,5 +1,6 @@
 // Orchestration d'un passage : réglages, détecteurs, journal (pipeline_runs)
 
+import { syncBrevoContact } from '../_shared/brevo.ts'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   UserFacingError,
@@ -162,6 +163,15 @@ export async function runProspection(
       settings.departments,
       failures.length > 0 ? failures.map((stats) => stats.error).join(' · ') : undefined
     )
+    // Première recherche réussie du compte : Brevo le sait (plus d'e-mail « lancez votre première recherche »)
+    if (!allFailed) {
+      const { count } = await admin
+        .from('pipeline_runs')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'succeeded')
+      if (count === 1) await syncBrevoContact(admin, userId)
+    }
   } catch (error) {
     console.error('runProspection', error)
     await finishRun(admin, runId, 'failed', results, [], errorMessage(error))

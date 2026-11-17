@@ -1,5 +1,6 @@
 import 'server-only'
 import { after } from 'next/server'
+import type { createClient } from '@/lib/supabase/server'
 
 const BREVO_API_URL = 'https://api.brevo.com/v3'
 
@@ -7,7 +8,8 @@ const BREVO_API_URL = 'https://api.brevo.com/v3'
 // (Expéditeurs, domaines et IP dédiées).
 const TEAM_INBOX = 'contact@filonea.fr'
 
-// Liste Brevo « Inscrits Filonea », pour les e-mails marketing (numéro visible dans Contacts > Listes)
+// Liste Brevo « Inscrits Filonea » : tous les comptes confirmés (e-mails de l'essai) ; les e-mails
+// marketing ne vont qu'aux contacts OPT_IN = oui (numéro de liste visible dans Contacts > Listes)
 const SIGNUP_LIST_ID = 3
 
 /**
@@ -58,18 +60,39 @@ export async function sendSignupNotification(signup: { email: string; confirmati
   })
 }
 
+type BrevoContact = { email: string; opt_in: boolean; attributes: Record<string, string | boolean | null> }
+
 /**
- * Ajoute une personne inscrite à la liste Brevo des inscrits, une fois son adresse confirmée :
- * les adresses mal tapées ou fausses n'abîment pas la réputation des envois marketing.
- * Une personne déjà dans Brevo est mise à jour ; si elle s'était désinscrite, elle le reste.
+ * Fiche Brevo du compte connecté (e-mails du cycle d'essai) : ajout à la liste des inscrits et mise à
+ * jour des champs PRENOM, ENTREPRISE, METIER, DATE_INSCRIPTION, FIN_ESSAI, STATUT, OFFRE et
+ * A_LANCE_RECHERCHE, calculés en base (fonction brevo_contact). Envoyé après la réponse, sans bloquer.
+ *
+ * withOptIn : seulement à la confirmation de l'adresse, pour noter la case « conseils et nouveautés » de
+ * l'inscription (OPT_IN). Ensuite on ne l'envoie plus : un désabonnement fait dans Brevo reste respecté.
+ * Une adresse non confirmée n'est jamais ajoutée : les adresses fausses n'abîment pas la réputation des envois.
  */
-export function addToSignupList(email: string) {
-  after(() => addContactToSignupList(email))
+export function syncBrevoContact(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  options: { withOptIn?: boolean } = {}
+) {
+  after(async () => {
+    const { data, error } = await supabase.rpc('brevo_contact', { p_user_id: userId })
+    if (error || !data) {
+      if (error) console.error('Brevo contact:', error)
+      return
+    }
+    await sendBrevoContact(data as BrevoContact, options)
+  })
 }
 
-export async function addContactToSignupList(email: string) {
-  if (!SIGNUP_LIST_ID) return false
-  return brevoRequest('/contacts', { email, listIds: [SIGNUP_LIST_ID], updateEnabled: true })
+export async function sendBrevoContact(contact: BrevoContact, options: { withOptIn?: boolean } = {}) {
+  return brevoRequest('/contacts', {
+    email: contact.email,
+    attributes: options.withOptIn ? { ...contact.attributes, OPT_IN: contact.opt_in } : contact.attributes,
+    listIds: [SIGNUP_LIST_ID],
+    updateEnabled: true,
+  })
 }
 
 /**
