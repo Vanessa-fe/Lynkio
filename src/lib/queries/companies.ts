@@ -115,6 +115,28 @@ export async function getCompanySignals(companyId: string): Promise<CompanySigna
   return data
 }
 
+/**
+ * Relances d'une fiche (lot 1.8c) : rang de chaque envoi depuis la dernière réponse, d'après la vue
+ * exchange_follow_ups. 0 = premier envoi, 1 = première relance… Seuls les rangs à partir de 1 sont gardés.
+ */
+export async function getCompanyFollowUps(companyId: string): Promise<Record<string, number>> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('exchange_follow_ups')
+    .select('interaction_id, follow_up_number')
+    .eq('company_id', companyId)
+    .gt('follow_up_number', 0)
+  if (error) {
+    console.error('Follow-ups query error:', error)
+    return {}
+  }
+  return Object.fromEntries(
+    (data ?? [])
+      .filter((row) => row.interaction_id && row.follow_up_number)
+      .map((row) => [row.interaction_id!, row.follow_up_number!])
+  )
+}
+
 export async function getCompanyInteractions(
   companyId: string,
   limit = 100

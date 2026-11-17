@@ -85,19 +85,28 @@ interface CompanyInteractionsProps {
   companyId: string
   contacts: CompanyContact[]
   interactions: CompanyInteractionWithContact[]
+  // Relances (lot 1.8c) : 1 = première relance, 2 = deuxième… (envois restés sans réponse)
+  followUps?: Record<string, number>
   // L'utilisatrice a rempli sa présentation (Paramètres, Messages de Sophie)
   hasPitch: boolean
   // La rédaction d'un e-mail avec Sophie s'ouvre dès l'arrivée sur la fiche
   openEmailDraft?: boolean
 }
 
+// « Relance », « 2ᵉ relance », « 3ᵉ relance »…
+function followUpLabel(rank: number): string {
+  return rank === 1 ? 'Relance' : `${rank}ᵉ relance`
+}
+
 export function CompanyInteractions({
   companyId,
   contacts,
   interactions,
+  followUps = {},
   hasPitch,
   openEmailDraft = false,
 }: CompanyInteractionsProps) {
+  const followUpCount = Object.keys(followUps).length
   const router = useRouter()
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -166,7 +175,9 @@ export function CompanyInteractions({
             <CardDescription>
               {interactions.length === 0
                 ? 'Aucun échange enregistré'
-                : `${interactions.length} échange${interactions.length > 1 ? 's' : ''}`}
+                : `${interactions.length} échange${interactions.length > 1 ? 's' : ''}${
+                    followUpCount > 0 ? ` · ${followUpCount} relance${followUpCount > 1 ? 's' : ''}` : ''
+                  }`}
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -212,6 +223,10 @@ export function CompanyInteractions({
                               <span className="text-sm text-muted-foreground">
                                 {interaction.direction === 'incoming' ? 'reçu' : 'envoyé'}
                               </span>
+                            )}
+                            {/* Envoi resté sans réponse après un précédent : c'est une relance */}
+                            {followUps[interaction.id] && (
+                              <Badge variant="secondary">{followUpLabel(followUps[interaction.id]!)}</Badge>
                             )}
                             {interaction.status !== 'done' && (
                               <Badge variant="outline">{companyInteractionStatusLabels[interaction.status]}</Badge>

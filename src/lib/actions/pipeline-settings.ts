@@ -173,12 +173,14 @@ export async function updateStage(stageId: string, input: StageInput): Promise<A
 }
 
 /**
- * Supprime une étape. Les entreprises qui y étaient passent « Sans étape »
- * (la base met stage_id à NULL) : elles ne sont pas supprimées.
+ * Supprime une étape. Ses entreprises vont dans l'étape choisie (lot 1.8c) ; sans choix, elles passent
+ * « Sans étape » (la base met stage_id à NULL). Elles ne sont jamais supprimées, et ce déplacement ne
+ * fait pas entrer une découverte dans le suivi commercial.
  */
-export async function deleteStage(stageId: string): Promise<ActionResult> {
+export async function deleteStage(stageId: string, moveToStageId: string | null = null): Promise<ActionResult> {
   const { supabase, userId } = await currentUserId()
   if (!userId) return { success: false, error: 'Vous devez être connecté' }
+  if (moveToStageId === stageId) return { success: false, error: 'Choisissez une autre étape' }
 
   const { data: stage } = await supabase
     .from('pipeline_stages')
@@ -190,6 +192,44 @@ export async function deleteStage(stageId: string): Promise<ActionResult> {
   if (!stage) return { success: false, error: 'Étape introuvable' }
   if (stage.is_default) {
     return { success: false, error: 'Choisissez d\'abord une autre étape par défaut' }
+  }
+
+  if (moveToStageId) {
+    const { data: target } = await supabase
+      .from('pipeline_stages')
+      .select('id')
+      .eq('id', moveToStageId)
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (!target) return { success: false, error: 'Étape de destination introuvable' }
+
+    const { data: moving, error: readError } = await supabase
+      .from('companies')
+      .select('id, engaged_at')
+      .eq('user_id', userId)
+      .eq('stage_id', stageId)
+    if (readError) return failure(readError, 'Impossible de déplacer les entreprises')
+
+    if (moving && moving.length > 0) {
+      const { error: moveError } = await supabase
+        .from('companies')
+        .update({ stage_id: moveToStageId })
+        .eq('user_id', userId)
+        .eq('stage_id', stageId)
+      if (moveError) return failure(moveError, 'Impossible de déplacer les entreprises')
+
+      // Un changement d'étape fait entrer une découverte dans le suivi (engage_on_stage) : ici ce n'est
+      // pas un choix de l'utilisateur, les découvertes déplacées restent des découvertes
+      const discovered = moving.filter((company) => !company.engaged_at).map((company) => company.id)
+      if (discovered.length > 0) {
+        const { error: keepError } = await supabase
+          .from('companies')
+          .update({ engaged_at: null })
+          .eq('user_id', userId)
+          .in('id', discovered)
+        if (keepError) return failure(keepError, 'Impossible de déplacer les entreprises')
+      }
+    }
   }
 
   const { error } = await supabase.from('pipeline_stages').delete().eq('id', stageId).eq('user_id', userId)
