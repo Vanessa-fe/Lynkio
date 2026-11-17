@@ -1,11 +1,12 @@
-import { ExternalLink } from 'lucide-react'
+import { ChevronDown, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { APPROACH_LABELS, companyAgeRange, nafCodesForGroups, sectorLabelForNaf } from '@/lib/constants/client-sectors'
 import { DEPARTMENTS } from '@/lib/validations/prospection'
 import { formatDate } from '@/lib/utils/dates'
 import { suggestApproachAngle } from '@/lib/utils/approach-angle'
 import type { StrategyOverview } from '@/lib/queries/strategies'
-import type { Company } from '@/types'
+import type { Company, CompanyQualification } from '@/types'
+import { ScoreDetails } from './company-score-card'
 
 const SIZE_LABELS: Record<string, string> = {
   solo: 'indépendant, sans salarié',
@@ -29,8 +30,9 @@ const euros = (amount: number) =>
 type Fact = { label: string; value: string; match?: string }
 
 /**
- * « Pourquoi cette entreprise » : ce qui la rattache à votre recherche, avec la source et la date.
- * Seulement des faits du registre officiel ; aucun besoin n'est supposé quand aucun signal n'a été vu.
+ * « Pourquoi cette entreprise » : résumé de pertinence (lot 1.7, fusion avec « Pourquoi ce score »).
+ * Les faits vérifiés et la source, les signaux observés, l'angle d'approche (hypothèse), ce qui reste
+ * inconnu, puis le détail du score, replié. Aucun besoin n'est supposé quand aucun signal n'a été vu.
  */
 export function CompanyWhyCard({
   company,
@@ -38,6 +40,7 @@ export function CompanyWhyCard({
   signalCount,
   signalTypes = [],
   hasDecisionMaker,
+  qualification,
 }: {
   company: Company
   strategy: StrategyOverview | null
@@ -45,8 +48,10 @@ export function CompanyWhyCard({
   // Types des signaux observés (pour l'angle d'approche suggéré)
   signalTypes?: string[]
   hasDecisionMaker: boolean
+  qualification: CompanyQualification | null
 }) {
-  if (!company.strategy_id) return null
+  const fromStrategy = Boolean(company.strategy_id)
+  const fromRegistry = Boolean(company.naf_code || company.registration_id)
 
   const nafCodes = strategy ? nafCodesForGroups(strategy.sectorGroups) : []
   const department = departmentFromPostalCode(company.postal_code)
@@ -111,14 +116,21 @@ export function CompanyWhyCard({
               Trouvée par votre recherche <span className="font-medium text-foreground">« {strategy.name} »</span> (
               {APPROACH_LABELS[strategy.approach].toLowerCase()}).
             </>
-          ) : (
+          ) : fromStrategy ? (
             'Trouvée par une recherche que vous avez supprimée depuis.'
+          ) : company.origin === 'manual' ? (
+            'Ajoutée par vous.'
+          ) : company.origin === 'import' ? (
+            'Ajoutée par un import.'
+          ) : (
+            'Trouvée par une recherche automatique.'
           )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 text-sm">
+        {facts.length > 0 && (
         <section className="space-y-2">
-          <h3 className="font-medium">Faits vérifiés</h3>
+          <h3 className="font-medium">{fromRegistry ? 'Faits vérifiés' : 'Ce que vous avez renseigné'}</h3>
           <ul className="space-y-1.5">
             {facts.map((fact) => (
               <li key={fact.label} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
@@ -134,6 +146,7 @@ export function CompanyWhyCard({
               </li>
             ))}
           </ul>
+          {fromRegistry && (
           <p className="text-xs text-muted-foreground">
             Source : registre officiel des entreprises (INSEE et registre national des entreprises, via l’API Recherche
             d’entreprises), consulté le {formatDate(new Date(company.collected_at), 'd MMMM yyyy')}.{' '}
@@ -149,7 +162,9 @@ export function CompanyWhyCard({
               </a>
             )}
           </p>
+          )}
         </section>
+        )}
 
         <section className="space-y-1">
           <h3 className="font-medium">Signaux d’opportunité</h3>
@@ -178,6 +193,23 @@ export function CompanyWhyCard({
             <h3 className="font-medium">Encore inconnu</h3>
             <p className="text-muted-foreground">Sophie n’a pas trouvé {unknowns.join(', ')}.</p>
           </section>
+        )}
+
+        {qualification && (
+          <details className="group rounded-lg border p-3">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium marker:hidden [&::-webkit-details-marker]:hidden">
+              <span>
+                Détail du score{' '}
+                <span className="font-normal text-muted-foreground">
+                  ({qualification.is_eliminated ? 0 : qualification.score} / 100)
+                </span>
+              </span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+            </summary>
+            <div className="pt-3">
+              <ScoreDetails qualification={qualification} />
+            </div>
+          </details>
         )}
       </CardContent>
     </Card>
