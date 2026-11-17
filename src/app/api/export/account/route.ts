@@ -39,6 +39,7 @@ const TABLES: { table: string; columns: string; owner?: 'id' }[] = [
   { table: 'sophie_preferences', columns: '*' },
   { table: 'sophie_notifications', columns: '*' },
   { table: 'sophie_conversations', columns: '*' },
+  { table: 'sophie_actions', columns: 'kind, summary, status, error, created_at, decided_at, executed_at' },
   { table: 'sophie_messages', columns: 'conversation_id, role, content, context, status, error, provider, model, created_at' },
   { table: 'feedback', columns: '*' },
   { table: 'billing', columns: 'plan, billing_interval, status, trial_ends_at, current_period_end, cancel_at_period_end, updated_at' },
