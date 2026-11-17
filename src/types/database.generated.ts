@@ -1843,6 +1843,7 @@ export type Database = {
         Returns: string
       }
       initialize_prospection_defaults: { Args: never; Returns: undefined }
+      simplify_pipeline: { Args: { p_steps: string[] }; Returns: Json }
       read_user_api_key: {
         Args: { p_provider: string; p_user_id: string }
         Returns: {
