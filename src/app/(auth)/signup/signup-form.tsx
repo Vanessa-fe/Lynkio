@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { isNavigationError } from '@/lib/utils/navigation-error'
 
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null)
@@ -46,6 +47,8 @@ export function SignupForm() {
         setError(result.error)
       }
     } catch (err) {
+      // Inscription réussie : la redirection vers l'onboarding arrive comme une « erreur »
+      if (isNavigationError(err)) return
       setError('Une erreur inattendue est survenue')
     } finally {
       setIsLoading(false)

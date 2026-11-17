@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { isNavigationError } from '@/lib/utils/navigation-error'
 
 export function LoginForm({
   linkExpired = false,
@@ -52,6 +53,8 @@ export function LoginForm({
         setError(result.error)
       }
     } catch (err) {
+      // Connexion réussie : la redirection vers le tableau de bord arrive comme une « erreur »
+      if (isNavigationError(err)) return
       setError('Une erreur inattendue est survenue')
     } finally {
       setIsLoading(false)
