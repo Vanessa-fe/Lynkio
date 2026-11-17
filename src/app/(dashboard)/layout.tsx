@@ -48,6 +48,7 @@ export default async function DashboardLayout({
       hasAiKey={sophieProvider !== null}
       providerLabel={sophieProvider ? AI_PROVIDER_LABELS[sophieProvider] : null}
       firstName={profile.first_name}
+      professionKey={profile.profession_key}
       autoOpen={profile.sophie_auto_open}
     >
       <div className="min-h-screen bg-background">

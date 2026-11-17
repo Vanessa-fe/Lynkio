@@ -77,7 +77,7 @@ export async function loadPageFacts(supabase: SupabaseClient, userId: string, co
   }
 }
 
-async function companyFacts(supabase: SupabaseClient, companyId: string): Promise<string> {
+export async function companyFacts(supabase: SupabaseClient, companyId: string): Promise<string> {
   const [{ data: company }, { data: stages }, { data: signals }, { data: qualification }, { data: contacts }, { data: exchanges }, { data: reminders }, { data: followUps }] =
     await Promise.all([
       supabase
