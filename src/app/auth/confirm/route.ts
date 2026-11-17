@@ -17,7 +17,14 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type') as EmailOtpType | null
   const requested = searchParams.get('next')
-  const next = requested?.startsWith('/') && !requested.startsWith('//') ? requested : '/dashboard'
+  // Mot de passe oublié : toujours la page du nouveau mot de passe, même si le modèle d'e-mail enregistré
+  // dans Supabase ne précise pas « next » (sinon la personne était connectée sans pouvoir le changer)
+  const next =
+    type === 'recovery'
+      ? '/update-password'
+      : requested?.startsWith('/') && !requested.startsWith('//')
+        ? requested
+        : '/dashboard'
 
   if (tokenHash && type && OTP_TYPES.includes(type)) {
     const supabase = await createClient()
