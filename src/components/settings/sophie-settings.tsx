@@ -14,23 +14,27 @@ import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 
 /**
- * Réglages de la conversation avec Sophie (phase 2) : ouverture automatique sur l'accueil, plafond de
+ * Réglages de Sophie (phases 2 et 5) : ouverture automatique sur l'accueil, suggestions, plafond de
  * messages par jour (ce que consomme votre clé IA) et durée de conservation des conversations.
  */
 export function SophieSettings({
   autoOpen,
+  suggestions,
   dailyMessages,
   chatMonths,
 }: {
   autoOpen: boolean
+  suggestions: boolean
   dailyMessages: number
   chatMonths: number
 }) {
   const router = useRouter()
   const { toast } = useToast()
-  const [values, setValues] = useState({ autoOpen, dailyMessages, chatMonths })
+  const [values, setValues] = useState({ autoOpen, suggestions, dailyMessages, chatMonths })
   const [saving, setSaving] = useState(false)
-  const changed = values.autoOpen !== autoOpen || values.dailyMessages !== dailyMessages || values.chatMonths !== chatMonths
+  const changed =
+    values.autoOpen !== autoOpen ||
+    values.suggestions !== suggestions || values.dailyMessages !== dailyMessages || values.chatMonths !== chatMonths
 
   const save = async () => {
     setSaving(true)
@@ -65,6 +69,21 @@ export function SophieSettings({
           <span>
             Ouvrir Sophie à mon arrivée sur le tableau de bord
             <span className="block text-xs text-muted-foreground">Une fois par visite ; si vous la fermez, elle reste fermée.</span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-start gap-2 text-sm">
+          <Checkbox
+            checked={values.suggestions}
+            onCheckedChange={(checked) => setValues({ ...values, suggestions: checked === true })}
+            className="mt-0.5"
+          />
+          <span>
+            Afficher les suggestions de Sophie
+            <span className="block text-xs text-muted-foreground">
+              Relances prévues, prospects sans réponse, dirigeants pas encore contactés, nouvelles entreprises. Calculées
+              sur vos données, sans IA ni clé.
+            </span>
           </span>
         </label>
 

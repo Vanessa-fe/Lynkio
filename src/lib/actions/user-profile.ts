@@ -307,6 +307,7 @@ export async function saveCompaniesView(view: 'table' | 'kanban'): Promise<Actio
  */
 export async function saveSophieSettings(input: {
   autoOpen: boolean
+  suggestions: boolean
   dailyMessages: number
   chatMonths: number
 }): Promise<ActionResult> {
@@ -323,7 +324,11 @@ export async function saveSophieSettings(input: {
   const [{ error: profileError }, { error: retentionError }] = await Promise.all([
     supabase
       .from('user_profiles')
-      .update({ sophie_auto_open: input.autoOpen === true, sophie_daily_messages: input.dailyMessages })
+      .update({
+        sophie_auto_open: input.autoOpen === true,
+        sophie_suggestions: input.suggestions === true,
+        sophie_daily_messages: input.dailyMessages,
+      })
       .eq('id', user.id),
     supabase
       .from('data_retention_settings')

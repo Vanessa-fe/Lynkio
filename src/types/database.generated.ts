@@ -87,6 +87,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sophie_suggestion_states: {
+        Row: {
+          created_at: string
+          key: string
+          status: string
+          until: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          status?: string
+          until?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          status?: string
+          until?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       sophie_conversations: {
         Row: {
           created_at: string
@@ -1640,6 +1664,7 @@ export type Database = {
       user_profiles: {
         Row: {
           sophie_auto_open: boolean
+          sophie_suggestions: boolean
           sophie_daily_messages: number
           companies_view: string
           ai_provider: string | null
@@ -1657,6 +1682,7 @@ export type Database = {
         }
         Insert: {
           sophie_auto_open?: boolean
+          sophie_suggestions?: boolean
           sophie_daily_messages?: number
           companies_view?: string
           ai_provider?: string | null
@@ -1674,6 +1700,7 @@ export type Database = {
         }
         Update: {
           sophie_auto_open?: boolean
+          sophie_suggestions?: boolean
           sophie_daily_messages?: number
           companies_view?: string
           ai_provider?: string | null

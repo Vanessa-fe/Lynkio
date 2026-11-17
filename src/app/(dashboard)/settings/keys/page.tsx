@@ -46,6 +46,7 @@ export default async function ApiKeysSettingsPage() {
 
       <SophieSettings
         autoOpen={profile?.sophie_auto_open ?? true}
+        suggestions={profile?.sophie_suggestions ?? true}
         dailyMessages={profile?.sophie_daily_messages ?? 100}
         chatMonths={retention?.sophie_chat_months ?? 12}
       />
