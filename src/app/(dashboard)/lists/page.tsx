@@ -8,6 +8,7 @@ import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { Counter } from '@/components/motion/counter'
 import { Stagger, StaggerItem } from '@/components/motion/reveal'
 import { ListActions } from '@/components/lists/list-actions'
+import { ContactsTabs } from '@/components/people/contacts-tabs'
 import { getListsOverview, type ListOverview } from '@/lib/queries/lists'
 
 function plural(count: number, one: string, many: string) {
@@ -91,12 +92,13 @@ export default async function ListsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold md:text-4xl">
-            Vos <span className="accent-serif text-primary">listes</span>
-          </h1>
+          <h1 className="text-3xl font-bold md:text-4xl">Contacts</h1>
           <p className="text-muted-foreground mt-2 max-w-2xl">
             Regroupez vos contacts pour les contacter ensemble sur LinkedIn ou les exporter.
           </p>
+          <div className="mt-4">
+            <ContactsTabs active="lists" />
+          </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Button variant="outline" asChild>

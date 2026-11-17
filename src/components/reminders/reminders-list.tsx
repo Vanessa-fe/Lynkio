@@ -21,9 +21,9 @@ import {
   reminderPriorities,
   reminderPriorityLabels,
   reminderPriorityBadgeVariants,
-  getReminderUrgency,
   isReminderOverdue,
 } from '@/lib/validations/reminder'
+import { reminderDayKey } from './reminders-week'
 import { ArrowRight, Clock, Building2, Trash2, AlertCircle } from 'lucide-react'
 import { ReminderFormDialog } from './reminder-form-dialog'
 import { formatDate } from '@/lib/utils/dates'
@@ -101,31 +101,35 @@ export function RemindersList({
     return true
   })
 
-  // Grouper par urgence
+  // Grouper par jour calendaire, heure de Paris (lot 1.10) : aujourd'hui d'abord, puis en retard, à venir,
+  // et les relances terminées gardées en dernier
+  const todayKey = reminderDayKey(new Date())
   const groupedReminders = filteredReminders.reduce(
     (groups, reminder) => {
-      const urgency = getReminderUrgency(
-        new Date(reminder.due_at),
-        reminder.priority ?? 'medium',
-        reminder.completed_at ? new Date(reminder.completed_at) : null
-      )
-      if (!groups[urgency]) {
-        groups[urgency] = []
-      }
-      groups[urgency]?.push(reminder)
+      const dayKey = reminderDayKey(reminder.due_at)
+      const group = reminder.completed_at
+        ? 'completed'
+        : dayKey === todayKey
+          ? 'today'
+          : dayKey < todayKey
+            ? 'overdue'
+            : 'upcoming'
+      ;(groups[group] ??= []).push(reminder)
       return groups
     },
     {} as Record<string, ReminderWithRelations[]>
   )
+  // Terminées : les plus récentes d'abord
+  groupedReminders.completed?.sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
 
   const urgencyLabels = {
+    today: 'Aujourd’hui',
     overdue: 'En retard',
-    urgent: 'Urgent',
     upcoming: 'À venir',
-    completed: 'Terminé',
+    completed: 'Terminées',
   }
 
-  const urgencyOrder = ['overdue', 'urgent', 'upcoming', 'completed']
+  const urgencyOrder = ['today', 'overdue', 'upcoming', 'completed']
 
   return (
     <div className="space-y-6">
@@ -140,7 +144,7 @@ export function RemindersList({
 
         <div className="flex gap-2 w-full sm:w-auto flex-wrap">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrer par état">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -151,7 +155,7 @@ export function RemindersList({
           </Select>
 
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrer par priorité">
               <SelectValue placeholder="Priorité" />
             </SelectTrigger>
             <SelectContent>

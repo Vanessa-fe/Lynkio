@@ -3,17 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ListMinus, ListPlus, Loader2, MessageCircleReply, Search, Send, Users, X } from 'lucide-react'
+import { ListMinus, ListPlus, Loader2, Search, Users, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Counter } from '@/components/motion/counter'
 import { Checkbox } from '@/components/ui/checkbox'
 import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { CompanyStageSelect } from '@/components/companies/company-stage-select'
 import { useStartLinkedin } from '@/components/linkedin/use-start-linkedin'
 import { SegmentBadge } from '@/components/companies/company-segment'
 import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
@@ -25,7 +23,7 @@ import { useToast } from '@/lib/hooks/use-toast'
 import { useSessionState } from '@/lib/hooks/use-session-state'
 import { cn } from '@/lib/utils'
 import type { PersonRow, ProspectListWithCount } from '@/lib/queries/people'
-import type { OutreachStatus, PipelineStage } from '@/types'
+import type { OutreachStatus } from '@/types'
 import { AddToListDialog } from './add-to-list-dialog'
 import { ImportProspectsDialog } from './import-prospects-dialog'
 import { ListToolbar } from './list-toolbar'
@@ -41,12 +39,6 @@ const SCOPES: { value: Scope; label: string }[] = [
   { value: 'organization', label: 'Dans une entreprise' },
 ]
 
-// Compteurs en haut de page : un clic filtre la liste sur ce statut
-const STAT_TILES: { status: StatusFilter; label: string; detail: string; icon: typeof Users }[] = [
-  { status: 'all', label: 'Contacts', detail: 'Tous vos interlocuteurs', icon: Users },
-  { status: 'to_contact', label: 'À contacter', detail: 'Des conversations à amorcer', icon: Send },
-  { status: 'replied', label: 'Ont répondu', detail: 'À suivre de près', icon: MessageCircleReply },
-]
 
 function initials(person: Pick<PersonRow, 'first_name' | 'last_name' | 'email'>): string {
   const letters = [person.first_name, person.last_name]
@@ -79,12 +71,11 @@ function parsePeopleView(raw: unknown): PeopleView {
 
 interface PeopleListProps {
   people: PersonRow[]
-  stages: PipelineStage[]
   lists: ProspectListWithCount[]
   activeListId: string | null
 }
 
-export function PeopleList({ people, stages, lists, activeListId }: PeopleListProps) {
+export function PeopleList({ people, lists, activeListId }: PeopleListProps) {
   const router = useRouter()
   const { toast } = useToast()
   // Filtres et sélection gardés pour la session, par liste : on les retrouve en revenant de l'envoi
@@ -117,6 +108,9 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
   })
   const filtered =
     statusFilter === 'all' ? scoped : scoped.filter((person) => person.outreach.status === statusFilter)
+
+  // Filtres secondaires actifs (segment, type de personne)
+  const secondaryFilters = (segment !== 'all' ? 1 : 0) + (scope !== 'all' ? 1 : 0)
 
   const countFor = (status: StatusFilter) =>
     status === 'all' ? scoped.length : scoped.filter((person) => person.outreach.status === status).length
@@ -164,44 +158,9 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
     router.refresh()
   }
 
-  // Compteurs sur la liste affichée, avant recherche et filtres
-  const tileCount = (status: StatusFilter) =>
-    status === 'all' ? inList.length : inList.filter((person) => person.outreach.status === status).length
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-3 sm:gap-4" role="group" aria-label="Filtrer par statut">
-        {STAT_TILES.map(({ status, label, detail, icon: Icon }) => {
-          const active = statusFilter === status
-          return (
-            <button
-              key={status}
-              type="button"
-              onClick={() => setStatusFilter(status)}
-              aria-pressed={active}
-              className={cn(
-                'group flex flex-col justify-start rounded-2xl border border-ink/[0.07] bg-card p-4 text-left shadow-soft transition-[box-shadow,transform,border-color] duration-300 hover:-translate-y-0.5 hover:shadow-lift sm:p-5',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                active && 'border-primary/40 ring-1 ring-primary/30'
-              )}
-            >
-              <span className="flex items-center gap-2 text-xs text-muted-foreground sm:text-sm">
-                <span className="hidden size-7 items-center justify-center rounded-lg bg-secondary text-primary sm:flex">
-                  <Icon className="size-4" />
-                </span>
-                {label}
-              </span>
-              <Counter
-                to={tileCount(status)}
-                duration={1}
-                className="mt-1.5 block font-display text-2xl font-bold tabular-nums tracking-tight sm:text-3xl"
-              />
-              <span className="mt-1 block text-xs text-muted-foreground sm:text-sm">{detail}</span>
-            </button>
-          )
-        })}
-      </div>
-
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -225,7 +184,12 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
           activeList={activeList}
           exportableCount={inList.filter((person) => person.linkedin_url && !person.opted_out_at).length}
         />
-        <div className="flex flex-col sm:flex-row gap-2">
+        {/* Filtres secondaires, repliés (lot 1.10) ; le nombre d'actifs reste visible */}
+        <details className="group sm:ml-auto" open={secondaryFilters > 0}>
+          <summary className="cursor-pointer list-none text-sm font-medium text-muted-foreground hover:text-foreground marker:hidden [&::-webkit-details-marker]:hidden">
+            Plus de filtres{secondaryFilters > 0 ? ` (${secondaryFilters})` : ''}
+          </summary>
+        <div className="mt-2 flex flex-col sm:flex-row gap-2">
           <Select value={segment} onValueChange={setSegment}>
             <SelectTrigger className="w-full sm:w-[190px]" aria-label="Filtrer par segment">
               <SelectValue />
@@ -253,10 +217,13 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
             </SelectContent>
           </Select>
         </div>
+        </details>
       </div>
 
-      {/* Statuts déduits des échanges : un clic filtre */}
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer par statut">
+      {/* Statut de chaque personne, déduit de ses échanges : un clic filtre. À ne pas confondre avec l'étape
+          commerciale de son entreprise (page Entreprises) */}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par statut du contact">
+        <span className="text-sm text-muted-foreground">Statut du contact :</span>
         {(['all', ...OUTREACH_STATUSES] as StatusFilter[]).map((status) => (
           <button
             key={status}
@@ -269,7 +236,7 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
               statusFilter === status ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'
             )}
           >
-            {status === 'all' ? 'Tous les statuts' : outreachStatusLabels[status]}
+            {status === 'all' ? 'Toutes' : outreachStatusLabels[status]}
             <span className={cn('text-xs', statusFilter === status ? 'opacity-80' : 'text-muted-foreground')}>
               {countFor(status)}
             </span>
@@ -361,9 +328,8 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
                 </TableHead>
                 <TableHead>Personne</TableHead>
                 <TableHead className="hidden sm:table-cell">Entreprise</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="hidden lg:table-cell">Étape</TableHead>
-                <TableHead className="hidden xl:table-cell">Prochaine action</TableHead>
+                <TableHead>Statut du contact</TableHead>
+                <TableHead className="hidden lg:table-cell">Prochaine action</TableHead>
                 <TableHead className="text-right">Noter</TableHead>
               </TableRow>
             </TableHeader>
@@ -406,7 +372,7 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
                               </a>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">{person.role || '-'}</p>
+                          <p className="text-sm text-muted-foreground">{person.role || 'Fonction inconnue'}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -430,16 +396,13 @@ export function PeopleList({ people, stages, lists, activeListId }: PeopleListPr
                         showWhen
                       />
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
-                    </TableCell>
-                    <TableCell className="hidden xl:table-cell max-w-[14rem]">
+                    <TableCell className="hidden lg:table-cell max-w-[14rem]">
                       {company.next_action ? (
                         <p className="text-sm truncate" title={company.next_action}>
                           {company.next_action}
                         </p>
                       ) : (
-                        <span className="text-sm text-muted-foreground">-</span>
+                        <span className="text-sm text-muted-foreground">À définir</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
