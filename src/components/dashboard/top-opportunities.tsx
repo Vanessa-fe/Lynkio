@@ -10,18 +10,18 @@ export function TopOpportunities({ opportunities }: { opportunities: DashboardOp
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle>Meilleures opportunités</CardTitle>
-            <CardDescription>Les découvertes les mieux notées, avant de commencer à les prospecter</CardDescription>
+            <CardTitle>Entreprises à examiner</CardTitle>
+            <CardDescription>Vos découvertes les mieux notées</CardDescription>
           </div>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/companies">Toutes</Link>
+            <Link href="/companies?vue=tableau">Toutes</Link>
           </Button>
         </div>
       </CardHeader>
       <CardContent>
         {opportunities.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">
-            Aucune piste à contacter. Lancez une recherche dans l&apos;onglet Prospection.
+            Aucune découverte à examiner. <Link href="/prospection" className="text-primary underline-offset-2 hover:underline">Lancer une recherche</Link>
           </p>
         ) : (
           <ol className="divide-y">
