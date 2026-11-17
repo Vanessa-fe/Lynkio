@@ -24,6 +24,8 @@ import {
   updateStage,
 } from '@/lib/actions/pipeline-settings'
 import { STAGE_COLORS, STAGE_KINDS, stageKindLabels, type StageInput } from '@/lib/validations/pipeline-settings'
+import { rolesForKind, roleFitsKind, STAGE_ROLES } from '@/lib/stage-meaning'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { PipelineStage } from '@/types'
@@ -73,8 +75,8 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
           <div>
             <CardTitle>Étapes du pipeline</CardTitle>
             <CardDescription>
-              Le parcours d&apos;une entreprise, dans l&apos;ordre. La nature de chaque étape sert aux
-              statistiques (taux de réussite…) : vous pouvez renommer les étapes librement.
+              Le parcours d&apos;une entreprise, dans l&apos;ordre. Renommez les étapes librement : leur nature et
+              ce à quoi elles correspondent permettent à Sophie et aux statistiques de les comprendre.
             </CardDescription>
           </div>
           <Button size="sm" onClick={() => setEditing('new')} className="shrink-0">
@@ -95,7 +97,13 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
                     <Badge variant="outline">{stageKindLabels[stage.kind]}</Badge>
                     {stage.is_default && <Badge>Nouvelles entreprises</Badge>}
                   </div>
-                  <p className="text-sm text-muted-foreground">{companiesLabel(usage[stage.id] ?? 0)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {companiesLabel(usage[stage.id] ?? 0)}
+                    {/* Rien à préciser quand le nom dit déjà la même chose (« Rendez-vous ») */}
+                    {roleLabel(stage) &&
+                      roleLabel(stage)!.toLowerCase() !== stage.name.trim().toLowerCase() &&
+                      ` · correspond à « ${roleLabel(stage)} »`}
+                  </p>
                 </div>
               </div>
 
@@ -164,6 +172,7 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
       {editing && (
         <StageDialog
           stage={editing === 'new' ? undefined : editing}
+          stages={stages}
           onClose={() => setEditing(null)}
         />
       )}
@@ -171,14 +180,28 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
   )
 }
 
-function StageDialog({ stage, onClose }: { stage?: PipelineStage; onClose: () => void }) {
+// Ce à quoi correspond l'étape (rôle), quand il est connu et cohérent avec sa nature
+function roleLabel(stage: PipelineStage): string | null {
+  if (!stage.role || !roleFitsKind(stage.kind, stage.role)) return null
+  return STAGE_ROLES.find((role) => role.value === stage.role)?.label ?? null
+}
+
+const NO_ROLE = 'none'
+
+function StageDialog({ stage, stages, onClose }: { stage?: PipelineStage; stages: PipelineStage[]; onClose: () => void }) {
   const router = useRouter()
   const { toast } = useToast()
   const [values, setValues] = useState<StageInput>({
     name: stage?.name ?? '',
     color: stage?.color ?? STAGE_COLORS[1] ?? '#3b82f6',
     kind: stage?.kind ?? 'open',
+    role: stage?.role ?? null,
   })
+  // Rôles déjà portés par une autre étape du compte (un seul par compte)
+  const takenBy = new Map(
+    stages.filter((other) => other.id !== stage?.id && other.role).map((other) => [other.role as string, other.name])
+  )
+  const roleOptions = rolesForKind(values.kind)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -266,7 +289,14 @@ function StageDialog({ stage, onClose }: { stage?: PipelineStage; onClose: () =>
                     name="stageKind"
                     value={kind.value}
                     checked={values.kind === kind.value}
-                    onChange={() => setValues({ ...values, kind: kind.value })}
+                    // Un rôle qui ne convient plus à la nouvelle nature est retiré
+                    onChange={() =>
+                      setValues({
+                        ...values,
+                        kind: kind.value,
+                        role: roleFitsKind(kind.value, values.role ?? null) ? values.role : null,
+                      })
+                    }
                     disabled={isSaving}
                     className="mt-0.5 accent-primary"
                   />
@@ -278,6 +308,34 @@ function StageDialog({ stage, onClose }: { stage?: PipelineStage; onClose: () =>
               ))}
             </div>
           </fieldset>
+
+          {roleOptions.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="stageRole">Cette étape correspond à…</Label>
+              <Select
+                value={values.role ?? NO_ROLE}
+                onValueChange={(value) => setValues({ ...values, role: value === NO_ROLE ? null : (value as StageInput['role']) })}
+                disabled={isSaving}
+              >
+                <SelectTrigger id="stageRole">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_ROLE}>Rien de particulier</SelectItem>
+                  {roleOptions.map((role) => (
+                    <SelectItem key={role.value} value={role.value} disabled={takenBy.has(role.value)}>
+                      {role.label}
+                      {takenBy.has(role.value) ? ` (déjà : ${takenBy.get(role.value)})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {(values.role && roleOptions.find((role) => role.value === values.role)?.hint) ||
+                  'Facultatif. Sophie et les statistiques comprennent ainsi l’étape, quel que soit son nom.'}
+              </p>
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>

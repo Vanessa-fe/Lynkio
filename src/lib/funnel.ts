@@ -46,11 +46,21 @@ export type FunnelResult = {
   lost: number
 }
 
-const ROLE_STEP: Record<string, number> = { to_contact: 1, contacted: 2, followed_up: 2, in_discussion: 3, meeting: 4 }
+// Rôles des étapes en cours (00071) : proposition et négociation comptent comme « proposition »
+const ROLE_STEP: Record<string, number> = {
+  to_contact: 1,
+  contacted: 2,
+  followed_up: 2,
+  in_discussion: 3,
+  meeting: 4,
+  proposal: 5,
+  negotiation: 5,
+}
 
 /**
  * Étape de l'entonnoir atteinte en étant dans chaque étape du pipeline. Étapes sans rôle : celle de
- * l'étape à rôle qui la précède (dans l'ordre du pipeline) ; « Proposition… » = 5 ; gagnée = 6 ;
+ * l'étape à rôle qui la précède (dans l'ordre du pipeline) ; rôle proposition ou négociation, ou nom
+ * « Proposition… » sans rôle = 5 ; gagnée = 6 ;
  * perdue / hors cible / étape par défaut : 0 (elles ne font pas avancer).
  */
 export function stageSteps(stages: FunnelStage[]): Map<string, number> {

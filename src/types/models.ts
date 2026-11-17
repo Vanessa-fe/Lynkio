@@ -1,3 +1,4 @@
+import type { StageRole } from '@/lib/stage-meaning'
 import type { Database } from './database'
 
 /**
@@ -40,7 +41,8 @@ export type InteractionDirection = 'incoming' | 'outgoing'
 export type ReminderPriority = 'low' | 'medium' | 'high'
 export type PipelineStageKind = 'open' | 'won' | 'lost' | 'excluded'
 // Étapes vers lesquelles une fiche avance toute seule quand on note un envoi ou une réponse
-export type PipelineStageRole = 'to_contact' | 'contacted' | 'followed_up' | 'in_discussion' | 'meeting'
+// Ce que représente une étape, quel que soit son nom (00071, src/lib/stage-meaning.ts)
+export type PipelineStageRole = StageRole
 // Statut de prospection d'une personne, déduit de ses échanges (vue contact_outreach)
 export type OutreachStatus = 'to_contact' | 'contacted' | 'followed_up' | 'replied' | 'do_not_contact'
 // Envoi LinkedIn d'une personne : relu et validé, invitée, en relation, message envoyé, relancée (1 puis 2), a répondu (ou arrêté)

@@ -19,6 +19,13 @@ type ActionResult = {
 
 const UNIQUE_VIOLATION = '23505'
 
+// Un rôle par compte (index uq_pipeline_stages_role) ; sinon, c'est le nom qui est déjà pris
+function uniqueViolationMessage(error: { message?: string }): string {
+  return error.message?.includes('uq_pipeline_stages_role')
+    ? 'Une autre étape correspond déjà à ce rôle : retirez-le d\'abord de cette étape'
+    : 'Une étape porte déjà ce nom'
+}
+
 function revalidate() {
   revalidatePath('/settings/pipeline')
   revalidatePath('/companies')
@@ -102,11 +109,13 @@ export async function createStage(input: StageInput): Promise<ActionResult> {
       name: validated.name,
       color: validated.color,
       kind: validated.kind,
+      // Pas de rôle choisi : la base le devine d'après le nom s'il est libre (set_default_stage_role)
+      ...(validated.role ? { role: validated.role } : {}),
       order: await nextOrder('pipeline_stages', userId),
     })
 
     if (error) {
-      if (error.code === UNIQUE_VIOLATION) return { success: false, error: 'Une étape porte déjà ce nom' }
+      if (error.code === UNIQUE_VIOLATION) return { success: false, error: uniqueViolationMessage(error) }
       return failure(error, 'Impossible d\'ajouter l\'étape')
     }
 
@@ -142,12 +151,17 @@ export async function updateStage(stageId: string, input: StageInput): Promise<A
 
     const { error } = await supabase
       .from('pipeline_stages')
-      .update({ name: validated.name, color: validated.color, kind: validated.kind })
+      .update({
+        name: validated.name,
+        color: validated.color,
+        kind: validated.kind,
+        ...(validated.role !== undefined ? { role: validated.role } : {}),
+      })
       .eq('id', stageId)
       .eq('user_id', userId)
 
     if (error) {
-      if (error.code === UNIQUE_VIOLATION) return { success: false, error: 'Une étape porte déjà ce nom' }
+      if (error.code === UNIQUE_VIOLATION) return { success: false, error: uniqueViolationMessage(error) }
       return failure(error, 'Impossible de modifier l\'étape')
     }
 
