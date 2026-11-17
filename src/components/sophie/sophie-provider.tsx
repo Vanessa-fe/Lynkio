@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSessionState, writeSessionState } from '@/lib/hooks/use-session-state'
 import { askSophie, type SophiePageContext } from './sophie-stream'
+import { isSophieCard, type SophieCard } from './sophie-cards'
 
 /**
  * État partagé du panneau Sophie (phase 2 de la refonte), monté une fois dans la mise en page :
@@ -21,6 +22,9 @@ export type SophieMessage = {
   error?: string | null
   // Fiche ouverte quand le message a été écrit : une réponse ne s'applique qu'à elle
   entityId: string | null
+  // Cartes de la réponse (phase 3) et étape en cours pendant la préparation
+  cards: SophieCard[]
+  statusText?: string | null
 }
 
 export type SophieConversation = { id: string; title: string; updated_at: string }
@@ -35,6 +39,7 @@ type SophieState = {
   hasAiKey: boolean
   providerLabel: string | null
   firstName: string | null
+  professionKey: string | null
   conversationId: string | null
   title: string | null
   messages: SophieMessage[]
@@ -93,12 +98,14 @@ export function SophieProvider({
   hasAiKey,
   providerLabel,
   firstName,
+  professionKey,
   autoOpen,
 }: {
   children: ReactNode
   hasAiKey: boolean
   providerLabel: string | null
   firstName: string | null
+  professionKey: string | null
   autoOpen: boolean
 }) {
   const pathname = usePathname()
@@ -124,7 +131,7 @@ export function SophieProvider({
       supabase.from('sophie_conversations').select('id, title').eq('id', id).maybeSingle(),
       supabase
         .from('sophie_messages')
-        .select('id, role, content, status, error, context')
+        .select('id, role, content, status, error, context, cards')
         .eq('conversation_id', id)
         .order('created_at')
         .limit(200),
@@ -150,6 +157,7 @@ export function SophieProvider({
           status: row.status === 'error' ? 'error' : 'done',
           error: row.error,
           entityId: rowContext.entity_id ?? null,
+          cards: Array.isArray(row.cards) ? row.cards.filter(isSophieCard) : [],
         }
       })
     )
@@ -224,12 +232,13 @@ export function SophieProvider({
         content: message,
         status: 'done',
         entityId: context.entityId,
+        cards: [],
       }
       const replyId = `reply-${Date.now()}`
       setMessages((current) => [
         ...current,
         userMessage,
-        { id: replyId, role: 'assistant', content: '', status: 'streaming', entityId: context.entityId },
+        { id: replyId, role: 'assistant', content: '', status: 'streaming', entityId: context.entityId, cards: [] },
       ])
       const update = (change: (message: SophieMessage) => SophieMessage) =>
         setMessages((current) => current.map((item) => (item.id === replyId ? change(item) : item)))
@@ -244,8 +253,12 @@ export function SophieProvider({
             setConversationId(event.conversationId)
             setTitle(event.title)
             setSession(CONVERSATION_KEY, event.conversationId)
+          } else if (event.type === 'status') {
+            update((item) => ({ ...item, statusText: event.text }))
+          } else if (event.type === 'card') {
+            if (isSophieCard(event.card)) update((item) => ({ ...item, cards: [...item.cards, event.card as SophieCard] }))
           } else if (event.type === 'delta') {
-            update((item) => ({ ...item, content: item.content + event.text }))
+            update((item) => ({ ...item, statusText: null, content: item.content + event.text }))
           } else if (event.type === 'done') {
             update((item) => ({ ...item, id: event.messageId ?? item.id, status: 'done' }))
           } else if (event.type === 'error') {
@@ -309,6 +322,7 @@ export function SophieProvider({
     hasAiKey,
     providerLabel,
     firstName,
+    professionKey,
     conversationId,
     title,
     messages,

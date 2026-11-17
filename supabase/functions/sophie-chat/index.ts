@@ -20,6 +20,7 @@ import { streamChat, type ChatTurn } from '../_shared/chat.ts'
 import { UserFacingError } from '../_shared/errors.ts'
 import { loadPageFacts, readPageContext } from './context.ts'
 import { sophieInstructions } from './prompt.ts'
+import { planTools, runTool, TOOL_STATUS, type ToolResult } from './tools.ts'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_MESSAGE_LENGTH = 4000
@@ -182,13 +183,6 @@ Deno.serve(async (request) => {
       : Promise.resolve({ data: null }),
     loadPageFacts(supabase, user.id, context),
   ])
-  const system = sophieInstructions({
-    firstName: profile?.first_name ?? null,
-    profession: profession?.label ?? null,
-    context,
-    facts,
-    today: todayInParis(),
-  })
 
   const encoder = new TextEncoder()
   const startedAt = Date.now()
@@ -197,13 +191,39 @@ Deno.serve(async (request) => {
       const send = (event: Record<string, unknown>) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`))
       send({ type: 'meta', conversationId, title, provider: PROVIDER_LABELS[access.provider] })
 
+      // Outils (phase 3) : choisis par le planificateur, vérifiés, exécutés avec les droits de l'utilisateur.
+      // Un planificateur en panne n'empêche pas de répondre.
+      let calls: Awaited<ReturnType<typeof planTools>> = []
+      try {
+        calls = await planTools({ access, turns, context })
+      } catch (error) {
+        console.error('sophie-chat planner', error instanceof Error ? error.message : error)
+      }
+      const results: ToolResult[] = []
+      for (const call of calls) {
+        send({ type: 'status', text: TOOL_STATUS[call.tool] })
+        results.push(await runTool({ call, supabase, userId: user.id, context, authorization, lastMessage: message }))
+      }
+      const cards = results.flatMap((result) => (result.card ? [result.card] : []))
+      for (const card of cards) send({ type: 'card', card })
+
+      const system = sophieInstructions({
+        firstName: profile?.first_name ?? null,
+        profession: profession?.label ?? null,
+        context,
+        facts,
+        toolFacts: results.map((result) => `[${result.tool}]\n${result.facts}`).join('\n\n'),
+        today: todayInParis(),
+      })
+
       let text = ''
       try {
         const result = await streamChat({
           access,
           system,
           turns,
-          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          // Brouillon affiché en carte : Sophie le présente en deux phrases, elle n'en écrit pas un autre
+          maxOutputTokens: cards.some((card) => card.type === 'outreach_draft') ? 600 : MAX_OUTPUT_TOKENS,
           timeoutMs: REQUEST_TIMEOUT_MS,
           onDelta: (delta) => {
             text += delta
@@ -224,6 +244,8 @@ Deno.serve(async (request) => {
             input_tokens: result.inputTokens,
             output_tokens: result.outputTokens,
             latency_ms: Date.now() - startedAt,
+            cards,
+            tools: results.map((result) => result.tool),
           })
           .select('id')
           .single()
@@ -242,6 +264,8 @@ Deno.serve(async (request) => {
           status: 'error',
           error: shown.slice(0, 1000),
           provider: access.provider,
+          cards,
+          tools: results.map((result) => result.tool),
           latency_ms: Date.now() - startedAt,
         })
         send({ type: 'error', message: shown })

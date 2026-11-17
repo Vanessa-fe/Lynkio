@@ -68,6 +68,8 @@ export type Database = {
       }
       sophie_messages: {
         Row: {
+          cards: Json
+          tools: string[]
           content: string
           context: Json
           conversation_id: string
@@ -84,6 +86,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cards?: Json
+          tools?: string[]
           content?: string
           context?: Json
           conversation_id: string
@@ -100,6 +104,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cards?: Json
+          tools?: string[]
           content?: string
           context?: Json
           conversation_id?: string

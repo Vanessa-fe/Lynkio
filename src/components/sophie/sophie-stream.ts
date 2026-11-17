@@ -13,6 +13,8 @@ export type SophiePageContext = { page: string; entityType: 'company' | null; en
 export type SophieEvent =
   | { type: 'meta'; conversationId: string; title: string; provider: string }
   | { type: 'delta'; text: string }
+  | { type: 'status'; text: string }
+  | { type: 'card'; card: unknown }
   | { type: 'done'; messageId: string | null }
   | { type: 'error'; message: string; code?: string }
 
