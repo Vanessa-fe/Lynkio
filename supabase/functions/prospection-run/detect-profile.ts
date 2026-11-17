@@ -206,6 +206,7 @@ async function runStrategy(
           postalCode: company.siege?.code_postal ?? null,
           notes: truncate(`Trouvée par votre recherche « ${strategy.name} » (registre officiel des entreprises).`, 500),
           strategyId: strategy.id,
+          discoveredBy: 'registry',
         },
         company
       )

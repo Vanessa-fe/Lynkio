@@ -221,6 +221,7 @@ async function processCandidate(
       postalCode: null,
       notes: truncate(notes, 4000),
       detectedStack: site.detected,
+      discoveredBy: 'tech_ai',
     },
     registry
   )

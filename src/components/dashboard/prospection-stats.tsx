@@ -44,6 +44,17 @@ function StatTile({
   )
 }
 
+/** « Dont 12 des sources officielles, 3 par analyse IA » : jamais attribuer à l'IA ce que le moteur classique a trouvé */
+function foundDetail(found: number, byAi: number): string {
+  if (found === 0) return 'Ajoutées ces 7 derniers jours'
+  const official = found - byAi
+  const parts = [
+    official > 0 && `${official} des sources officielles`,
+    byAi > 0 && `${byAi} par analyse IA`,
+  ].filter(Boolean)
+  return `Dont ${parts.join(', ')}`
+}
+
 export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
   // Taux de réussite masqué tant qu'aucune piste n'est signée ou non concrétisée : pas de tiret à expliquer
   const hasSuccessRate = stats.successRate !== null && stats.won + stats.lost > 0
@@ -67,11 +78,7 @@ export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
           icon={<Sparkles className="w-4 h-4" />}
           label="Nouvelles cette semaine"
           value={stats.addedThisWeek}
-          detail={
-            stats.addedBySophieThisWeek > 0
-              ? `Dont ${stats.addedBySophieThisWeek} trouvée${stats.addedBySophieThisWeek > 1 ? 's' : ''} par Sophie`
-              : 'Ajoutées ces 7 derniers jours'
-          }
+          detail={foundDetail(stats.addedBySophieThisWeek, stats.addedByAiThisWeek)}
         />
       </StaggerItem>
       <StaggerItem>

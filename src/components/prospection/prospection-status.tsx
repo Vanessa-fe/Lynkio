@@ -11,6 +11,7 @@ import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { PipelineRun, ProspectionSettings } from '@/types'
 import { formatDate } from '@/lib/utils/dates'
+import { watchRun } from './run-watch'
 
 // Rafraîchissement de la page tant qu'un passage est en cours
 const POLL_INTERVAL_MS = 3000
@@ -51,7 +52,9 @@ export function ProspectionStatus({ settings, nextRunAt, runningRun, weeklyRunAv
     }
 
     if (result.success) {
-      toast({ title: 'Sophie est partie chercher', description: 'Les résultats arrivent dans quelques instants.' })
+      // La fenêtre de fin s'ouvrira quand la recherche sera terminée, même sur une autre page
+      if (result.runId) watchRun(result.runId)
+      toast({ title: 'Sophie a lancé la recherche', description: 'Je vous préviens dès qu’elle est terminée.' })
       router.refresh()
     } else {
       toast({

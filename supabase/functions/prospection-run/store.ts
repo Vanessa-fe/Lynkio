@@ -31,7 +31,12 @@ export type CompanyDraft = {
   detectedStack?: string[]
   // Recherche enregistrée qui a trouvé l'entreprise (« Pourquoi cette entreprise »)
   strategyId?: string | null
+  // Source qui l'a trouvée (companies.discovered_by) : officielle ou analyse par IA
+  discoveredBy: DiscoverySource
 }
+
+// Sources officielles (registre, BODACC) ou analyse par l'IA de l'utilisateur (recherche par technologie)
+export type DiscoverySource = 'registry' | 'bodacc' | 'tech_ai'
 
 /**
  * Dernier exercice publié avec un chiffre d'affaires : beaucoup de petites
@@ -133,6 +138,8 @@ export async function insertCompany(
       finances_year: finances?.year ?? null,
       detected_stack: detectedStack,
       strategy_id: draft.strategyId ?? null,
+      discovered_by: draft.discoveredBy,
+      pipeline_run_id: context.runId ?? null,
       stack_detected_at: detectedStack.length > 0 ? new Date().toISOString() : null,
     })
     .select('id')

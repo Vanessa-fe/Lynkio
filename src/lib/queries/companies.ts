@@ -23,7 +23,10 @@ const COMPANY_RELATIONS = `
  * Entreprises de l'utilisateur, les mieux notées puis les plus récentes en premier.
  * Le filtrage (recherche, étape, source) se fait côté client sur cette liste.
  */
-export async function getCompanies(limit = 200, filters: { strategyId?: string } = {}): Promise<CompanyWithRelations[]> {
+export async function getCompanies(
+  limit = 200,
+  filters: { strategyId?: string; pipelineRunId?: string } = {}
+): Promise<CompanyWithRelations[]> {
   const supabase = await createClient()
 
   const user = await getAuthUser()
@@ -35,6 +38,8 @@ export async function getCompanies(limit = 200, filters: { strategyId?: string }
   let query = supabase.from('companies').select(COMPANY_RELATIONS).eq('user_id', user.id)
   // Entreprises trouvées par une recherche enregistrée (lien « N entreprises trouvées »)
   if (filters.strategyId) query = query.eq('strategy_id', filters.strategyId)
+  // Entreprises ajoutées par un passage (« Voir les entreprises » à la fin d'une recherche)
+  if (filters.pipelineRunId) query = query.eq('pipeline_run_id', filters.pipelineRunId)
   const { data, error } = await query
     .order('score', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })

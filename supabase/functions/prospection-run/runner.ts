@@ -101,6 +101,7 @@ export async function runProspection(
   try {
     const settings = await loadSettings(admin, userId)
     const context = await loadContext(admin, userId)
+    context.runId = runId
     if (limits) context.searchKeywords = context.searchKeywords.slice(0, limits.searchKeywords)
     if (strategyId) context.strategyId = strategyId
     const budget: Budget = {
@@ -151,13 +152,15 @@ export async function runProspection(
     const failures = outcomes.filter((stats) => stats.error)
     const allFailed = failures.length === outcomes.length
 
+    // Une source en panne et une autre qui répond : passage « succeeded » AVEC un message d'erreur,
+    // pour que l'écran dise « terminée en partie » et jamais une réussite complète (lot 1.3)
     await finishRun(
       admin,
       runId,
       allFailed ? 'failed' : 'succeeded',
       results,
       settings.departments,
-      allFailed ? failures.map((stats) => stats.error).join(' · ') : undefined
+      failures.length > 0 ? failures.map((stats) => stats.error).join(' · ') : undefined
     )
   } catch (error) {
     console.error('runProspection', error)

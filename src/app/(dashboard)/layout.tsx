@@ -8,6 +8,7 @@ import { NavigationProgress } from '@/components/layout/navigation-progress'
 import { BillingBanner } from '@/components/billing/billing-banner'
 import { getBilling } from '@/lib/queries/billing'
 import { getAccess } from '@/lib/billing'
+import { RunCompletionDialog } from '@/components/prospection/run-completion-dialog'
 
 export default async function DashboardLayout({
   children,
@@ -43,6 +44,7 @@ export default async function DashboardLayout({
         </main>
       </div>
       <MobileNav />
+      <RunCompletionDialog />
     </div>
   )
 }

@@ -4,19 +4,28 @@ import { Button } from '@/components/ui/button'
 import { CompaniesList } from '@/components/companies/companies-list'
 import { getCompanies, getLeadSources, getPipelineStages } from '@/lib/queries/companies'
 import { getStrategies, getStrategy } from '@/lib/queries/strategies'
+import { getPipelineRun } from '@/lib/queries/prospection'
+import { formatDate } from '@/lib/utils/dates'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ strategie?: string }> }) {
-  const { strategie } = await searchParams
+export default async function CompaniesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ strategie?: string; passage?: string }>
+}) {
+  const { strategie, passage } = await searchParams
   const strategyId = strategie && UUID.test(strategie) ? strategie : undefined
-  const [companies, stages, sources, strategy, strategies] = await Promise.all([
-    getCompanies(200, { strategyId }),
+  // « Voir les entreprises » à la fin d'une recherche : celles ajoutées par ce passage
+  const pipelineRunId = !strategyId && passage && UUID.test(passage) ? passage : undefined
+  const [companies, stages, sources, strategy, strategies, run] = await Promise.all([
+    getCompanies(200, { strategyId, pipelineRunId }),
     getPipelineStages(),
     getLeadSources(),
     strategyId ? getStrategy(strategyId) : Promise.resolve(null),
     // Liste déjà limitée à une recherche par l'adresse : pas de filtre « Recherche » en plus
-    strategyId ? Promise.resolve([]) : getStrategies(),
+    strategyId || pipelineRunId ? Promise.resolve([]) : getStrategies(),
+    pipelineRunId ? getPipelineRun(pipelineRunId) : Promise.resolve(null),
   ])
 
   return (
@@ -48,6 +57,18 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
         </div>
       </div>
 
+      {pipelineRunId && (
+        <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            Entreprises ajoutées par la recherche
+            {run ? ` du ${formatDate(new Date(run.started_at), "d MMMM 'à' HH:mm")}` : ''}
+          </span>
+          <Link href="/companies" className="font-medium text-primary underline-offset-2 hover:underline">
+            Voir toutes les entreprises
+          </Link>
+        </div>
+      )}
+
       {strategyId && (
         <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
           <span>
@@ -64,7 +85,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
         companies={companies}
         stages={stages}
         sources={sources}
-        strategies={strategyId ? undefined : strategies.map(({ id, name }) => ({ id, name }))}
+        strategies={strategyId || pipelineRunId ? undefined : strategies.map(({ id, name }) => ({ id, name }))}
       />
     </div>
   )
