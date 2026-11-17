@@ -1507,6 +1507,7 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          companies_view: string
           ai_provider: string | null
           avatar_url: string | null
           business_name: string | null
@@ -1521,6 +1522,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          companies_view?: string
           ai_provider?: string | null
           avatar_url?: string | null
           business_name?: string | null
@@ -1535,6 +1537,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          companies_view?: string
           ai_provider?: string | null
           avatar_url?: string | null
           business_name?: string | null

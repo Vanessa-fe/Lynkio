@@ -281,3 +281,20 @@ export async function saveMessageSettings(input: MessageSettingsInput): Promise<
     return { success: false, error: 'Une erreur est survenue' }
   }
 }
+
+/**
+ * Dernière vue choisie sur la page Entreprises (lot 1.9) : tableau ou Kanban, gardée sur le compte.
+ * Un échec n'empêche pas de changer de vue : seule la mémorisation est perdue.
+ */
+export async function saveCompaniesView(view: 'table' | 'kanban'): Promise<ActionResult> {
+  if (view !== 'table' && view !== 'kanban') return { success: false, error: 'Vue inconnue' }
+  const user = await getAuthUser()
+  if (!user) return { success: false, error: 'Vous devez être connecté' }
+  const supabase = await createClient()
+  const { error } = await supabase.from('user_profiles').update({ companies_view: view }).eq('id', user.id)
+  if (error) {
+    console.error('Save companies view error:', error)
+    return { success: false, error: 'Impossible de mémoriser la vue' }
+  }
+  return { success: true }
+}

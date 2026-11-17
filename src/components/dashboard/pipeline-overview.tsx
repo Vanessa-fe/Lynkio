@@ -29,7 +29,7 @@ export function PipelineOverview({ pipeline }: { pipeline: DashboardData['pipeli
           {pipeline.map(({ stage, count, amount }, index) => (
             <li key={stage?.id ?? 'none'}>
               <Link
-                href="/pipeline"
+                href="/companies?vue=kanban"
                 className={cn(
                   'grid items-center gap-3 rounded-md text-sm hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   hasAmounts
@@ -56,10 +56,10 @@ export function PipelineOverview({ pipeline }: { pipeline: DashboardData['pipeli
           ))}
         </ul>
         <Link
-          href="/pipeline"
+          href="/companies?vue=kanban"
           className="group inline-flex items-center gap-1.5 text-sm font-medium text-primary"
         >
-          Ouvrir le tableau du pipeline
+          Ouvrir le Kanban
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
         {openAmount > 0 && (

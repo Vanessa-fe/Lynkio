@@ -65,7 +65,7 @@ export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
     >
       <StaggerItem>
         <StatTile
-          href="/pipeline"
+          href="/companies?vue=kanban"
           icon={<Building2 className="w-4 h-4" />}
           label="Pistes en cours"
           value={stats.tracked}
@@ -94,7 +94,7 @@ export function ProspectionStats({ stats }: { stats: DashboardData['stats'] }) {
       {hasSuccessRate && (
         <StaggerItem>
           <StatTile
-            href="/pipeline"
+            href="/companies?vue=kanban"
             icon={<Trophy className="w-4 h-4" />}
             label="Taux de réussite"
             value={stats.successRate ?? 0}
