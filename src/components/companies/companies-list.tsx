@@ -5,11 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Search, Trash2, Eye, Globe, Building2, Filter, MessagesSquare } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Search, Trash2, Eye, Building2, Filter, MessagesSquare } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { technologyLabel } from '@/lib/constants/technologies'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Counter } from '@/components/motion/counter'
 import {
@@ -28,7 +26,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { deleteCompany } from '@/lib/actions/companies'
-import { companyAge, formatEuros, individualLabel, toWebsiteDomain, toWebsiteUrl } from '@/lib/validations/company'
+import { companyAge, formatEuros, individualLabel } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
@@ -54,6 +52,8 @@ const FILTERS_KEY = 'companies-list-filters'
 type Filters = {
   // Découvertes, en démarche, terminées (lot 1.8b)
   pipeline: string
+  // Ordre du tableau (lot 1.6)
+  sort: SortKey
   stage: string
   source: string
   segment: string
@@ -64,6 +64,7 @@ type Filters = {
 }
 const DEFAULT_FILTERS: Filters = {
   pipeline: ALL,
+  sort: 'score',
   stage: ALL,
   source: ALL,
   segment: ALL,
@@ -88,6 +89,32 @@ function matchesScore(score: number | null, filter: string): boolean {
   if (filter === 'medium') return score >= 40 && score < 70
   if (filter === 'low') return score < 40
   return false
+}
+
+// Ordre du tableau. Âge : d'après la date de création au registre ; âge inconnu toujours en dernier
+type SortKey = 'score' | 'youngest' | 'oldest' | 'recent'
+const SORTS: { value: SortKey; label: string }[] = [
+  { value: 'score', label: 'Meilleur score' },
+  { value: 'youngest', label: 'Plus jeunes d’abord' },
+  { value: 'oldest', label: 'Plus anciennes d’abord' },
+  { value: 'recent', label: 'Ajoutées récemment' },
+]
+
+function foundedTime(foundedOn: string | null): number | null {
+  if (!foundedOn) return null
+  const time = new Date(`${foundedOn}T00:00:00`).getTime()
+  return Number.isNaN(time) ? null : time
+}
+
+function compareCompanies(sort: SortKey, a: CompanyWithRelations, b: CompanyWithRelations): number {
+  if (sort === 'recent') return b.created_at.localeCompare(a.created_at)
+  if (sort === 'youngest' || sort === 'oldest') {
+    const left = foundedTime(a.founded_on)
+    const right = foundedTime(b.founded_on)
+    if (left === null || right === null) return left === right ? 0 : left === null ? 1 : -1
+    return sort === 'youngest' ? right - left : left - right
+  }
+  return (b.score ?? -1) - (a.score ?? -1)
 }
 
 // Découverte : pas encore en démarche (ni écartée) ; en démarche : suivi actif ; terminée : signée, perdue, hors cible
@@ -131,6 +158,7 @@ function parseFilters(raw: string): Filters {
     const saved = raw ? (JSON.parse(raw) as Partial<Filters>) : {}
     return {
       pipeline: PIPELINE_FILTERS.includes(saved.pipeline as string) ? (saved.pipeline as string) : ALL,
+      sort: SORTS.some((option) => option.value === saved.sort) ? (saved.sort as SortKey) : 'score',
       stage: typeof saved.stage === 'string' ? saved.stage : ALL,
       source: typeof saved.source === 'string' ? saved.source : ALL,
       segment: typeof saved.segment === 'string' ? saved.segment : ALL,
@@ -161,6 +189,8 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
   const setContactFilter = (contact: string) => writeFilters({ ...filters, contact })
   // Une étape précise remplace le filtre découvertes / en démarche (et inversement)
   const setStageFilter = (stage: string) => writeFilters({ ...filters, stage, pipeline: ALL })
+  const sortKey = filters.sort
+  const setSort = (sort: SortKey) => writeFilters({ ...filters, sort })
   const pipelineFilter = filters.pipeline
   const setPipelineFilter = (pipeline: string) => writeFilters({ ...filters, pipeline, stage: ALL })
   const kindByStage = new Map(stages.map((stage) => [stage.id, stage.kind]))
@@ -210,6 +240,9 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
       matchesContact
     )
   })
+
+  // Le serveur renvoie les entreprises par score ; les autres ordres se font ici, sans recharger
+  const sortedCompanies = sortKey === 'score' ? filteredCompanies : [...filteredCompanies].sort((a, b) => compareCompanies(sortKey, a, b))
 
   const handleDelete = async (company: CompanyWithRelations) => {
     if (
@@ -437,10 +470,24 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
         <Card className="overflow-hidden">
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-xl">Vos entreprises</CardTitle>
-            <span className="text-sm text-muted-foreground tabular-nums">
-              {filteredCompanies.length} entreprise{filteredCompanies.length !== 1 ? 's' : ''}
-              {filteredCompanies.length !== companies.length && ` sur ${companies.length}`}
-            </span>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <span className="text-sm text-muted-foreground tabular-nums">
+                {filteredCompanies.length} entreprise{filteredCompanies.length !== 1 ? 's' : ''}
+                {filteredCompanies.length !== companies.length && ` sur ${companies.length}`}
+              </span>
+              <Select value={sortKey} onValueChange={(value) => setSort(value as SortKey)}>
+                <SelectTrigger className="h-9 w-[13rem]" aria-label="Trier les entreprises">
+                  <SelectValue>{SORTS.find((option) => option.value === sortKey)?.label}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {SORTS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <Table>
             <TableHeader>
@@ -448,15 +495,33 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
                 <TableHead>Entreprise</TableHead>
                 <TableHead>Étape</TableHead>
                 <TableHead className="text-center">Score</TableHead>
+                <TableHead
+                  className="hidden lg:table-cell"
+                  aria-sort={sortKey === 'youngest' ? 'descending' : sortKey === 'oldest' ? 'ascending' : 'none'}
+                >
+                  {/* Un clic trie par ancienneté : plus jeunes, puis plus anciennes */}
+                  <button
+                    type="button"
+                    onClick={() => setSort(sortKey === 'youngest' ? 'oldest' : 'youngest')}
+                    className="inline-flex items-center gap-1 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                  >
+                    Âge
+                    {sortKey === 'youngest' ? (
+                      <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+                    ) : sortKey === 'oldest' ? (
+                      <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 opacity-50" aria-hidden="true" />
+                    )}
+                  </button>
+                </TableHead>
                 <TableHead className="hidden md:table-cell">Prochaine action</TableHead>
-                <TableHead className="hidden lg:table-cell">Site web</TableHead>
-                <TableHead className="hidden xl:table-cell">Stack</TableHead>
                 <TableHead className="hidden md:table-cell">Dernier échange</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCompanies.map((company) => (
+              {sortedCompanies.map((company) => (
                 <TableRow key={company.id}>
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-2">
@@ -470,10 +535,9 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
                         company.kind === 'individual' && individualLabel(company),
                         company.city,
                         company.sector,
-                        companyAge(company.founded_on)?.age,
                       ]
                         .filter(Boolean)
-                        .join(' · ') || '-'}
+                        .join(' · ') || 'Ville et secteur non renseignés'}
                     </p>
                   </TableCell>
                   <TableCell>
@@ -487,45 +551,20 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
                   <TableCell className="text-center">
                     <CompanyScore score={company.score} />
                   </TableCell>
+                  <TableCell className="hidden lg:table-cell whitespace-nowrap">
+                    <AgeCell foundedOn={company.founded_on} />
+                  </TableCell>
                   <TableCell className="hidden md:table-cell max-w-[16rem]">
                     {company.next_action ? (
                       <p className="text-sm truncate" title={company.next_action}>
                         {company.next_action}
                       </p>
                     ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
+                      <span className="text-sm text-muted-foreground">À définir</span>
                     )}
                     {company.estimated_amount != null && (
                       <p className="text-xs text-muted-foreground">{formatEuros(company.estimated_amount)} HT</p>
                     )}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {company.website ? (
-                      <a
-                        href={toWebsiteUrl(company.website)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm inline-flex items-center gap-1 hover:underline"
-                      >
-                        <Globe className="w-3 h-3" />
-                        {toWebsiteDomain(company.website)}
-                      </a>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell">
-                    <div className="flex flex-wrap gap-1">
-                      {company.detected_stack.length > 0 ? (
-                        company.detected_stack.map((tech) => (
-                          <Badge key={tech} variant="outline" className="text-xs">
-                            {technologyLabel(tech)}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-muted-foreground">-</span>
-                      )}
-                    </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <span className="text-sm text-muted-foreground">
@@ -593,5 +632,16 @@ function StageChip({
       {label}
       <span className={cn('text-xs', active ? 'opacity-80' : 'text-muted-foreground')}>{count}</span>
     </button>
+  )
+}
+
+/** Âge d'après la date de création au registre ; inconnu quand le registre ne la donne pas */
+function AgeCell({ foundedOn }: { foundedOn: string | null }) {
+  const age = companyAge(foundedOn)
+  if (!age) return <span className="text-sm text-muted-foreground">Inconnu</span>
+  return (
+    <span className="text-sm" title={`Créée en ${age.since}`}>
+      {age.age}
+    </span>
   )
 }
