@@ -1832,6 +1832,16 @@ export type Database = {
         Args: { p_bucket: string; p_max: number; p_window_seconds: number }
         Returns: boolean
       }
+      submit_support_request: {
+        Args: {
+          p_email: string
+          p_ip?: string
+          p_message: string
+          p_name: string
+          p_topic: string
+        }
+        Returns: boolean
+      }
       infer_company_segment: {
         Args: {
           p_kind: string

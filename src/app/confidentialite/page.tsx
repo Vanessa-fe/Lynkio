@@ -43,6 +43,13 @@ export default function PrivacyPage() {
         (intérêt légitime), et à tenir la comptabilité (obligation légale).
       </p>
 
+      <h2>Les messages d&apos;aide</h2>
+      <p>
+        Quand vous écrivez par le formulaire d&apos;aide (page Contact), nous recevons votre nom, votre adresse
+        e-mail, le sujet et votre message, ainsi que votre compte si vous êtes connecté. Ils servent seulement à vous
+        répondre (intérêt légitime) : le message nous est transmis par e-mail via Brevo, et gardé 12 mois.
+      </p>
+
       <h2>Les données de vos prospects</h2>
       <p>
         Filonea réunit des informations sur des entreprises à partir de sources publiques :
@@ -121,6 +128,7 @@ export default function PrivacyPage() {
         </li>
         <li>Les signaux d&apos;opportunité : effacés automatiquement après une durée propre à chaque type de signal.</li>
         <li>Le journal d&apos;accès à vos données (exports, clés, nettoyages) : 12 mois.</li>
+        <li>Les messages envoyés par le formulaire d&apos;aide : 12 mois.</li>
         <li>
           À la suppression du compte (Paramètres &gt; Mon compte), tout est effacé immédiatement ; les sauvegardes
           chiffrées, gardées 30 jours, disparaissent ensuite.

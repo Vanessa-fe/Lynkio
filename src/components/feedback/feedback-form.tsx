@@ -84,7 +84,7 @@ export function FeedbackForm() {
                 onChange={(event) => setMessage(event.target.value)}
                 rows={6}
                 maxLength={2000}
-                placeholder="Ex. : j'aimerais pouvoir… / ce serait plus simple si… / quand je clique sur…, il se passe…"
+                placeholder="Ex. : j'aimerais pouvoir… / ce serait plus simple si…"
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? 'feedback-error' : undefined}
               />

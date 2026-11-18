@@ -11,6 +11,9 @@ export function Footer() {
         <Logo className="text-ink" />
         <p>L&apos;outil de prospection des freelances.</p>
         <div className="flex gap-5">
+          <Link href="/contact" className="hover:text-ink">
+            Contact
+          </Link>
           <Link href="/login" className="hover:text-ink">
             Se connecter
           </Link>

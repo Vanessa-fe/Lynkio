@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'motion/react'
-import { Lightbulb, LogOut } from 'lucide-react'
+import { LifeBuoy, Lightbulb, LogOut } from 'lucide-react'
 import posthog from 'posthog-js'
 import { cn } from '@/lib/utils/cn'
 import { logout } from '@/lib/actions/auth'
@@ -59,6 +59,16 @@ export function Sidebar() {
           })}
         </nav>
         <div className="space-y-1 border-t p-3">
+          <Link
+            href="/help"
+            className={cn(
+              'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-foreground',
+              isActivePath(pathname, '/help') ? 'bg-muted text-foreground' : 'text-muted-foreground'
+            )}
+          >
+            <LifeBuoy className="h-5 w-5" />
+            Aide
+          </Link>
           <Link
             href="/ideas"
             className={cn(

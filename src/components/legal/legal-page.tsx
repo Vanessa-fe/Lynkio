@@ -7,6 +7,7 @@ const LINKS = [
   { href: '/mentions-legales', label: 'Mentions légales' },
   { href: '/conditions', label: 'Conditions générales' },
   { href: '/confidentialite', label: 'Confidentialité' },
+  { href: '/contact', label: 'Contact' },
 ]
 
 /**
