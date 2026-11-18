@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { LogoutButton } from '@/components/layout/logout-button'
 import {
   ArrowRight,
   BellRing,
@@ -186,9 +187,13 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold md:text-4xl">Paramètres</h1>
-        <p className="text-muted-foreground mt-2">Votre façon de prospecter, vos outils et votre compte</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold md:text-4xl">Paramètres</h1>
+          <p className="text-muted-foreground mt-2">Votre façon de prospecter, vos outils et votre compte</p>
+        </div>
+        {/* Mobile : pas de barre latérale, la déconnexion se trouve ici (Réglages, dans le menu du bas) */}
+        <LogoutButton variant="outline" className="shrink-0 md:hidden" />
       </div>
 
       <section className="space-y-4 rounded-3xl bg-secondary px-6 py-6 sm:px-8">
