@@ -50,11 +50,7 @@ export function CompaniesExport() {
     <Card>
       <CardHeader>
         <CardTitle>Exporter et modèle</CardTitle>
-        <CardDescription>
-          L&apos;export contient toutes vos entreprises, leur étape, leur score, leurs signaux en cours et leur
-          contact principal. Les contacts qui se sont opposés à la prospection ne sont jamais exportés.
-          Le fichier peut être réimporté tel quel.
-        </CardDescription>
+        <CardDescription>Vos entreprises, leur étape, leur score et leur contact principal. Réimportable tel quel.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap gap-2">
         <Button asChild>

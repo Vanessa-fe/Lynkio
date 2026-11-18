@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { ArrowRight, ListPlus, Users } from 'lucide-react'
+import { ArrowRight, ListPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LinkedinIcon } from '@/components/ui/linkedin-icon'
@@ -115,14 +115,8 @@ export default async function ListsPage() {
 
       {lists.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-start gap-4 py-10">
+          <CardContent className="py-10">
             <p className="text-muted-foreground max-w-xl">Aucune liste. Dans Personnes, cochez des contacts puis « Ajouter à une liste ».</p>
-            <Button asChild>
-              <Link href="/people">
-                <Users className="w-4 h-4 mr-2" />
-                Aller aux personnes
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -135,20 +129,6 @@ export default async function ListsPage() {
         </Stagger>
       )}
 
-      <section className="flex flex-col gap-4 rounded-3xl bg-secondary px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-        <div className="space-y-1">
-          <h2 className="font-display text-xl font-semibold tracking-tight text-secondary-foreground">
-            Du premier contact à la <span className="accent-serif text-primary">conversation</span>
-          </h2>
-          <p className="max-w-2xl text-sm text-muted-foreground">Dans Personnes, cochez des contacts puis « Ajouter à une liste ».</p>
-        </div>
-        <Button variant="outline" asChild className="group shrink-0 bg-white">
-          <Link href="/people">
-            Voir mes contacts
-            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </Button>
-      </section>
     </div>
   )
 }

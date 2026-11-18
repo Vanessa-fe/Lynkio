@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { completeReminder } from '@/lib/actions/reminders'
@@ -41,7 +41,6 @@ export function TodayReminders({ reminders }: { reminders: ReminderWithRelations
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <CardTitle>À faire aujourd&apos;hui</CardTitle>
-            <CardDescription>Relances du jour et en retard</CardDescription>
           </div>
           <Button variant="outline" size="sm" asChild>
             <Link href="/reminders">Toutes les relances</Link>

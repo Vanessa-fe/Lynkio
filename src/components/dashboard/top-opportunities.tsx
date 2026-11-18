@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CompanyScore } from '@/components/companies/company-stage-select'
 import type { DashboardOpportunity } from '@/lib/queries/prospection-dashboard'
@@ -11,7 +11,6 @@ export function TopOpportunities({ opportunities }: { opportunities: DashboardOp
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <CardTitle>Entreprises à examiner</CardTitle>
-            <CardDescription>Vos découvertes les mieux notées</CardDescription>
           </div>
           <Button variant="outline" size="sm" asChild>
             <Link href="/companies?vue=tableau">Toutes</Link>

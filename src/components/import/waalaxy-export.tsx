@@ -15,13 +15,7 @@ export function WaalaxyExport({ count }: { count: number }) {
           <LinkedinIcon className="w-5 h-5" />
           Export CSV pour automatisation LinkedIn
         </CardTitle>
-        <CardDescription>
-          Les contacts de vos entreprises en cours qui ont un profil LinkedIn, avec leur e-mail s&apos;il est connu,
-          prêts à importer dans votre outil d&apos;automatisation LinkedIn. Les personnes opposées à la prospection
-          n&apos;y figurent jamais. Pour n&apos;en exporter qu&apos;une partie, exportez une liste depuis la page
-          Personnes. Au retour, importez le CSV de votre outil plus haut : invitations, messages et réponses sont
-          notés dans l&apos;historique, sans doublon.
-        </CardDescription>
+        <CardDescription>Vos contacts avec un profil LinkedIn, pour votre outil d&apos;automatisation. Réimportez son CSV ici au retour.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         {count > 0 ? (
@@ -33,8 +27,7 @@ export function WaalaxyExport({ count }: { count: number }) {
           </Button>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Aucun contact n&apos;a encore de profil LinkedIn. Ouvrez une fiche entreprise, cliquez sur « Chercher sur
-            LinkedIn » à côté d&apos;un contact, puis « Ajouter son profil » pour coller l&apos;adresse trouvée.
+            Aucun contact n&apos;a encore de profil LinkedIn.
           </p>
         )}
       </CardContent>

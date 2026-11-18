@@ -37,15 +37,9 @@ export default async function CompaniesPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold md:text-4xl">Entreprises</h1>
-          <p className="text-muted-foreground mt-2">
-            {view === 'kanban'
-              ? 'Vos entreprises en démarche, étape par étape. Glissez une carte pour la faire avancer.'
-              : 'Vos découvertes et votre suivi commercial, au même endroit.'}
-          </p>
-        </div>
+      {/* Les boutons passent à la ligne quand la place manque, au lieu de déborder */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold md:text-4xl">Entreprises</h1>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <CompaniesViewToggle view={view} />
           <Button variant="outline" asChild>

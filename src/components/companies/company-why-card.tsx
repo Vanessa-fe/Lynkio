@@ -148,8 +148,7 @@ export function CompanyWhyCard({
           </ul>
           {fromRegistry && (
           <p className="text-xs text-muted-foreground">
-            Source : registre officiel des entreprises (INSEE et registre national des entreprises, via l’API Recherche
-            d’entreprises), consulté le {formatDate(new Date(company.collected_at), 'd MMMM yyyy')}.{' '}
+            Source : registre officiel des entreprises, consulté le {formatDate(new Date(company.collected_at), 'd MMMM yyyy')}.{' '}
             {company.registration_id && (
               <a
                 href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${company.registration_id}`}
@@ -170,7 +169,7 @@ export function CompanyWhyCard({
           <h3 className="font-medium">Signaux d’opportunité</h3>
           <p className="text-muted-foreground">
             {signalCount === 0
-              ? 'Aucun signal observé pour l’instant : Sophie ne sait pas si cette entreprise a un besoin en ce moment. Elle correspond seulement à votre profil de client.'
+              ? 'Aucun signal observé pour l’instant.'
               : `${signalCount} signal${signalCount > 1 ? 's' : ''} observé${signalCount > 1 ? 's' : ''} : voir le détail plus bas.`}
           </p>
         </section>
