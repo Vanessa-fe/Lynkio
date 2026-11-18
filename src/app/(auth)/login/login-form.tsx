@@ -23,8 +23,11 @@ import { isNavigationError } from '@/lib/utils/navigation-error'
 export function LoginForm({
   linkExpired = false,
   accountDeleted = false,
+  redirectTo = null,
 }: {
   linkExpired?: boolean
+  // Page demandée avant la connexion (lien d'un e-mail) : on y revient après
+  redirectTo?: string | null
   // Arrivée juste après la suppression du compte
   accountDeleted?: boolean
 }) {
@@ -46,7 +49,7 @@ export function LoginForm({
     setIsLoading(true)
 
     try {
-      const result = await login(data)
+      const result = await login(data, redirectTo)
 
       // Action réussie : le serveur redirige et ne renvoie rien (la navigation est déjà en cours)
       if (result && !result.success && result.error) {
