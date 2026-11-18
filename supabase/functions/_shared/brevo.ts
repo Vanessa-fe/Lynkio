@@ -34,3 +34,50 @@ export async function syncBrevoContact(admin: SupabaseClient, userId: string): P
     console.error('brevo', error instanceof Error ? error.message : error)
   }
 }
+
+const TEAM_INBOX = 'contact@filonea.fr'
+const STATUS_LABELS: Record<string, string> = {
+  abonne: 'abonnement payé',
+  abonne_essai: 'offre choisie pendant l’essai, premier prélèvement à la fin de l’essai',
+}
+
+/**
+ * Alerte « Nouvel abonné » sur contact@filonea.fr, à la création d'un abonnement Stripe, avec la commande
+ * qui vérifie sa fiche Brevo et l'e-mail de remerciement. Sans BREVO_API_KEY, rien n'est envoyé ;
+ * une erreur est notée sans bloquer le webhook.
+ */
+export async function notifyNewSubscriber(admin: SupabaseClient, userId: string): Promise<void> {
+  const apiKey = Deno.env.get('BREVO_API_KEY')
+  if (!apiKey) return
+  try {
+    const { data, error } = await admin.rpc('brevo_contact', { p_user_id: userId })
+    if (error || !data) {
+      if (error) console.error('brevo: alerte abonné', error.message)
+      return
+    }
+    const contact = data as { email: string; attributes: Record<string, unknown> }
+    const plan = String(contact.attributes.OFFRE ?? '') || 'offre inconnue'
+    const status = String(contact.attributes.STATUT ?? '')
+    const name = String(contact.attributes.PRENOM ?? '')
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        sender: { name: 'Filonea', email: Deno.env.get('BREVO_FROM_EMAIL') || TEAM_INBOX },
+        to: [{ email: TEAM_INBOX }],
+        subject: `Nouvel abonné sur Filonea : ${contact.email} (${plan})`,
+        textContent: [
+          `${name ? `${name} (${contact.email})` : contact.email} vient de s'abonner à Filonea, offre ${plan}.`,
+          `Statut : ${STATUS_LABELS[status] ?? status}.`,
+          '',
+          'Pour vérifier sa fiche Brevo et l’e-mail de remerciement, depuis le dossier du projet :',
+          `scripts/verifier-compte.sh abonnement ${contact.email}`,
+        ].join('\n'),
+      }),
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (!response.ok) console.error('brevo: alerte abonné', response.status, (await response.text()).slice(0, 300))
+  } catch (error) {
+    console.error('brevo: alerte abonné', error instanceof Error ? error.message : error)
+  }
+}

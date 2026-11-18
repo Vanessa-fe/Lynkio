@@ -4,7 +4,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { syncSubscription, verifyStripeSignature } from '../_shared/stripe.ts'
-import { syncBrevoContact } from '../_shared/brevo.ts'
+import { notifyNewSubscriber, syncBrevoContact } from '../_shared/brevo.ts'
 
 type StripeEvent = {
   id: string
@@ -44,7 +44,10 @@ Deno.serve(async (request) => {
     console.log('stripe-webhook', event.type, subscriptionId, userId ? 'à jour' : 'compte introuvable')
     // Statut et offre à jour dans Brevo (e-mails de fin d'essai, de remerciement), sans retarder la réponse
     if (userId) {
-      const job = syncBrevoContact(admin, userId)
+      // Nouvel abonnement : fiche Brevo à jour, puis alerte « Nouvel abonné » (une fois, à la création)
+      const job = syncBrevoContact(admin, userId).then(() =>
+        event.type === 'customer.subscription.created' ? notifyNewSubscriber(admin, userId) : undefined
+      )
       const runtime = (globalThis as { EdgeRuntime?: { waitUntil: (promise: Promise<unknown>) => void } }).EdgeRuntime
       if (runtime) runtime.waitUntil(job)
       else await job
