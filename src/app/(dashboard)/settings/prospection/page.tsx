@@ -1,6 +1,3 @@
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { ProspectionSettingsForm } from '@/components/prospection/prospection-settings-form'
 import { getProspectionSettings } from '@/lib/queries/prospection'
 import { getCurrentPlan } from '@/lib/queries/billing'
@@ -13,12 +10,6 @@ export default async function ProspectionSettingsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <Button variant="ghost" size="sm" asChild>
-        <Link href="/settings">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Paramètres
-        </Link>
-      </Button>
 
       <div>
         <h1 className="text-3xl font-bold">Recherche de Sophie</h1>

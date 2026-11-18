@@ -1,6 +1,3 @@
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { OfferForm } from '@/components/settings/offer-form'
 import { getOffer } from '@/lib/queries/offer'
@@ -11,12 +8,6 @@ export default async function OfferSettingsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <Button variant="ghost" size="sm" asChild>
-        <Link href="/settings">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Paramètres
-        </Link>
-      </Button>
 
       <div>
         <h1 className="text-3xl font-bold">Mon offre et mes objectifs</h1>

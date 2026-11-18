@@ -3,6 +3,7 @@ import { getAuthUser } from '@/lib/supabase/auth'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { MobileNav } from '@/components/layout/mobile-nav'
+import { SettingsBackLink } from '@/components/layout/settings-back-link'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 import { NavigationProgress } from '@/components/layout/navigation-progress'
 import { BillingBanner } from '@/components/billing/billing-banner'
@@ -58,6 +59,7 @@ export default async function DashboardLayout({
         <SophieMain>
           <main className="mx-auto max-w-7xl p-4 pb-24 md:p-8 md:pb-10">
             <BillingBanner access={access} />
+            <SettingsBackLink />
             {children}
           </main>
         </SophieMain>
