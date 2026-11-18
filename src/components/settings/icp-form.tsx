@@ -231,11 +231,7 @@ export function IcpForm({
       <Card>
         <CardHeader>
           <CardTitle>Mots-clés recherchés</CardTitle>
-          <CardDescription>
-            Sophie cherche les offres d&apos;emploi dont l&apos;intitulé contient l&apos;un de ces mots, dans les
-            départements choisis dans Prospection. Écrivez des intitulés de poste, comme ils apparaissent dans les
-            annonces{isWebDeveloper ? ' ; les offres de développeur, de webmaster et du digital sont déjà cherchées pour vous' : ''}.
-          </CardDescription>
+          <CardDescription>Intitulés de poste, comme dans les annonces{isWebDeveloper ? ' (développeur, webmaster et digital déjà inclus)' : ''}.</CardDescription>
         </CardHeader>
         <CardContent>
           <KeywordPicker
@@ -257,7 +253,6 @@ export function IcpForm({
       <Card>
         <CardHeader>
           <CardTitle>Nom</CardTitle>
-          <CardDescription>Pour vous y retrouver si vous créez plus tard plusieurs profils.</CardDescription>
         </CardHeader>
         <CardContent>
           <Input {...register('name')} disabled={isSaving} className="sm:max-w-md" aria-label="Nom du client idéal" />
@@ -268,10 +263,7 @@ export function IcpForm({
       <Card>
         <CardHeader>
           <CardTitle>Taille des entreprises</CardTitle>
-          <CardDescription>
-            Idéale : +{SIZE_FIT_OPTIONS[0].points} points · Acceptée : +{SIZE_FIT_OPTIONS[1].points} points ·
-            Hors cible : aucun point (l&apos;entreprise n&apos;est pas écartée pour autant).
-          </CardDescription>
+          <CardDescription>Idéale : +{SIZE_FIT_OPTIONS[0].points} points · Acceptée : +{SIZE_FIT_OPTIONS[1].points} points · Hors cible : 0.</CardDescription>
         </CardHeader>
         <CardContent className="divide-y">
           {sizeCategories.map((category) => (
@@ -319,11 +311,7 @@ export function IcpForm({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1.5">
               <CardTitle>Signaux d&apos;opportunité</CardTitle>
-              <CardDescription>
-                Les événements que Sophie sait repérer aujourd&apos;hui, et les points qu&apos;ils apportent tant
-                qu&apos;ils sont valides. À 0 point, un signal est inactif. Plusieurs signaux du même type : +5 par
-                signal supplémentaire, 10 au plus.
-              </CardDescription>
+              <CardDescription>À 0 point, un signal est inactif.</CardDescription>
             </div>
             <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setAdvisorOpen(true)}>
               <Sparkles className="mr-2 h-4 w-4" />
@@ -346,10 +334,7 @@ export function IcpForm({
               )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Sophie peut choisir vos signaux à partir de vos prestations : elle explique pourquoi chacun peut créer un
-              besoin chez vos clients. Sans cela, les points par défaut de votre métier s&apos;appliquent.
-            </p>
+            <p className="text-sm text-muted-foreground">Sophie peut les choisir d&apos;après vos prestations.</p>
           )}
 
           <section className="space-y-2" aria-labelledby="signals-suggested">
@@ -372,11 +357,7 @@ export function IcpForm({
               <h3 id="signals-deep" className="text-sm font-semibold">
                 Avec une analyse approfondie ({deepSignals.length})
               </h3>
-              <p className="text-sm text-muted-foreground">
-                Ces événements se trouvent sur Internet (presse, annonces de l&apos;entreprise). Sophie les cherche sur
-                une fiche quand vous cliquez sur « Approfondir avec Sophie », jamais pendant les recherches. Un
-                événement ne rapporte des points que s&apos;il est daté et que sa source a été vérifiée.
-              </p>
+              <p className="text-sm text-muted-foreground">Cherchés sur une fiche avec « Approfondir avec Sophie ».</p>
               <div className="divide-y">{deepSignals.map(renderSignal)}</div>
             </section>
           )}
@@ -399,10 +380,7 @@ export function IcpForm({
               <summary className="cursor-pointer font-medium">
                 Pas encore détectables ({unavailableSignals.length})
               </summary>
-              <p className="text-sm text-muted-foreground mt-2 mb-3">
-                Aucune source fiable ne permet encore à Sophie de les repérer : ils ne rapportent aucun point pour
-                l&apos;instant.
-              </p>
+              <p className="text-sm text-muted-foreground mt-2 mb-3">Pas encore repérables : aucun point pour l&apos;instant.</p>
               <ul className="divide-y">
                 {unavailableSignals.map((signal) => (
                   <li key={signal.key} className="py-3 first:pt-0 last:pb-0">
@@ -439,10 +417,7 @@ export function IcpForm({
       <Card>
         <CardHeader>
           <CardTitle>Votre tarif</CardTitle>
-          <CardDescription>
-            Sert à repérer les entreprises qui peuvent vous payer : une mission de {MISSION_DAYS} jours ne doit pas
-            peser plus de 4 % de leur chiffre d&apos;affaires publié.
-          </CardDescription>
+          <CardDescription>Une mission de {MISSION_DAYS} jours ne doit pas dépasser 4 % du chiffre d&apos;affaires.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 sm:max-w-xs">
           <Label htmlFor="dayRate">Tarif journalier moyen (€ HT)</Label>
@@ -464,10 +439,6 @@ export function IcpForm({
       <Card>
         <CardHeader>
           <CardTitle>Technologies qui vous intéressent</CardTitle>
-          <CardDescription>
-            Quand l&apos;analyse du site d&apos;une entreprise en détecte une, Sophie ajoute le signal « Stack
-            technique compatible » à sa fiche.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <Controller
@@ -498,9 +469,6 @@ export function IcpForm({
               </div>
             )}
           />
-          <p className="text-sm text-muted-foreground mt-3">
-            Vous pouvez aussi cocher WordPress ou Webflow si vous proposez des refontes de ces sites.
-          </p>
         </CardContent>
       </Card>
       ) : null}
@@ -508,10 +476,7 @@ export function IcpForm({
       <Card>
         <CardHeader>
           <CardTitle>Mots-clés à exclure</CardTitle>
-          <CardDescription>
-            Une entreprise dont le nom, le secteur ou les notes contiennent l&apos;un de ces mots est écartée
-            (score 0).
-          </CardDescription>
+          <CardDescription>Si le nom, le secteur ou les notes en contiennent un, l&apos;entreprise est écartée.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2 sm:max-w-md">
@@ -570,7 +535,7 @@ export function IcpForm({
       <Card>
         <CardHeader>
           <CardTitle>Comment le score est calculé</CardTitle>
-          <CardDescription>Sur 100 points, en quatre parties. Le détail de chaque fiche est affiché sur sa page.</CardDescription>
+          <CardDescription>Sur 100 points.</CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="space-y-1.5 text-sm">

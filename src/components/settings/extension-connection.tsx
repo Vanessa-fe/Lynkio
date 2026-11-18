@@ -101,10 +101,7 @@ export function ExtensionConnection({ accountEmail }: { accountEmail: string | n
             <CardTitle className="text-xl">Installer l&apos;extension</CardTitle>
             <Badge variant="secondary">Pas encore installée</Badge>
           </div>
-          <CardDescription>
-            L&apos;extension n&apos;est pas encore sur le Chrome Web Store : pour l&apos;instant, elle s&apos;installe à la
-            main, dans Google Chrome.
-          </CardDescription>
+          <CardDescription>Pas encore sur le Chrome Web Store : elle s&apos;installe à la main.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <ol className="list-decimal pl-5 space-y-2 text-sm">
@@ -163,8 +160,7 @@ export function ExtensionConnection({ accountEmail }: { accountEmail: string | n
         {status.connected && !otherAccount && (
           <p className="flex items-start gap-2 text-sm text-muted-foreground">
             <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
-            Sur le profil LinkedIn d&apos;une personne, le bouton « + Filonea » apparaît en bas à droite : il l&apos;ajoute
-            à vos personnes, après vérification.
+            Sur un profil LinkedIn, cliquez sur « + Filonea » pour l&apos;ajouter.
           </p>
         )}
         {error && <p className="text-sm text-destructive">{error}</p>}

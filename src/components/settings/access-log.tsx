@@ -13,10 +13,7 @@ export function AccessLog({ entries }: { entries: Entry[] }) {
     <Card>
       <CardHeader>
         <CardTitle>Journal d&apos;accès</CardTitle>
-        <CardDescription>
-          Les exports de vos données, les changements de clés personnelles et les nettoyages, gardés 12 mois. Personne
-          ne peut modifier ce journal.
-        </CardDescription>
+        <CardDescription>Gardé 12 mois, non modifiable.</CardDescription>
       </CardHeader>
       <CardContent>
         {entries.length === 0 ? (

@@ -57,7 +57,7 @@ export function SophieSettings({
     <Card>
       <CardHeader>
         <CardTitle>Conversation avec Sophie</CardTitle>
-        <CardDescription>Sophie répond avec votre clé IA : ces réglages limitent ce qu’elle consomme.</CardDescription>
+        <CardDescription>Pour limiter ce que Sophie consomme sur votre clé.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <label className="flex cursor-pointer items-start gap-2 text-sm">
