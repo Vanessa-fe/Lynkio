@@ -30,7 +30,6 @@ import { cn } from '@/lib/utils'
 import type { IcpProfile } from '@/types'
 import type { RecommendationView, SignalWeightOption } from '@/lib/queries/icp'
 import { SignalAdvisorDialog } from '@/components/settings/signal-advisor-dialog'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   SIGNAL_STATE_LABELS,
   SIGNAL_STATE_TONES,
@@ -40,7 +39,6 @@ import {
 } from '@/lib/constants/signals'
 import {
   DETECTABLE_TECHNOLOGIES,
-  TECHNOLOGY_LABELS,
   type DetectableTechnology,
 } from '@/lib/constants/technologies'
 
@@ -435,43 +433,8 @@ export function IcpForm({
         </CardContent>
       </Card>
 
-      {(isWebDeveloper || (icp.criteria as IcpCriteria | null)?.tech_stack?.length) ? (
-      <Card>
-        <CardHeader>
-          <CardTitle>Technologies qui vous intéressent</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Controller
-            name="techStack"
-            control={control}
-            render={({ field }) => (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {DETECTABLE_TECHNOLOGIES.map((tech) => {
-                  const checked = field.value.includes(tech)
-                  return (
-                    <div key={tech} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`tech-${tech}`}
-                        checked={checked}
-                        onCheckedChange={(value) =>
-                          field.onChange(
-                            value === true ? [...field.value, tech] : field.value.filter((item) => item !== tech)
-                          )
-                        }
-                        disabled={isSaving}
-                      />
-                      <Label htmlFor={`tech-${tech}`} className="font-normal">
-                        {TECHNOLOGY_LABELS[tech]}
-                      </Label>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          />
-        </CardContent>
-      </Card>
-      ) : null}
+      {/* « Technologies qui vous intéressent » retirée : trop propre au développement web. Les choix déjà
+          enregistrés restent dans les critères (techStack) */}
 
       <Card>
         <CardHeader>
@@ -538,25 +501,20 @@ export function IcpForm({
           <CardDescription>Sur 100 points.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-1.5 text-sm">
-            <li className="flex justify-between gap-4">
-              <span>Adéquation à votre recherche : secteur, taille, zone, ancienneté (sur les critères connus)</span>
-              <span className="font-medium tabular-nums shrink-0">50</span>
+          <ul className="list-disc space-y-1.5 pl-5 text-sm marker:text-primary">
+            <li>
+              <span className="font-medium">Adéquation · 50 points</span> : secteur, taille, zone, ancienneté
             </li>
-            <li className="flex justify-between gap-4">
-              <span>
-                Signaux d&apos;opportunité réglés ci-dessus, seulement s&apos;ils sont prouvés. Moitié des points pour une
-                hypothèse ou un signal ancien.
-              </span>
-              <span className="font-medium tabular-nums shrink-0">35</span>
+            <li>
+              <span className="font-medium">Signaux d&apos;opportunité · 35 points</span> : seulement s&apos;ils sont
+              prouvés, moitié pour une hypothèse ou un signal ancien
             </li>
-            <li className="flex justify-between gap-4">
-              <span>Fraîcheur : dernier signal de moins de 7 jours (1 mois, 3 mois)</span>
-              <span className="font-medium tabular-nums shrink-0">10 (5, 2)</span>
+            <li>
+              <span className="font-medium">Fraîcheur · 10 points</span> : signal de moins de 7 jours (5 à 1 mois, 2 à
+              3 mois)
             </li>
-            <li className="flex justify-between gap-4">
-              <span>Joignabilité : décideur identifié 2, e-mail de contact 2, site web connu 1</span>
-              <span className="font-medium tabular-nums shrink-0">5</span>
+            <li>
+              <span className="font-medium">Joignabilité · 5 points</span> : décideur 2, e-mail 2, site web 1
             </li>
           </ul>
         </CardContent>
