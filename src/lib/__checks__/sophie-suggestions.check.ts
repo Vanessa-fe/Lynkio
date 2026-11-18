@@ -70,7 +70,7 @@ test('nouvelles entreprises : une suggestion dont la clé suit la plus récente'
   ]
   const welcome = buildSophieWelcome({ ...empty, newDiscoveries: discoveries }, { now, dismissed: none })
   assert.equal(welcome.suggestions[0]!.key, 'discoveries:2026-11-17T06:00:00')
-  assert.equal(welcome.suggestions[0]!.label, 'Examiner les 2 nouvelles entreprises')
+  assert.equal(welcome.suggestions[0]!.label, 'Examiner les 2 découvertes de la semaine')
   assert.equal(welcome.suggestions[0]!.detail, 'La mieux notée : ACME (82/100)')
   const single = buildSophieWelcome({ ...empty, newDiscoveries: [discoveries[0]!] }, { now, dismissed: none })
   assert.equal(single.suggestions[0]!.href, '/companies/c1')

@@ -297,14 +297,49 @@ function SophieHistory() {
 
 /** Bouton pour ouvrir Sophie, présent sur toutes les pages connectées */
 export function SophieLauncher() {
-  const { open, openPanel } = useSophie()
+  const { open, openPanel, peek, dismissPeek, suggestions, firstName } = useSophie()
   const count = useSuggestionCount()
   if (open) return null
+  const summary =
+    suggestions?.summary ??
+    (firstName ? `Bonjour ${firstName}, je suis là si vous avez besoin de moi.` : 'Bonjour, je suis là si vous avez besoin de moi.')
+  return (
+    <>
+      {/* Mobile, à l'arrivée sur l'accueil : un aperçu qui laisse la page utilisable, le plein écran sur demande */}
+      {peek && (
+        <aside
+          aria-label="Aperçu de Sophie"
+          className="fixed inset-x-4 bottom-[calc(6rem+var(--cookie-banner-offset,0px))] z-40 flex items-start gap-3 rounded-2xl border border-ink/[0.07] bg-card p-3 shadow-lift sm:hidden"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-wine font-display text-xs font-semibold text-cream" aria-hidden="true">
+            S
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 text-sm leading-snug">{summary}</p>
+            <Button type="button" size="sm" className="mt-2 h-8" onClick={openPanel}>
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              {count > 0 ? `Voir ${count} suggestion${count > 1 ? 's' : ''}` : 'Ouvrir Sophie'}
+            </Button>
+          </div>
+          <Button type="button" variant="ghost" size="icon" className="-mr-1 -mt-1 h-8 w-8 shrink-0" onClick={dismissPeek} aria-label="Masquer l’aperçu de Sophie">
+            <X className="h-4 w-4" />
+          </Button>
+        </aside>
+      )}
+      <SophieButton count={count} onClick={openPanel} className={peek ? 'max-sm:hidden' : undefined} />
+    </>
+  )
+}
+
+function SophieButton({ count, onClick, className }: { count: number; onClick: () => void; className?: string }) {
   return (
     <button
       type="button"
-      onClick={openPanel}
-      className="fixed bottom-24 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-wine px-4 py-3 text-sm font-semibold text-cream shadow-lift transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:bottom-6 md:right-6"
+      onClick={onClick}
+      className={cn(
+        'fixed bottom-[calc(6rem+var(--cookie-banner-offset,0px))] right-4 z-40 inline-flex items-center gap-2 rounded-full bg-wine px-4 py-3 text-sm font-semibold text-cream shadow-lift transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:bottom-6 md:right-6',
+        className
+      )}
       aria-label={count > 0 ? `Ouvrir Sophie : ${count} suggestion${count > 1 ? 's' : ''}` : 'Ouvrir Sophie'}
     >
       <Sparkles className="h-4 w-4" aria-hidden="true" />

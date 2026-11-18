@@ -1,6 +1,6 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,20 @@ function isBannerOpen() {
  */
 export function CookieBanner() {
   const isOpen = useSyncExternalStore(subscribe, isBannerOpen, () => false)
+  const bannerRef = useRef<HTMLDivElement>(null)
+
+  // Hauteur du bandeau, pour que les boutons flottants (Sophie) se placent au-dessus au lieu d'être cachés
+  useEffect(() => {
+    const banner = bannerRef.current
+    const root = document.documentElement
+    if (!isOpen || !banner) return
+    const observer = new ResizeObserver(() => root.style.setProperty('--cookie-banner-offset', `${banner.offsetHeight + 12}px`))
+    observer.observe(banner)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--cookie-banner-offset')
+    }
+  }, [isOpen])
 
   const choose = (accepted: boolean) => {
     if (accepted) posthog.opt_in_capturing()
@@ -44,14 +58,16 @@ export function CookieBanner() {
 
   return (
     <div
+      ref={bannerRef}
       role="region"
       aria-label="Cookies"
-      className="fixed inset-x-4 bottom-4 z-[60] rounded-2xl border border-ink/[0.07] bg-white p-4 text-sm text-ink shadow-soft sm:inset-x-auto sm:left-4 sm:max-w-sm"
+      // Mobile : au-dessus du menu du bas (et de la zone de saisie de Sophie), plus compact
+      className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[60] rounded-2xl border border-ink/[0.07] bg-white p-3 text-sm text-ink shadow-soft sm:inset-x-auto sm:bottom-4 sm:left-4 sm:max-w-sm sm:p-4"
     >
       <p className="leading-relaxed text-ink/75">
-        Filonea mesure son audience avec PostHog, hébergé en Europe, pour comprendre comment le site est utilisé
-        et l&apos;améliorer. Rien n&apos;est revendu ni utilisé pour de la publicité. Vous acceptez les cookies de
-        mesure ?{' '}
+        Filonea mesure son audience avec PostHog, hébergé en Europe
+        <span className="max-sm:hidden">, pour comprendre comment le site est utilisé et l&apos;améliorer</span>.
+        Rien n&apos;est revendu ni utilisé pour de la publicité. Vous acceptez les cookies de mesure ?{' '}
         <Link href="/confidentialite#cookies" className="font-medium text-ink underline underline-offset-2 hover:text-brand-700">
           En savoir plus
         </Link>

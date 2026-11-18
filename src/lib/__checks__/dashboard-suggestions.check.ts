@@ -14,7 +14,7 @@ test('découvertes et relances du jour : une phrase et une question', () => {
   const welcome = dashboardWelcome({ ...quiet, newDiscoveries: 12, todayReminders: 2 })
   assert.equal(
     welcome.summary,
-    'Vous avez 12 nouvelles entreprises à examiner et 2 relances prévues aujourd’hui. Par quoi voulez-vous commencer ?'
+    'Vous avez 12 nouvelles entreprises à examiner cette semaine et 2 relances prévues aujourd’hui. Par quoi voulez-vous commencer ?'
   )
   assert.deepEqual(
     welcome.suggestions.map((suggestion) => suggestion.key),
@@ -30,13 +30,13 @@ test('les relances en retard passent en premier, et au plus trois suggestions', 
     unreadAlerts: 4,
     lastRunFailed: true,
   })
-  assert.equal(welcome.summary, 'Vous avez 1 nouvelle entreprise à examiner et 3 relances à faire, dont 1 en retard. Par quoi voulez-vous commencer ?')
+  assert.equal(welcome.summary, 'Vous avez 1 nouvelle entreprise à examiner cette semaine et 3 relances à faire, dont 1 en retard. Par quoi voulez-vous commencer ?')
   assert.deepEqual(
     welcome.suggestions.map((suggestion) => suggestion.key),
     ['overdue', 'discoveries', 'run-failed']
   )
   assert.equal(welcome.suggestions[0]!.label, 'Traiter 1 relance en retard')
-  assert.equal(welcome.suggestions[1]!.label, 'Examiner la nouvelle entreprise')
+  assert.equal(welcome.suggestions[1]!.label, 'Examiner la découverte de la semaine')
 })
 
 test('une seule chose : pas de question', () => {

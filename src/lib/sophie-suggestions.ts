@@ -127,7 +127,7 @@ export function buildSophieWelcome(facts: SuggestionFacts, options: { now: Date;
     all.push({
       key: `discoveries:${latest.slice(0, 19)}`,
       kind: 'discoveries',
-      label: count > 1 ? `Examiner les ${count} nouvelles entreprises` : `Examiner ${best.name}`,
+      label: count > 1 ? `Examiner les ${count} découvertes de la semaine` : `Examiner ${best.name}`,
       detail:
         count > 1
           ? `La mieux notée : ${best.name}${best.score !== null ? ` (${best.score}/100)` : ''}`

@@ -201,10 +201,13 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
   const setSearch = (value: string) => writeFilters({ ...filters, search: value })
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  // Nombre d'entreprises par étape, pour la vue d'ensemble du pipeline
+  // Nombre d'entreprises par étape, pour la vue d'ensemble du pipeline. Seulement les fiches en suivi
+  // commercial : une découverte porte l'étape de départ (« À contacter ») sans être en démarche, et le
+  // Kanban ne la montre pas non plus
   const countByStage = useMemo(() => {
     const counts = new Map<string, number>()
     for (const company of companies) {
+      if (!company.engaged_at) continue
       const key = company.stage_id ?? 'none'
       counts.set(key, (counts.get(key) ?? 0) + 1)
     }
@@ -219,7 +222,8 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term))
 
-    const matchesStage = stageFilter === ALL || (company.stage_id ?? 'none') === stageFilter
+    const matchesStage =
+      stageFilter === ALL || (company.engaged_at !== null && (company.stage_id ?? 'none') === stageFilter)
     const matchesPipeline = pipelineFilter === ALL || stateOf(company) === pipelineFilter
     const matchesSource = sourceFilter === ALL || company.source_id === sourceFilter
     const matchesSegment = segmentFilter === ALL || (company.segment ?? 'none') === segmentFilter
@@ -350,11 +354,12 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
         </div>
       </div>
 
-      {/* Vue d'ensemble du pipeline : un clic filtre sur l'étape */}
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer par étape">
+      {/* Vue d'ensemble du pipeline : un clic filtre sur l'étape (fiches en démarche seulement) */}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer le suivi commercial par étape">
+        <span className="text-xs font-medium text-muted-foreground">Suivi commercial :</span>
+        {/* Sans compteur : « Toutes » enlève le filtre d'étape, découvertes comprises */}
         <StageChip
           label="Toutes"
-          count={companies.length}
           active={stageFilter === ALL}
           onClick={() => setStageFilter(ALL)}
         />
@@ -612,7 +617,7 @@ function StageChip({
   onClick,
 }: {
   label: string
-  count: number
+  count?: number
   color?: string
   active: boolean
   onClick: () => void
@@ -630,7 +635,7 @@ function StageChip({
     >
       {color && <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />}
       {label}
-      <span className={cn('text-xs', active ? 'opacity-80' : 'text-muted-foreground')}>{count}</span>
+      {count !== undefined && <span className={cn('text-xs', active ? 'opacity-80' : 'text-muted-foreground')}>{count}</span>}
     </button>
   )
 }
