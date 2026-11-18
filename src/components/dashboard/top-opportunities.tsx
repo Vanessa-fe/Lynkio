@@ -31,12 +31,8 @@ export function TopOpportunities({ opportunities }: { opportunities: DashboardOp
                   className="flex items-center gap-3 py-3 rounded-md hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <CompanyScore score={company.score} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{company.name}</p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {[company.topSignal, company.city].filter(Boolean).join(' · ') || company.sector || '–'}
-                    </p>
-                  </div>
+                  {/* Le nom seul : le détail est sur la fiche */}
+                  <p className="min-w-0 flex-1 truncate font-medium">{company.name}</p>
                 </Link>
               </li>
             ))}

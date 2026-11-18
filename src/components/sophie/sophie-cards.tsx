@@ -87,10 +87,7 @@ function CompaniesCard({ card }: { card: Extract<SophieCard, { type: 'companies'
           <li key={item.id}>
             <Link href={`/companies/${item.id}`} className="flex items-center gap-2 rounded py-2 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <CompanyScore score={item.score} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{item.name}</span>
-                <span className="block truncate text-xs text-muted-foreground">{item.detail}</span>
-              </span>
+              <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
             </Link>
           </li>
         ))}
