@@ -29,7 +29,10 @@ export function dashboardWelcome(facts: DashboardFacts): Welcome {
   const parts: string[] = []
   const reminders = facts.overdueReminders + facts.todayReminders
   if (facts.newDiscoveries > 0) {
-    parts.push(plural(facts.newDiscoveries, 'nouvelle entreprise à examiner', 'nouvelles entreprises à examiner'))
+    // Périmètre affiché : les découvertes de la semaine, pas toutes celles à examiner (liste Entreprises)
+    parts.push(
+      plural(facts.newDiscoveries, 'nouvelle entreprise à examiner', 'nouvelles entreprises à examiner') + ' cette semaine'
+    )
   }
   if (reminders > 0) {
     parts.push(
@@ -62,7 +65,7 @@ export function dashboardWelcome(facts: DashboardFacts): Welcome {
   if (facts.newDiscoveries > 0) {
     suggestions.push({
       key: 'discoveries',
-      label: `Examiner ${facts.newDiscoveries > 1 ? `les ${facts.newDiscoveries} nouvelles entreprises` : 'la nouvelle entreprise'}`,
+      label: `Examiner ${facts.newDiscoveries > 1 ? `les ${facts.newDiscoveries} découvertes de la semaine` : 'la découverte de la semaine'}`,
       href: '/companies?vue=tableau',
     })
   }

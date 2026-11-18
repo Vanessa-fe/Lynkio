@@ -47,13 +47,15 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           <div className="flex items-center gap-1">
             {access.allowed && (
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/settings">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Paramètres
+                {/* Page hors de la navigation habituelle : un retour explicite vers l'application */}
+                <Link href="/dashboard">
+                  <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                  <span className="max-sm:hidden">Retour au tableau de bord</span>
+                  <span className="sm:hidden">Tableau de bord</span>
                 </Link>
               </Button>
             )}
-            <LogoutButton />
+            <LogoutButton compact />
           </div>
         </div>
       </header>

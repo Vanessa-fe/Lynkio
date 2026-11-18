@@ -14,7 +14,7 @@ type NavItem = {
 // de Contacts, Relances s'appelle Suivi
 export const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Tableau de bord', shortLabel: 'Accueil', icon: Home },
-  { href: '/prospection', label: 'Prospection', shortLabel: 'Sophie', icon: Radar },
+  { href: '/prospection', label: 'Prospection', shortLabel: 'Prospection', icon: Radar },
   { href: '/companies', label: 'Entreprises', shortLabel: 'Sociétés', icon: Building2 },
   { href: '/people', label: 'Contacts', shortLabel: 'Contacts', icon: Users, also: ['/lists'] },
   { href: '/reminders', label: 'Suivi', shortLabel: 'Suivi', icon: Bell },

@@ -37,6 +37,9 @@ type SophieState = {
   setView: (view: 'chat' | 'history') => void
   openPanel: () => void
   closePanel: () => void
+  // Aperçu sur mobile : l'ouverture automatique n'y prend pas tout l'écran
+  peek: boolean
+  dismissPeek: () => void
   context: SophiePageContext
   hasAiKey: boolean
   providerLabel: string | null
@@ -70,6 +73,9 @@ export function useSophie(): SophieState {
 }
 
 const OPEN_KEY = 'filonea:sophie-open'
+const PEEK_KEY = 'filonea:sophie-peek'
+// En dessous, le panneau prend tout l'écran : l'ouverture automatique n'y montre qu'un aperçu
+const PANEL_MEDIA = '(min-width: 640px)'
 const CONVERSATION_KEY = 'filonea:sophie-conversation'
 // Ouverture automatique déjà faite (ou panneau fermé volontairement) pendant cette session
 const AUTO_OPENED_KEY = 'filonea:sophie-auto-opened'
@@ -118,6 +124,7 @@ export function SophieProvider({
   const context = useMemo(() => readContext(pathname), [pathname])
   // Ouvert ou fermé : gardé pour la session (on retrouve le panneau après un rechargement)
   const [open] = useSessionState(OPEN_KEY, (raw) => raw === true)
+  const [peek] = useSessionState(PEEK_KEY, (raw) => raw === true)
   const [view, setView] = useState<'chat' | 'history'>('chat')
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [title, setTitle] = useState<string | null>(null)
@@ -213,7 +220,12 @@ export function SophieProvider({
     setResumeDone(true)
   }, [loadConversation])
 
-  const openPanel = useCallback(() => writeSessionState(OPEN_KEY, true), [])
+  const openPanel = useCallback(() => {
+    writeSessionState(PEEK_KEY, false)
+    writeSessionState(OPEN_KEY, true)
+  }, [])
+
+  const dismissPeek = useCallback(() => writeSessionState(PEEK_KEY, false), [])
 
   const closePanel = useCallback(() => {
     writeSessionState(OPEN_KEY, false)
@@ -235,7 +247,9 @@ export function SophieProvider({
     const active = document.activeElement
     if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
     setSession(AUTO_OPENED_KEY, '1')
-    writeSessionState(OPEN_KEY, true)
+    // Sur mobile, le panneau couvrirait l'accueil : un aperçu, le plein écran seulement sur demande
+    if (window.matchMedia(PANEL_MEDIA).matches) writeSessionState(OPEN_KEY, true)
+    else writeSessionState(PEEK_KEY, true)
   }, [autoOpen, pathname])
 
   const newConversation = useCallback(() => {
@@ -348,6 +362,8 @@ export function SophieProvider({
     setView,
     openPanel,
     closePanel,
+    peek,
+    dismissPeek,
     context,
     hasAiKey,
     providerLabel,
