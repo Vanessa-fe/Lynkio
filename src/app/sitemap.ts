@@ -8,6 +8,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 1,
     },
+    {
+      url: `${SITE_URL}/contact`,
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
     ...['/mentions-legales', '/conditions', '/confidentialite'].map((path) => ({
       url: `${SITE_URL}${path}`,
       changeFrequency: 'yearly' as const,

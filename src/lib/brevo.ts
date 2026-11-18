@@ -8,6 +8,9 @@ const BREVO_API_URL = 'https://api.brevo.com/v3'
 // (Expéditeurs, domaines et IP dédiées).
 const TEAM_INBOX = 'contact@filonea.fr'
 
+// Boîte du formulaire d'aide (questions, problèmes, facturation)
+const SUPPORT_INBOX = 'support@filonea.fr'
+
 // Liste Brevo « Inscrits Filonea » : tous les comptes confirmés (e-mails de l'essai) ; les e-mails
 // marketing ne vont qu'aux contacts OPT_IN = oui (numéro de liste visible dans Contacts > Listes)
 const SIGNUP_LIST_ID = 3
@@ -141,4 +144,33 @@ export function notifyFeedback(feedback: { email: string | null; kind: string; m
         .join('\n'),
     })
   )
+}
+
+/**
+ * Transmet un message du formulaire d'aide à support@filonea.fr ; « Répondre » écrit à la personne.
+ * Attendu (pas after) : si l'envoi échoue, la personne le sait et peut écrire directement.
+ */
+export async function sendSupportRequest(request: {
+  name: string
+  email: string
+  topicLabel: string
+  message: string
+  userId: string | null
+  accountEmail: string | null
+}) {
+  return brevoRequest('/smtp/email', {
+    sender: { name: 'Filonea', email: process.env.BREVO_FROM_EMAIL || TEAM_INBOX },
+    to: [{ email: SUPPORT_INBOX }],
+    replyTo: { email: request.email, name: request.name },
+    subject: `Aide : ${request.topicLabel} (${request.name})`,
+    textContent: [
+      request.message,
+      '—',
+      `De : ${request.name} <${request.email}>`,
+      `Sujet : ${request.topicLabel}`,
+      request.userId
+        ? `Compte connecté : ${request.accountEmail ?? 'adresse inconnue'} (${request.userId})`
+        : 'Envoyé sans être connecté',
+    ].join('\n'),
+  })
 }

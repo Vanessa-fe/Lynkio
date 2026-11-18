@@ -135,9 +135,15 @@ export function LoginForm({
               </Link>
             </p>
           )}
-          <Link href="/" className="text-sm text-center text-muted-foreground hover:underline">
-            Découvrir Filonea
-          </Link>
+          <p className="text-sm text-center text-muted-foreground">
+            <Link href="/" className="hover:underline">
+              Découvrir Filonea
+            </Link>
+            {' · '}
+            <Link href="/contact" className="hover:underline">
+              Besoin d&apos;aide ?
+            </Link>
+          </p>
         </CardFooter>
       </form>
     </Card>

@@ -1,7 +1,8 @@
 import { Lightbulb } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FeedbackForm } from '@/components/feedback/feedback-form'
-import { FEEDBACK_KINDS } from '@/lib/validations/feedback'
+import Link from 'next/link'
+import { FEEDBACK_KIND_LABELS } from '@/lib/validations/feedback'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 
@@ -27,8 +28,15 @@ export default async function IdeasPage() {
           Boîte à idées
         </h1>
         <p className="text-muted-foreground mt-2">
-          Un besoin, une fonction qui vous manque, quelque chose à améliorer ou qui ne marche pas ? Dites-le : chaque
-          message est lu, et Filonea évolue avec vos retours.
+          Une fonction qui vous manque, quelque chose à améliorer ? Dites-le : chaque idée est lue, et Filonea évolue
+          avec vos retours.
+        </p>
+        <p className="text-sm text-muted-foreground mt-2">
+          Un problème ou une question ? Écrivez plutôt à l&apos;
+          <Link href="/help" className="text-primary underline-offset-4 hover:underline">
+            aide
+          </Link>
+          , nous vous répondons par e-mail.
         </p>
       </div>
 
@@ -45,7 +53,7 @@ export default async function IdeasPage() {
               {(sent ?? []).map((item) => (
                 <li key={item.id} className="py-3 text-sm">
                   <p className="text-xs text-muted-foreground">
-                    {FEEDBACK_KINDS.find((kind) => kind.value === item.kind)?.label ?? item.kind} ·{' '}
+                    {FEEDBACK_KIND_LABELS[item.kind] ?? item.kind} ·{' '}
                     {dateFormat.format(new Date(item.created_at))}
                   </p>
                   <p className="mt-1 whitespace-pre-line">{item.message}</p>

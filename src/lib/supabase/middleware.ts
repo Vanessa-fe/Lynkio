@@ -1,4 +1,4 @@
-import { LEGAL_ROUTES } from '@/lib/constants/legal'
+import { LEGAL_ROUTES, PUBLIC_ROUTES } from '@/lib/constants/legal'
 import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 import type { Database } from '@/types/database'
@@ -67,9 +67,11 @@ export async function updateSession(request: NextRequest) {
   const isAuthCallback = ['/auth/callback', '/auth/confirm'].includes(request.nextUrl.pathname)
   // Pages légales : lisibles par tout le monde, connecté ou non
   const isLegalRoute = LEGAL_ROUTES.includes(request.nextUrl.pathname)
+  // Formulaire d'aide : aussi pour les visiteurs et les personnes qui ne peuvent plus se connecter
+  const isOpenRoute = PUBLIC_ROUTES.includes(request.nextUrl.pathname)
   // Lien « ne plus être contacté » des e-mails de prospection : ouvert par des personnes sans compte
   const isOptOutRoute = request.nextUrl.pathname.startsWith('/stop/')
-  const isPublicRoute = isAuthRoute || isAuthCallback || isLegalRoute || isOptOutRoute
+  const isPublicRoute = isAuthRoute || isAuthCallback || isLegalRoute || isOpenRoute || isOptOutRoute
 
   // Redirection si non authentifié et accès à une route protégée
   if (!user && !isPublicRoute && request.nextUrl.pathname !== '/') {

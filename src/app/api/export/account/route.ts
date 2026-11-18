@@ -86,7 +86,7 @@ export async function GET() {
     }
   } catch (error) {
     captureServerError(error, user.id, { action: 'export_account' })
-    return NextResponse.json({ error: 'Export impossible pour le moment : réessayez, ou écrivez-nous.' }, { status: 500 })
+    return NextResponse.json({ error: 'Export impossible pour le moment : réessayez, ou écrivez à support@filonea.fr.' }, { status: 500 })
   }
 
   const counts = { companies: data.companies?.length ?? 0, contacts: data.company_contacts?.length ?? 0 }

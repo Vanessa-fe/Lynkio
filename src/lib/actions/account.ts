@@ -33,11 +33,11 @@ export async function deleteAccount(confirmation: string): Promise<ActionResult>
         error instanceof FunctionsHttpError
           ? ((await error.context.json().catch(() => null)) as { error?: string } | null)?.error
           : null
-      return { success: false, error: detail ?? 'Suppression impossible pour le moment : réessayez, ou écrivez-nous.' }
+      return { success: false, error: detail ?? 'Suppression impossible pour le moment : réessayez, ou écrivez à support@filonea.fr.' }
     }
   } catch (error) {
     captureServerError(error, user.id, { action: 'delete_account' })
-    return { success: false, error: 'Suppression impossible pour le moment : réessayez, ou écrivez-nous.' }
+    return { success: false, error: 'Suppression impossible pour le moment : réessayez, ou écrivez à support@filonea.fr.' }
   }
 
   // Le compte n'existe plus : le reste ne doit pas bloquer la personne
