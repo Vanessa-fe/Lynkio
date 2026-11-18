@@ -66,9 +66,6 @@ export function ProspectionBand({
               </motion.span>
             </AnimatePresence>
           </p>
-          <p className="text-sm text-cream/60">
-            Décrivez-le avec vos mots : Sophie en fait une recherche, que vous relisez avant de la lancer.
-          </p>
         </div>
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
           <Button
@@ -92,7 +89,7 @@ export function ProspectionBand({
             className="text-cream hover:bg-cream/10 hover:text-cream"
           >
             <Plus className="mr-2 size-4" />
-            Remplir le formulaire
+            Nouvelle recherche
           </Button>
           {atLimit && (
             <p className="text-xs text-cream/70 lg:max-w-48">
