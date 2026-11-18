@@ -93,9 +93,6 @@ export default async function ListsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold md:text-4xl">Contacts</h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">
-            Regroupez vos contacts pour les contacter ensemble sur LinkedIn ou les exporter.
-          </p>
           <div className="mt-4">
             <ContactsTabs active="lists" />
           </div>
@@ -119,10 +116,7 @@ export default async function ListsPage() {
       {lists.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-start gap-4 py-10">
-            <p className="text-muted-foreground max-w-xl">
-              Aucune liste pour l&apos;instant. Dans Personnes, cochez les personnes à regrouper, puis cliquez sur
-              « Ajouter à une liste ».
-            </p>
+            <p className="text-muted-foreground max-w-xl">Aucune liste. Dans Personnes, cochez des contacts puis « Ajouter à une liste ».</p>
             <Button asChild>
               <Link href="/people">
                 <Users className="w-4 h-4 mr-2" />
@@ -146,10 +140,7 @@ export default async function ListsPage() {
           <h2 className="font-display text-xl font-semibold tracking-tight text-secondary-foreground">
             Du premier contact à la <span className="accent-serif text-primary">conversation</span>
           </h2>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Regroupez vos contacts par cible : dans Personnes, cochez-les puis « Ajouter à une liste ». Sophie prépare
-            ensuite les messages, que vous relisez avant l&apos;envoi.
-          </p>
+          <p className="max-w-2xl text-sm text-muted-foreground">Dans Personnes, cochez des contacts puis « Ajouter à une liste ».</p>
         </div>
         <Button variant="outline" asChild className="group shrink-0 bg-white">
           <Link href="/people">

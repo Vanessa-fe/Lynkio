@@ -40,11 +40,6 @@ export default async function ProspectionPage() {
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-3xl font-bold">Prospection</h1>
-        <p className="text-muted-foreground mt-2">
-          Sophie cherche pour vous les entreprises qui correspondent à votre profil de client, dans le registre
-          officiel des entreprises.
-          Celles qu&apos;elle retient arrivent dans Entreprises, parmi vos découvertes.
-        </p>
       </div>
 
       <ProspectionBand

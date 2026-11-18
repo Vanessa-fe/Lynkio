@@ -114,10 +114,7 @@ export function StrategiesCard({
               <Search className="h-5 w-5 text-primary" aria-hidden />
               Vos recherches
             </CardTitle>
-            <CardDescription className="mt-1.5">
-              Des entreprises qui correspondent à votre profil de client : secteur, taille, zone. Sophie les cherche
-              dans le registre officiel, sans IA, et ne vous montre jamais deux fois la même.
-            </CardDescription>
+            <CardDescription className="mt-1.5">Secteur, taille, zone : Sophie cherche dans le registre officiel, sans IA.</CardDescription>
           </div>
           <div className="flex shrink-0 flex-col gap-1 sm:items-end">
             <div className="flex flex-col gap-2 sm:flex-row">

@@ -36,7 +36,6 @@ export default async function BoampPage({ searchParams }: { searchParams: Params
       <Link href="/prospection" className="text-sm underline">Retour à la prospection</Link>
       <header>
         <h1 className="text-3xl font-bold">Marchés publics de services</h1>
-        <p className="mt-2 text-muted-foreground">Consultez les appels d’offres publiés au BOAMP dont l’échéance est encore à venir.</p>
       </header>
       <form action="/prospection/boamp" method="get" className="grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-2">
         <input type="hidden" name="search" value="1" />

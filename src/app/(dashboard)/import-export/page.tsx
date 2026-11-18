@@ -19,9 +19,6 @@ export default async function ImportExportPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Import / Export</h1>
-        <p className="text-muted-foreground mt-2">
-          Ajoutez des entreprises et des personnes depuis un fichier CSV, ou récupérez les vôtres
-        </p>
       </div>
 
       {plan === 'pro' ? (

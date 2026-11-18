@@ -194,10 +194,7 @@ export function CompanyInteractions({
       </CardHeader>
       <CardContent>
         {interactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-6">
-            Notez ici chaque e-mail, message, appel ou rendez-vous : la date du dernier échange
-            vous aidera à savoir quand relancer. Sophie peut aussi préparer votre premier message.
-          </p>
+          <p className="text-sm text-muted-foreground text-center py-6">Notez chaque e-mail, message, appel ou rendez-vous.</p>
         ) : (
           <div className="relative">
             <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-border" aria-hidden="true" />

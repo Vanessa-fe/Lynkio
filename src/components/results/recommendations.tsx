@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SMALL_SAMPLE } from '@/lib/funnel'
 import type { Suggestion } from '@/lib/prospect-recommendations'
 
@@ -71,7 +71,6 @@ export function Recommendations({ suggestions, scope }: { suggestions: Suggestio
     <Card>
       <CardHeader>
         <CardTitle>Pistes de prospection</CardTitle>
-        <CardDescription>À partir de vos fiches sur la période et avec les filtres sélectionnés.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {!suggestions.some(s => s.kind === 'compare') && <p>Les résultats disponibles ne permettent pas encore de privilégier un secteur ou une recherche.</p>}
@@ -84,7 +83,8 @@ export function Recommendations({ suggestions, scope }: { suggestions: Suggestio
           <p className="mt-2">Les étapes sont celles de l’entonnoir. Les fiches récentes ont eu moins de temps pour aboutir.
             Les écarts observés peuvent tenir au suivi des fiches, à leur ancienneté ou au hasard des comparaisons.</p>
         </details>
-        {suggestions.length > 0 && <p className="text-xs text-muted-foreground">Approuver ou ignorer mémorise votre choix dans ce navigateur. Vous gardez la main sur vos recherches.</p>}
+        {suggestions.length > 0 && <p className="text-xs text-muted-foreground">Votre choix est gardé dans ce navigateur.</p>
+}
       </CardContent>
     </Card>
   )

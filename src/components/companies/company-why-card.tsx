@@ -183,9 +183,7 @@ export function CompanyWhyCard({
             </span>
           </h3>
           <p>{suggestion.angle}</p>
-          <p className="text-xs text-muted-foreground">
-            Pourquoi : {suggestion.because}. C’est une piste pour votre premier message, pas un besoin constaté.
-          </p>
+          <p className="text-xs text-muted-foreground">Pourquoi : {suggestion.because}. Une piste, pas un besoin constaté.</p>
         </section>
 
         {unknowns.length > 0 && (

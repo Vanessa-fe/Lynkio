@@ -23,7 +23,6 @@ export default async function RemindersPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold md:text-4xl">Suivi</h1>
-          <p className="text-muted-foreground mt-2">Vos relances : aujourd&apos;hui, en retard et à venir.</p>
         </div>
         <div className="shrink-0">
           <ReminderFormDialog companies={companies} />

@@ -249,10 +249,7 @@ export function StrategyAssistantDialog({
               </div>
 
               {isLast && (
-                <p className="text-xs text-muted-foreground">
-                  Un seul appel à votre IA, payé par votre clé : en général quelques centimes au plus, gratuit avec une clé
-                  Gemini gratuite. Aucune entreprise n’est recherchée à cette étape.
-                </p>
+                <p className="text-xs text-muted-foreground">Un seul appel à votre IA : quelques centimes au plus.</p>
               )}
 
               {error && (
@@ -353,9 +350,7 @@ export function StrategyAssistantDialog({
                 </div>
               )}
 
-              <p className="text-xs text-muted-foreground">
-                Proposition de votre IA, à vérifier. Rien n’est enregistré ni lancé avant votre confirmation.
-              </p>
+              <p className="text-xs text-muted-foreground">Proposition à vérifier : rien n’est lancé sans votre accord.</p>
 
               {error && (
                 <p className="text-sm text-destructive" role="alert">
