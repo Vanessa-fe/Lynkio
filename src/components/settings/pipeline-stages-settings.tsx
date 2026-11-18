@@ -76,10 +76,7 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
             <CardTitle>Étapes du pipeline</CardTitle>
-            <CardDescription>
-              Le parcours d&apos;une entreprise, dans l&apos;ordre. Renommez les étapes librement : leur nature et
-              ce à quoi elles correspondent permettent à Sophie et aux statistiques de les comprendre.
-            </CardDescription>
+            <CardDescription>Renommez-les librement.</CardDescription>
           </div>
           <Button size="sm" onClick={() => setEditing('new')} className="shrink-0">
             <Plus className="w-4 h-4 mr-2" />

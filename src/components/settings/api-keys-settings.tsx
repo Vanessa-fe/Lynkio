@@ -212,12 +212,7 @@ function AiKeyCard({
           <Sparkles className="h-5 w-5 text-primary" />
           Votre IA
         </CardTitle>
-        <CardDescription>
-          Sophie a besoin d&apos;une clé API pour rédiger vos messages et faire
-          ses recherches : ChatGPT (OpenAI), Claude (Anthropic) ou Gemini
-          (Google). Créez une clé API, puis collez-la ci-dessous : Filonea
-          s&apos;occupe du reste.
-        </CardDescription>
+        <CardDescription>ChatGPT (OpenAI), Claude (Anthropic) ou Gemini (Google) : collez votre clé API.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {saved.length > 0 && (

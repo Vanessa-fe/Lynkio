@@ -77,11 +77,7 @@ export function DataRetentionSettings({ settings, preview }: Props) {
     <Card>
       <CardHeader>
         <CardTitle>Durée de conservation</CardTitle>
-        <CardDescription>
-          Le RGPD demande de ne pas garder indéfiniment les données de prospects restés sans suite. Choisissez la durée ;
-          vos clients, les fiches avec un échange ou un rappel récent et les personnes qui ont demandé à ne plus être
-          contactées sont toujours gardés.
-        </CardDescription>
+        <CardDescription>Pour les prospects restés sans suite. Vos clients et les fiches récentes sont toujours gardés.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">

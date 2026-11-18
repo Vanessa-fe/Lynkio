@@ -104,10 +104,7 @@ export function OfferForm({ offer, dayRate }: { offer: Offer; dayRate: number | 
       <Card>
         <CardHeader>
           <CardTitle>Vos prestations</CardTitle>
-          <CardDescription>
-            Ce que vous proposez, avec vos mots. Sophie s’en servira pour choisir la bonne prestation selon
-            l’entreprise. Le prix est facultatif et reste privé.
-          </CardDescription>
+          <CardDescription>Avec vos mots. Le prix est facultatif et reste privé.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {services.length === 0 && (
@@ -219,9 +216,7 @@ export function OfferForm({ offer, dayRate }: { offer: Offer; dayRate: number | 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle>Vos objectifs</CardTitle>
-              <CardDescription className="mt-1.5">
-                Ce que vous visez. Le tableau de bord vous montre où vous en êtes. Laissez vide ce qui ne vous parle pas.
-              </CardDescription>
+              <CardDescription className="mt-1.5">Laissez vide ce qui ne vous parle pas.</CardDescription>
             </div>
             <Button type="button" variant="outline" size="sm" onClick={applySuggestions} className="shrink-0">
               <Wand2 className="mr-2 h-4 w-4" />

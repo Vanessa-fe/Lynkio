@@ -24,11 +24,7 @@ export default async function AccountSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Vos données</CardTitle>
-          <CardDescription>
-            Téléchargez à tout moment vos entreprises, leurs contacts et leur suivi dans un fichier lisible par un tableur
-            (Excel, Google Sheets), ou l&apos;ensemble de vos données (réglages, échanges, listes, journal…) dans un
-            fichier complet, pour les garder ou les reprendre ailleurs.
-          </CardDescription>
+          <CardDescription>Vos entreprises en tableur (Excel, Google Sheets), ou toutes vos données dans un fichier complet.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           <Button variant="outline" asChild>

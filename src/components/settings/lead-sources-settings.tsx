@@ -6,7 +6,7 @@ import { ArrowDown, ArrowUp, Lock, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -64,7 +64,6 @@ export function LeadSourcesSettings({ sources, usage }: LeadSourcesSettingsProps
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
             <CardTitle>Sources</CardTitle>
-            <CardDescription>D&apos;où viennent vos entreprises : utile pour savoir ce qui marche le mieux.</CardDescription>
           </div>
           <Button size="sm" onClick={() => setEditing('new')} className="shrink-0">
             <Plus className="w-4 h-4 mr-2" />

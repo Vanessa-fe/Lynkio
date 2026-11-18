@@ -38,7 +38,6 @@ export function Preferences(props: Props) {
       <input type="checkbox" name="email" checked={email} onChange={(e) => setEmail(e.target.checked)} />
       Recevoir aussi ces alertes par e-mail
     </label>
-    <p className="text-sm text-muted-foreground">Les alertes arrivent toujours dans Filonéa. Vous pouvez désactiver chaque abonnement ici.</p>
     <Button size="sm" disabled={pending}>Enregistrer mes préférences</Button>
     <p role="status" className="text-sm">{status}</p>
   </form>

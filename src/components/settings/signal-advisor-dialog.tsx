@@ -156,10 +156,7 @@ export function SignalAdvisorDialog({ open, onOpenChange, hasAiKey, services, in
               />
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Un seul appel à votre IA, sans recherche sur Internet, payé par votre clé : en général quelques centimes au
-              plus. Aucune entreprise n’est recherchée à cette étape.
-            </p>
+            <p className="text-xs text-muted-foreground">Un seul appel à votre IA : quelques centimes au plus.</p>
 
             {error && (
               <p className="text-destructive" role="alert">
@@ -213,10 +210,7 @@ export function SignalAdvisorDialog({ open, onOpenChange, hasAiKey, services, in
               </div>
             )}
 
-            <p className="text-xs text-muted-foreground">
-              Ce sont des pistes, pas des besoins confirmés. Les points que vous avez réglés vous-même restent
-              prioritaires.
-            </p>
+            <p className="text-xs text-muted-foreground">Des pistes, pas des besoins confirmés.</p>
 
             {error && (
               <p className="text-destructive" role="alert">

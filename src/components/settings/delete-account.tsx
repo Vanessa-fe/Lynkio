@@ -40,10 +40,7 @@ export function DeleteAccount() {
     <Card className="border-destructive/40">
       <CardHeader>
         <CardTitle className="text-destructive">Supprimer mon compte</CardTitle>
-        <CardDescription>
-          Votre compte et toutes vos données sont effacés tout de suite et définitivement : entreprises, personnes,
-          échanges, listes, réglages et clés enregistrées. Pensez à exporter vos entreprises avant.
-        </CardDescription>
+        <CardDescription>Tout est effacé, définitivement. Exportez vos entreprises avant.</CardDescription>
       </CardHeader>
       <CardContent>
         {isOpen ? (

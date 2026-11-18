@@ -63,11 +63,7 @@ export function MessageSettingsForm({ pitch, signature }: MessageSettingsFormPro
       <Card>
         <CardHeader>
           <CardTitle>Votre présentation</CardTitle>
-          <CardDescription>
-            Qui vous êtes, ce que vous faites et pour qui, en deux ou trois phrases. Sophie en tire la phrase qui
-            vous présente dans chaque message. Elle n&apos;invente rien : sans présentation, elle se limite à votre
-            métier et à vos technologies.
-          </CardDescription>
+          <CardDescription>Qui vous êtes, ce que vous faites et pour qui, en deux ou trois phrases.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Label htmlFor="pitch" className="sr-only">
@@ -90,10 +86,7 @@ export function MessageSettingsForm({ pitch, signature }: MessageSettingsFormPro
       <Card>
         <CardHeader>
           <CardTitle>Signature des e-mails</CardTitle>
-          <CardDescription>
-            Ajoutée telle quelle à la fin des e-mails préparés. Les messages LinkedIn sont signés de votre
-            prénom. Sans signature, Sophie met votre prénom et le nom de votre activité.
-          </CardDescription>
+          <CardDescription>Ajoutée à la fin des e-mails. Sinon : votre prénom et votre activité.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Label htmlFor="signature" className="sr-only">

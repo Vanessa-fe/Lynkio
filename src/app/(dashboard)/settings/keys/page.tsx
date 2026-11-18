@@ -23,10 +23,7 @@ export default async function ApiKeysSettingsPage() {
 
       <p className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-        <span>
-          Vos clés sont vérifiées puis chiffrées. Filonea ne les affiche plus jamais (seulement leurs 4 derniers
-          caractères) et ne s&apos;en sert que pour les demandes que vous faites à Sophie.
-        </span>
+        <span>Vos clés sont vérifiées, chiffrées et jamais réaffichées.</span>
       </p>
 
       <ApiKeysSettings savedKeys={savedKeys} aiProvider={aiProvider} />

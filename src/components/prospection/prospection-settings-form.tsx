@@ -9,7 +9,7 @@ import { CheckCircle2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -133,10 +133,6 @@ export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 
     <Card>
       <CardHeader>
         <CardTitle>Réglages de la recherche</CardTitle>
-        <CardDescription>
-          Sophie repère des entreprises dans vos départements, puis les complète avec les données officielles :
-          ancienneté, activité, taille, dirigeants.
-        </CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
@@ -189,10 +185,6 @@ export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 
           <section className="space-y-3">
             <div>
               <h3 className="font-semibold">Intermédiaires acceptés</h3>
-              <p className="text-sm text-muted-foreground">
-                Dans les offres d&apos;emploi, gardez ou écartez celles publiées par un intermédiaire plutôt que par
-                l&apos;entreprise elle-même.
-              </p>
             </div>
             <Controller
               name="acceptedIntermediaries"
@@ -417,9 +409,6 @@ export function ProspectionSettingsForm({ settings, maxDays = 7, maxCompanies = 
                 </Select>
               )}
             />
-            <p className="text-sm text-muted-foreground">
-              Mieux vaut peu d&apos;entreprises bien suivies qu&apos;une longue liste jamais traitée.
-            </p>
           </section>
 
           {/* Secteurs ignorés */}
