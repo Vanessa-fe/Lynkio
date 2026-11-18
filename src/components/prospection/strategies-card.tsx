@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, Search, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -114,7 +114,6 @@ export function StrategiesCard({
               <Search className="h-5 w-5 text-primary" aria-hidden />
               Vos recherches
             </CardTitle>
-            <CardDescription className="mt-1.5">Secteur, taille, zone : Sophie cherche dans le registre officiel, sans IA.</CardDescription>
           </div>
           <div className="flex shrink-0 flex-col gap-1 sm:items-end">
             <div className="flex flex-col gap-2 sm:flex-row">
