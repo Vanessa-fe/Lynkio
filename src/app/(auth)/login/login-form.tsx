@@ -48,10 +48,18 @@ export function LoginForm({
     setError(null)
     setIsLoading(true)
 
+    // Chargement de la page suivante en cours : le bouton reste en attente jusqu'au changement de page
+    let leaving = false
     try {
       const result = await login(data, redirectTo)
 
       // Action réussie : le serveur redirige et ne renvoie rien (la navigation est déjà en cours)
+      if (result?.success && result.redirectTo) {
+        // Chargement complet : la page arrive entière, avec son menu (voir actions/auth.ts)
+        leaving = true
+        window.location.assign(result.redirectTo)
+        return
+      }
       if (result && !result.success && result.error) {
         setError(result.error)
       }
@@ -60,7 +68,7 @@ export function LoginForm({
       if (isNavigationError(err)) return
       setError('Une erreur inattendue est survenue')
     } finally {
-      setIsLoading(false)
+      if (!leaving) setIsLoading(false)
     }
   }
 

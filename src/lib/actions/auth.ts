@@ -25,6 +25,12 @@ import {
 type ActionResult = {
   success: boolean
   error?: string
+  /**
+   * Page où aller ensuite. Le navigateur la charge entièrement (window.location) au lieu d'une navigation
+   * interne : en passant des pages de connexion à l'application, Safari et Chrome sur iPhone n'affichaient
+   * parfois que le haut du tableau de bord (le reste vide, sans le menu) jusqu'à un rechargement.
+   */
+  redirectTo?: string
 }
 
 /**
@@ -96,8 +102,7 @@ export async function login(data: LoginInput, requestedPath?: string | null): Pr
     }
   }
 
-  revalidatePath('/', 'layout')
-  redirect(destination)
+  return { success: true, redirectTo: destination }
 }
 
 /**
@@ -268,6 +273,5 @@ export async function updatePassword(data: UpdatePasswordInput): Promise<ActionR
     }
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  return { success: true, redirectTo: '/dashboard' }
 }

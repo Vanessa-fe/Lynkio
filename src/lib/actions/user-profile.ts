@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -32,6 +31,8 @@ function firstSearchName(sectors: string[], departments: string[]): string {
 type ActionResult = {
   success: boolean
   error?: string
+  // Page à charger entièrement ensuite (voir actions/auth.ts)
+  redirectTo?: string
 }
 
 /**
@@ -185,8 +186,8 @@ export async function completeOnboarding(data: OnboardingInput): Promise<ActionR
     }
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  // Chargement complet du tableau de bord côté navigateur (voir redirectTo dans actions/auth.ts)
+  return { success: true, redirectTo: '/dashboard' }
 }
 
 /**
