@@ -13,10 +13,6 @@ export default async function ProspectionSettingsPage() {
 
       <div>
         <h1 className="text-3xl font-bold">Recherche de Sophie</h1>
-        <p className="text-muted-foreground mt-2">
-          Où, quand et quoi chercher. Les résultats arrivent dans Entreprises, et l&apos;historique des recherches
-          reste dans Prospection.
-        </p>
       </div>
 
       {plan === 'essentiel' && (

@@ -15,10 +15,6 @@ export default async function IcpSettingsPage() {
 
       <div>
         <h1 className="text-3xl font-bold">Client idéal</h1>
-        <p className="text-muted-foreground mt-2">
-          Ce qui compte pour vous dans une entreprise. Sophie s&apos;en sert pour noter chaque entreprise sur 100
-          et vous montrer les plus prometteuses en premier.
-        </p>
       </div>
 
       {plan === 'essentiel' && (

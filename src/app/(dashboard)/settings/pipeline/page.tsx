@@ -11,9 +11,6 @@ export default async function PipelineSettingsPage() {
 
       <div>
         <h1 className="text-3xl font-bold">Étapes et sources</h1>
-        <p className="text-muted-foreground mt-2">
-          Organisez votre pipeline de prospection comme vous travaillez.
-        </p>
       </div>
 
       <PipelineSimplifyAssistant stages={stages} usage={usage.byStage} />
