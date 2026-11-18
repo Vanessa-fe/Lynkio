@@ -38,6 +38,8 @@ sql() {
     -d postgres -At -F '|' -v ON_ERROR_STOP=1 -v email="$email" -f - 2>/tmp/verifier-compte.err
 }
 brevo() { curl -s -w '\n%{http_code}' -H "api-key: $BREVO_KEY" -H 'Accept: application/json' "$BREVO$1"; }
+# Adresse encodée pour une URL : le « + » d'un alias Gmail deviendrait sinon une espace
+url() { jq -rn --arg v "$1" '$v|@uri'; }
 
 # --- Base Filonéa ---------------------------------------------------------------------------------------
 print "\nFilonéa ($email)"
@@ -86,7 +88,7 @@ fi
 
 # --- Fiche Brevo ----------------------------------------------------------------------------------------
 print "\nBrevo"
-reponse=$(brevo "/contacts/${email//@/%40}?identifierType=email_id")
+reponse=$(brevo "/contacts/$(url "$email")?identifierType=email_id")
 code="${reponse##*$'\n'}"; corps="${reponse%$'\n'*}"
 if [[ "$etape" == suppression ]]; then
   [[ "$code" == 404 ]] && bon "Fiche retirée de Brevo" || faux "La fiche existe encore dans Brevo (code $code)"
@@ -114,7 +116,7 @@ fi
 # --- E-mails envoyés par Filonéa (3 derniers jours) -----------------------------------------------------
 if [[ "$etape" != suppression ]]; then
   print "\nE-mails envoyés par Filonéa (3 derniers jours)"
-  evenements() { brevo "/smtp/statistics/events?limit=50&days=3&sort=desc&email=${1//@/%40}" | sed '$d'; }
+  evenements() { brevo "/smtp/statistics/events?limit=100&days=3&sort=desc&email=$(url "$1")" | sed '$d'; }
   recus=$(evenements "$email" | jq -r '.events[]? | select(.event == "delivered" or .event == "requests") | .subject' | sort -u)
   if [[ -n "$recus" ]]; then
     print -r -- "$recus" | while IFS= read -r sujet; do bon "Au compte : $sujet"; done
@@ -122,7 +124,7 @@ if [[ "$etape" != suppression ]]; then
     faux "Aucun e-mail envoyé à cette adresse (confirmation d'inscription attendue)"
   fi
   if [[ "$etape" == inscription ]]; then
-    alerte=$(evenements contact@filonea.fr | jq -r --arg e "$email" '.events[]? | select(.subject | test($e; "i")) | .subject' | head -1)
+    alerte=$(evenements contact@filonea.fr | jq -r --arg e "$email" '.events[]? | select((.subject // "") | ascii_downcase | contains($e)) | .subject' | head -1)
     [[ -n "$alerte" ]] && bon "Alerte reçue sur contact@filonea.fr : $alerte" || faux "Pas d'alerte « Nouvelle inscription » sur contact@filonea.fr"
   fi
   info "Scénarios Brevo (bienvenue, remerciement) : à vérifier dans la boîte de réception du compte."
