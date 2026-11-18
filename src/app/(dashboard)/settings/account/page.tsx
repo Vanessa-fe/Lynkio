@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { ArrowLeft, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccessLog } from '@/components/settings/access-log'
@@ -14,12 +13,6 @@ export default async function AccountSettingsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <Button variant="ghost" size="sm" asChild>
-        <Link href="/settings">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Paramètres
-        </Link>
-      </Button>
 
       <div>
         <h1 className="text-3xl font-bold">Mon compte</h1>

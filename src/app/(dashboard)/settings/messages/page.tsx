@@ -1,6 +1,3 @@
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { MessageSettingsForm } from '@/components/settings/message-settings-form'
 import { getUserProfile } from '@/lib/queries/user-profile'
 
@@ -9,12 +6,6 @@ export default async function MessageSettingsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <Button variant="ghost" size="sm" asChild>
-        <Link href="/settings">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Paramètres
-        </Link>
-      </Button>
 
       <div>
         <h1 className="text-3xl font-bold">Messages de Sophie</h1>

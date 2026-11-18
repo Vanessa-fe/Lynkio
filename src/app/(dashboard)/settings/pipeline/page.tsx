@@ -1,6 +1,3 @@
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { PipelineStagesSettings } from '@/components/settings/pipeline-stages-settings'
 import { LeadSourcesSettings } from '@/components/settings/lead-sources-settings'
 import { PipelineSimplifyAssistant } from '@/components/settings/pipeline-simplify-assistant'
@@ -11,12 +8,6 @@ export default async function PipelineSettingsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <Button variant="ghost" size="sm" asChild>
-        <Link href="/settings">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Paramètres
-        </Link>
-      </Button>
 
       <div>
         <h1 className="text-3xl font-bold">Étapes et sources</h1>
