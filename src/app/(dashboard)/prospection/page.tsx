@@ -37,7 +37,7 @@ export default async function ProspectionPage() {
   const nextRunAt = await getNextScheduledRun(settings, availableAt)
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Prospection</h1>
       </div>

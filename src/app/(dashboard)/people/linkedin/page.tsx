@@ -29,7 +29,7 @@ export default async function LinkedinOutreachPage({ searchParams }: LinkedinOut
       : { href: '/people', label: 'Personnes' }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       <Button variant="ghost" size="sm" asChild>
         <Link href={back.href}>
           <ArrowLeft className="w-4 h-4 mr-2" />
