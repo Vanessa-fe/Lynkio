@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Gauge } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SUGGESTED_GOALS } from '@/lib/validations/offer'
 import type { GoalProgress } from '@/lib/queries/offer'
@@ -51,11 +51,6 @@ export function GoalsBarometer({ progress }: { progress: GoalProgress }) {
           <Gauge className="h-5 w-5 text-primary" aria-hidden />
           Vos objectifs
         </CardTitle>
-        <CardDescription>
-          {hasGoals
-            ? 'D’après vos échanges notés et vos fiches signées.'
-            : 'Fixez-vous un rythme : Sophie vous montrera où vous en êtes.'}
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {hasGoals ? (

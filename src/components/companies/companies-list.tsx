@@ -26,13 +26,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { deleteCompany } from '@/lib/actions/companies'
-import { companyAge, formatEuros, individualLabel } from '@/lib/validations/company'
+import { companyAge, formatEuros } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
 import { CompanyScore, CompanyStageSelect } from './company-stage-select'
 import { ProspectingToggle } from './prospecting-toggle'
-import { SegmentBadge } from './company-segment'
 import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
 
 interface CompaniesListProps {
@@ -278,12 +277,12 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
   // Compteurs du haut : tout, les découvertes à examiner, et le suivi commercial en cours (lot 1.8b)
   const countState = (state: string) => companies.filter((company) => stateOf(company) === state).length
   const tiles = [
-    { key: ALL, label: 'Entreprises', detail: 'Votre portefeuille', icon: Building2, count: companies.length },
-    { key: 'discovered', label: 'Découvertes', detail: 'À examiner', icon: Filter, count: countState('discovered') },
+    { key: ALL, label: 'Entreprises', icon: Building2, count: companies.length },
+    { key: 'discovered', label: 'Découvertes', icon: Filter, count: countState('discovered') },
     {
       key: 'engaged',
       label: 'En démarche',
-      detail: 'Votre suivi commercial',
+     
       icon: MessagesSquare,
       count: countState('engaged'),
     },
@@ -309,7 +308,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-3 sm:gap-4" role="group" aria-label="Filtrer par étape (raccourcis)">
-        {tiles.map(({ key, label, detail, icon: Icon, count }) => {
+        {tiles.map(({ key, label, icon: Icon, count }) => {
           const active = pipelineFilter === key && stageFilter === ALL
           return (
             <button
@@ -334,7 +333,6 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
                 duration={1}
                 className="mt-1.5 block font-display text-2xl font-bold tabular-nums tracking-tight sm:text-3xl"
               />
-              <span className="mt-1 block text-xs text-muted-foreground sm:text-sm">{detail}</span>
             </button>
           )
         })}
@@ -526,21 +524,10 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
               {sortedCompanies.map((company) => (
                 <TableRow key={company.id}>
                   <TableCell>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/companies/${company.id}`} className="font-medium hover:underline">
-                        {company.name}
-                      </Link>
-                      <SegmentBadge segment={company.segment} />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {[
-                        company.kind === 'individual' && individualLabel(company),
-                        company.city,
-                        company.sector,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ') || 'Ville et secteur non renseignés'}
-                    </p>
+                    {/* Le nom seul : ville, secteur et catégorie sont sur la fiche */}
+                    <Link href={`/companies/${company.id}`} className="font-medium hover:underline">
+                      {company.name}
+                    </Link>
                   </TableCell>
                   <TableCell>
                     {/* Découverte : on décide d'abord de la prospecter ; ensuite, l'étape se choisit ici */}

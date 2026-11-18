@@ -27,7 +27,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Counter } from '@/components/motion/counter'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { analyzeCompanyWebsite, deleteCompany } from '@/lib/actions/companies'
 import { technologyLabel } from '@/lib/constants/technologies'
 import {
@@ -342,7 +342,6 @@ export function CompanyDetail({
 
           <CollapsibleCard
             title={isIndividual ? 'Informations' : 'Informations sur l’entreprise'}
-            description={isIndividual ? 'Coordonnées, source et notes.' : 'Site, SIREN, création, chiffre d’affaires, taille et notes.'}
           >
             <CardContent className="space-y-6">
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -483,9 +482,6 @@ export function CompanyDetail({
           <Card>
             <CardHeader>
               <CardTitle>Relances</CardTitle>
-              <CardDescription>
-                {isIndividual ? 'Les rappels liés à cette personne' : 'Les rappels liés à cette entreprise'}
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <RemindersList reminders={reminders} totalCount={reminders.length} companyId={company.id} />
@@ -631,7 +627,6 @@ function CompatibilityTile({ score }: { score: number | null }) {
           <span className="text-xl font-semibold opacity-60"> / 100</span>
         </p>
       )}
-      <p className="mt-1 text-xs opacity-70">Selon vos critères de client idéal</p>
     </div>
   )
 }

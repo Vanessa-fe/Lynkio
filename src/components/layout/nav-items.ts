@@ -13,12 +13,12 @@ type NavItem = {
 // Six entrées (lot 1.10) : Pipeline commercial est dans Entreprises (vue Kanban), Listes est un onglet
 // de Contacts, Relances s'appelle Suivi
 export const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Tableau de bord', shortLabel: 'Accueil', icon: Home },
+  { href: '/dashboard', label: 'Accueil', shortLabel: 'Accueil', icon: Home },
   { href: '/prospection', label: 'Prospection', shortLabel: 'Prospection', icon: Radar },
-  { href: '/companies', label: 'Entreprises', shortLabel: 'Sociétés', icon: Building2 },
+  { href: '/companies', label: 'Entreprises', shortLabel: 'Entreprises', icon: Building2 },
   { href: '/people', label: 'Contacts', shortLabel: 'Contacts', icon: Users, also: ['/lists'] },
   { href: '/reminders', label: 'Suivi', shortLabel: 'Suivi', icon: Bell },
-  { href: '/settings', label: 'Paramètres', shortLabel: 'Réglages', icon: Settings },
+  { href: '/settings', label: 'Paramètres', shortLabel: 'Paramètres', icon: Settings },
 ]
 
 export function isActivePath(pathname: string, href: string) {

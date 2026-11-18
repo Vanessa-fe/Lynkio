@@ -50,8 +50,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                 {/* Page hors de la navigation habituelle : un retour explicite vers l'application */}
                 <Link href="/dashboard">
                   <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
-                  <span className="max-sm:hidden">Retour au tableau de bord</span>
-                  <span className="sm:hidden">Tableau de bord</span>
+                  Retour à l&apos;accueil
                 </Link>
               </Button>
             )}
@@ -76,7 +75,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
               {billing?.status === 'trialing' ? 'est enregistré.' : 'est actif.'} Vos factures sont dans « Gérer mon
               abonnement ».{' '}
               <Link href="/dashboard" className="font-medium underline underline-offset-4">
-                Retour au tableau de bord
+                Retour à l&apos;accueil
               </Link>
             </p>
           </div>

@@ -78,7 +78,6 @@ export function RemindersWeek({ reminders, now }: { reminders: ReminderWithRelat
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-xs text-muted-foreground">Survolez un jour pour voir ses relances.</p>
       </CardContent>
     </Card>
   )

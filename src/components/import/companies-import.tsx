@@ -139,20 +139,14 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
     <Card>
       <CardHeader>
         <CardTitle>Importer des entreprises et des personnes</CardTitle>
-        <CardDescription>
-          Un fichier CSV avec une entreprise par ligne, et si besoin un contact. Colonnes reconnues : Nom (ou
-          Entreprise, Société), Site web, SIREN ou SIRET, Ville, Code postal, Secteur, Taille, Source, Notes,
-          Montant estimé, Prochaine action, Prénom, Nom du contact, Poste, E-mail, Téléphone, LinkedIn. Les autres
-          colonnes sont ignorées. Une ligne sans entreprise mais avec le nom d&apos;une personne devient une
-          personne seule.
-        </CardDescription>
+        <CardDescription>Un CSV, une entreprise par ligne (avec un contact si besoin). Téléchargez le modèle plus bas pour les colonnes.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {step === 'upload' && (
           <div className="rounded-lg border-2 border-dashed p-8 text-center space-y-3">
             <FileUp className="w-8 h-8 mx-auto text-muted-foreground" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">
-              Au plus {MAX_IMPORT_ROWS} lignes. Rien n&apos;est importé avant votre confirmation.
+              Au plus {MAX_IMPORT_ROWS} lignes, rien n&apos;est importé sans votre accord.
             </p>
             <input
               ref={inputRef}

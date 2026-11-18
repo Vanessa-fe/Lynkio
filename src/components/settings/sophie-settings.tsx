@@ -67,7 +67,7 @@ export function SophieSettings({
             className="mt-0.5"
           />
           <span>
-            Ouvrir Sophie à mon arrivée sur le tableau de bord
+            Ouvrir Sophie à mon arrivée sur l’accueil
             <span className="block text-xs text-muted-foreground">Une fois par visite ; si vous la fermez, elle reste fermée.</span>
           </span>
         </label>

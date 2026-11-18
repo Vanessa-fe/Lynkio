@@ -30,7 +30,6 @@ export function CompanyStageHistory({ events }: { events: CompanyStageEvent[] })
     // Section secondaire, repliée (lot 1.7)
     <CollapsibleCard
       title={`Historique des étapes (${events.length})`}
-      description="Chaque changement d’étape, daté. Les changements d’avant la mise en place du suivi ne sont pas connus."
     >
       <CardContent>
         <ol className="space-y-3">

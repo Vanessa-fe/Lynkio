@@ -194,7 +194,7 @@ export function CompanyInteractions({
       </CardHeader>
       <CardContent>
         {interactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-6">Notez chaque e-mail, message, appel ou rendez-vous.</p>
+          null /* « Aucun échange enregistré » est déjà dit dans l'en-tête */
         ) : (
           <div className="relative">
             <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-border" aria-hidden="true" />

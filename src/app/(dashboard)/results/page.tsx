@@ -23,15 +23,14 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
       <Button variant="ghost" size="sm" asChild>
         <Link href="/dashboard">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Tableau de bord
+          Accueil
         </Link>
       </Button>
 
       <div>
         <h1 className="text-3xl font-bold">Vos résultats</h1>
         <p className="text-muted-foreground mt-2">
-          Ce que deviennent les entreprises ajoutées {since ? `depuis le ${formatDate(since, 'd MMMM yyyy')}` : 'depuis le début'}
-          , étape par étape.
+          {since ? `Depuis le ${formatDate(since, 'd MMMM yyyy')}` : 'Depuis le début'}
         </p>
       </div>
 
@@ -54,10 +53,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                 return (
                   <li key={step.key} className="space-y-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 text-sm">
-                      <span>
-                        <span className="font-medium">{step.label}</span>{' '}
-                        <span className="text-muted-foreground">· {step.hint}</span>
-                      </span>
+                      <span className="font-medium">{step.label}</span>
                       <span className="tabular-nums">
                         <span className="font-semibold">{step.count}</span>
                         {rate && (
@@ -74,16 +70,16 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                     <div className="h-2.5 overflow-hidden rounded-full bg-muted" aria-hidden>
                       <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round((step.count / widest) * 100)}%` }} />
                     </div>
-                    {rate?.small && (
-                      <p className="text-xs text-amber-700 dark:text-amber-400">
-                        Petit échantillon ({rate.denominator} entreprise{rate.denominator > 1 ? 's' : ''}) : ce taux peut beaucoup varier, il ne permet pas
-                        encore de conclure.
-                      </p>
-                    )}
                   </li>
                 )
               })}
             </ol>
+          )}
+          {/* Une seule mention pour tout l'entonnoir, au lieu d'une sous chaque étape */}
+          {found > 0 && result.rates.some((rate) => rate.small) && (
+            <p className="mt-4 text-xs text-amber-700 dark:text-amber-400">
+              Petit échantillon : ces taux sont encore indicatifs.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -116,18 +112,12 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
             Comment c’est calculé
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            On part des entreprises ajoutées pendant la période (et correspondant aux filtres). Une étape est atteinte
-            d’après l’étape de la fiche, son historique d’étapes (suivi depuis sa mise en place) et vos échanges
-            notés : un envoi = contactée, une réponse reçue = réponse, un rendez-vous noté = rendez-vous.
-          </p>
-          <p>
-            Chaque taux se lit « tant sur tant » par rapport à l’étape d’avant. « — » veut dire qu’il n’y a pas encore de
-            donnée, ce qui n’est pas la même chose que 0 %. Sous {SMALL_SAMPLE} entreprises, un taux est signalé comme
-            petit échantillon.
-          </p>
-          <p>Ces chiffres décrivent ce qui s’est passé ; ils ne disent pas pourquoi.</p>
+        <CardContent>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground marker:text-primary">
+            <li>Base : les entreprises ajoutées pendant la période, selon les filtres.</li>
+            <li>Chaque taux se compare à l’étape d’avant. « — » : pas encore de donnée.</li>
+            <li>Sous {SMALL_SAMPLE} entreprises : petit échantillon.</li>
+          </ul>
         </CardContent>
       </Card>
     </div>

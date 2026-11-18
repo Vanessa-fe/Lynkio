@@ -6,7 +6,7 @@ import { Mail, Phone, Plus, Pencil, Trash2, Ban, Undo2, User, Search } from 'luc
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { deleteCompanyContact, setCompanyContactLinkedin, setCompanyContactOptOut } from '@/lib/actions/company-contacts'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
@@ -96,9 +96,6 @@ export function CompanyContacts({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <CardTitle>{isIndividual ? 'Coordonnées' : 'Contacts'}</CardTitle>
-            <CardDescription>
-              {isIndividual ? 'Pour joindre cette personne' : 'Les personnes à qui écrire dans cette entreprise'}
-            </CardDescription>
           </div>
           {(!isIndividual || contacts.length === 0) && (
             <Button size="sm" onClick={() => openDialog()}>
