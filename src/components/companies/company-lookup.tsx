@@ -65,9 +65,7 @@ export function CompanyLookup({ disabled, onPick }: CompanyLookupProps) {
           <Sparkles className="w-4 h-4 text-primary" />
           Retrouver l&apos;entreprise
         </Label>
-        <p className="text-xs text-muted-foreground">
-          Tapez son nom, son SIREN ou collez son site : Sophie cherche dans le registre officiel et remplit la fiche. Vous vérifiez avant d&apos;enregistrer.
-        </p>
+        <p className="text-xs text-muted-foreground">Nom, SIREN ou site : Sophie remplit la fiche, vous vérifiez.</p>
       </div>
 
       <div className="flex gap-2">
@@ -123,9 +121,7 @@ export function CompanyLookup({ disabled, onPick }: CompanyLookupProps) {
             </Button>
           )}
           {result.source === 'name' && (
-            <p className="text-xs text-muted-foreground">
-              Vous ne la voyez pas ? Son nom officiel peut être différent du nom que vous connaissez (par exemple pour la filiale française d’un groupe étranger). Essayez avec son SIREN ou son site : le résultat sera exact.
-            </p>
+            <p className="text-xs text-muted-foreground">Vous ne la voyez pas ? Essayez son SIREN ou son site.</p>
           )}
         </div>
       )}

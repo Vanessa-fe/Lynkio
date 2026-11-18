@@ -100,17 +100,11 @@ export function CompanyDeepDiveCard({ companyId, analysis, hasAiKey }: CompanyDe
           <Search className="h-5 w-5 text-primary" aria-hidden />
           Approfondir avec Sophie
         </CardTitle>
-        <CardDescription>
-          Sophie cherche sur Internet les annonces publiques de cette entreprise liées à vos prestations : ouverture,
-          lancement, nouvelle marque, projet… Seuls les faits datés, à la source vérifiée, deviennent des signaux.
-        </CardDescription>
+        <CardDescription>Annonces publiques liées à vos prestations. Seuls les faits datés et sourcés deviennent des signaux.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         {waiting ? (
-          <p className="flex items-center gap-2 text-muted-foreground" role="status">
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            Sophie cherche… cela prend souvent une minute. Vous pouvez quitter la page, l’analyse continue.
-          </p>
+          <p className="flex items-center gap-2 text-muted-foreground" role="status">Environ une minute. Vous pouvez quitter la page.</p>
         ) : analysis?.status === 'done' ? (
           <div className="space-y-4">
             <p className="text-muted-foreground">

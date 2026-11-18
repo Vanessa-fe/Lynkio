@@ -459,10 +459,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
           <CardContent className="p-10 text-center space-y-3">
             <Building2 className="w-10 h-10 mx-auto text-muted-foreground" />
             <p className="font-medium">Aucune entreprise pour l&apos;instant</p>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ajoutez une entreprise à la main, ou lancez une recherche dans Prospection : les entreprises
-              trouvées arrivent ici comme découvertes, à examiner.
-            </p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">Ajoutez une entreprise, ou lancez une recherche dans Prospection.</p>
           </CardContent>
         </Card>
       ) : filteredCompanies.length === 0 ? (

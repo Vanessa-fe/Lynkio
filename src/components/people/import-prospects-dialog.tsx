@@ -197,10 +197,7 @@ function LinkedinInstructions({ onBack }: { onBack: () => void }) {
         </li>
       </ol>
 
-      <p className="text-xs text-muted-foreground">
-        Le bouton lit seulement le profil affiché, quand vous cliquez : rien n&apos;est aspiré en masse, et rien
-        n&apos;est enregistré sans votre validation. Si la personne est déjà dans Filonea, Filonea vous le signale.
-      </p>
+      <p className="text-xs text-muted-foreground">Seul le profil affiché est lu, et rien n&apos;est enregistré sans votre accord.</p>
     </div>
   )
 }

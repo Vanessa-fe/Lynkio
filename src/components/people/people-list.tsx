@@ -287,10 +287,7 @@ export function PeopleList({ people, lists, activeListId }: PeopleListProps) {
           <CardContent className="p-10 text-center space-y-3">
             <Users className="w-10 h-10 mx-auto text-muted-foreground" />
             <p className="font-medium">Aucune personne pour l&apos;instant</p>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ajoutez une personne seule (un indépendant, un contact LinkedIn) ou avec son entreprise.
-              Les contacts de vos entreprises apparaissent aussi ici.
-            </p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">Ajoutez une personne seule ou avec son entreprise.</p>
           </CardContent>
         </Card>
       ) : activeList && inList.length === 0 ? (

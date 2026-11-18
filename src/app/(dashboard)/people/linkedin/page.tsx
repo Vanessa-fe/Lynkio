@@ -39,9 +39,6 @@ export default async function LinkedinOutreachPage({ searchParams }: LinkedinOut
 
       <div>
         <h1 className="text-3xl font-bold">Envoi LinkedIn</h1>
-        <p className="text-muted-foreground mt-2 max-w-3xl">
-          Les invitations et messages préparés par Sophie, personne par personne.
-        </p>
       </div>
 
       <LinkedinQueue

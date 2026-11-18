@@ -19,9 +19,6 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold md:text-4xl">Contacts</h1>
-          <p className="text-muted-foreground mt-2">
-            Les personnes que vous prospectez. Leur statut suit les échanges que vous notez.
-          </p>
           <div className="mt-4">
             <ContactsTabs active="people" />
           </div>

@@ -40,9 +40,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
       <Card>
         <CardHeader>
           <CardTitle>Entonnoir</CardTitle>
-          <CardDescription>
-            Chaque entreprise compte à l’étape la plus avancée qu’elle a atteinte, et à toutes celles d’avant.
-          </CardDescription>
+          <CardDescription>Chaque entreprise compte à l’étape la plus avancée atteinte.</CardDescription>
         </CardHeader>
         <CardContent>
           {found === 0 ? (

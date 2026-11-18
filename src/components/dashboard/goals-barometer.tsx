@@ -80,10 +80,8 @@ export function GoalsBarometer({ progress }: { progress: GoalProgress }) {
           </>
         ) : (
           <div className="space-y-3 text-sm">
-            <p className="text-muted-foreground">
-              Par exemple : {SUGGESTED_GOALS.contactsPerWeek} prises de contact par semaine et{' '}
-              {SUGGESTED_GOALS.clientsPerMonth} nouveaux clients par mois. À adapter selon vos envies.
-            </p>
+            <p className="text-muted-foreground">Par exemple : {SUGGESTED_GOALS.contactsPerWeek} prises de contact par semaine et{' '}
+              {SUGGESTED_GOALS.clientsPerMonth} nouveaux clients par mois.</p>
             <Button asChild variant="outline" size="sm">
               <Link href="/settings/offer">Choisir mes objectifs</Link>
             </Button>

@@ -76,10 +76,7 @@ function ScoreV2({ reasons }: { reasons: ScoreReason[] }) {
           </section>
         )
       })}
-      <p className="text-xs text-muted-foreground">
-        ? = information que Sophie ne connaît pas : elle ne fait ni monter ni baisser le score. Le score dit à quel point
-        la fiche correspond, pas la probabilité de signer.
-      </p>
+      <p className="text-xs text-muted-foreground">? = information inconnue, sans effet sur le score.</p>
     </div>
   )
 }

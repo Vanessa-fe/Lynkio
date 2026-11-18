@@ -124,9 +124,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                 label={access.paymentIssue ? 'Mettre à jour ma carte' : 'Gérer mon abonnement'}
                 variant={access.paymentIssue ? 'destructive' : 'default'}
               />
-              <p className="text-sm text-muted-foreground">
-                Sur l&apos;espace sécurisé de Stripe : changer d&apos;offre ou de carte, télécharger vos factures, résilier.
-              </p>
+              <p className="text-sm text-muted-foreground">Changer d&apos;offre ou de carte, factures, résiliation.</p>
             </CardContent>
           </Card>
         )}
@@ -154,9 +152,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
               <div className="space-y-1.5">
                 <CardTitle>{endedSubscription ? 'Votre abonnement a pris fin' : 'Votre essai gratuit est terminé'}</CardTitle>
-                <CardDescription>
-                  Choisissez une offre pour continuer : vos entreprises, vos contacts et vos réglages vous attendent.
-                </CardDescription>
+                <CardDescription>Choisissez une offre : vos données vous attendent.</CardDescription>
               </div>
             </CardHeader>
           </Card>
@@ -179,9 +175,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Elles restent à vous</CardTitle>
-                <CardDescription>
-                  Téléchargez vos entreprises, leurs contacts et leur suivi, même sans abonnement.
-                </CardDescription>
+                <CardDescription>Même sans abonnement.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button variant="outline" asChild>

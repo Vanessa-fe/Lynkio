@@ -57,10 +57,7 @@ export function UnidentifiedOffers({ offers, companies }: UnidentifiedOffersProp
     <Card>
       <CardHeader>
         <CardTitle>Offres à identifier</CardTitle>
-        <CardDescription>
-          Ces offres ne disent pas qui recrute. En ouvrant l&apos;annonce (description, adresse, contact),
-          vous pouvez souvent retrouver l&apos;entreprise, puis la rattacher.
-        </CardDescription>
+        <CardDescription>Elles ne disent pas qui recrute : l&apos;annonce permet souvent de le retrouver.</CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="divide-y">
@@ -268,11 +265,7 @@ function LinkOfferDialog({
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground rounded-md bg-muted p-3">
-            Offre publiée par un cabinet de recrutement (Michael Page, Hays…) ? Le cabinet n&apos;est pas
-            votre client : cherchez l&apos;entreprise qui recrute (secteur, ville, taille, projet décrits
-            dans l&apos;annonce). Si elle reste introuvable, ignorez l&apos;offre.
-          </p>
+          <p className="text-xs text-muted-foreground rounded-md bg-muted p-3">Cabinet de recrutement ? Cherchez l&apos;entreprise qui recrute, sinon ignorez l&apos;offre.</p>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>

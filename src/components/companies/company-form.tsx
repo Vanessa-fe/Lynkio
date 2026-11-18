@@ -314,9 +314,7 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
                   ))}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">
-                Renseignez le site officiel de l’entreprise. Vérifiez que ses conditions autorisent la lecture automatisée avant de lancer l’analyse.
-              </p>
+              <p className="text-xs text-muted-foreground">Vérifiez que ses conditions autorisent la lecture automatisée.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -518,11 +516,6 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
             </div>
           </section>
 
-          {!isEditing && (
-            <p className="text-sm text-muted-foreground">
-              Vous pourrez ajouter les personnes à contacter depuis la fiche de l&apos;entreprise.
-            </p>
-          )}
         </CardContent>
         <CardFooter className="flex gap-2">
           <Button type="submit" disabled={isLoading}>
