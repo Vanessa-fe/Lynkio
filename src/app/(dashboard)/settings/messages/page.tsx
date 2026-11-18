@@ -9,10 +9,6 @@ export default async function MessageSettingsPage() {
 
       <div>
         <h1 className="text-3xl font-bold">Messages de Sophie</h1>
-        <p className="text-muted-foreground mt-2">
-          Sur la fiche d&apos;une entreprise, Sophie peut préparer votre premier message à partir de ce qu&apos;elle
-          sait de l&apos;entreprise. Ce qu&apos;elle doit savoir de vous se règle ici.
-        </p>
       </div>
 
       <MessageSettingsForm pitch={profile?.message_pitch ?? null} signature={profile?.message_signature ?? null} />

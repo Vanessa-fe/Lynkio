@@ -29,10 +29,6 @@ export default async function NotificationsPage() {
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-3xl font-bold">Alertes de Sophie</h1>
-        <p className="text-muted-foreground mt-2">
-          Les nouveaux signaux sur les entreprises que vous suivez, et le bilan de vos actions chaque semaine. Rien n’est
-          activé sans votre accord.
-        </p>
       </div>
 
       <Preferences frequency={preferences.frequency} digest={preferences.digest} email={preferences.email} />

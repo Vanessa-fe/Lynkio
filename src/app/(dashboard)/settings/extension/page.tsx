@@ -12,10 +12,6 @@ export default async function ExtensionSettingsPage() {
 
       <div>
         <h1 className="text-3xl font-bold">Extension LinkedIn</h1>
-        <p className="text-muted-foreground mt-2">
-          L&apos;extension Chrome de Filonea ajoute un bouton « + Filonea » sur les profils LinkedIn et envoie vos
-          invitations et les messages de Sophie à votre rythme.
-        </p>
       </div>
 
       <ExtensionConnection accountEmail={user?.email ?? null} />

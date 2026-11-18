@@ -27,16 +27,11 @@ export default async function IdeasPage() {
           <Lightbulb className="h-7 w-7 text-amber-500" aria-hidden />
           Boîte à idées
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Une fonction qui vous manque, quelque chose à améliorer ? Dites-le : chaque idée est lue, et Filonea évolue
-          avec vos retours.
-        </p>
         <p className="text-sm text-muted-foreground mt-2">
-          Un problème ou une question ? Écrivez plutôt à l&apos;
+          Un problème ?{' '}
           <Link href="/help" className="text-primary underline-offset-4 hover:underline">
-            aide
+            Passez par l&apos;aide
           </Link>
-          , nous vous répondons par e-mail.
         </p>
       </div>
 

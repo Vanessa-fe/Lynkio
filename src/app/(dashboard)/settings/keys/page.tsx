@@ -19,11 +19,6 @@ export default async function ApiKeysSettingsPage() {
 
       <div>
         <h1 className="text-3xl font-bold">Vos clés</h1>
-        <p className="text-muted-foreground mt-2">
-          Sophie utilise vos propres comptes pour l&apos;IA et la recherche d&apos;e-mails : vous payez directement chaque
-          service, au prix coûtant, sans intermédiaire. Les recherches d&apos;entreprises (offres d&apos;emploi,
-          créations) et le suivi de vos prospects n&apos;ont besoin d&apos;aucune clé.
-        </p>
       </div>
 
       <p className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">

@@ -11,9 +11,6 @@ export default async function OfferSettingsPage() {
 
       <div>
         <h1 className="text-3xl font-bold">Mon offre et mes objectifs</h1>
-        <p className="text-muted-foreground mt-2">
-          Ce que vous proposez, comment vous travaillez et ce que vous visez. Tout est à vous : rien n’est imposé.
-        </p>
       </div>
 
       {offer ? (
