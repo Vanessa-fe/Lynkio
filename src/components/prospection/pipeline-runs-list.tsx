@@ -39,7 +39,7 @@ function plural(count: number, singular: string, pluralForm: string) {
 
 export function PipelineRunsList({ runs }: { runs: PipelineRun[] }) {
   return (
-    <CollapsibleCard title="Historique" description="Les dernières recherches de Sophie">
+    <CollapsibleCard title="Historique">
       <CardContent>
         {runs.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">Aucune recherche pour l&apos;instant.</p>

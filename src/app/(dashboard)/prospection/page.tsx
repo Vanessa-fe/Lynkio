@@ -49,10 +49,6 @@ export default async function ProspectionPage() {
         atLimit={strategies.length >= PLAN_LIMITS[plan ?? 'pro'].strategies}
       />
 
-      <Link href="/prospection/boamp" className="block rounded-lg border bg-card p-4 hover:bg-muted/50">
-        <span className="font-medium">Marchés publics de services</span>
-        <span className="block text-sm text-muted-foreground">Trouver les appels d’offres du BOAMP qui correspondent à vos prestations.</span>
-      </Link>
       <ProspectionStatus
         settings={settings}
         nextRunAt={nextRunAt}
@@ -65,7 +61,6 @@ export default async function ProspectionPage() {
         defaultDepartments={settings?.departments ?? []}
         isRunning={!!runningRun}
         maxStrategies={PLAN_LIMITS[plan ?? 'pro'].strategies}
-        hasAiKey={aiKey}
       />
       {JOB_OFFERS_ENABLED && <UnidentifiedOffers offers={unidentifiedOffers} companies={companyChoices} />}
       {/* Premier usage : un rappel bien visible pour régler la recherche, l'historique est encore vide */}
@@ -76,11 +71,11 @@ export default async function ProspectionPage() {
         <Settings2 className="h-5 w-5 shrink-0 text-primary" aria-hidden />
         <span>
           <span className="font-medium">Réglages de la recherche</span>
-          <span className="block text-muted-foreground">
-            {runs.length === 0
-              ? 'Commencez par choisir vos départements, vos jours et ce que Sophie doit chercher.'
-              : 'Départements, jours, nombre d’entreprises et secteurs ignorés : dans Paramètres.'}
-          </span>
+          {runs.length === 0 && (
+            <span className="block text-muted-foreground">
+              Commencez par choisir vos départements, vos jours et ce que Sophie doit chercher.
+            </span>
+          )}
         </span>
       </Link>
       <PipelineRunsList runs={runs} />

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, Search, Sparkles, Trash2 } from 'lucide-react'
+import { ChevronRight, Landmark, Loader2, MoreHorizontal, Pause, Pencil, Play, Search, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -22,7 +22,6 @@ import { formatDate } from '@/lib/utils/dates'
 import type { StrategyOverview } from '@/lib/queries/strategies'
 import { StrategyDialog } from './strategy-dialog'
 import { watchRun } from './run-watch'
-import { StrategyAssistantDialog } from './strategy-assistant-dialog'
 
 interface StrategiesCardProps {
   strategies: StrategyOverview[]
@@ -33,7 +32,6 @@ interface StrategiesCardProps {
   // Recherches permises par l'offre (5 en Essentiel, 20 en Pro)
   maxStrategies: number
   // Clé d'IA enregistrée : la conversation guidée avec Sophie est possible
-  hasAiKey: boolean
 }
 
 const SIZE_SHORT: Record<string, string> = Object.fromEntries(
@@ -63,7 +61,6 @@ export function StrategiesCard({
   defaultDepartments,
   isRunning,
   maxStrategies,
-  hasAiKey,
 }: StrategiesCardProps) {
   const atLimit = strategies.length >= maxStrategies
   const router = useRouter()
@@ -73,8 +70,6 @@ export function StrategiesCard({
   const [pending, setPending] = useState<string | null>(null)
   // Chaque ouverture repart d'un formulaire neuf
   const [dialogKey, setDialogKey] = useState(0)
-  const [assistantOpen, setAssistantOpen] = useState(false)
-  const [assistantKey, setAssistantKey] = useState(0)
 
   const run = async (
     key: string,
@@ -99,11 +94,6 @@ export function StrategiesCard({
     }
   }
 
-  const openNew = () => {
-    setEditing(null)
-    setDialogKey((key) => key + 1)
-    setDialogOpen(true)
-  }
 
   return (
     <Card>
@@ -116,24 +106,6 @@ export function StrategiesCard({
             </CardTitle>
           </div>
           <div className="flex shrink-0 flex-col gap-1 sm:items-end">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={atLimit}
-                onClick={() => {
-                  setAssistantKey((key) => key + 1)
-                  setAssistantOpen(true)
-                }}
-              >
-                <Sparkles className="mr-2 h-4 w-4" />
-                Décrire à Sophie
-              </Button>
-              <Button type="button" onClick={openNew} disabled={atLimit}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nouvelle recherche
-              </Button>
-            </div>
             <span className="text-xs text-muted-foreground">
               {strategies.length} recherche{strategies.length > 1 ? 's' : ''} sur {maxStrategies}
               {atLimit && ' : supprimez-en une pour en créer une autre'}
@@ -243,6 +215,15 @@ export function StrategiesCard({
             ))}
           </ul>
         )}
+        {/* Marchés publics : déplacé ici depuis le haut de la page Prospection */}
+        <Link
+          href="/prospection/boamp"
+          className="mt-4 flex items-center gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Landmark className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+          <span className="flex-1 font-medium">Marchés publics de services (BOAMP)</span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        </Link>
       </CardContent>
 
       <StrategyDialog
@@ -252,15 +233,6 @@ export function StrategiesCard({
         professionKey={professionKey}
         defaultDepartments={defaultDepartments}
         strategy={editing}
-      />
-      <StrategyAssistantDialog
-        key={`assistant-${assistantKey}`}
-        open={assistantOpen}
-        onOpenChange={setAssistantOpen}
-        hasAiKey={hasAiKey}
-        professionKey={professionKey}
-        defaultDepartments={defaultDepartments}
-        onUseForm={openNew}
       />
     </Card>
   )
