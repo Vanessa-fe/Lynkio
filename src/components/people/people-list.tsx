@@ -13,7 +13,6 @@ import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useStartLinkedin } from '@/components/linkedin/use-start-linkedin'
-import { SegmentBadge } from '@/components/companies/company-segment'
 import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
 import { removeContactsFromList } from '@/lib/actions/prospect-lists'
 import { OUTREACH_STATUSES, outreachStatusLabels } from '@/lib/constants/outreach'
@@ -383,7 +382,6 @@ export function PeopleList({ people, lists, activeListId }: PeopleListProps) {
                           {company.name}
                         </Link>
                       )}
-                      <SegmentBadge segment={company.segment} className="ml-2" />
                     </TableCell>
                     <TableCell>
                       <OutreachBadge
