@@ -19,7 +19,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const widest = Math.max(found, 1)
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       <Button variant="ghost" size="sm" asChild>
         <Link href="/dashboard">
           <ArrowLeft className="w-4 h-4 mr-2" />

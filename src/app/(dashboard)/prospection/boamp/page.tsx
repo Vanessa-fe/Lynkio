@@ -32,7 +32,7 @@ export default async function BoampPage({ searchParams }: { searchParams: Params
   }
   const pageUrl = (n: number) => '?' + new URLSearchParams({ ...filters, search: '1', page: String(n) })
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6">
       <Link href="/prospection" className="text-sm underline">Retour à la prospection</Link>
       <header>
         <h1 className="text-3xl font-bold">Marchés publics de services</h1>
