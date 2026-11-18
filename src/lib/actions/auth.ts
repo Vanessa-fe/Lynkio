@@ -46,8 +46,14 @@ async function requestOrigin(): Promise<string> {
 /**
  * Connexion d'un utilisateur
  */
-export async function login(data: LoginInput): Promise<ActionResult> {
-  let destination = '/dashboard'
+export async function login(data: LoginInput, requestedPath?: string | null): Promise<ActionResult> {
+  // Lien suivi avant la connexion (un bouton d'e-mail, par exemple) : on y revient ensuite.
+  // Seulement un chemin du site, jamais une autre adresse ni les pages de connexion.
+  const safePath =
+    requestedPath && /^\/(?!\/)[\w\-./?=&%]*$/.test(requestedPath) && !/^\/(login|signup|reset-password|update-password|auth)\b/.test(requestedPath)
+      ? requestedPath
+      : null
+  let destination = safePath ?? '/dashboard'
 
   try {
     // Validation
