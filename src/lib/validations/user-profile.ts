@@ -7,12 +7,15 @@ import { strategySchema } from './strategy'
  */
 
 export const onboardingSchema = z.object({
+  // Prénom utilisé dans les e-mails (« Bonjour Marie ») : obligatoire, sans espaces seuls
   firstName: z
     .string()
+    .trim()
     .min(1, 'Le prénom est requis')
     .max(50, 'Le prénom est trop long'),
   businessName: z
     .string()
+    .trim()
     .min(1, 'Le nom de l\'activité est requis')
     .max(100, 'Le nom de l\'activité est trop long'),
   // Clé d'une ligne de la table professions ; la clé étrangère vérifie qu'elle existe
@@ -34,8 +37,11 @@ export const onboardingSchema = z.object({
 })
 
 export const updateProfileSchema = z.object({
+  // Modifiable, mais jamais effacé : il sert dans les e-mails
   firstName: z
     .string()
+    .trim()
+    .min(1, 'Le prénom est requis')
     .max(50, 'Le prénom est trop long')
     .optional(),
   businessName: z
