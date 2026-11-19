@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
-import { AlertTriangle, CheckCircle2, Loader2, PlugZap, RefreshCw } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Loader2, PlugZap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -98,31 +98,22 @@ export function ExtensionConnection({ accountEmail }: { accountEmail: string | n
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <CardTitle className="text-xl">Installer l&apos;extension</CardTitle>
-            <Badge variant="secondary">Pas encore installée</Badge>
+            <CardTitle className="text-xl">Extension Filonea pour LinkedIn</CardTitle>
+            <Badge variant="secondary">Bientôt disponible</Badge>
           </div>
-          <CardDescription>Pas encore sur le Chrome Web Store : elle s&apos;installe à la main.</CardDescription>
+          <CardDescription>
+            Elle arrive bientôt sur le Chrome Web Store.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <ol className="list-decimal pl-5 space-y-2 text-sm">
-            <li>
-              Dans le dossier de l&apos;extension, lancez <code className="rounded bg-muted px-1.5 py-0.5">npm run build</code>{' '}
-              : il crée le dossier <code className="rounded bg-muted px-1.5 py-0.5">dist</code>.
-            </li>
-            <li>
-              Ouvrez <code className="rounded bg-muted px-1.5 py-0.5">chrome://extensions</code> et activez le{' '}
-              <strong>Mode développeur</strong>, en haut à droite.
-            </li>
-            <li>
-              Cliquez sur <strong>Charger l&apos;extension non empaquetée</strong> et choisissez le dossier{' '}
-              <code className="rounded bg-muted px-1.5 py-0.5">dist</code>.
-            </li>
-            <li>Revenez sur cette page : elle détecte l&apos;extension toute seule.</li>
-          </ol>
-          <Button variant="outline" onClick={check}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Vérifier à nouveau
-          </Button>
+          <ul className="list-disc pl-5 space-y-2 text-sm">
+            <li>Ajoutez une personne à Filonea en un clic, depuis son profil LinkedIn.</li>
+            <li>Repérez les posts de personnes qui cherchent un freelance, triés par Sophie.</li>
+          </ul>
+          <p className="text-sm text-muted-foreground">
+            En attendant, vous pouvez déjà préparer vos invitations et vos messages LinkedIn dans Contacts &gt; Envoi LinkedIn,
+            et les envoyer vous-même.
+          </p>
         </CardContent>
       </Card>
     )
