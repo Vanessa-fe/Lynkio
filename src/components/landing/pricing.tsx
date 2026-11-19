@@ -7,7 +7,7 @@ import { Magnetic } from '@/components/motion/magnetic'
 import { SIGNUPS_OPEN } from '@/lib/constants/signup'
 import { LEGAL } from '@/lib/constants/legal'
 import { cn } from '@/lib/utils/cn'
-import { plans, trialDays } from './content'
+import { launchOfferEnds, plans, trialDays } from './content'
 import { CtaLink } from './cta-link'
 import { SectionLabel } from './section-label'
 
@@ -79,6 +79,7 @@ export function Pricing() {
         <div className="mt-8 grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
           {plans.map((plan, index) => {
             const price = yearly ? plan.yearly : plan.monthly
+            const regularPrice = yearly ? plan.regularYearly : plan.regularMonthly
             const dark = plan.highlighted
             return (
               <FadeIn key={plan.key} delay={index * 0.1} className="h-full">
@@ -103,7 +104,19 @@ export function Pricing() {
                   </div>
                   <p className={cn('mt-1 md:min-h-[3rem]', dark ? 'text-cream/65' : 'text-ink/60')}>{plan.tagline}</p>
 
-                  <p className="mt-6 flex items-baseline gap-2">
+                  <p
+                    className={cn(
+                      'mt-6 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold',
+                      dark ? 'bg-cream/10 text-peach' : 'bg-brand-50 text-brand-700'
+                    )}
+                  >
+                    Prix spécial lancement
+                  </p>
+                  <p className="mt-3 flex flex-wrap items-baseline gap-x-2">
+                    <s className={cn('font-display text-2xl font-semibold', dark ? 'text-cream/40' : 'text-ink/35')}>
+                      <span className="sr-only">Au lieu de </span>
+                      {euros(regularPrice)}
+                    </s>
                     <span className="font-display text-6xl font-bold tracking-[-0.04em]">{euros(price)}</span>
                     <span className={dark ? 'text-cream/65' : 'text-ink/60'}>{yearly ? 'facturés par an' : 'par mois'}</span>
                   </p>
@@ -160,7 +173,9 @@ export function Pricing() {
             )
           })}
         </div>
-        <p className="mt-8 text-center text-sm text-ink/55">Prix en euros. {LEGAL.vat}.</p>
+        <p className="mt-8 text-center text-sm text-ink/55">
+          Prix spécial lancement valable jusqu&apos;au {launchOfferEnds}. Prix en euros. {LEGAL.vat}.
+        </p>
       </div>
     </section>
   )
