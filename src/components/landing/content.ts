@@ -181,6 +181,9 @@ export const safeguards: { title: string; text: string; example?: string }[] = [
  */
 const { essentiel, pro } = PLAN_LIMITS
 
+/** Prix de lancement (décision du 19/11/2026) : prix normaux (regular*) appliqués à partir de janvier 2027 */
+export const launchOfferEnds = '31 décembre 2026'
+
 export const plans = [
   {
     key: 'essentiel',
@@ -188,6 +191,8 @@ export const plans = [
     tagline: 'Pour prospecter chaque semaine',
     monthly: 9,
     yearly: 90,
+    regularMonthly: 15,
+    regularYearly: 150,
     highlighted: false,
     searches: `${essentiel.runsPerWeek} par semaine · jusqu’à ${essentiel.companiesPerRun} entreprises par recherche`,
     keywords: `Jusqu’à ${essentiel.searchKeywords}`,
@@ -205,6 +210,8 @@ export const plans = [
     tagline: 'Pour prospecter plus souvent et élargir vos recherches',
     monthly: 20,
     yearly: 200,
+    regularMonthly: 29,
+    regularYearly: 290,
     highlighted: true,
     searches: `Jusqu’à ${pro.daysPerWeek} jours sur 7 · jusqu’à ${pro.companiesPerRun} entreprises par recherche`,
     keywords: `Jusqu’à ${pro.searchKeywords}`,
