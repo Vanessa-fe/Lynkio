@@ -220,7 +220,7 @@ export const plans = [
       'Tout Essentiel, et :',
       'IA incluse : aucune clé à configurer',
       'Suggestions de messages LinkedIn et de relance',
-      'Extension LinkedIn',
+      'Extension LinkedIn (bientôt disponible)',
       'E-mails des décideurs',
       'Import de vos prospects',
     ],
