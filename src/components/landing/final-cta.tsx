@@ -18,12 +18,13 @@ export function FinalCta() {
           />
         </div>
         <RevealWords
-          text="Vos prochains clients sont peut-être *en train de recruter.*"
+          text={'Découvrez les entreprises\n*qui correspondent à votre cible.*'}
           accentClassName="text-peach"
-          className="mx-auto max-w-3xl text-balance font-display text-[clamp(2rem,4.4vw,3.6rem)] font-bold leading-[1.05] tracking-[-0.045em]"
+          className="mx-auto max-w-4xl text-balance font-display text-[clamp(2rem,4.4vw,3.6rem)] font-bold leading-[1.05] tracking-[-0.045em]"
         />
-        <p className="mx-auto mt-5 max-w-lg text-lg text-cream/80">
-          Réglez votre client idéal en quelques minutes : Sophie s&apos;occupe du reste.
+        <p className="mx-auto mt-5 max-w-xl text-lg text-cream/80">
+          Indiquez le type d&apos;entreprises que vous souhaitez contacter et lancez votre première recherche avec
+          Filonea.
         </p>
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
           {SIGNUPS_OPEN && (

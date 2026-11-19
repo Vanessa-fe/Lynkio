@@ -1,7 +1,7 @@
 import { LogoMark } from '@/components/brand/logo'
-import { FadeIn, RevealWords, Stagger, StaggerItem } from '@/components/motion/reveal'
+import { FadeIn, RevealWords } from '@/components/motion/reveal'
 import { cn } from '@/lib/utils/cn'
-import { radarBlips, sources } from './content'
+import { radarBlips } from './content'
 import { SectionLabel } from './section-label'
 
 // Durée d'un tour de faisceau (doit suivre les animations `sweep`, `blip` et `blip-label`)
@@ -83,43 +83,26 @@ function RadarScreen() {
   )
 }
 
-/** Ce que Sophie surveille : le radar et la liste des sources. */
+/** Prospection automatique : le radar et les critères de ciblage. */
 export function Radar() {
   return (
-    <section aria-label="Ce que Sophie surveille" className="px-4 py-20 md:px-6 md:py-28">
+    <section aria-label="Prospection automatique" className="px-4 py-20 md:px-6 md:py-28">
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 lg:grid-cols-2 lg:gap-20">
         <div>
-          <SectionLabel label="Ce que Sophie surveille" />
+          <SectionLabel label="Prospection automatique" />
           <RevealWords
-            text="Pendant que vous travaillez, *Sophie surveille.*"
+            text="Sophie cherche vos *prochains prospects.*"
             accentClassName="text-brand-600"
             className="mt-6 font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-bold leading-[1.02] tracking-[-0.045em]"
           />
           <FadeIn>
             <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink/65">
-              Aux jours et à l&apos;heure que vous choisissez, elle parcourt des sources publiques et ne garde que les
-              entreprises qui montrent un besoin.
+              Choisissez les entreprises que vous souhaitez cibler et quand lancer vos recherches. Sophie explore des
+              sources publiques selon vos critères. Vous retrouvez les entreprises repérées dans Filonea et choisissez
+              lesquelles contacter.
             </p>
           </FadeIn>
 
-          <Stagger as="ul" className="mt-9 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {sources.map((source) => {
-              const Icon = source.icon
-              return (
-                <StaggerItem as="li" key={source.title}>
-                  <div className="group flex h-full gap-3 rounded-2xl border border-ink/[0.07] bg-white p-4 shadow-soft transition-shadow duration-500 hover:shadow-lift">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-transform duration-500 ease-out-expo group-hover:scale-110">
-                      <Icon className="size-[18px]" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold leading-snug">{source.title}</p>
-                      <p className="mt-0.5 text-sm text-ink/55">{source.text}</p>
-                    </div>
-                  </div>
-                </StaggerItem>
-              )
-            })}
-          </Stagger>
         </div>
 
         <FadeIn y={40}>

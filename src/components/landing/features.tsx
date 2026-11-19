@@ -1,6 +1,6 @@
 'use client'
 
-import { Check } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
 import { Counter } from '@/components/motion/counter'
@@ -40,62 +40,6 @@ function FeatureCard({ feature, className, children }: { feature: Feature; class
   )
 }
 
-const liveSignals = [
-  { label: 'Offre publiée', detail: '« Chargé·e de communication »' },
-  { label: 'Mission freelance', detail: '« Refonte de l’identité visuelle »' },
-  { label: 'Entreprise créée', detail: 'il y a 5 jours · Rennes' },
-]
-
-function SignalsVisual() {
-  return (
-    <ul className="space-y-2">
-      {liveSignals.map((signal, i) => (
-        <motion.li
-          key={signal.label}
-          className="flex items-center gap-3 rounded-2xl border border-ink/[0.06] bg-cream px-4 py-3 text-sm"
-          initial={{ opacity: 0, x: 30 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={inView}
-          transition={{ duration: 0.7, ease: easeOutExpo, delay: 0.2 + i * 0.15 }}
-        >
-          <span className="size-2 shrink-0 animate-pulse-dot rounded-full bg-brand-500" style={{ animationDelay: `${i * 0.6}s` }} />
-          <span className="font-medium">{signal.label}</span>
-          <span className="truncate text-ink/55">{signal.detail}</span>
-        </motion.li>
-      ))}
-    </ul>
-  )
-}
-
-// Les outils que l'analyse de site sait reconnaître (voir constants/technologies.ts)
-const stack = ['Webflow', 'WordPress', 'Next.js', 'React']
-
-function TechVisual() {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {stack.map((tech, i) => {
-        const match = tech === 'WordPress'
-        return (
-          <motion.span
-            key={tech}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm',
-              match ? 'border-brand-600 bg-brand-600 font-medium text-cream' : 'border-ink/10 text-ink/45'
-            )}
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: match ? [0.8, 1.12, 1] : 1 }}
-            viewport={inView}
-            transition={{ duration: match ? 0.7 : 0.4, delay: match ? 0.7 : 0.15 + i * 0.06 }}
-          >
-            {match && <Check className="size-3.5" />}
-            {tech}
-          </motion.span>
-        )
-      })}
-    </div>
-  )
-}
-
 function ScoreVisual() {
   return (
     <div>
@@ -117,9 +61,8 @@ function ScoreVisual() {
 }
 
 const recordRows = [
-  ['SIREN', '123 456 789'],
-  ['Dirigeante', 'Claire M.'],
-  ['Site', 'WordPress'],
+  ['Dirigeante', 'Claire M. · Fondatrice'],
+  ['LinkedIn', 'Profil trouvé'],
 ]
 
 function RecordsVisual() {
@@ -135,63 +78,56 @@ function RecordsVisual() {
   )
 }
 
-const stages = ['À contacter', 'Contacté', 'A répondu', 'Gagné']
-
 function PipelineVisual() {
   return (
-    <ol className="relative space-y-2.5">
-      {stages.map((stage, i) => (
-        <motion.li
-          key={stage}
-          className="flex items-center gap-3 text-sm"
-          initial={{ opacity: 0.3 }}
-          whileInView={{ opacity: 1 }}
-          viewport={inView}
-          transition={{ delay: 0.3 + i * 0.35, duration: 0.4 }}
-        >
-          <motion.span
-            className="flex size-6 items-center justify-center rounded-full border-2 border-brand-200 bg-white"
-            initial={{ backgroundColor: '#ffffff', borderColor: '#f8cfc6' }}
-            whileInView={{ backgroundColor: '#c9432f', borderColor: '#c9432f' }}
-            viewport={inView}
-            transition={{ delay: 0.3 + i * 0.35, duration: 0.4 }}
-          >
-            <Check className="size-3.5 text-white" />
-          </motion.span>
-          <span className="font-medium">{stage}</span>
-        </motion.li>
-      ))}
-    </ol>
+    <motion.div
+      className="flex items-start gap-3 rounded-2xl border border-ink/[0.06] bg-cream p-4 text-sm"
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={inView}
+      transition={{ duration: 0.7, ease: easeOutExpo, delay: 0.3 }}
+    >
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+        <Bell className="size-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="font-medium">Cabinet de recrutement</p>
+        <p className="mt-0.5 text-ink/55">Message LinkedIn envoyé il y a 5 jours</p>
+        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-2.5 py-1 text-xs font-medium text-cream">
+          <span className="size-1.5 animate-pulse-dot rounded-full bg-cream" />
+          À relancer aujourd&apos;hui
+        </span>
+      </div>
+    </motion.div>
   )
 }
 
-const checks = ['Aucun lien inconnu', 'Aucun champ à compléter', 'Aucun prix annoncé']
-
 function MessagesVisual() {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.4fr_1fr] md:items-center">
-      <div className="rounded-2xl border border-ink/[0.06] bg-cream p-4 text-sm leading-relaxed text-ink/70">
+    <div className="space-y-3">
+      <motion.p
+        className="flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-2xl border border-ink/[0.06] bg-white px-4 py-3 text-sm"
+        initial={{ opacity: 0, x: 30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={inView}
+        transition={{ duration: 0.7, ease: easeOutExpo, delay: 0.2 }}
+      >
+        <span className="size-2 shrink-0 animate-pulse-dot rounded-full bg-brand-500" />
+        <span className="whitespace-nowrap font-medium">Entreprise créée récemment</span>
+        <span className="pl-5 text-ink/55 sm:pl-0">Cabinet de recrutement · Rennes</span>
+      </motion.p>
+      <motion.div
+        className="rounded-2xl border border-ink/[0.06] bg-cream p-4 text-sm leading-relaxed text-ink/70"
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={inView}
+        transition={{ duration: 0.7, ease: easeOutExpo, delay: 0.5 }}
+      >
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-700">Brouillon · LinkedIn</p>
-        Bonjour Claire, j&apos;ai vu que vous recrutez un·e chargé·e de communication. En attendant le bon profil, je peux
-        prendre en main un projet précis, à distance…
-      </div>
-      <ul className="space-y-2">
-        {checks.map((check, i) => (
-          <motion.li
-            key={check}
-            className="flex items-center gap-2.5 text-sm font-medium"
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={inView}
-            transition={{ duration: 0.5, ease: easeOutExpo, delay: 0.4 + i * 0.2 }}
-          >
-            <span className="flex size-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-              <Check className="size-3.5" />
-            </span>
-            {check}
-          </motion.li>
-        ))}
-      </ul>
+        Bonjour Claire, j&apos;ai vu que vous veniez de lancer votre cabinet. Si vous prévoyez de publier vos offres sur
+        votre propre site, je peux vous aider à mettre en place une page simple pour recevoir les candidatures. Est-ce un
+        sujet que vous avez déjà prévu ?
+      </motion.div>
     </div>
   )
 }
@@ -208,28 +144,23 @@ export function Features() {
             className="mt-6 font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-bold leading-[1.02] tracking-[-0.045em]"
           />
           <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink/65">
-            Sophie fait le repérage et la préparation. Vous gardez le meilleur rôle : choisir à qui écrire.
+            Voyez quelles entreprises contacter en priorité, trouvez un point de départ pour leur écrire et gardez le fil de
+            vos relances.
           </p>
         </div>
 
-        <Stagger className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" stagger={0.1}>
-          <FeatureCard feature={features.signals} className="md:col-span-2">
-            <SignalsVisual />
-          </FeatureCard>
-          <FeatureCard feature={features.tech}>
-            <TechVisual />
+        <Stagger className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3" stagger={0.1}>
+          <FeatureCard feature={features.messages} className="md:col-span-2">
+            <MessagesVisual />
           </FeatureCard>
           <FeatureCard feature={features.score}>
             <ScoreVisual />
           </FeatureCard>
-          <FeatureCard feature={features.records}>
+          <FeatureCard feature={features.records} className="md:col-span-2">
             <RecordsVisual />
           </FeatureCard>
           <FeatureCard feature={features.pipeline}>
             <PipelineVisual />
-          </FeatureCard>
-          <FeatureCard feature={features.messages} className="md:col-span-2 lg:col-span-3">
-            <MessagesVisual />
           </FeatureCard>
         </Stagger>
       </div>
