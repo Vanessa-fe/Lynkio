@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { formatDistance } from 'date-fns'
@@ -9,6 +9,7 @@ import { Loader2, Pause, Play, Power, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { resumeLinkedinAutomation, setLinkedinAutomation } from '@/lib/actions/linkedin-sequences'
+import { sendToExtension, type ExtensionStatus } from '@/lib/extension'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { formatDate } from '@/lib/utils/dates'
 import { useToast } from '@/lib/hooks/use-toast'
@@ -25,6 +26,18 @@ export function AutomationPanel({ automation, now }: { automation: LinkedinAutom
   const router = useRouter()
   const { toast } = useToast()
   const [busy, setBusy] = useState(false)
+  // Version de l'extension sans envoi automatique (Chrome Web Store, pour l'instant) : pas d'interrupteur
+  const [storeVersion, setStoreVersion] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    sendToExtension<ExtensionStatus>({ type: 'ping' }).then((status) => {
+      if (!cancelled) setStoreVersion(status?.autoSend === false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const run = async (action: () => Promise<{ success: boolean; error?: string }>, success: string) => {
     setBusy(true)
@@ -51,6 +64,22 @@ export function AutomationPanel({ automation, now }: { automation: LinkedinAutom
     : automation.lastSeenAt
       ? `Extension pas vue depuis ${formatDistance(new Date(automation.lastSeenAt), new Date(now), { locale: fr })} : Chrome est-il ouvert ?`
       : 'L\'extension ne s\'est pas encore manifestée'
+
+  if (storeVersion && !automation.enabled) {
+    return (
+      <div className="rounded-lg border bg-card p-4 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Zap className="w-4 h-4 text-primary" />
+          <span className="font-semibold">Envoi automatique</span>
+          <Badge variant="secondary">Bientôt disponible</Badge>
+        </div>
+        <p className="text-sm text-muted-foreground max-w-3xl">
+          Votre extension ajoute vos prospects et repère les posts. L’envoi automatique des invitations arrive dans une
+          prochaine version : en attendant, tout se fait en un clic.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-3">
@@ -101,7 +130,7 @@ export function AutomationPanel({ automation, now }: { automation: LinkedinAutom
       <p className="text-sm text-muted-foreground max-w-3xl">
         {seenRecently
           ? 'Invitations et premiers messages partent du lundi au vendredi, de 9 h à 18 h, quand Chrome est ouvert. Les relances se font en un clic.'
-          : 'L’envoi automatique demande l’extension Chrome de Filonéa. Sans elle, tout se fait en un clic.'}
+          : 'L’envoi automatique demande l’extension Chrome de Filonea. Sans elle, tout se fait en un clic.'}
       </p>
 
       <p className="text-xs text-muted-foreground">

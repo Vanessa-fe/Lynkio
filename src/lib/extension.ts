@@ -15,6 +15,8 @@ export type ExtensionStatus = {
   version: string
   connected: boolean
   email: string | null
+  /** Envoi automatique présent dans cette version (absent de la version du Chrome Web Store pour l'instant) */
+  autoSend?: boolean
 }
 
 export type ExtensionMessage =
