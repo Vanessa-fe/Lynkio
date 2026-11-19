@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { GrowBar } from '@/components/motion/grow-bar'
 import { Stagger, StaggerItem } from '@/components/motion/reveal'
-import { hasAiKey } from '@/lib/queries/api-keys'
+import { hasAiAccess } from '@/lib/queries/ai-access'
 import { getOffer } from '@/lib/queries/offer'
 import { getProspectionSettings } from '@/lib/queries/prospection'
 import { getUserProfile } from '@/lib/queries/user-profile'
@@ -153,7 +153,7 @@ function SettingsLink({ card }: { card: SettingsCard }) {
 
 export default async function SettingsPage() {
   const [aiKey, offer, prospection, profile] = await Promise.all([
-    hasAiKey(),
+    hasAiAccess(),
     getOffer(),
     getProspectionSettings(),
     getUserProfile(),
@@ -161,7 +161,7 @@ export default async function SettingsPage() {
 
   // Les réglages qui donnent à Sophie ses repères : ce qui est fait, ce qui reste
   const steps = [
-    { label: 'Clé IA enregistrée', done: aiKey, href: '/settings/keys' },
+    { label: 'IA de Sophie prête', done: aiKey, href: '/settings/keys' },
     { label: 'Offre décrite', done: offer !== null, href: '/settings/offer' },
     { label: 'Zone de recherche choisie', done: (prospection?.departments?.length ?? 0) > 0, href: '/settings/prospection' },
     { label: 'Présentation pour les messages', done: Boolean(profile?.message_pitch), href: '/settings/messages' },

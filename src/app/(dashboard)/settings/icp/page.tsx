@@ -4,10 +4,10 @@ import { getIcpSettings } from '@/lib/queries/icp'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { PLAN_LIMITS } from '@/lib/billing'
 import { ProOnlyNotice } from '@/components/billing/pro-only-notice'
-import { hasAiKey } from '@/lib/queries/api-keys'
+import { hasAiAccess } from '@/lib/queries/ai-access'
 
 export default async function IcpSettingsPage() {
-  const [settings, plan, aiKey] = await Promise.all([getIcpSettings(), getCurrentPlan(), hasAiKey()])
+  const [settings, plan, aiKey] = await Promise.all([getIcpSettings(), getCurrentPlan(), hasAiAccess()])
   const maxKeywords = PLAN_LIMITS[plan ?? 'pro'].searchKeywords
 
   return (

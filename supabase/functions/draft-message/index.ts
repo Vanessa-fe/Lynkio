@@ -14,7 +14,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { accountPlan, planDenial } from '../_shared/plan.ts'
-import { loadAiAccess } from '../_shared/ai.ts'
+import { loadAiAccess, recordAiUsage } from '../_shared/ai.ts'
 import { TECHNOLOGY_LABELS } from '../_shared/technologies.ts'
 import { checkDraft } from './checks.ts'
 import { fetchSiteText } from './site-text.ts'
@@ -185,7 +185,7 @@ Deno.serve(async (request) => {
   if (denial) return json({ error: denial.message, code: denial.code }, 403)
 
   try {
-    const access = await loadAiAccess(admin, user.id)
+    const access = await loadAiAccess(admin, user.id, 'draft')
     const [company, signals, contact, profile, icp, references, lastOutgoing] = await Promise.all([
       supabase
         .from('companies')
@@ -398,6 +398,7 @@ Deno.serve(async (request) => {
       signature,
       lastOutgoingAt: lastOutgoing.data?.occurred_at ?? null,
     }
+    await recordAiUsage(admin, user.id, access, 'draft')
     const checked = checkDraft(draft, checks)
     if (!sequence) return json(checked)
 

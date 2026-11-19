@@ -14,13 +14,20 @@ import { SophieProvider } from '@/components/sophie/sophie-provider'
 import { SophieLauncher, SophieMain, SophiePanel } from '@/components/sophie/sophie-panel'
 import { getMyApiKeys } from '@/lib/queries/api-keys'
 import { AI_PROVIDER_LABELS, isAiProvider } from '@/lib/constants/api-keys'
+import { getAiAvailability } from '@/lib/queries/ai-access'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [profile, user, billing, keys] = await Promise.all([getUserProfile(), getAuthUser(), getBilling(), getMyApiKeys()])
+  const [profile, user, billing, keys, ai] = await Promise.all([
+    getUserProfile(),
+    getAuthUser(),
+    getBilling(),
+    getMyApiKeys(),
+    getAiAvailability(),
+  ])
 
   if (!profile) {
     redirect('/login')
@@ -37,7 +44,8 @@ export default async function DashboardLayout({
     redirect('/billing')
   }
 
-  // IA de Sophie : celle choisie dans Paramètres > Vos clés, sinon la première clé d'IA enregistrée
+  // IA de Sophie : celle choisie dans Paramètres > Vos clés, sinon la première clé d'IA enregistrée ;
+  // sans clé, l'IA incluse dans Pro (essai compris)
   const aiProviders = keys.map((key) => key.provider).filter(isAiProvider)
   const sophieProvider =
     profile.ai_provider && isAiProvider(profile.ai_provider) && aiProviders.includes(profile.ai_provider)
@@ -46,8 +54,8 @@ export default async function DashboardLayout({
 
   return (
     <SophieProvider
-      hasAiKey={sophieProvider !== null}
-      providerLabel={sophieProvider ? AI_PROVIDER_LABELS[sophieProvider] : null}
+      hasAiKey={ai.mode !== 'none'}
+      providerLabel={sophieProvider ? AI_PROVIDER_LABELS[sophieProvider] : ai.mode === 'included' ? 'IA incluse dans Pro' : null}
       firstName={profile.first_name}
       professionKey={profile.profession_key}
       autoOpen={profile.sophie_auto_open}

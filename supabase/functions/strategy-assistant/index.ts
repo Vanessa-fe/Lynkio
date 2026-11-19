@@ -12,7 +12,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { accountPlan, planDenial } from '../_shared/plan.ts'
-import { generateJson, loadAiAccess } from '../_shared/ai.ts'
+import { generateJson, loadAiAccess, recordAiUsage } from '../_shared/ai.ts'
 import { UserFacingError } from '../_shared/errors.ts'
 
 const MAX_ANSWER_LENGTH = 800
@@ -122,7 +122,7 @@ Deno.serve(async (request) => {
   if (denial) return json({ error: denial.message, code: denial.code }, 403)
 
   try {
-    const access = await loadAiAccess(admin, user.id)
+    const access = await loadAiAccess(admin, user.id, 'assistant')
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('profession:professions(label)')
@@ -164,6 +164,7 @@ Deno.serve(async (request) => {
       timeoutMs: REQUEST_TIMEOUT_MS,
       task: 'L’analyse de vos réponses',
     })
+    await recordAiUsage(admin, user.id, access, 'assistant')
 
     let parsed: Record<string, unknown>
     try {

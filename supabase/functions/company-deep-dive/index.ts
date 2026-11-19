@@ -15,7 +15,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { accountPlan, planDenial } from '../_shared/plan.ts'
-import { generateJson, loadAiAccess, normalizeUrl, type AiAccess } from '../_shared/ai.ts'
+import { generateJson, loadAiAccess, normalizeUrl, recordAiUsage, type AiAccess } from '../_shared/ai.ts'
 import { UserFacingError } from '../_shared/errors.ts'
 import { publicPage } from '../_shared/public-page.ts'
 import {
@@ -295,6 +295,7 @@ async function runAnalysis(admin: SupabaseClient, access: AiAccess, analysisId: 
       .from('company_deep_analyses')
       .update({ status: 'done', finished_at: new Date().toISOString(), result, signals_added: added })
       .eq('id', analysisId)
+    await recordAiUsage(admin, company.user_id, access, 'deep_dive')
   } catch (error) {
     if (!(error instanceof UserFacingError)) console.error('company-deep-dive', error)
     await admin
@@ -373,7 +374,7 @@ Deno.serve(async (request) => {
     const fresh = latest?.status === 'done' && Date.now() - Date.parse(latest.started_at) < CACHE_DAYS * 86_400_000
     if (fresh && input.force !== true) return json({ analysisId: latest.id, status: 'done', cached: true })
 
-    const access = await loadAiAccess(admin, user.id)
+    const access = await loadAiAccess(admin, user.id, 'deep_dive')
     // Limite sur 24 heures glissantes : seules comptent les analyses abouties ou en cours. Une analyse
     // qui échoue (clé refusée, crédit épuisé, recherche indisponible, interruption) ne se décompte pas.
     const { count: used, error: countError } = await admin

@@ -175,7 +175,8 @@ export const safeguards: { title: string; text: string; example?: string }[] = [
 
 /**
  * Tarifs (15/11/2026) : deux offres. Essentiel, accessible pour démarrer ; Pro, l'offre complète mise en
- * avant. L'IA est payée par l'utilisateur à son fournisseur. Les limites viennent de PLAN_LIMITS (appliquées
+ * avant. IA incluse en Pro depuis le 19/11/2026 (quotas : src/lib/ai-quota.ts) ; en Essentiel, l'utilisateur
+ * ajoute sa propre clé. Les limites viennent de PLAN_LIMITS (appliquées
  * par l'application et par Sophie) ; les prix doivent correspondre aux prix Stripe (clés essentiel_monthly,
  * essentiel_yearly, pro_monthly, pro_yearly).
  */
@@ -199,7 +200,7 @@ export const plans = [
     features: [
       'Score de chaque prospect sur 100',
       'Fiche entreprise complète',
-      'E-mails de prospection rédigés par Sophie',
+      'E-mails de prospection rédigés par Sophie, avec votre propre clé d’IA',
       'Suivi des prospects et rappels à planifier',
       'Export de vos données',
     ],
@@ -217,6 +218,7 @@ export const plans = [
     keywords: `Jusqu’à ${pro.searchKeywords}`,
     features: [
       'Tout Essentiel, et :',
+      'IA incluse : aucune clé à configurer',
       'Suggestions de messages LinkedIn et de relance',
       'Extension LinkedIn',
       'E-mails des décideurs',
@@ -260,7 +262,7 @@ export const faq = [
   {
     question: 'Ai-je besoin d’une clé API pour utiliser Filonea ?',
     answer:
-      'Vous pouvez rechercher des entreprises, consulter leurs fiches et leurs scores, et suivre vos prospects sans clé API. Si vous souhaitez discuter avec Sophie, obtenir de l’aide pour rédiger vos messages ou utiliser la fonction « Approfondir », ajoutez votre propre clé API. Votre fournisseur peut vous facturer cet usage séparément, y compris pendant l’essai.',
+      'Non avec l’offre Pro, essai compris : l’IA est incluse. Vous pouvez discuter avec Sophie, obtenir de l’aide pour rédiger vos messages et utiliser la fonction « Approfondir » sans rien configurer, dans la limite de quantités mensuelles (par exemple 300 brouillons et 40 analyses « Approfondir » par mois, la moitié pendant l’essai). Avec l’offre Essentiel, vous pouvez rechercher des entreprises, consulter leurs fiches et leurs scores, et suivre vos prospects sans IA ; pour utiliser l’IA, ajoutez votre propre clé API, que votre fournisseur vous facture séparément.',
   },
   {
     question: 'Puis-je importer mes prospects existants ?',

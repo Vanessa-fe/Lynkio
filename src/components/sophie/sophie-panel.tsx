@@ -74,7 +74,7 @@ function SophieHeader() {
       <div className="min-w-0 flex-1">
         <p className="font-semibold leading-tight">Sophie</p>
         <p className="truncate text-xs text-muted-foreground">
-          {hasAiKey ? (title && view === 'chat' ? title : `Disponible${providerLabel ? ` · ${providerLabel}` : ''}`) : 'Conversation indisponible sans clé IA'}
+          {hasAiKey ? (title && view === 'chat' ? title : `Disponible${providerLabel ? ` · ${providerLabel}` : ''}`) : 'Incluse dans l’offre Pro'}
         </p>
       </div>
       {hasAiKey && (
@@ -155,7 +155,7 @@ function SophieChat() {
                   ? isCompany
                     ? 'Je peux vous expliquer cette entreprise, son score et ce qui reste à vérifier, ou vous aider à préparer un premier message.'
                     : 'Je peux vous aider à choisir vos priorités, comprendre une entreprise ou préparer vos messages. Posez-moi votre question.'
-                  : 'Pour discuter avec moi, ajoutez la clé de votre IA (OpenAI, Gemini ou Claude). Tout le reste de Filonéa fonctionne sans elle : recherches, scores, suivi et relances.'}
+                  : 'Je suis incluse dans l’offre Pro. Avec l’offre Essentiel, ajoutez la clé de votre propre IA (OpenAI, Gemini ou Claude) pour discuter avec moi. Tout le reste de Filonea fonctionne sans IA : recherches, scores, suivi et relances.'}
               </p>
             </div>
             <SophieSuggestions />
@@ -173,12 +173,17 @@ function SophieChat() {
                 ))}
               </div>
             ) : (
-              <Button asChild size="sm">
-                <Link href="/settings/keys">
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Ajouter ma clé IA
-                </Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm">
+                  <Link href="/billing">Passer en Pro</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/settings/keys">
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Ajouter ma clé IA
+                  </Link>
+                </Button>
+              </div>
             )}
           </div>
         ) : (
@@ -215,7 +220,7 @@ function SophieChat() {
             rows={1}
             maxLength={4000}
             disabled={!hasAiKey}
-            placeholder={hasAiKey ? 'Écrivez à Sophie…' : 'Ajoutez une clé IA pour discuter'}
+            placeholder={hasAiKey ? 'Écrivez à Sophie…' : 'Offre Pro ou clé d’IA nécessaire'}
             className="max-h-40 min-h-[1.5rem] flex-1 resize-none bg-transparent text-sm outline-none [field-sizing:content] placeholder:text-muted-foreground"
           />
           {sending ? (
@@ -229,7 +234,7 @@ function SophieChat() {
           )}
         </div>
         <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">
-          {hasAiKey ? 'Sophie peut se tromper : vérifiez les informations importantes.' : 'Vos recherches, scores et relances restent disponibles sans clé.'}
+          {hasAiKey ? 'Sophie peut se tromper : vérifiez les informations importantes.' : 'Vos recherches, scores et relances restent disponibles sans IA.'}
         </p>
       </form>
     </>

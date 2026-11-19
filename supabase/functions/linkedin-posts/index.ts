@@ -15,7 +15,7 @@ import { accountPlan, planDenial } from '../_shared/plan.ts'
 import { TECHNOLOGY_LABELS } from '../_shared/technologies.ts'
 import { matchesExcludedKeyword, truncate } from '../prospection-run/rules.ts'
 import { sortPosts, type SortedPost } from './sorting.ts'
-import { loadAiAccess } from '../_shared/ai.ts'
+import { loadAiAccess, recordAiUsage } from '../_shared/ai.ts'
 import { clearlyEnglish, notFrenchReason } from './language.ts'
 
 const MAX_POSTS = 50
@@ -176,8 +176,9 @@ Deno.serve(async (request) => {
     // Sans IA (clé absente, OpenAI indisponible), les posts restent à traiter, non triés : rien n'est perdu
     let verdicts: (SortedPost | null)[] = toSort.map(() => null)
     try {
-      verdicts = await sortPosts(
-        await loadAiAccess(admin, userId),
+      const access = toSort.length > 0 ? await loadAiAccess(admin, userId, 'linkedin_sort') : null
+      verdicts = !access ? verdicts : await sortPosts(
+        access,
         toSort.map((post) => ({
           authorCompany: post.authorIsCompany ? post.authorName : null,
           authorHeadline: post.authorHeadline,
@@ -188,6 +189,7 @@ Deno.serve(async (request) => {
           technologies: strings(criteria.tech_stack).map((tech) => TECHNOLOGY_LABELS[tech] ?? tech),
         }
       )
+      if (access) await recordAiUsage(admin, userId, access, 'linkedin_sort')
     } catch (error) {
       console.error('linkedin-posts sorting', error)
     }

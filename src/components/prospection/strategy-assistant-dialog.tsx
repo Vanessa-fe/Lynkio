@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FunctionsHttpError } from '@supabase/supabase-js'
-import { KeyRound, Loader2, Sparkles } from 'lucide-react'
+import { KeyRound, Loader2, Lock, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
@@ -197,11 +197,17 @@ export function StrategyAssistantDialog({
 
           {!hasAiKey ? (
             <div className="space-y-4 text-sm">
-              <p>
-                Pour comprendre vos réponses, Sophie utilise votre propre IA (OpenAI, Gemini ou Claude). Ajoutez sa clé
-                dans les paramètres, ou créez la recherche avec le formulaire, sans IA.
+              <p className="flex items-start gap-2">
+                <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <span>
+                  L’IA est incluse dans l’offre Pro. Avec l’offre Essentiel, ajoutez la clé de votre propre IA (OpenAI,
+                  Gemini ou Claude), ou créez la recherche avec le formulaire, sans IA.
+                </span>
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
+                <Button asChild>
+                  <Link href="/billing">Passer en Pro</Link>
+                </Button>
                 <Button asChild variant="outline">
                   <Link href="/settings/keys">
                     <KeyRound className="mr-2 h-4 w-4" />

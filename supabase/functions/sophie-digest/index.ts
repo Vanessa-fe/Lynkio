@@ -2,7 +2,7 @@
 // Appelée depuis le navigateur, avec le jeton de l'utilisateur (verify_jwt). Seuls les totaux et la
 // période sont envoyés à l'IA ; 5 reformulations par jour au plus.
 import { createClient } from '@supabase/supabase-js'
-import { loadAiAccess, generateJson } from '../_shared/ai.ts'
+import { loadAiAccess, generateJson, recordAiUsage } from '../_shared/ai.ts'
 import { UserFacingError } from '../_shared/errors.ts'
 import { accountPlan, planDenial } from '../_shared/plan.ts'
 
@@ -50,7 +50,7 @@ Deno.serve(async request => {
     const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
     const denial = planDenial(await accountPlan(admin, user.id), false)
     if (denial) return json({ error: denial.message }, 403)
-    const access = await loadAiAccess(admin, user.id)
+    const access = await loadAiAccess(admin, user.id, 'assistant')
     const { data: allowed, error: limitError } = await client.rpc('hit_my_rate_limit', {
       p_action: 'sophie_digest', p_max: 5, p_window_seconds: 86400,
     })
@@ -64,6 +64,7 @@ Deno.serve(async request => {
       input: JSON.stringify({ du: parisDay(report.period_start), au: parisDay(report.period_end, -1), totaux: report.counts }),
       webSearch: false,
     })
+    await recordAiUsage(admin, user.id, access, 'assistant')
     const summary = JSON.parse(result.text)?.summary
     if (typeof summary !== 'string' || !summary.trim()) throw new Error('Réponse vide')
     return json({ summary: summary.slice(0, 1500) })

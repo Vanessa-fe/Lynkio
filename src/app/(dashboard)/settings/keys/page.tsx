@@ -4,14 +4,17 @@ import { getMyAiProvider, getMyApiKeys } from '@/lib/queries/api-keys'
 import { SophieSettings } from '@/components/settings/sophie-settings'
 import { getUserProfile } from '@/lib/queries/user-profile'
 import { createClient } from '@/lib/supabase/server'
+import { getAiAvailability } from '@/lib/queries/ai-access'
+import { AiIncludedCard } from '@/components/settings/ai-included-card'
 
 export default async function ApiKeysSettingsPage() {
   const supabase = await createClient()
-  const [savedKeys, aiProvider, profile, { data: retention }] = await Promise.all([
+  const [savedKeys, aiProvider, profile, { data: retention }, ai] = await Promise.all([
     getMyApiKeys(),
     getMyAiProvider(),
     getUserProfile(),
     supabase.from('data_retention_settings').select('sophie_chat_months').maybeSingle(),
+    getAiAvailability(),
   ])
 
   return (
@@ -25,6 +28,8 @@ export default async function ApiKeysSettingsPage() {
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
         <span>Vos clés sont vérifiées, chiffrées et jamais réaffichées.</span>
       </p>
+
+      <AiIncludedCard ai={ai} />
 
       <ApiKeysSettings savedKeys={savedKeys} aiProvider={aiProvider} />
 

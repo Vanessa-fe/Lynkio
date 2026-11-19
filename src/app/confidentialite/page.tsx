@@ -106,6 +106,14 @@ export default function PrivacyPage() {
           <strong>Stripe</strong> : paiement de l&apos;abonnement. Filonea ne voit jamais votre numéro de carte.
         </li>
         <li>
+          <strong>OpenAI, pour l&apos;IA incluse dans l&apos;offre Pro</strong> (essai compris) : quand vous demandez un
+          message, une analyse ou discutez avec Sophie sans clé personnelle, les informations utiles (fiche de
+          l&apos;entreprise, prénom et poste du contact, votre présentation, vos messages à Sophie) sont envoyées à
+          OpenAI par Filonea. Filonea désactive l&apos;enregistrement des échanges chez OpenAI (option « store »).
+          Selon ses conditions pour les entreprises, OpenAI n&apos;utilise pas ces données pour entraîner ses modèles
+          et peut les garder jusqu&apos;à 30 jours pour détecter les abus.
+        </li>
+        <li>
           <strong>L&apos;IA et le service de recherche d&apos;e-mails que vous avez choisis</strong> (OpenAI, Anthropic
           Claude ou Google Gemini, et Hunter) : quand vous demandez un message ou une recherche, les informations
           utiles (fiche de l&apos;entreprise, prénom et poste du contact, votre présentation) leur sont envoyées avec

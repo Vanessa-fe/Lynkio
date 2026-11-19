@@ -32,6 +32,12 @@ const PARIS = 'Europe/Paris'
  * Minuit (heure de Paris) du jour de `date`, décalé de `days` jours. Sert à la limite Essentiel :
  * recherches par semaine, comptées au jour près (même règle dans supabase/functions/_shared/plan.ts).
  */
+/** Début du mois en cours, à minuit heure de Paris (quotas d'IA incluse, src/lib/ai-quota.ts) */
+export function parisMonthStart(now: Date): Date {
+  const day = Number(new Intl.DateTimeFormat('en-CA', { timeZone: PARIS, day: 'numeric' }).format(now))
+  return parisMidnight(now, -(day - 1))
+}
+
 export function parisMidnight(date: Date, days = 0): Date {
   const [year = 1970, month = 1, day = 1] = new Intl.DateTimeFormat('en-CA', { timeZone: PARIS, year: 'numeric', month: '2-digit', day: '2-digit' })
     .format(date)
