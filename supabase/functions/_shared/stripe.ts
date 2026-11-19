@@ -41,7 +41,16 @@ export type StripeSubscription = {
   items: { data: { current_period_end?: number; price: { lookup_key: string | null; recurring?: { interval?: string } } }[] }
 }
 
-const PLAN_FROM_LOOKUP = /^(essentiel|pro)_(monthly|yearly)$/
+// « _lancement » : anciens prix de lancement (9 € / 20 €), renommés quand les nouveaux prix prennent les clés
+// habituelles (janvier 2027). Les abonnés du lancement gardent leur prix et restent reconnus.
+const PLAN_FROM_LOOKUP = /^(essentiel|pro)_(monthly|yearly)(?:_lancement)?$/
+
+/** Offre et période d'un prix Stripe d'après sa clé (lookup key), ou null si la clé est inconnue */
+export function planFromLookupKey(key: string | null | undefined): { plan: 'essentiel' | 'pro'; interval: 'month' | 'year' } | null {
+  const match = key?.match(PLAN_FROM_LOOKUP)
+  if (!match) return null
+  return { plan: match[1] as 'essentiel' | 'pro', interval: match[2] === 'monthly' ? 'month' : 'year' }
+}
 
 /**
  * Recopie l'état d'un abonnement Stripe dans la table billing (offre, période, statut, résiliation)
@@ -53,7 +62,7 @@ export async function syncSubscription(admin: SupabaseClient, subscriptionId: st
     'GET'
   )
   const item = subscription.items.data[0]
-  const match = item?.price.lookup_key?.match(PLAN_FROM_LOOKUP)
+  const match = planFromLookupKey(item?.price.lookup_key)
   const renewal = subscription.current_period_end ?? item?.current_period_end ?? null
   // Résilié : l'accès s'arrête à la date de fin prévue, sans nouveau prélèvement
   const cancelling = subscription.cancel_at_period_end || Boolean(subscription.cancel_at)
@@ -75,8 +84,8 @@ export async function syncSubscription(admin: SupabaseClient, subscriptionId: st
     .update({
       stripe_customer_id: subscription.customer,
       stripe_subscription_id: subscription.id,
-      plan: match?.[1] ?? null,
-      billing_interval: match ? (match[2] === 'monthly' ? 'month' : 'year') : null,
+      plan: match?.plan ?? null,
+      billing_interval: match?.interval ?? null,
       status: subscription.status,
       current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
       cancel_at_period_end: cancelling,
