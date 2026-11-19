@@ -81,6 +81,34 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
+      <h2>L&apos;extension Filonea pour LinkedIn</h2>
+      <p>
+        L&apos;extension Chrome de Filonea, si vous l&apos;installez, relie LinkedIn à votre compte Filonea. Elle ne
+        transmet à Filonea que ce que vous lui demandez :
+      </p>
+      <ul>
+        <li>
+          <strong>Une personne que vous ajoutez</strong> avec le bouton « + Filonea » : son nom, son poste, son
+          entreprise et l&apos;adresse de son profil, que vous vérifiez avant d&apos;enregistrer.
+        </li>
+        <li>
+          <strong>Les posts trouvés pour vos expressions</strong> (par exemple « cherche un freelance ») : texte du
+          post, nom et titre de son auteur, date. Sophie les trie pour vous ; ceux que vous ne retenez pas sont effacés
+          après 30 jours par défaut (voir « Combien de temps »).
+        </li>
+        <li>
+          <strong>Le suivi des invitations et messages</strong> que vous avez validés dans Filonea, si vous activez
+          l&apos;envoi depuis votre compte LinkedIn : invitation envoyée, acceptée, message envoyé.
+        </li>
+      </ul>
+      <p>
+        Pour envoyer depuis votre compte, l&apos;extension lit sur place votre jeton de session LinkedIn : il
+        n&apos;est jamais transmis à Filonea ni à personne. Sa connexion à Filonea est gardée dans votre navigateur.
+        Rien de ce qu&apos;elle lit n&apos;est vendu ni partagé. Vous restez responsable de votre usage de LinkedIn et
+        de ses conditions. Pour tout arrêter, désinstallez l&apos;extension ou déconnectez-la dans Paramètres &gt;
+        Extension LinkedIn.
+      </p>
+
       <h2>Avec qui vos données sont partagées</h2>
       <p>Seulement avec les prestataires nécessaires au service, chacun pour sa mission :</p>
       <ul>
