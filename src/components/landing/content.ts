@@ -127,7 +127,7 @@ export const features: Record<'messages' | 'score' | 'records' | 'pipeline', Fea
   messages: {
     icon: Sparkles,
     title: 'Préparez un premier message à partir d’un fait',
-    text: 'Sophie vous propose un brouillon d’e-mail ou de message LinkedIn à partir des informations disponibles sur l’entreprise. Vous pouvez le modifier avant de l’envoyer.',
+    text: 'Sophie vous propose un e-mail ou un message LinkedIn à partir des informations disponibles sur l’entreprise. Vous pouvez le modifier avant de l’envoyer.',
   },
   score: {
     icon: Target,
@@ -157,7 +157,7 @@ export const steps = [
   },
   {
     title: 'Choisissez à qui écrire',
-    text: 'Consultez les résultats, sélectionnez les entreprises qui vous intéressent et partez d’un brouillon que vous pouvez adapter avant l’envoi.',
+    text: 'Consultez les résultats et sélectionnez les entreprises qui vous intéressent. Sophie vous prépare un message que vous pouvez adapter avant l’envoi.',
   },
 ]
 
@@ -168,8 +168,8 @@ export const safeguards: { title: string; text: string; example?: string }[] = [
     example: 'Création récente · Source BODACC',
   },
   {
-    title: 'Des brouillons modifiables',
-    text: 'Sophie vous propose un brouillon d’e-mail ou de message LinkedIn. Vous pouvez le relire et le modifier, puis l’envoyer vous-même au moment qui vous convient.',
+    title: 'Des messages personnalisables',
+    text: 'Sophie vous propose un e-mail ou un message LinkedIn. Vous pouvez le relire et le modifier, puis l’envoyer vous-même au moment qui vous convient.',
   },
 ]
 

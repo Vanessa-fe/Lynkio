@@ -123,7 +123,7 @@ function MessagesVisual() {
         viewport={inView}
         transition={{ duration: 0.7, ease: easeOutExpo, delay: 0.5 }}
       >
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-700">Brouillon · LinkedIn</p>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-700">Message proposé · LinkedIn</p>
         Bonjour Claire, j&apos;ai vu que vous veniez de lancer votre cabinet. Si vous prévoyez de publier vos offres sur
         votre propre site, je peux vous aider à mettre en place une page simple pour recevoir les candidatures. Est-ce un
         sujet que vous avez déjà prévu ?
