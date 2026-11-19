@@ -56,7 +56,6 @@ test('prix affichés : Essentiel 9 € / 90 €, Pro 20 € / 200 €, dans les 
   const content = readFileSync(new URL('../../components/landing/content.ts', import.meta.url), 'utf8')
   assert.match(content, /key: 'essentiel'[\s\S]*?monthly: 9,\s*yearly: 90,/)
   assert.match(content, /key: 'pro'[\s\S]*?monthly: 20,\s*yearly: 200,/)
-  assert.match(content, /Pro à 20 € par mois \(200 € par an\)/)
   const terms = readFileSync(new URL('../../app/conditions/page.tsx', import.meta.url), 'utf8')
   assert.match(terms, /9 € par mois ou 90 € par an\. <strong>Pro<\/strong> : 20 € par mois ou 200 € par/)
 })

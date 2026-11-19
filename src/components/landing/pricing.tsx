@@ -22,22 +22,34 @@ export function Pricing() {
   return (
     <section id="tarifs" className="px-4 py-24 md:px-6 md:py-32">
       <div className="mx-auto max-w-5xl">
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="mx-auto max-w-3xl text-center">
           <SectionLabel label="Tarifs" />
           <RevealWords
-            text="Commencez petit, *visez grand.*"
+            text={`Essayez Filonea Pro\n*gratuitement pendant ${trialDays}\u00a0jours.*`}
             accentClassName="text-brand-600"
             className="mt-6 font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-bold leading-[1.02] tracking-[-0.045em]"
           />
           <FadeIn>
             <p className="mt-5 text-lg leading-relaxed text-ink/65">
-              {trialDays} jours d&apos;essai gratuit de l&apos;offre Pro, sans carte bancaire. Sans engagement : vous
-              changez d&apos;offre ou vous arrêtez quand vous voulez.
+              Sans carte bancaire. À la fin de l&apos;essai, choisissez l&apos;offre qui vous convient ou arrêtez-vous là.
             </p>
+          </FadeIn>
+          <FadeIn className="mt-8 flex justify-center">
+            {SIGNUPS_OPEN ? (
+              <Magnetic>
+                <CtaLink href="/signup" variant="primary" arrow>
+                  Essayer Pro gratuitement
+                </CtaLink>
+              </Magnetic>
+            ) : (
+              <p className="inline-flex rounded-full bg-brand-50 px-5 py-3 text-sm font-medium text-brand-700">
+                Ouverture des inscriptions très bientôt
+              </p>
+            )}
           </FadeIn>
         </div>
 
-        <FadeIn className="mt-10 flex justify-center">
+        <FadeIn className="mt-14 flex flex-col items-center gap-3">
           <div role="group" aria-label="Période de paiement" className="inline-flex rounded-full border border-ink/10 bg-white p-1 shadow-soft">
             {[
               { value: false, label: 'Mensuel' },
@@ -57,6 +69,11 @@ export function Pricing() {
               </button>
             ))}
           </div>
+          <p className="max-w-md text-center text-sm text-ink/55">
+            {yearly
+              ? 'Payé une fois par an. Si vous arrêtez, l’abonnement n’est pas renouvelé : vous gardez l’accès jusqu’à la fin de l’année payée.'
+              : 'Sans engagement : vous changez d’offre ou vous arrêtez quand vous voulez. L’arrêt prend effet à la fin du mois payé.'}
+          </p>
         </FadeIn>
 
         <div className="mt-8 grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
@@ -84,17 +101,36 @@ export function Pricing() {
                       <span className="rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-cream">Recommandée</span>
                     )}
                   </div>
-                  <p className={cn('mt-1', dark ? 'text-cream/65' : 'text-ink/60')}>{plan.tagline}</p>
+                  <p className={cn('mt-1 md:min-h-[3rem]', dark ? 'text-cream/65' : 'text-ink/60')}>{plan.tagline}</p>
 
                   <p className="mt-6 flex items-baseline gap-2">
                     <span className="font-display text-6xl font-bold tracking-[-0.04em]">{euros(price)}</span>
-                    <span className={dark ? 'text-cream/65' : 'text-ink/60'}>{yearly ? 'par an' : 'par mois'}</span>
+                    <span className={dark ? 'text-cream/65' : 'text-ink/60'}>{yearly ? 'facturés par an' : 'par mois'}</span>
                   </p>
                   <p className={cn('mt-1 h-5 text-sm', dark ? 'text-cream/55' : 'text-ink/55')}>
                     {yearly ? `soit ${euros(plan.yearly / 12)} par mois` : `ou ${euros(plan.yearly)} par an`}
                   </p>
 
-                  <ul className="mt-8 flex-1 space-y-3">
+                  <dl
+                    className={cn(
+                      'mt-7 divide-y rounded-2xl border text-sm',
+                      dark ? 'divide-cream/10 border-cream/10 bg-cream/[0.04]' : 'divide-ink/[0.06] border-ink/[0.06] bg-cream'
+                    )}
+                  >
+                    {[
+                      { label: 'Recherches', value: plan.searches, tall: true },
+                      { label: 'Mots-clés', value: plan.keywords, tall: false },
+                    ].map((row) => (
+                      <div key={row.label} className="px-4 py-3">
+                        <dt className={cn('text-xs font-semibold uppercase tracking-wider', dark ? 'text-peach' : 'text-brand-700')}>
+                          {row.label}
+                        </dt>
+                        <dd className={cn('mt-1 font-medium', row.tall && 'md:min-h-[2.5rem]', dark ? 'text-cream' : 'text-ink')}>{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  <ul className="mt-7 flex-1 space-y-3">
                     {plan.features.map((feature, featureIndex) => {
                       // « Tout Essentiel, et : » introduit la liste de Pro, sans coche
                       const intro = dark && featureIndex === 0
@@ -119,24 +155,6 @@ export function Pricing() {
                     })}
                   </ul>
 
-                  <div className="mt-9">
-                    {SIGNUPS_OPEN ? (
-                      <Magnetic>
-                        <CtaLink href={`/signup?offre=${plan.key}`} variant={dark ? 'primary' : 'outline'} arrow={dark}>
-                          {dark ? `Essayer ${trialDays} jours gratuitement` : 'Choisir Essentiel'}
-                        </CtaLink>
-                      </Magnetic>
-                    ) : (
-                      <p
-                        className={cn(
-                          'inline-flex rounded-full px-5 py-3 text-sm font-medium',
-                          dark ? 'bg-cream/10 text-peach' : 'bg-brand-50 text-brand-700'
-                        )}
-                      >
-                        Ouverture des inscriptions très bientôt
-                      </p>
-                    )}
-                  </div>
                 </div>
               </FadeIn>
             )

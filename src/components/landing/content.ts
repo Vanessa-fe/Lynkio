@@ -1,23 +1,20 @@
 import {
   Bell,
   Building2,
-  Globe,
   Landmark,
+  Newspaper,
   Rocket,
-  ScanSearch,
   Sparkles,
   Target,
   Users,
-  Zap,
   type LucideIcon,
 } from 'lucide-react'
 import { PLAN_LIMITS } from '@/lib/billing'
-import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 
 export const navLinks = [
   { href: '#fonctionnalites', label: 'Fonctionnalités' },
   { href: '#comment-ca-marche', label: 'Comment ça marche' },
-  { href: '#fiabilite', label: 'Fiabilité' },
+  { href: '#transparence', label: 'Transparence' },
   { href: '#tarifs', label: 'Tarifs' },
   { href: '#questions', label: 'Questions' },
 ]
@@ -32,10 +29,9 @@ export const brand = {
 
 export const hero = {
   eyebrow: 'L’outil de prospection des freelances',
-  title: 'Trouvez les entreprises qui ont besoin de vous, *au bon moment.*',
+  title: 'Trouvez de nouvelles entreprises\n*à prospecter chaque\u00a0semaine.*',
   intro:
-    'Sophie, votre assistante de prospection, trouve les entreprises qui correspondent à votre client idéal, vous explique pourquoi les contacter, les note sur 100 et prépare votre premier message.',
-  reassurance: 'Sources publiques, sites vérifiés, messages relus par vous.',
+    'Filonea recherche automatiquement des entreprises selon vos critères. Repérez celles à contacter en priorité et gardez le fil de vos relances.',
 }
 
 /** Fiches d'exemple qui défilent dans la carte de Sophie (entreprises fictives, une par cible) */
@@ -53,18 +49,18 @@ export type Example = {
 
 export const examples: Example[] = [
   {
-    company: 'Atelier Lumen',
-    meta: 'Luminaires · Lyon',
+    company: 'Cabinet Ardent',
+    meta: 'Cabinet de recrutement · Rennes',
     segment: 'TPE / PME',
     segmentIcon: Building2,
     score: 82,
     signals: [
-      { icon: Target, title: 'Correspond à votre client idéal', detail: 'Commerce de luminaires · 14 salariés · Rhône' },
-      { icon: Globe, title: 'Utilise vos outils', detail: 'Boutique en ligne faite avec WordPress' },
+      { icon: Target, title: 'Correspond à vos critères', detail: 'Recrutement · Bretagne' },
+      { icon: Landmark, title: 'Création récente', detail: 'Source BODACC' },
     ],
-    badges: ['CA 1,8 M€', 'Budget confortable', 'Décideur identifié'],
+    badges: ['Dirigeante identifiée', 'Profil LinkedIn trouvé'],
     message:
-      'Bonjour Claire, votre boutique en ligne tourne sur WordPress : j’accompagne des commerces comme le vôtre pour la faire évoluer, à distance…',
+      'Bonjour Claire, j’ai vu que vous veniez de lancer votre cabinet. Si vous prévoyez de publier vos offres sur votre propre site, je peux vous aider à mettre en place une page simple pour recevoir les candidatures…',
   },
   {
     company: 'Studio Brume',
@@ -73,12 +69,12 @@ export const examples: Example[] = [
     segmentIcon: Users,
     score: 76,
     signals: [
-      { icon: Users, title: 'Agence qui peut sous-traiter', detail: 'Agence web · 12 salariés · Loire-Atlantique' },
-      { icon: Globe, title: 'Utilise vos outils', detail: 'Sites clients faits avec Webflow' },
+      { icon: Target, title: 'Correspond à vos critères', detail: 'Agence web · 12 salariés · Loire-Atlantique' },
+      { icon: Newspaper, title: 'Développement annoncé', detail: 'Trouvé avec « Approfondir » · site de l’agence' },
     ],
-    badges: ['12 salariés', 'Renfort possible', 'Contact trouvé'],
+    badges: ['12 salariés', 'Dirigeant identifié', 'Profil LinkedIn trouvé'],
     message:
-      'Bonjour Hugo, je suis designer UI/UX indépendant·e. Quand vos projets se chevauchent, je peux renforcer l’équipe sur un projet précis, à distance et sans période d’adaptation…',
+      'Bonjour Hugo, j’ai lu que Studio Brume ouvrait de nouveaux marchés. Quand vos projets se chevauchent, je peux renforcer l’équipe sur un projet précis, à distance…',
   },
   {
     company: 'Kalia',
@@ -87,21 +83,13 @@ export const examples: Example[] = [
     segmentIcon: Rocket,
     score: 88,
     signals: [
-      { icon: Landmark, title: 'Fiche officielle vérifiée', detail: 'Éditeur de logiciels · créé en 2021 · CA publié' },
-      { icon: Target, title: 'Proche de votre client idéal', detail: 'Startup de 18 personnes, équipe marketing' },
+      { icon: Landmark, title: 'Fiche officielle', detail: 'Éditeur de logiciels · créé en 2021 · CA publié' },
+      { icon: Newspaper, title: 'Financement annoncé', detail: 'Trouvé avec « Approfondir » · article de presse' },
     ],
-    badges: ['Budget confortable', 'Décideur identifié', 'E-mail trouvé'],
+    badges: ['CA publié', 'Dirigeante identifiée', 'E-mail trouvé'],
     message:
-      'Bonjour Inès, j’ai vu votre mission sur la stratégie de contenu de Kalia. Je peux démarrer rapidement ; voici comment je m’y prendrais…',
+      'Bonjour Inès, félicitations pour la levée de fonds de Kalia. Si vous renforcez votre marketing dans les prochains mois, je peux vous aider sur la stratégie de contenu…',
   },
-]
-
-/** Sources surveillées par Sophie (section radar) */
-export const sources = [
-  { icon: Landmark, title: 'Registre officiel des entreprises', text: 'Secteur, taille et zone de votre client idéal' },
-  { icon: Users, title: 'Agences et partenaires', text: 'Ceux qui confient des projets à des indépendants' },
-  { icon: Sparkles, title: 'Sociétés tout juste créées', text: 'Annonces du BODACC, en option' },
-  { icon: Globe, title: 'Sites web analysés', text: 'Les outils du site vérifiés dans le code' },
 ]
 
 /** Points du radar : angle en degrés (sens horaire depuis le haut), distance au centre (0 à 1) */
@@ -114,87 +102,74 @@ export const radarBlips = [
 ]
 
 export const beforeAfter = {
-  title: 'Prospecter à froid, c’est écrire au hasard. *Sophie vous dit pourquoi.*',
+  title: 'Votre prospection avance,\n*même les semaines chargées.*',
   before: {
-    label: 'À l’aveugle',
+    label: 'À la main',
     items: [
-      'Des listes d’entreprises prises au hasard',
-      'Le même message envoyé à tout le monde',
-      'Des relances oubliées, des pistes qui refroidissent',
+      'Chercher de nouvelles entreprises une par une',
+      'Trouver quoi dire dans le premier message',
+      'Se souvenir de qui relancer et quand',
     ],
   },
   after: {
-    label: 'Avec Sophie',
+    label: 'Avec Filonea',
     items: [
-      'Des entreprises choisies selon votre client idéal, avec la raison et la source',
-      'Un premier message qui part d’un fait précis',
-      'Les relances du jour, au bon moment',
+      'Recevez les résultats de vos recherches planifiées',
+      'Partez d’une suggestion de Sophie et adaptez-la à votre façon',
+      'Retrouvez les prospects à relancer dans vos rappels',
     ],
   },
 }
 
 export type Feature = { icon: LucideIcon; title: string; text: string }
 
-export const features: Record<'signals' | 'tech' | 'score' | 'records' | 'messages' | 'pipeline', Feature> = {
-  signals: {
-    icon: Zap,
-    title: 'Les bonnes entreprises, et pourquoi',
-    text: 'Secteur, taille, zone : Sophie cherche dans le registre officiel les entreprises qui correspondent à votre client idéal, ou les agences qui sous-traitent. Chaque fiche dit pourquoi elle a été retenue, avec la source et la date.',
-  },
-  tech: {
-    icon: ScanSearch,
-    title: 'Recherche par outil',
-    text: 'L’IA cherche des entreprises dont le site utilise les outils que vous maîtrisez, comme WordPress ou Webflow. Sophie analyse ensuite chaque site : sans l’outil dans son code, l’entreprise est écartée.',
+export const features: Record<'messages' | 'score' | 'records' | 'pipeline', Feature> = {
+  messages: {
+    icon: Sparkles,
+    title: 'Préparez un premier message à partir d’un fait',
+    text: 'Sophie vous propose un brouillon d’e-mail ou de message LinkedIn à partir des informations disponibles sur l’entreprise. Vous pouvez le modifier avant de l’envoyer.',
   },
   score: {
     icon: Target,
-    title: 'Un score selon votre client idéal',
-    text: 'Taille de l’entreprise, nature et fraîcheur des signaux, décideur identifié : chaque entreprise reçoit une note sur 100, avec le détail du calcul. Son budget est estimé au regard de votre tarif journalier.',
+    title: 'Priorisez vos prospects',
+    text: 'Visualisez en un coup d’œil à quel point une entreprise correspond à vos critères et consultez le détail de son score.',
   },
   records: {
     icon: Building2,
-    title: 'Des fiches complètes',
-    text: 'SIREN, dirigeants, chiffre d’affaires, outils du site, contacts et profils LinkedIn, réunis au même endroit.',
-  },
-  messages: {
-    icon: Sparkles,
-    title: 'Des messages qui partent d’un fait',
-    text: 'Sophie rédige un premier e-mail ou message LinkedIn à partir du signal et du site de l’entreprise. Le code le contrôle, vous le relisez, vous l’envoyez : c’est noté.',
+    title: 'Retrouvez les infos utiles avant d’écrire',
+    text: 'Consultez les informations disponibles sur l’entreprise, comme ses dirigeants, son chiffre d’affaires ou ses profils LinkedIn.',
   },
   pipeline: {
     icon: Bell,
-    title: 'Pipeline et relances',
-    text: 'Étapes, échanges, listes de prospects et relances du jour : vous savez toujours qui recontacter, et quand. Import CSV, profils LinkedIn et retour des campagnes Waalaxy inclus.',
+    title: 'Gardez le fil de vos relances',
+    text: 'Retrouvez vos échanges et voyez qui relancer aujourd’hui.',
   },
 }
 
 export const steps = [
   {
-    title: 'Décrivez votre client idéal',
-    text: 'Métier, taille d’entreprise, outils, tarif journalier, départements : quelques réglages suffisent.',
+    title: 'Définissez votre cible',
+    text: 'Indiquez les secteurs, les zones géographiques et les tailles d’entreprise qui vous intéressent.',
   },
   {
-    title: 'Sophie cherche pour vous',
-    text: 'Aux jours et à l’heure que vous choisissez, elle parcourt les sources et ajoute les entreprises qui correspondent.',
+    title: 'Sophie lance les recherches',
+    text: 'Choisissez les jours et l’heure de vos recherches. Sophie repère les entreprises qui correspondent à vos critères et les ajoute à vos résultats.',
   },
   {
-    title: 'Contactez les meilleures pistes',
-    text: 'Les entreprises les mieux notées en premier, un message prêt à relire, une relance programmée.',
+    title: 'Choisissez à qui écrire',
+    text: 'Consultez les résultats, sélectionnez les entreprises qui vous intéressent et partez d’un brouillon que vous pouvez adapter avant l’envoi.',
   },
 ]
 
-export const safeguards = [
+export const safeguards: { title: string; text: string; example?: string }[] = [
   {
     title: 'Des sources publiques',
-    text: 'Chaque piste s’appuie sur une source vérifiable : le registre officiel des entreprises, le BODACC ou le code du site lui-même.',
+    text: 'Filonea s’appuie sur des données publiques, notamment le registre des entreprises et les annonces du BODACC, pour repérer des entreprises selon vos critères.',
+    example: 'Création récente · Source BODACC',
   },
   {
-    title: 'Des sites analysés',
-    text: 'Chaque site est analysé avant qu’un outil soit retenu.',
-  },
-  {
-    title: 'Des messages contrôlés',
-    text: 'Lien inconnu, champ à compléter, prix : chaque message est vérifié, puis relu par vous avant l’envoi.',
+    title: 'Des brouillons modifiables',
+    text: 'Sophie vous propose un brouillon d’e-mail ou de message LinkedIn. Vous pouvez le relire et le modifier, puis l’envoyer vous-même au moment qui vous convient.',
   },
 ]
 
@@ -210,34 +185,35 @@ export const plans = [
   {
     key: 'essentiel',
     name: 'Essentiel',
-    tagline: 'Pour démarrer votre prospection',
+    tagline: 'Pour prospecter chaque semaine',
     monthly: 9,
     yearly: 90,
     highlighted: false,
+    searches: `${essentiel.runsPerWeek} par semaine · jusqu’à ${essentiel.companiesPerRun} entreprises par recherche`,
+    keywords: `Jusqu’à ${essentiel.searchKeywords}`,
     features: [
-      `Deux recherches de Sophie par semaine, jusqu’à ${essentiel.companiesPerRun} entreprises chacune (une recherche sans résultat ne compte pas)`,
-      `${essentiel.searchKeywords} mots-clés de recherche`,
-      'Score sur 100 et fiche complète : SIREN, dirigeants, chiffre d’affaires',
-      'Premiers e-mails rédigés par Sophie',
-      'Suivi de vos prospects : entreprises, personnes, listes, rappels',
+      'Score de chaque prospect sur 100',
+      'Fiche entreprise complète',
+      'E-mails de prospection rédigés par Sophie',
+      'Suivi des prospects et rappels à planifier',
       'Export de vos données',
     ],
   },
   {
     key: 'pro',
     name: 'Pro',
-    tagline: 'Pour ne laisser passer aucun client',
+    tagline: 'Pour prospecter plus souvent et élargir vos recherches',
     monthly: 20,
     yearly: 200,
     highlighted: true,
+    searches: `Jusqu’à ${pro.daysPerWeek} jours sur 7 · jusqu’à ${pro.companiesPerRun} entreprises par recherche`,
+    keywords: `Jusqu’à ${pro.searchKeywords}`,
     features: [
       'Tout Essentiel, et :',
-      `Sophie cherche jusqu’à 7 jours sur 7, jusqu’à ${pro.companiesPerRun} entreprises par recherche`,
-      `${pro.searchKeywords} mots-clés de recherche`,
-      'Messages LinkedIn et relances préparés par Sophie',
-      'Extension LinkedIn : le bouton «\u00a0+\u00a0Filonea\u00a0» et vos envois à votre rythme',
-      'Recherche d’e-mails des décideurs',
-      'Import de vos prospects (CSV, Waalaxy)',
+      'Suggestions de messages LinkedIn et de relance',
+      'Extension LinkedIn',
+      'E-mails des décideurs',
+      'Import de vos prospects',
     ],
   },
 ] as const
@@ -250,64 +226,40 @@ export const trialDays = 14
  */
 export const faq = [
   {
-    question: 'Qu’est-ce que Filonea ?',
+    question: 'Comment fonctionnent les 14 jours d’essai ?',
     answer:
-      'Filonea est un outil de prospection B2B pour les freelances qui vendent leurs services aux entreprises. Son assistante, Sophie, repère les entreprises qui correspondent à votre client idéal, avec leurs signaux d’opportunité (une création récente, un site fait avec un outil que vous maîtrisez), les note sur 100 et prépare un premier message. Filonea suit ensuite vos échanges et vos relances, jusqu’au client signé.',
+      'Vous pouvez essayer Filonea Pro pendant 14 jours sans renseigner de carte bancaire. Vous pouvez choisir une offre pendant ou après l’essai : si vous la choisissez pendant, le premier prélèvement a lieu à la fin de l’essai. Si vous ne choisissez aucune offre, l’essai se termine sans prélèvement.',
   },
   {
-    question: 'À quels freelances s’adresse Filonea ?',
+    question: 'À qui s’adresse Filonea ?',
     answer:
-      'Aux freelances qui vendent leurs services aux entreprises : tech et IT (développement, DevOps, data, IA…), design et graphisme, rédaction et SEO, marketing et communication, vidéo et photo, assistanat… Vous choisissez votre métier ; Sophie vous suggère les secteurs de clients et de partenaires qui vont avec, et vous gardez la main sur chaque recherche. Un métier absent de la liste ? Choisissez « Autre métier » : tous les secteurs restent disponibles.',
-  },
-  {
-    question: 'Qu’est-ce qu’un signal d’opportunité ?',
-    answer:
-      'C’est un fait public qui laisse penser qu’une entreprise pourrait avoir besoin de vous : une société tout juste créée, ou un site fait avec un outil que vous maîtrisez. Sans signal, Sophie le dit clairement : l’entreprise correspond seulement à votre client idéal.',
+      'Aux freelances et indépendants qui proposent leurs services à des entreprises. Que vous fassiez du conseil, de la rédaction, du design ou du développement, vous choisissez les secteurs, les zones et les tailles d’entreprise qui vous intéressent.',
   },
   {
     question: 'D’où viennent les entreprises proposées ?',
     answer:
-      'Du registre officiel des entreprises (secteur, taille, zone de votre client idéal), des annonces de créations du BODACC (en option) et d’une recherche par outil dont chaque résultat est vérifié dans le code du site. Les entreprises qui refusent la prospection commerciale sont toujours écartées. Chaque fiche réunit ensuite le SIREN, les dirigeants, le chiffre d’affaires publié et les contacts trouvés.',
+      'Filonea s’appuie sur des sources publiques, comme le registre des entreprises et les annonces du BODACC, pour repérer les entreprises qui correspondent à vos critères.',
   },
   {
-    question: 'Comment est calculé le score sur 100 ?',
+    question: 'À quoi sert le score sur 100 ?',
     answer:
-      'Selon votre client idéal : taille de l’entreprise, nature et fraîcheur des signaux, décideur identifié, moyen de contact connu. Le détail du calcul est affiché sur chaque fiche. Le budget de l’entreprise est estimé à part, au regard de votre tarif journalier.',
+      'Il vous aide à choisir quelles entreprises examiner en priorité. Vous pouvez consulter le détail du score et ajuster le poids des signaux qui comptent pour vous, comme une création récente.',
   },
   {
-    question: 'Sophie envoie-t-elle les messages à ma place ?',
+    question: 'Qui envoie les messages et les relances ?',
     answer:
-      'Non. Sophie rédige un premier e-mail ou message LinkedIn à partir du signal et du site de l’entreprise. Le code le vérifie (lien inconnu, champ à compléter, prix), puis vous le relisez et l’envoyez vous-même. Un clic suffit ensuite pour le noter dans l’historique.',
+      'Sophie vous propose des textes que vous pouvez adapter. Vous envoyez vous-même vos messages et vos relances. Les rappels vous aident à retrouver les prospects à recontacter.',
   },
   {
-    question: 'Quelles entreprises Filonea cible-t-il ?',
+    question: 'Ai-je besoin d’une clé API pour utiliser Filonea ?',
     answer:
-      'Des entreprises en France, de trois types : les agences qui ont besoin de renfort, les TPE et PME qui veulent confier un projet, et les startups qui renforcent leur équipe. Vous réglez la taille, les outils et les départements visés.',
-  },
-  {
-    question: 'Combien coûte Filonea ?',
-    answer:
-      'Deux offres, sans engagement : Essentiel à 9 € par mois (90 € par an) pour démarrer, et Pro à 20 € par mois (200 € par an) avec toute la prospection LinkedIn, plus de recherches et plus de mots-clés. Les 14 premiers jours sont gratuits, sans carte bancaire.',
-  },
-  {
-    question: 'Pourquoi utiliser ma propre clé d’IA ?',
-    answer:
-      'Pour payer l’IA au prix coûtant, sans marge. Sophie utilise le compte de l’IA de votre choix : OpenAI ou Claude d’Anthropic (quelques centimes par message), ou Gemini de Google (offre gratuite pour rédiger). Votre clé est chiffrée, jamais affichée, et ne sert qu’aux demandes que vous faites à Sophie. La recherche d’e-mails utilise de la même façon votre compte Hunter, gratuit jusqu’à 50 recherches par mois.',
+      'Vous pouvez rechercher des entreprises, consulter leurs fiches et leurs scores, et suivre vos prospects sans clé API. Si vous souhaitez discuter avec Sophie, obtenir de l’aide pour rédiger vos messages ou utiliser la fonction « Approfondir », ajoutez votre propre clé API. Votre fournisseur peut vous facturer cet usage séparément, y compris pendant l’essai.',
   },
   {
     question: 'Puis-je importer mes prospects existants ?',
-    answer:
-      'Oui : import CSV d’entreprises ou de personnes, ajout d’un profil LinkedIn depuis votre navigateur, et import de l’export Waalaxy pour retrouver invitations, messages et réponses dans l’historique de chaque personne.',
+    answer: 'Oui, l’offre Pro permet d’importer vos prospects depuis un fichier CSV ou un export Waalaxy.',
   },
 ]
 
-/** Toutes les questions, avec l'accès qui dépend de l'ouverture des inscriptions */
-export const faqItems = [
-  ...faq,
-  {
-    question: 'Comment accéder à Filonea ?',
-    answer: SIGNUPS_OPEN
-      ? 'Créez votre compte, choisissez votre métier puis réglez votre client idéal en quelques minutes. Sophie lance ensuite ses recherches aux jours et à l’heure que vous choisissez.'
-      : `Filonea est en test privé. ${SIGNUPS_CLOSED_MESSAGE}`,
-  },
-]
+/** Questions affichées sur la page et reprises dans les données structurées (FAQPage) */
+export const faqItems = faq

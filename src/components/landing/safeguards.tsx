@@ -1,7 +1,6 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { Counter } from '@/components/motion/counter'
 import { easeOutExpo, FadeIn, RevealWords } from '@/components/motion/reveal'
 import { safeguards } from './content'
 import { SectionLabel } from './section-label'
@@ -29,31 +28,21 @@ function DrawnCheck({ delay }: { delay: number }) {
 
 export function Safeguards() {
   return (
-    <section id="fiabilite" className="px-3 py-8 md:px-6">
-      <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-wine px-5 py-20 text-cream md:rounded-[2.5rem] md:px-12 md:py-28">
+    <section id="transparence" className="px-3 py-8 md:px-6">
+      <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-wine px-5 py-14 text-cream md:rounded-[2.5rem] md:px-12 md:py-20">
         <div
           aria-hidden
           className="absolute -right-40 -top-40 -z-10 size-[36rem] animate-float rounded-full opacity-40 blur-3xl"
           style={{ background: 'radial-gradient(circle, #c9432f 0%, transparent 65%)' }}
         />
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
           <div>
-            <SectionLabel label="Fiabilité" tone="dark" />
+            <SectionLabel label="En toute transparence" tone="dark" />
             <RevealWords
-              text="L’IA propose, *le code vérifie.*"
+              text={'Des sources publiques.\n*Vous décidez quoi envoyer.*'}
               accentClassName="text-brand-300"
               className="mt-6 font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-bold leading-[1.02] tracking-[-0.045em]"
             />
-            <FadeIn>
-              <p className="mt-5 max-w-md text-lg leading-relaxed text-cream/70">
-                Une IA peut se tromper avec beaucoup d&apos;assurance. Sophie s&apos;en sert pour chercher et rédiger,
-                jamais pour décider seule.
-              </p>
-            </FadeIn>
-            <FadeIn delay={0.15} className="mt-10 flex items-end gap-4 border-t border-cream/15 pt-8">
-              <Counter to={100} suffix={"\u00a0%"} className="font-display text-6xl font-bold tracking-[-0.04em] text-cream md:text-7xl" />
-              <p className="max-w-[12rem] pb-2 text-sm leading-snug text-cream/60">des messages relus par vous avant l&apos;envoi</p>
-            </FadeIn>
           </div>
 
           <ul className="space-y-3">
@@ -64,6 +53,12 @@ export function Safeguards() {
                   <div>
                     <h3 className="font-display text-lg font-semibold tracking-tight">{item.title}</h3>
                     <p className="mt-1 leading-relaxed text-cream/65">{item.text}</p>
+                    {item.example && (
+                      <span className="mt-3 inline-flex items-center gap-2 rounded-full border border-cream/15 bg-cream/[0.06] px-3 py-1 text-sm text-cream/85">
+                        <span className="size-1.5 rounded-full bg-brand-300" />
+                        {item.example}
+                      </span>
+                    )}
                   </div>
                 </div>
               </FadeIn>

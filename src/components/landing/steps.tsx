@@ -66,13 +66,13 @@ export function Steps() {
         <div className="lg:sticky lg:top-32 lg:self-start">
           <SectionLabel label="Comment ça marche" />
           <RevealWords
-            text="Trois étapes, et Sophie *s’occupe du reste.*"
+            text={'Vos premières recherches,\n*en trois étapes.*'}
             accentClassName="text-brand-600"
             className="mt-6 font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-bold leading-[1.02] tracking-[-0.045em]"
           />
           <p className="mt-5 max-w-md text-lg leading-relaxed text-ink/65">
-            Quelques minutes de réglages au départ. Ensuite, des pistes notées arrivent toutes seules, avec de quoi
-            écrire.
+            Choisissez qui vous souhaitez cibler et quand lancer vos recherches. Les résultats vous attendent dans
+            Filonea.
           </p>
         </div>
 

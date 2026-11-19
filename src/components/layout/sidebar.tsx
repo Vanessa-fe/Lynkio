@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils/cn'
 import { logout } from '@/lib/actions/auth'
 import { Logo } from '@/components/brand/logo'
 import { navItems, isActivePath } from './nav-items'
+import { dismissIdeaBubble, IdeaBoxBubble } from './idea-box-bubble'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -69,16 +70,20 @@ export function Sidebar() {
             <LifeBuoy className="h-5 w-5" />
             Aide
           </Link>
-          <Link
-            href="/ideas"
-            className={cn(
-              'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-foreground',
-              isActivePath(pathname, '/ideas') ? 'bg-muted text-foreground' : 'text-muted-foreground'
-            )}
-          >
-            <Lightbulb className="h-5 w-5" />
-            Boîte à idées
-          </Link>
+          <div className="relative">
+            <Link
+              href="/ideas"
+              onClick={dismissIdeaBubble}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-foreground',
+                isActivePath(pathname, '/ideas') ? 'bg-muted text-foreground' : 'text-muted-foreground'
+              )}
+            >
+              <Lightbulb className="h-5 w-5" />
+              Boîte à idées
+            </Link>
+            <IdeaBoxBubble hidden={isActivePath(pathname, '/ideas')} />
+          </div>
           <button
             type="button"
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"

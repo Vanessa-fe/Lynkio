@@ -7,7 +7,7 @@ import { Magnetic } from '@/components/motion/magnetic'
 import { easeOutExpo, RevealWords } from '@/components/motion/reveal'
 import { SIGNUPS_CLOSED_MESSAGE, SIGNUPS_OPEN } from '@/lib/constants/signup'
 import { cn } from '@/lib/utils/cn'
-import { hero } from './content'
+import { hero, trialDays } from './content'
 import { CtaLink } from './cta-link'
 import { SophiePreview } from './sophie-preview'
 
@@ -106,7 +106,7 @@ export function Hero() {
             delay={0.15}
             stagger={0.045}
             accentClassName="text-brand-600"
-            className="mt-7 text-balance font-display text-[clamp(2.5rem,5.2vw,4.1rem)] font-bold leading-[1.04] tracking-[-0.04em] text-ink"
+            className="mt-7 font-display text-[clamp(2.3rem,4.4vw,3.4rem)] font-bold leading-[1.04] tracking-[-0.04em] text-ink"
           />
 
           <Appear delay={0.6}>
@@ -115,18 +115,11 @@ export function Hero() {
 
           <Appear delay={0.75} className="mt-9 flex flex-wrap items-center gap-3">
             {SIGNUPS_OPEN ? (
-              <>
-                <Magnetic>
-                  <CtaLink href="/signup" arrow>
-                    Créer mon compte
-                  </CtaLink>
-                </Magnetic>
-                <Magnetic>
-                  <CtaLink href="/login" variant="outline">
-                    J&apos;ai déjà un compte
-                  </CtaLink>
-                </Magnetic>
-              </>
+              <Magnetic>
+                <CtaLink href="/signup" arrow>
+                  Démarrer mon essai gratuit
+                </CtaLink>
+              </Magnetic>
             ) : (
               <Magnetic>
                 <CtaLink href="/login" arrow>
@@ -139,7 +132,9 @@ export function Hero() {
           <Appear delay={0.9}>
             <p className="mt-6 flex items-center gap-2 text-sm text-ink/60">
               <ShieldCheck className="size-4 shrink-0 text-brand-600" />
-              {SIGNUPS_OPEN ? hero.reassurance : `${SIGNUPS_CLOSED_MESSAGE} Filonea est en test privé.`}
+              {SIGNUPS_OPEN
+                ? `${trialDays}\u00a0jours d’essai Pro · Sans carte bancaire`
+                : `${SIGNUPS_CLOSED_MESSAGE} Filonea est en test privé.`}
             </p>
           </Appear>
         </div>

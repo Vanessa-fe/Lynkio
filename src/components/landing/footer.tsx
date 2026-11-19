@@ -8,8 +8,10 @@ export function Footer() {
   return (
     <footer className="overflow-hidden border-t border-ink/[0.07]">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-4 py-10 text-sm text-ink/60 sm:flex-row md:px-6">
-        <Logo className="text-ink" />
-        <p>L&apos;outil de prospection des freelances.</p>
+        <div className="flex flex-col items-center gap-2 sm:items-start">
+          <Logo className="text-ink" />
+          <p>L&apos;outil de prospection des freelances.</p>
+        </div>
         <div className="flex gap-5">
           <Link href="/contact" className="hover:text-ink">
             Contact
@@ -32,7 +34,7 @@ export function Footer() {
           filonea
         </p>
       </FadeIn>
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 border-t border-ink/[0.07] px-4 py-6 text-xs text-ink/45 sm:flex-row md:px-6">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 border-t border-ink/[0.07] px-4 py-6 text-xs text-ink/60 sm:flex-row md:px-6">
         <p>© {new Date().getFullYear()} Filonea</p>
         <p className="flex flex-wrap justify-center gap-x-3 gap-y-1">
           <Link href="/mentions-legales" className="hover:text-ink">

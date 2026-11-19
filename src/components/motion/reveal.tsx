@@ -10,10 +10,12 @@ type WordPart = { text: string; accent: boolean }
 
 /**
  * Découpe « Trouvez les entreprises *au bon moment.* » en mots ;
- * les passages entre astérisques sont marqués `accent`.
+ * les passages entre astérisques sont marqués `accent`. Un `\n` force un retour à la ligne :
+ * l'indice du mot qui le suit est ajouté à `breaks`.
  */
-function splitWords(input: string): WordPart[][] {
+function splitWords(input: string): { words: WordPart[][]; breaks: Set<number> } {
   const words: WordPart[][] = []
+  const breaks = new Set<number>()
   let current: WordPart[] = []
   const flush = () => {
     if (current.length) words.push(current)
@@ -24,14 +26,17 @@ function splitWords(input: string): WordPart[][] {
     if (!chunk) return
     const accent = chunk.startsWith('*') && chunk.endsWith('*')
     const clean = accent ? chunk.slice(1, -1) : chunk
-    clean.split(/(\s+)/).forEach((piece) => {
+    // Espaces ordinaires seulement : une espace insécable garde deux mots ensemble (« 14 jours »)
+    clean.split(/([ \t\n]+)/).forEach((piece) => {
       if (!piece) return
-      if (/^\s+$/.test(piece)) flush()
-      else current.push({ text: piece, accent })
+      if (/^[ \t\n]+$/.test(piece)) {
+        flush()
+        if (piece.includes('\n')) breaks.add(words.length)
+      } else current.push({ text: piece, accent })
     })
   })
   flush()
-  return words
+  return { words, breaks }
 }
 
 /** Titre dont chaque mot monte depuis un masque. `*mot*` = italique serif rouge. */
@@ -58,7 +63,7 @@ export function RevealWords({
 }) {
   const ref = useRef<HTMLElement>(null)
   const inView = useInView(ref, { once: true, margin: '0px 0px -10% 0px' })
-  const words = splitWords(text)
+  const { words, breaks } = splitWords(text)
   const parts = (word: WordPart[]) =>
     word.map((part, j) => (
       <span key={j} className={part.accent ? cn('accent-serif', accentClassName) : undefined}>
@@ -68,9 +73,10 @@ export function RevealWords({
 
   return (
     <Tag ref={ref} className={className}>
-      <span className="sr-only">{text.replaceAll('*', '')}</span>
+      <span className="sr-only">{text.replaceAll('*', '').replaceAll('\n', ' ')}</span>
       {words.map((word, i) => (
         <span key={i} aria-hidden>
+          {breaks.has(i) && <br />}
           <span className="-mb-[0.14em] inline-block overflow-hidden px-[0.04em] pb-[0.14em] align-top">
             {immediate ? (
               <span
