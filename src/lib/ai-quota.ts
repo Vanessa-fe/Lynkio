@@ -18,8 +18,8 @@ export const AI_QUOTAS: Record<AiAction, number> = {
 
 /** Libellés dans Paramètres > Vos clés */
 export const AI_QUOTA_LABELS: Record<AiAction, string> = {
-  draft: 'Brouillons de messages',
-  chat: 'Messages à Sophie',
+  draft: 'Messages préparés par Sophie',
+  chat: 'Questions posées à Sophie',
   deep_dive: 'Analyses « Approfondir »',
   assistant: 'Aides de Sophie (recommandations, stratégies, bilans)',
   linkedin_sort: 'Tris de posts LinkedIn (extension)',
