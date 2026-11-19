@@ -12,7 +12,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { accountPlan, planDenial } from '../_shared/plan.ts'
-import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
+import { TECHNOLOGY_LABELS } from '../_shared/technologies.ts'
 import { matchesExcludedKeyword, truncate } from '../prospection-run/rules.ts'
 import { sortPosts, type SortedPost } from './sorting.ts'
 import { loadAiAccess } from '../_shared/ai.ts'

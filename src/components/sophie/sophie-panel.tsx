@@ -20,7 +20,7 @@ function starters(page: string, isCompany: boolean): string[] {
     ]
   }
   if (page.startsWith('/prospection')) {
-    return ['Quelle différence entre mes recherches et la recherche par technologie ?', 'Comment trouver plus d’entreprises dans ma zone ?']
+    return ['Comment fonctionnent mes recherches enregistrées ?', 'Comment trouver plus d’entreprises dans ma zone ?']
   }
   if (page.startsWith('/reminders')) return ['Comment relancer sans être insistant ?']
   return ['Par quoi commencer aujourd’hui ?', 'Comment choisir les entreprises à contacter en priorité ?']

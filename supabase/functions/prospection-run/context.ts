@@ -2,8 +2,7 @@ import { UserFacingError } from '../_shared/errors.ts'
 
 // Types et outils partagés par l'orchestration et les détecteurs
 
-// tech_users (recherche par technologie) n'est lancée qu'à la demande : elle coûte
-// une recherche IA et ne fait pas partie des sources du planning
+// tech_users (recherche par technologie) : retirée le 19/11/2026, gardée pour lire l'historique
 // profile_search : recherches enregistrées (prospect_strategies), lancées à chaque passage s'il y en a
 export type SourceKey = 'job_postings' | 'recent_creations' | 'tech_users' | 'profile_search'
 
