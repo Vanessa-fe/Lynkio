@@ -45,6 +45,10 @@ export default function TermsPage() {
           <strong>Essentiel</strong> : 9 € par mois ou 90 € par an. <strong>Pro</strong> : 20 € par mois ou 200 € par
           an. Le contenu de chaque offre est décrit sur la page d&apos;accueil.
         </li>
+        <li>
+          Prix de lancement : un abonnement souscrit au plus tard le 31 décembre 2026 garde le prix de son offre tant
+          qu&apos;il n&apos;est pas résilié, même si les prix augmentent ensuite.
+        </li>
         <li>{LEGAL.vat}.</li>
         <li>Les 14 premiers jours de l&apos;offre Pro sont gratuits, sans carte bancaire.</li>
         <li>
