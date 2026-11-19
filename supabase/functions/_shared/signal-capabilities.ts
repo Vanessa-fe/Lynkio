@@ -146,7 +146,7 @@ export const SIGNAL_CAPABILITIES: readonly SignalCapability[] = [
   {
     id: 'site_technical_stack',
     label: 'Technologies du site',
-    detectionLabel: 'Analyse du site depuis la fiche, ou recherche par technologie',
+    detectionLabel: 'Analyse du site depuis la fiche',
     family: 'site_analysis',
     area: 'technical',
     purpose: 'signal',
@@ -183,26 +183,6 @@ export const SIGNAL_CAPABILITIES: readonly SignalCapability[] = [
     implementedIn: [
       'src/lib/actions/companies.ts (analyzeCompanyWebsite)',
       'supabase/migrations/00059_website_audit.sql (sync_website_protocol_signal)',
-    ],
-  },
-  {
-    id: 'tech_web_research',
-    label: 'Recherche par technologie',
-    detectionLabel: 'Recherche sur Internet par votre IA, lancée à la demande',
-    family: 'web_research',
-    purpose: 'sourcing',
-    trigger: 'on_demand',
-    inputs: ['user_technologies'],
-    method:
-      'Votre IA cherche des entreprises dont le site utilise vos technologies ; chaque site est ensuite vérifié par l’analyse technique, sinon l’entreprise est écartée',
-    cost: { ai: 'web_search', network: 'ai_provider' },
-    reliability: 'medium',
-    source: 'ai_research',
-    evidence: 'consulted_url',
-    signals: [],
-    implementedIn: [
-      'supabase/functions/prospection-run/ai-research.ts',
-      'supabase/functions/prospection-run/detect-tech-users.ts',
     ],
   },
   {

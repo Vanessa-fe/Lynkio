@@ -3,8 +3,6 @@
 // Deux façons de l'appeler (POST, JSON) :
 // - { "mode": "manual" } depuis l'application (« Lancer maintenant »), avec le
 //   jeton de l'utilisateur connecté dans l'en-tête Authorization ;
-//   { "mode": "manual", "source": "tech_users" } lance seulement la recherche
-//   par technologie (recherche IA, à la demande) ;
 // - { "mode": "scheduled" } toutes les heures par pg_cron. Ce mode ne traite que
 //   les plannings arrivés à échéance (réservés atomiquement par la base) : un
 //   appel en trop ne déclenche donc rien de plus que ce qui était prévu.
@@ -18,7 +16,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { runProspection, startRun } from './runner.ts'
-import { accountPlan, COUNTED_RUNS_FILTER, NO_ACCESS_MESSAGE, parisMidnight, PLAN_LIMITS, PRO_ONLY_MESSAGE, weeklyRunAvailableAt, type Plan } from '../_shared/plan.ts'
+import { accountPlan, COUNTED_RUNS_FILTER, NO_ACCESS_MESSAGE, parisMidnight, PLAN_LIMITS, weeklyRunAvailableAt, type Plan } from '../_shared/plan.ts'
 
 // Fourni par le runtime Supabase : garde la fonction en vie après la réponse
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
@@ -81,7 +79,8 @@ Deno.serve(async (request) => {
 
     const plan = await accountPlan(admin, data.user.id)
     if (!plan) return json({ error: NO_ACCESS_MESSAGE, code: 'no_access' }, 403)
-    if (body.source === 'tech_users' && plan !== 'pro') return json({ error: PRO_ONLY_MESSAGE, code: 'pro_only' }, 403)
+    // Recherche par technologie retirée le 19/11/2026
+    if (body.source === 'tech_users') return json({ error: 'La recherche par technologie n’existe plus.', code: 'removed' }, 410)
     const nextRun = await nextWeeklyRun(admin, data.user.id, plan)
     if (nextRun) {
       return json(
@@ -98,14 +97,9 @@ Deno.serve(async (request) => {
       return json({ error: start.error }, 409)
     }
 
-    // « Recherche par technologie » ou « Lancer cette recherche » : seulement cette source, à la demande
+    // « Lancer cette recherche » : seulement cette recherche enregistrée, à la demande
     const strategyId = typeof body.strategyId === 'string' && UUID.test(body.strategyId) ? body.strategyId : undefined
-    const only =
-      body.source === 'tech_users'
-        ? ['tech_users' as const]
-        : strategyId
-          ? ['profile_search' as const]
-          : undefined
+    const only = strategyId ? ['profile_search' as const] : undefined
     EdgeRuntime.waitUntil(runProspection(admin, data.user.id, start.runId, only, PLAN_LIMITS[plan], strategyId))
     return json({ runId: start.runId }, 202)
   }

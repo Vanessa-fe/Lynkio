@@ -13,7 +13,6 @@ import {
   type SourceStats,
 } from './context.ts'
 import { detectRecentCreations } from './detect-recent-creations.ts'
-import { detectTechUsers } from './detect-tech-users.ts'
 import { detectProfileMatches } from './detect-profile.ts'
 import { UNIQUE_VIOLATION } from './store.ts'
 
@@ -38,8 +37,8 @@ const DETECTORS: {
   // Recherches enregistrées (curseur dans chaque recherche) : rien à faire si l'utilisateur n'en a pas
   { key: 'profile_search', cursorColumn: null, detect: detectProfileMatches },
   { key: 'recent_creations', cursorColumn: 'bodacc_cursor', detect: detectRecentCreations },
-  // À la demande seulement (voir SourceKey)
-  { key: 'tech_users', cursorColumn: null, detect: detectTechUsers },
+  // La recherche par technologie (tech_users) a été retirée le 19/11/2026 : la clé reste connue
+  // pour lire l'historique des passages.
 ]
 
 export type StartResult = { ok: true; runId: string } | { ok: false; error: string }
@@ -90,7 +89,7 @@ export async function runProspection(
   admin: SupabaseClient,
   userId: string,
   runId: string,
-  // Sources imposées (lancement « recherche par technologie ») ; sinon celles des réglages
+  // Sources imposées (« Lancer cette recherche ») ; sinon celles des réglages
   only?: SourceKey[],
   // Plafonds de l'offre du compte (entreprises par passage, mots-clés de recherche)
   limits?: { companiesPerRun: number; searchKeywords: number },

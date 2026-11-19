@@ -15,7 +15,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { accountPlan, planDenial } from '../_shared/plan.ts'
 import { loadAiAccess } from '../_shared/ai.ts'
-import { TECHNOLOGY_LABELS } from '../prospection-run/detect-tech-users.ts'
+import { TECHNOLOGY_LABELS } from '../_shared/technologies.ts'
 import { checkDraft } from './checks.ts'
 import { fetchSiteText } from './site-text.ts'
 import { opportunityEvent, readSignalRecommendation } from '../_shared/signal-capabilities.ts'
