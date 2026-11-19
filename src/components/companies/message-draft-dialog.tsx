@@ -175,7 +175,7 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
     }
 
     toast({
-      title: 'Brouillon enregistré',
+      title: 'Message enregistré',
       description: 'Retrouvez-le dans les échanges. Une fois envoyé, marquez-le comme envoyé.',
     })
     onOpenChange(false)
@@ -373,7 +373,7 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
                   Copier le message
                 </Button>
                 <Button type="button" onClick={handleSave} disabled={isSaving || !body.trim()}>
-                  {isSaving ? 'Enregistrement...' : 'Enregistrer en brouillon'}
+                  {isSaving ? 'Enregistrement...' : 'Enregistrer pour plus tard'}
                 </Button>
               </div>
             </DialogFooter>
