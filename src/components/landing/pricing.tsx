@@ -174,7 +174,11 @@ export function Pricing() {
           })}
         </div>
         <p className="mt-8 text-center text-sm text-ink/55">
-          Prix spécial lancement valable jusqu&apos;au {launchOfferEnds}. Prix en euros. {LEGAL.vat}.
+          <strong className="font-semibold text-ink/75">
+            Abonnez-vous avant le {launchOfferEnds} : vous gardez ce prix tant que vous restez abonné.
+          </strong>
+          <br />
+          Prix en euros. {LEGAL.vat}.
         </p>
       </div>
     </section>
