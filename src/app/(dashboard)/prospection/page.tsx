@@ -10,7 +10,7 @@ import { JOB_OFFERS_ENABLED } from '@/lib/constants/features'
 import { getIcpBasics } from '@/lib/queries/icp'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { PLAN_LIMITS } from '@/lib/billing'
-import { hasAiKey } from '@/lib/queries/api-keys'
+import { hasAiAccess } from '@/lib/queries/ai-access'
 import {
   getCompanyChoices,
   getNextScheduledRun,
@@ -29,7 +29,7 @@ export default async function ProspectionPage() {
     getIcpBasics(),
     getCurrentPlan(),
     getStrategies(),
-    hasAiKey(),
+    hasAiAccess(),
   ])
   const runningRun = runs.find((run) => run.status === 'running') ?? null
   // Offre Essentiel : deux recherches par semaine, et la prochaine automatique peut être sautée

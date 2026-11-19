@@ -17,7 +17,7 @@ import { getIcpBasics } from '@/lib/queries/icp'
 import { getUserProfile } from '@/lib/queries/user-profile'
 import { getContactsOutreach, getOrganizationOptions } from '@/lib/queries/people'
 import { getStrategy } from '@/lib/queries/strategies'
-import { hasAiKey } from '@/lib/queries/api-keys'
+import { hasAiAccess } from '@/lib/queries/ai-access'
 import { explainSignal } from '@/lib/signal-explanation'
 
 interface CompanyPageProps {
@@ -43,7 +43,7 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       getContactsOutreach(id),
       getCompanyStageEvents(id),
       getLatestDeepAnalysis(id),
-      hasAiKey(),
+      hasAiAccess(),
       getSignalAdvice(),
       getCompanyFollowUps(id),
     ])

@@ -9,11 +9,13 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { UserFacingError } from './errors.ts'
+import { ProviderAccountError, UserFacingError } from './errors.ts'
+import { aiQuota, ESSENTIEL_AI_MESSAGE, parisMonthStart, quotaReachedMessage, type AiAction } from './ai-quota.ts'
 
 export type AiProvider = 'openai' | 'gemini' | 'anthropic'
 
-export type AiAccess = { provider: AiProvider; apiKey: string; model: string }
+/** funded : clé de Filonea (IA incluse dans Pro), à compter avec recordAiUsage après un appel réussi */
+export type AiAccess = { provider: AiProvider; apiKey: string; model: string; funded?: boolean }
 
 const AI_PROVIDERS: AiProvider[] = ['openai', 'gemini', 'anthropic']
 
@@ -41,10 +43,11 @@ export const MISSING_AI_KEY_MESSAGE =
   'Ajoutez la clé de votre IA dans Paramètres > Vos clés : Sophie l\'utilise pour rédiger et pour ses recherches IA.'
 
 /**
- * Clé et modèle d'IA de l'utilisateur. Le client doit avoir le rôle service_role :
- * lui seul peut déchiffrer une clé.
+ * Clé et modèle d'IA pour cet appel. Le client doit avoir le rôle service_role : lui seul peut déchiffrer
+ * une clé. D'abord la clé de l'utilisateur (sans quota) ; sinon, pour un compte Pro ou en essai, la clé de
+ * Filonea dans la limite du quota de `action` (_shared/ai-quota.ts).
  */
-export async function loadAiAccess(admin: SupabaseClient, userId: string): Promise<AiAccess> {
+export async function loadAiAccess(admin: SupabaseClient, userId: string, action?: AiAction): Promise<AiAccess> {
   const { data: profile } = await admin.from('user_profiles').select('ai_provider').eq('id', userId).maybeSingle()
   const preferred = (profile?.ai_provider ?? null) as string | null
   const order = [
@@ -65,7 +68,43 @@ export async function loadAiAccess(admin: SupabaseClient, userId: string): Promi
     }
   }
 
+  if (action) return fundedAccess(admin, userId, action)
   throw new UserFacingError(MISSING_AI_KEY_MESSAGE)
+}
+
+/** Clé de Filonea pour un compte Pro ou en essai, si son quota du mois n'est pas atteint */
+async function fundedAccess(admin: SupabaseClient, userId: string, action: AiAction): Promise<AiAccess> {
+  const apiKey = Deno.env.get('FILONEA_OPENAI_API_KEY')
+  const [{ data: plan, error: planError }, { data: billing }] = await Promise.all([
+    admin.rpc('account_plan', { p_user_id: userId }),
+    admin.from('billing').select('status, trial_ends_at, exempt').eq('user_id', userId).maybeSingle(),
+  ])
+  if (planError) throw new Error(`Offre illisible : ${planError.message}`)
+  if (plan === 'essentiel') throw new UserFacingError(ESSENTIEL_AI_MESSAGE)
+  if (plan !== 'pro' || !apiKey) throw new UserFacingError(MISSING_AI_KEY_MESSAGE)
+
+  // Essai : pas encore d'abonnement (même règle que account_plan et getAccess dans src/lib/billing.ts)
+  const subscribed = ['active', 'trialing', 'past_due'].includes(String(billing?.status ?? ''))
+  const trial = Boolean(billing && !billing.exempt && !subscribed && new Date(billing.trial_ends_at).getTime() > Date.now())
+  const quota = aiQuota(action, trial)
+  const now = new Date()
+  const { count, error } = await admin
+    .from('ai_usage')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('action', action)
+    .gte('created_at', parisMonthStart(now).toISOString())
+  if (error) throw new Error(`Lecture du quota impossible : ${error.message}`)
+  if ((count ?? 0) >= quota) throw new UserFacingError(quotaReachedMessage(action, quota, now))
+
+  return { provider: 'openai', apiKey, model: Deno.env.get('OPENAI_MODEL') || DEFAULT_MODELS.openai, funded: true }
+}
+
+/** Compte un appel réussi fait avec la clé de Filonea (rien à compter avec la clé de l'utilisateur) */
+export async function recordAiUsage(admin: SupabaseClient, userId: string, access: AiAccess, action: AiAction): Promise<void> {
+  if (!access.funded) return
+  const { error } = await admin.from('ai_usage').insert({ user_id: userId, action })
+  if (error) console.error('ai_usage', error.message)
 }
 
 export type JsonRequest = {
@@ -90,13 +129,34 @@ export type JsonResult = {
 }
 
 export async function generateJson(request: JsonRequest): Promise<JsonResult> {
-  switch (request.access.provider) {
-    case 'openai':
-      return openAiJson(request)
-    case 'gemini':
-      return geminiJson(request)
-    case 'anthropic':
-      return anthropicJson(request)
+  return withFundedErrors(request.access, () => {
+    switch (request.access.provider) {
+      case 'openai':
+        return openAiJson(request)
+      case 'gemini':
+        return geminiJson(request)
+      case 'anthropic':
+        return anthropicJson(request)
+    }
+  })
+}
+
+export const FUNDED_UNAVAILABLE_MESSAGE =
+  'L’IA de Filonea est momentanément indisponible : réessayez dans quelques minutes. Si le problème continue, écrivez à support@filonea.fr.'
+
+/**
+ * Avec la clé de Filonea, un problème de compte chez OpenAI (crédit épuisé, clé refusée…) n'est pas celui de
+ * l'utilisateur : message neutre pour lui, détail dans les journaux pour Filonea.
+ */
+export async function withFundedErrors<T>(access: AiAccess, call: () => Promise<T>): Promise<T> {
+  try {
+    return await call()
+  } catch (error) {
+    if (access.funded && error instanceof ProviderAccountError) {
+      console.error('IA incluse (clé Filonea) :', error.message)
+      throw new UserFacingError(FUNDED_UNAVAILABLE_MESSAGE)
+    }
+    throw error
   }
 }
 
@@ -147,27 +207,27 @@ export function timeoutError(task: string): UserFacingError {
 // facturation à activer, trop de demandes, modèle inconnu ou incompatible avec la recherche web.
 
 export function keyRefused(provider: AiProvider): UserFacingError {
-  return new UserFacingError(`${PROVIDER_LABELS[provider]} refuse votre clé : vérifiez-la dans Paramètres > Vos clés`)
+  return new ProviderAccountError(`${PROVIDER_LABELS[provider]} refuse votre clé : vérifiez-la dans Paramètres > Vos clés`)
 }
 
 export function noCredit(provider: AiProvider): UserFacingError {
-  return new UserFacingError(
+  return new ProviderAccountError(
     `Votre compte ${PROVIDER_LABELS[provider]} n'a plus de crédit : ajoutez-en sur ${BILLING_PAGES[provider]}, puis réessayez.`
   )
 }
 
 export function tooManyRequests(provider: AiProvider): UserFacingError {
-  return new UserFacingError(`${PROVIDER_LABELS[provider]} reçoit trop de demandes de votre compte en même temps : réessayez dans une minute.`)
+  return new ProviderAccountError(`${PROVIDER_LABELS[provider]} reçoit trop de demandes de votre compte en même temps : réessayez dans une minute.`)
 }
 
 export function unknownModel(provider: AiProvider, model: string): UserFacingError {
-  return new UserFacingError(
+  return new ProviderAccountError(
     `${PROVIDER_LABELS[provider]} ne connaît pas le modèle « ${model} » : laissez le champ Modèle vide dans Paramètres > Vos clés pour prendre le modèle conseillé.`
   )
 }
 
 function noWebSearchModel(provider: AiProvider, model: string): UserFacingError {
-  return new UserFacingError(
+  return new ProviderAccountError(
     `Le modèle « ${model} » ne permet pas la recherche sur Internet : choisissez un autre modèle ${PROVIDER_LABELS[provider]} dans Paramètres > Vos clés (laissez le champ vide pour le modèle conseillé, ${DEFAULT_MODELS[provider]}).`
   )
 }
@@ -252,7 +312,7 @@ function geminiNeedsBilling(request: JsonRequest): UserFacingError {
 }
 
 export function geminiFreeLimit(): UserFacingError {
-  return new UserFacingError(
+  return new ProviderAccountError(
     'Vous avez atteint la limite gratuite de Gemini : réessayez plus tard, ou activez la facturation dans Google AI Studio (aistudio.google.com).'
   )
 }

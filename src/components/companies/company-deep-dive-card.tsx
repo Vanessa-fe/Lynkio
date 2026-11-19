@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FunctionsHttpError } from '@supabase/supabase-js'
-import { CheckCircle2, ExternalLink, KeyRound, Loader2, Search } from 'lucide-react'
+import { CheckCircle2, ExternalLink, KeyRound, Loader2, Lock, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
@@ -162,17 +162,28 @@ export function CompanyDeepDiveCard({ companyId, analysis, hasAiKey }: CompanyDe
                 {analysis?.status === 'done' ? 'Relancer l’analyse' : 'Approfondir avec Sophie'}
               </Button>
               <span className="text-xs text-muted-foreground">
-                Une recherche sur Internet avec votre IA, payée par votre clé
+                Une recherche sur Internet, qui prend environ une minute
                 {isFresh && ` ; l’analyse actuelle reste valable ${DEEP_ANALYSIS_CACHE_DAYS} jours`}.
               </span>
             </div>
           ) : (
-            <Button asChild variant="outline">
-              <Link href="/settings/keys">
-                <KeyRound className="mr-2 h-4 w-4" />
-                Ajouter ma clé d’IA pour approfondir
-              </Link>
-            </Button>
+            <div className="space-y-3">
+              <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>Inclus dans l’offre Pro. Avec l’offre Essentiel, ajoutez la clé de votre propre IA.</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild>
+                  <Link href="/billing">Passer en Pro</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/settings/keys">
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Ajouter ma clé d’IA
+                  </Link>
+                </Button>
+              </div>
+            </div>
           ))}
       </CardContent>
     </Card>

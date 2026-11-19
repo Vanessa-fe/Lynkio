@@ -16,7 +16,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { accountPlan, parisMidnight, planDenial } from '../_shared/plan.ts'
-import { loadAiAccess, PROVIDER_LABELS } from '../_shared/ai.ts'
+import { loadAiAccess, PROVIDER_LABELS, recordAiUsage } from '../_shared/ai.ts'
 import { streamChat, type ChatTurn } from '../_shared/chat.ts'
 import { UserFacingError } from '../_shared/errors.ts'
 import { loadPageFacts, readPageContext } from './context.ts'
@@ -125,7 +125,7 @@ Deno.serve(async (request) => {
   // Clé d'IA de l'utilisateur : sans clé, pas de conversation (les fonctions sans IA restent disponibles)
   let access: Awaited<ReturnType<typeof loadAiAccess>>
   try {
-    access = await loadAiAccess(admin, user.id)
+    access = await loadAiAccess(admin, user.id, 'chat')
   } catch (error) {
     if (error instanceof UserFacingError) return json({ error: error.message, code: 'missing_key' }, 400)
     throw error
@@ -273,6 +273,7 @@ Deno.serve(async (request) => {
           })
           .select('id')
           .single()
+        await recordAiUsage(admin, user.id, access, 'chat')
         send({ type: 'done', messageId: saved?.id ?? null })
       } catch (error) {
         const shown =

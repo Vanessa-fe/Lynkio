@@ -65,11 +65,20 @@ export default function TermsPage() {
         </li>
       </ul>
 
-      <h2>5. Clés personnelles (IA, recherche d&apos;e-mails)</h2>
+      <h2>5. Intelligence artificielle et clés personnelles</h2>
       <p>
-        Pour rédiger ses messages et trouver des adresses e-mail, Sophie utilise les comptes de l&apos;utilisateur
-        chez des services tiers (OpenAI, Google Gemini, Hunter ou un autre service de son choix), avec ses propres
-        clés. Ces services sont facturés directement par eux à l&apos;utilisateur, selon leurs propres conditions.
+        <strong>Offre Pro, essai compris</strong> : l&apos;IA est incluse. Filonea fait appel à un service tiers
+        (OpenAI) pour les demandes de l&apos;utilisateur, dans la limite de quantités mensuelles affichées dans
+        Paramètres &gt; Vos clés (la moitié pendant l&apos;essai). Les compteurs repartent à zéro le 1er de chaque
+        mois ; une quantité non utilisée n&apos;est pas reportée. Filonea peut faire évoluer ces quantités en
+        prévenant l&apos;utilisateur par e-mail au moins 30 jours à l&apos;avance.
+      </p>
+      <p>
+        <strong>Clés personnelles</strong> : avec l&apos;offre Essentiel, ou s&apos;il le préfère en Pro,
+        l&apos;utilisateur peut ajouter ses propres clés chez des services tiers (OpenAI, Google Gemini, Claude,
+        Hunter ou un autre service de son choix). Elles sont alors utilisées à la place de l&apos;IA incluse, sans
+        limite mensuelle, et ces services les facturent directement à l&apos;utilisateur, selon leurs propres
+        conditions. La recherche d&apos;adresses e-mail (Hunter) passe toujours par la clé de l&apos;utilisateur.
         Filonea chiffre ces clés et ne s&apos;en sert que pour les demandes faites par l&apos;utilisateur.
       </p>
 

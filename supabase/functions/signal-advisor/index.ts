@@ -13,7 +13,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { accountPlan, planDenial } from '../_shared/plan.ts'
-import { generateJson, loadAiAccess } from '../_shared/ai.ts'
+import { generateJson, loadAiAccess, recordAiUsage } from '../_shared/ai.ts'
 import { UserFacingError } from '../_shared/errors.ts'
 import {
   MAX_RECOMMENDED_EVENTS,
@@ -136,7 +136,7 @@ Deno.serve(async (request) => {
     const technologies = strings((icp.criteria as { tech_stack?: unknown } | null)?.tech_stack).slice(0, 10)
     const profession = (profile?.profession as { label?: string } | null)?.label ?? null
 
-    const access = await loadAiAccess(admin, user.id)
+    const access = await loadAiAccess(admin, user.id, 'assistant')
     const { data: allowed, error: limitError } = await supabase.rpc('hit_my_rate_limit', {
       p_action: 'signal_advisor',
       p_max: DAILY_LIMIT,
@@ -192,6 +192,7 @@ Deno.serve(async (request) => {
       timeoutMs: REQUEST_TIMEOUT_MS,
       task: 'La recommandation des signaux',
     })
+    await recordAiUsage(admin, user.id, access, 'assistant')
 
     let parsed: Record<string, unknown>
     try {

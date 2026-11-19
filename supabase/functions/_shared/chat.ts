@@ -21,6 +21,7 @@ import {
   unavailable,
   unexpected,
   unknownModel,
+  withFundedErrors,
   type AiAccess,
   type AiProvider,
 } from './ai.ts'
@@ -52,7 +53,11 @@ export type ChatResult = { text: string; model: string; inputTokens: number | nu
  * Réponse de Sophie, au fil de l'eau. Modèle économique d'abord ; s'il est inconnu pour cette clé (et
  * qu'aucun texte n'est encore parti), on réessaie avec le modèle choisi par l'utilisateur.
  */
-export async function streamChat(request: ChatRequest): Promise<ChatResult> {
+export function streamChat(request: ChatRequest): Promise<ChatResult> {
+  return withFundedErrors(request.access, () => streamChatWithFallback(request))
+}
+
+async function streamChatWithFallback(request: ChatRequest): Promise<ChatResult> {
   const light = CHAT_MODELS[request.access.provider]
   let started = false
   const onDelta = (text: string) => {
