@@ -3,7 +3,7 @@
 // par mois (heure de Paris). Avec sa propre clé, pas de quota : c'est son fournisseur qui facture.
 // Mêmes quotas que src/lib/ai-quota.ts (affichés dans Paramètres > Vos clés).
 //
-// Coût mesuré le 19/11/2026 (gpt-5.6-terra) : brouillon ~0,004 $, « Approfondir » ~0,09 $ (max 0,13 $).
+// Coût mesuré le 19/11/2026 (gpt-5.6-terra) : message préparé ~0,004 $, « Approfondir » ~0,09 $ (max 0,13 $).
 // Un compte Pro au maximum de tous ses quotas : ~6 $ par mois.
 
 import { parisMidnight } from './plan.ts'
@@ -23,8 +23,8 @@ export const AI_QUOTAS: Record<AiAction, number> = {
 
 /** Ce que compte chaque quota, dans les messages (« vos 40 analyses « Approfondir » ») */
 export const AI_ACTION_LABELS: Record<AiAction, string> = {
-  draft: 'brouillons de messages',
-  chat: 'messages à Sophie',
+  draft: 'messages préparés par Sophie',
+  chat: 'questions posées à Sophie',
   deep_dive: 'analyses « Approfondir »',
   assistant: 'aides de Sophie (recommandations, stratégies, bilans)',
   linkedin_sort: 'tris de posts LinkedIn',

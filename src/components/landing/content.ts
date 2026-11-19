@@ -262,7 +262,7 @@ export const faq = [
   {
     question: 'Ai-je besoin d’une clé API pour utiliser Filonea ?',
     answer:
-      'Non avec l’offre Pro, essai compris : l’IA est incluse. Vous pouvez discuter avec Sophie, obtenir de l’aide pour rédiger vos messages et utiliser la fonction « Approfondir » sans rien configurer, dans la limite de quantités mensuelles (par exemple 300 brouillons et 40 analyses « Approfondir » par mois, la moitié pendant l’essai). Avec l’offre Essentiel, vous pouvez rechercher des entreprises, consulter leurs fiches et leurs scores, et suivre vos prospects sans IA ; pour utiliser l’IA, ajoutez votre propre clé API, que votre fournisseur vous facture séparément.',
+      'Non avec l’offre Pro, essai compris : l’IA est incluse. Vous pouvez discuter avec Sophie, obtenir de l’aide pour rédiger vos messages et utiliser la fonction « Approfondir » sans rien configurer, dans la limite de quantités mensuelles (par exemple 300 messages préparés par Sophie et 40 analyses « Approfondir » par mois, la moitié pendant l’essai). Avec l’offre Essentiel, vous pouvez rechercher des entreprises, consulter leurs fiches et leurs scores, et suivre vos prospects sans IA ; pour utiliser l’IA, ajoutez votre propre clé API.',
   },
   {
     question: 'Puis-je importer mes prospects existants ?',
