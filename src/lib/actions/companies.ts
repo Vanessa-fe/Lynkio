@@ -281,10 +281,12 @@ export async function updateCompanyStage(
 
 /**
  * « Commencer à prospecter » (lot 1.8b) : l'entreprise découverte entre dans le suivi commercial.
- * Encore dans l'étape d'arrivée, elle passe dans « À contacter » (ou l'étape en cours suivante) ;
- * l'entrée est notée dans sa chronologie. Rien d'autre ne change.
+ * Avec une étape choisie (liste « Choisir une étape… »), elle y va directement ; « Hors cible » l'écarte
+ * sans la mettre en démarche (elle reste connue, donc les recherches ne la reproposent pas).
+ * Sans étape : encore dans l'étape d'arrivée, elle passe dans « À contacter » (ou l'étape en cours
+ * suivante). L'entrée est notée dans sa chronologie.
  */
-export async function startProspecting(companyId: string): Promise<ActionResult> {
+export async function startProspecting(companyId: string, stageId?: string): Promise<ActionResult> {
   try {
     const user = await getAuthUser()
     if (!user) return { success: false, error: 'Vous devez être connecté' }
@@ -295,9 +297,31 @@ export async function startProspecting(companyId: string): Promise<ActionResult>
       supabase.from('pipeline_stages').select('id, name, kind, role, order, is_default').eq('user_id', user.id),
     ])
     if (!company) return { success: false, error: 'Entreprise introuvable' }
-    if (company.engaged_at) return { success: true }
 
-    const target = prospectingStage((stages ?? []) as MeaningStage[], company.stage_id)
+    const chosen = stageId ? (stages ?? []).find((stage) => stage.id === stageId) : undefined
+    if (stageId && !chosen) return { success: false, error: 'Étape introuvable' }
+
+    // « Hors cible » : découverte écartée, pas de démarche
+    if (chosen?.kind === 'excluded') {
+      const { error } = await supabase
+        .from('companies')
+        .update({ stage_id: chosen.id })
+        .eq('id', companyId)
+        .eq('user_id', user.id)
+      if (error) {
+        console.error('Exclude discovery error:', error)
+        return { success: false, error: 'Impossible de changer l\'étape' }
+      }
+      captureServerEvent(user.id, 'discovery_excluded')
+      revalidateProspecting(companyId)
+      return { success: true }
+    }
+
+    if (company.engaged_at) {
+      return chosen ? updateCompanyStage(companyId, chosen.id) : { success: true }
+    }
+
+    const target = chosen ?? prospectingStage((stages ?? []) as MeaningStage[], company.stage_id)
     const { error } = await supabase
       .from('companies')
       .update({ engaged_at: new Date().toISOString(), ...(target ? { stage_id: target.id } : {}) })
@@ -309,7 +333,7 @@ export async function startProspecting(companyId: string): Promise<ActionResult>
     }
 
     await noteSystemEvent(supabase, user.id, companyId, 'Ajoutée au suivi commercial')
-    captureServerEvent(user.id, 'prospecting_started', { stage_moved: !!target })
+    captureServerEvent(user.id, 'prospecting_started', { stage_moved: !!target, stage_chosen: !!chosen })
     revalidateProspecting(companyId)
     return { success: true }
   } catch (error) {

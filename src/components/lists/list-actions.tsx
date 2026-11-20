@@ -18,6 +18,7 @@ import { useStartLinkedin } from '@/components/linkedin/use-start-linkedin'
 import { deleteProspectList, renameProspectList } from '@/lib/actions/prospect-lists'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 interface ListActionsProps {
   list: { id: string; name: string }
@@ -69,7 +70,13 @@ export function ListActions({ list, exportableCount, afterDeleteHref, compact = 
   }
 
   const handleDelete = async () => {
-    if (!confirm(`Supprimer la liste « ${list.name} » ? Les personnes restent dans Filonea.`)) return
+    const confirmed = await confirmAction({
+      title: `Supprimer la liste « ${list.name} » ?`,
+      description: 'Les personnes restent dans Filonea.',
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })
+    if (!confirmed) return
     let result: Awaited<ReturnType<typeof deleteProspectList>>
     try {
       result = await deleteProspectList(list.id)

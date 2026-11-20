@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { SophieSuggestions, useSuggestionCount } from './sophie-suggestions'
 import { useSophie } from './sophie-provider'
 import { SophieMessageBubble } from './sophie-message'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 // Questions proposées selon la page ouverte (pas d'appel à l'IA tant qu'on ne clique pas)
 function starters(page: string, isCompany: boolean): string[] {
@@ -286,10 +287,14 @@ function SophieHistory() {
             size="icon"
             className="h-8 w-8"
             aria-label={`Supprimer « ${conversation.title} »`}
-            onClick={() => {
-              if (window.confirm(`Supprimer la conversation « ${conversation.title} » ? Elle sera effacée définitivement.`)) {
-                void deleteConversation(conversation.id)
-              }
+            onClick={async () => {
+              const confirmed = await confirmAction({
+                title: `Supprimer la conversation « ${conversation.title} » ?`,
+                description: 'Elle sera effacée définitivement.',
+                confirmLabel: 'Supprimer',
+                destructive: true,
+              })
+              if (confirmed) void deleteConversation(conversation.id)
             }}
           >
             <Trash2 className="h-3.5 w-3.5 text-destructive" />

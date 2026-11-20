@@ -1,6 +1,7 @@
 'use client'
 
-import { useOptimistic, useTransition } from 'react'
+import { useOptimistic, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Select,
   SelectContent,
@@ -8,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { updateCompanyStage } from '@/lib/actions/companies'
+import { startProspecting, updateCompanyStage } from '@/lib/actions/companies'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
@@ -83,6 +84,77 @@ export function CompanyStageSelect({ companyId, stageId, stages, className }: Co
         <SelectItem value="none">
           <span className="text-muted-foreground">Sans étape</span>
         </SelectItem>
+        {stages.map((stage) => (
+          <SelectItem key={stage.id} value={stage.id}>
+            <StageOption stage={stage} />
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+
+/**
+ * Découverte (pas encore en démarche) : on choisit son étape de départ. Une étape du suivi la met
+ * « en démarche » à cette étape ; « Hors cible » l'écarte (elle reste connue, les recherches ne la
+ * reproposent pas). Remplace l'ancien bouton « Prospecter ».
+ */
+export function DiscoveryStageSelect({
+  companyId,
+  stageId,
+  stages,
+  className,
+}: {
+  companyId: string
+  // Découverte écartée : « Hors cible » s'affiche ; une autre étape la remet en démarche
+  stageId?: string | null
+  stages: PipelineStage[]
+  className?: string
+}) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
+  const [chosenId, setChosenId] = useState<string | undefined>(stageId ?? undefined)
+  const chosen = stages.find((stage) => stage.id === chosenId)
+
+  const handleChange = (value: string) => {
+    if (value === chosenId) return
+    const stage = stages.find((item) => item.id === value)
+    setChosenId(value)
+    startTransition(async () => {
+      try {
+        const result = await startProspecting(companyId, value)
+        if (!result.success) {
+          setChosenId(stageId ?? undefined)
+          toast({ variant: 'destructive', title: 'Étape non enregistrée', description: result.error })
+          return
+        }
+        toast({
+          title:
+            stage?.kind === 'excluded'
+              ? 'Entreprise écartée : elle ne vous sera plus proposée'
+              : 'C’est parti : l’entreprise est dans votre suivi commercial',
+        })
+        router.refresh()
+      } catch {
+        setChosenId(stageId ?? undefined)
+        toast({ variant: 'destructive', title: 'Étape non enregistrée', description: CONNECTION_ERROR })
+      }
+    })
+  }
+
+  return (
+    <Select value={chosenId ?? ''} onValueChange={handleChange} disabled={isPending}>
+      <SelectTrigger
+        className={cn('h-9 w-[180px] transition-opacity', isPending && 'opacity-70', className)}
+        aria-label="Choisir l'étape de départ"
+        aria-busy={isPending}
+      >
+        <SelectValue placeholder="Choisir une étape…">
+          {chosen ? <StageOption stage={chosen} /> : <span className="text-muted-foreground">Choisir une étape…</span>}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
         {stages.map((stage) => (
           <SelectItem key={stage.id} value={stage.id}>
             <StageOption stage={stage} />

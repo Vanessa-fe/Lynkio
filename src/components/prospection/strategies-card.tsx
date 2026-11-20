@@ -22,6 +22,7 @@ import { formatDate } from '@/lib/utils/dates'
 import type { StrategyOverview } from '@/lib/queries/strategies'
 import { StrategyDialog } from './strategy-dialog'
 import { watchRun } from './run-watch'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 interface StrategiesCardProps {
   strategies: StrategyOverview[]
@@ -199,10 +200,14 @@ export function StrategiesCard({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onSelect={() => {
-                          if (window.confirm(`Supprimer la recherche « ${strategy.name} » ? Les entreprises déjà trouvées restent.`)) {
-                            run(`delete:${strategy.id}`, () => deleteStrategy(strategy.id), 'Recherche supprimée')
-                          }
+                        onSelect={async () => {
+                          const confirmed = await confirmAction({
+                            title: `Supprimer la recherche « ${strategy.name} » ?`,
+                            description: 'Les entreprises déjà trouvées restent.',
+                            confirmLabel: 'Supprimer',
+                            destructive: true,
+                          })
+                          if (confirmed) run(`delete:${strategy.id}`, () => deleteStrategy(strategy.id), 'Recherche supprimée')
                         }}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />

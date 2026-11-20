@@ -19,6 +19,7 @@ import { createSource, deleteSource, moveSource, updateSource } from '@/lib/acti
 import { AUTOMATIC_SOURCE_NAME } from '@/lib/validations/pipeline-settings'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { LeadSource } from '@/types'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 interface LeadSourcesSettingsProps {
   sources: LeadSource[]
@@ -48,13 +49,18 @@ export function LeadSourcesSettings({ sources, usage }: LeadSourcesSettingsProps
     }
   }
 
-  const handleDelete = (source: LeadSource) => {
+  const handleDelete = async (source: LeadSource) => {
     const count = usage[source.id] ?? 0
-    const message =
-      count > 0
-        ? `Supprimer la source « ${source.name} » ? ${companiesLabel(count)} ${count > 1 ? 'la citent' : 'la cite'} : ${count > 1 ? 'elles restent' : 'elle reste'} dans vos entreprises, sans source.`
-        : `Supprimer la source « ${source.name} » ?`
-    if (!confirm(message)) return
+    const confirmed = await confirmAction({
+      title: `Supprimer la source « ${source.name} » ?`,
+      description:
+        count > 0
+          ? `${companiesLabel(count)} ${count > 1 ? 'la citent' : 'la cite'} : ${count > 1 ? 'elles restent' : 'elle reste'} dans vos entreprises, sans source.`
+          : undefined,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })
+    if (!confirmed) return
     run(source.id, () => deleteSource(source.id), 'Source supprimée')
   }
 
