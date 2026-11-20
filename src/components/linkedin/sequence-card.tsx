@@ -19,6 +19,7 @@ import { LINKEDIN_FIRST_MESSAGE_MAX, LINKEDIN_FIRST_MESSAGE_TARGET } from '@/lib
 import { useToast } from '@/lib/hooks/use-toast'
 import { formatDate } from '@/lib/utils/dates'
 import type { LinkedinSequenceRow } from '@/lib/queries/linkedin'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 type Field = keyof Required<LinkedinTexts>
 
@@ -193,13 +194,17 @@ export function SequenceCard({
   }
 
   const advance = async (step: LinkedinStep) => {
-    if (step === 'stopped' && !confirm(`Arrêter l'envoi LinkedIn pour ${name} ?`)) return
+    if (
+      step === 'stopped' &&
+      !(await confirmAction({ title: `Arrêter l'envoi LinkedIn pour ${name} ?`, confirmLabel: 'Arrêter' }))
+    )
+      return
     if (pending?.step === step && !(await saveText())) return
     await run(() => advanceLinkedinSequence(sequence.id, step), STEP_TOASTS[step])
   }
 
   const remove = async () => {
-    if (!confirm(`Retirer ${name} de l'envoi LinkedIn ?`)) return
+    if (!(await confirmAction({ title: `Retirer ${name} de l'envoi LinkedIn ?`, confirmLabel: 'Retirer' }))) return
     await run(() => removeLinkedinSequence(sequence.id), 'Retiré de l\'envoi')
   }
 

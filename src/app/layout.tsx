@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Fraunces, Inter, Sora } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { MotionProvider } from '@/components/motion/motion-provider'
 import { CookieBanner } from '@/components/analytics/cookie-banner'
 import { OPEN_GRAPH_BASE, SITE_URL } from '@/lib/site'
@@ -38,6 +39,7 @@ export default function RootLayout({
         <MotionProvider>
           {children}
           <Toaster />
+          <ConfirmDialog />
           <CookieBanner />
         </MotionProvider>
       </body>

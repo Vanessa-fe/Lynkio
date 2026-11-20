@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { PipelineStage } from '@/types'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 interface PipelineStagesSettingsProps {
   stages: PipelineStage[]
@@ -61,12 +62,13 @@ export function PipelineStagesSettings({ stages, usage }: PipelineStagesSettings
   const [deleting, setDeleting] = useState<PipelineStage | null>(null)
 
   // Étape vide : une simple confirmation ; sinon, on choisit où vont ses entreprises
-  const handleDelete = (stage: PipelineStage) => {
+  const handleDelete = async (stage: PipelineStage) => {
     if ((usage[stage.id] ?? 0) > 0) {
       setDeleting(stage)
       return
     }
-    if (!confirm(`Supprimer l'étape « ${stage.name} » ?`)) return
+    const confirmed = await confirmAction({ title: `Supprimer l'étape « ${stage.name} » ?`, confirmLabel: 'Supprimer', destructive: true })
+    if (!confirmed) return
     run(stage.id, () => deleteStage(stage.id), 'Étape supprimée')
   }
 

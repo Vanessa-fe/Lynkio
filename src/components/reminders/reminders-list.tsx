@@ -27,6 +27,7 @@ import { reminderDayKey } from './reminders-week'
 import { ArrowRight, Clock, Building2, Trash2, AlertCircle } from 'lucide-react'
 import { ReminderFormDialog } from './reminder-form-dialog'
 import { formatDate } from '@/lib/utils/dates'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 interface RemindersListProps {
   reminders: ReminderWithRelations[]
@@ -68,9 +69,8 @@ export function RemindersList({
   }
 
   const handleDelete = async (reminderId: string, title: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer la relance "${title}" ?`)) {
-      return
-    }
+    const confirmed = await confirmAction({ title: `Supprimer la relance « ${title} » ?`, confirmLabel: 'Supprimer', destructive: true })
+    if (!confirmed) return
 
     setDeletingId(reminderId)
 

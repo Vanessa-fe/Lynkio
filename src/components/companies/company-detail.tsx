@@ -50,7 +50,9 @@ import type {
   PipelineStage,
   ReminderWithRelations,
 } from '@/types'
-import { CompanyStageSelect } from './company-stage-select'
+import { confirmAction } from '@/components/ui/confirm-dialog'
+import { DELETE_COMPANY_WARNING } from '@/lib/constants/companies'
+import { CompanyStageSelect, DiscoveryStageSelect } from './company-stage-select'
 import { CompanyContacts } from './company-contacts'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyWhyCard } from './company-why-card'
@@ -158,14 +160,17 @@ export function CompanyDetail({
   const isIndividual = company.kind === 'individual'
   // Source de l'entreprise : officielle, analyse IA ou saisie (badge sous le nom)
   const provenance = companyProvenance(company)
+  // Pas encore en démarche : « découverte » (étape à choisir) ou « découverte écartée » (Hors cible)
+  const isExcluded = stages.find((stage) => stage.id === company.stage_id)?.kind === 'excluded'
 
   const handleDelete = async () => {
-    const consequence = isIndividual
-      ? 'Ses coordonnées, échanges et relances seront aussi supprimés.'
-      : 'Ses contacts, signaux et échanges seront aussi supprimés.'
-    if (!confirm(`Supprimer ${company.name} ? ${consequence}`)) {
-      return
-    }
+    const confirmed = await confirmAction({
+      title: `Supprimer ${company.name} ?`,
+      description: isIndividual ? 'Ses coordonnées, échanges et relances seront aussi supprimés.' : DELETE_COMPANY_WARNING,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })
+    if (!confirmed) return
 
     setIsDeleting(true)
     const result = await deleteCompany(company.id)
@@ -239,15 +244,16 @@ export function CompanyDetail({
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
-                <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
+                {/* Pas en démarche : on choisit son étape de départ (ce qui la met en démarche, ou l'écarte) */}
+                {!company.engaged_at ? (
+                  <DiscoveryStageSelect companyId={company.id} stageId={isExcluded ? company.stage_id : null} stages={stages} />
+                ) : (
+                  <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
+                )}
                 <CompanySegmentSelect companyId={company.id} segment={company.segment} setBy={company.segment_set_by} />
               </div>
               {provenance && <ProvenanceBadge kind={provenance.kind} detail={provenance.detail} />}
-              <ProspectingToggle
-                companyId={company.id}
-                engagedAt={company.engaged_at}
-                excluded={stages.find((stage) => stage.id === company.stage_id)?.kind === 'excluded'}
-              />
+              <ProspectingToggle companyId={company.id} engagedAt={company.engaged_at} excluded={isExcluded} />
             </div>
             <CompatibilityTile score={company.score} />
           </div>

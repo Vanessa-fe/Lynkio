@@ -17,6 +17,7 @@ import { CompanyContactDialog } from './company-contact-dialog'
 import { OutreachBadge } from '@/components/people/outreach-badge'
 import type { PersonRow } from '@/lib/queries/people'
 import { formatDate } from '@/lib/utils/dates'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 interface CompanyContactsProps {
   companyId: string
@@ -70,16 +71,25 @@ export function CompanyContacts({
     }
   }
 
-  const handleDelete = (contact: CompanyContact) => {
-    if (!confirm(`Supprimer ${contactDisplayName(contact)} ?`)) return
+  const handleDelete = async (contact: CompanyContact) => {
+    const confirmed = await confirmAction({
+      title: `Supprimer ${contactDisplayName(contact)} ?`,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })
+    if (!confirmed) return
     runAction(contact.id, () => deleteCompanyContact(contact.id, companyId), 'Contact supprimé')
   }
 
-  const handleOptOut = (contact: CompanyContact) => {
+  const handleOptOut = async (contact: CompanyContact) => {
     const optingOut = !contact.opted_out_at
     if (
       optingOut &&
-      !confirm(`${contactDisplayName(contact)} ne souhaite plus être contacté·e ? Sophie l'ignorera.`)
+      !(await confirmAction({
+        title: `${contactDisplayName(contact)} ne souhaite plus être contacté·e ?`,
+        description: "Sophie l'ignorera.",
+        confirmLabel: 'Confirmer',
+      }))
     ) {
       return
     }

@@ -51,7 +51,7 @@ export function PipelineSummary({ stats, pipeline }: Pick<DashboardData, 'stats'
           </ul>
         ) : (
           <p className="text-muted-foreground">
-            Aucune démarche en cours : choisissez une découverte et cliquez sur « Prospecter ».
+            Aucune démarche en cours : choisissez l’étape d’une découverte dans « Entreprises ».
           </p>
         )}
         {(openAmount > 0 || hasSuccessRate) && (

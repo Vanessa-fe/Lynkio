@@ -30,8 +30,9 @@ import { companyAge, formatEuros } from '@/lib/validations/company'
 import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
-import { CompanyScore, CompanyStageSelect } from './company-stage-select'
-import { ProspectingToggle } from './prospecting-toggle'
+import { confirmAction } from '@/components/ui/confirm-dialog'
+import { DELETE_COMPANY_WARNING } from '@/lib/constants/companies'
+import { CompanyScore, CompanyStageSelect, DiscoveryStageSelect } from './company-stage-select'
 import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
 
 interface CompaniesListProps {
@@ -248,13 +249,13 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
   const sortedCompanies = sortKey === 'score' ? filteredCompanies : [...filteredCompanies].sort((a, b) => compareCompanies(sortKey, a, b))
 
   const handleDelete = async (company: CompanyWithRelations) => {
-    if (
-      !confirm(
-        `Supprimer ${company.name} ? Ses contacts, signaux et échanges seront aussi supprimés.`
-      )
-    ) {
-      return
-    }
+    const confirmed = await confirmAction({
+      title: `Supprimer ${company.name} ?`,
+      description: DELETE_COMPANY_WARNING,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })
+    if (!confirmed) return
 
     setDeletingId(company.id)
     const result = await deleteCompany(company.id)
@@ -530,9 +531,13 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
                     </Link>
                   </TableCell>
                   <TableCell>
-                    {/* Découverte : on décide d'abord de la prospecter ; ensuite, l'étape se choisit ici */}
-                    {stateOf(company) === 'discovered' ? (
-                      <ProspectingToggle companyId={company.id} engagedAt={null} excluded={false} compact />
+                    {/* Pas en démarche : on choisit son étape de départ (ce qui la met en démarche, ou l'écarte) */}
+                    {!company.engaged_at ? (
+                      <DiscoveryStageSelect
+                        companyId={company.id}
+                        stageId={stateOf(company) === 'excluded' ? company.stage_id : null}
+                        stages={stages}
+                      />
                     ) : (
                       <CompanyStageSelect companyId={company.id} stageId={company.stage_id} stages={stages} />
                     )}

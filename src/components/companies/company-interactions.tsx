@@ -60,6 +60,7 @@ import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyContact, CompanyInteractionType, CompanyInteractionWithContact } from '@/types'
 import { formatDate } from '@/lib/utils/dates'
 import { MessageDraftDialog } from './message-draft-dialog'
+import { confirmAction } from '@/components/ui/confirm-dialog'
 
 const typeIcons: Record<CompanyInteractionType, React.ReactNode> = {
   email: <Mail className="w-5 h-5" />,
@@ -144,12 +145,13 @@ export function CompanyInteractions({
   }
 
   const handleDelete = async (interaction: CompanyInteractionWithContact) => {
-    if (
-      !confirm(
-        `Supprimer cet échange (${companyInteractionTypeLabels[interaction.type]}) ?\n\nS'il avait fait avancer la fiche d'étape, elle revient à son étape d'avant.`
-      )
-    )
-      return
+    const confirmed = await confirmAction({
+      title: `Supprimer cet échange (${companyInteractionTypeLabels[interaction.type]}) ?`,
+      description: "S'il avait fait avancer la fiche d'étape, elle revient à son étape d'avant.",
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    })
+    if (!confirmed) return
 
     setDeletingId(interaction.id)
     const result = await deleteCompanyInteraction(interaction.id, companyId)
