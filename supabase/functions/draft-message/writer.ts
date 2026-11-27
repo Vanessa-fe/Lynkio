@@ -11,7 +11,7 @@ import { UserFacingError } from '../_shared/errors.ts'
 
 export { UserFacingError }
 
-export type Channel = 'email' | 'linkedin_message'
+export type Channel = 'email' | 'linkedin_message' | 'whatsapp'
 
 export type SignalForMessage = {
   id: string
@@ -115,8 +115,13 @@ export type DraftFromAi = {
 // La passerelle Supabase coupe une requête au bout de 150 secondes
 const REQUEST_TIMEOUT_MS = 90_000
 const TOTAL_BUDGET_MS = 140_000
-// Premier message LinkedIn plus long que ça : Sophie le raccourcit dans un second passage
-const LINKEDIN_SHORTEN_ABOVE = 300
+// Premier message plus long que ça : Sophie le raccourcit dans un second passage
+const SHORTEN_ABOVE: Partial<Record<Channel, number>> = { linkedin_message: 300, whatsapp: 600 }
+// Longueur visée, rappelée à l'IA pour ce second passage
+const SHORTEN_TARGET: Partial<Record<Channel, string>> = {
+  linkedin_message: '25 à 40 mots (150 à 250 caractères)',
+  whatsapp: '3 à 5 phrases, moins de 500 caractères',
+}
 // Temps minimum pour tenter ce second passage
 const MIN_SHORTEN_TIME_MS = 20_000
 
@@ -147,9 +152,9 @@ const SEGMENT_LABELS: Record<string, string> = {
 const RULES = `Tu es Sophie, l'assistante de prospection d'une freelance. Tu rédiges en français le premier message qu'elle enverra à une entreprise qu'elle ne connaît pas encore.
 
 Ce qui fait un bon premier message :
-- il part de l'entreprise, pas de la freelance : la première phrase parle d'un fait précis la concernant (le signal le plus parlant, ce que dit son offre d'emploi ou son site) ;
+- il part de l'entreprise, pas de la freelance : la première phrase parle d'un fait précis la concernant (le signal le plus parlant, ce que dit son offre d'emploi ou son site). Exception : sur WhatsApp, la freelance se présente d'abord (voir le format) ;
 - il fait le lien entre ce fait et un besoin POSSIBLE, sans jamais l'affirmer (« c'est souvent le moment où… », « si c'est un sujet pour vous… », jamais « vous avez besoin de »), puis présente la freelance en une phrase, à partir de sa présentation ;
-- dans un e-mail, il cite au plus une référence, seulement si elle est proche de l'activité ou du besoin de l'entreprise ; un message LinkedIn n'en cite aucune ;
+- dans un e-mail, il cite au plus une référence, seulement si elle est proche de l'activité ou du besoin de l'entreprise ; un message LinkedIn ou WhatsApp n'en cite aucune ;
 - il se termine par une question simple et facile à accepter (par exemple un court échange de 15 minutes), sans insister ;
 - il est écrit à la première personne, au nom de la freelance (« je »), jamais en parlant d'elle à la troisième personne ;
 - il est sobre et naturel : vouvoiement, phrases courtes, aucune flatterie, aucun jargon commercial, pas d'emoji, pas de tiret long (—), pas de « J'espère que vous allez bien » ;
@@ -198,6 +203,12 @@ Format :
   une question de moins de 10 mots, par exemple « Un échange de 15 minutes cette semaine ? » ;
   la formule de fin seule sur la dernière ligne.
   Aucune référence, aucune liste de technologies, aucune ancienneté : ils viendront dans la suite de l'échange ;
+- message WhatsApp : objet vide, et un message court et humain, comme entre deux personnes sur une messagerie : 3 à 5 phrases, moins de 600 caractères en tout. La personne ne connaît pas ce numéro : la freelance doit se présenter tout de suite. Sa forme, dans cet ordre :
+  « Bonjour » suivi du prénom s'il est connu, une virgule, puis un retour à la ligne ;
+  une phrase où la freelance se présente avec son prénom et ce qu'elle fait, en quelques mots tirés de sa présentation (si son prénom n'est pas connu, son activité seulement) ;
+  une ou deux phrases sur un détail concret et précis concernant l'entreprise (un signal, ce que dit son site, son offre d'emploi ou l'analyse approfondie), relié à un besoin possible, sans l'affirmer ;
+  une seule question simple pour finir, facile à accepter.
+  Vouvoiement, ton direct. Aucun lien, aucune référence, aucune liste de technologies, aucune mise en forme (pas de gras, d'italique, de liste ni d'emoji), pas d'objet. Pas de formule de fin ni de signature après la question : son prénom est ajouté ensuite ;
 - angle : en une phrase, pour la freelance, sur quoi repose le message ;
 - signal_id : l'identifiant du signal sur lequel repose le message, ou une chaîne vide.`
 
@@ -221,7 +232,9 @@ function contextPrompt(context: MessageContext): string {
     ? 'une séquence LinkedIn de trois messages complets (body, follow_up_1 et follow_up_2)'
     : context.channel === 'email'
       ? 'un e-mail'
-      : 'un message LinkedIn'
+      : context.channel === 'whatsapp'
+        ? 'un message WhatsApp'
+        : 'un message LinkedIn'
 
   return [
     `Rédige ${channel}.`,
@@ -308,10 +321,11 @@ function contextPrompt(context: MessageContext): string {
 export async function writeDraft(access: AiAccess, context: MessageContext): Promise<DraftFromAi> {
   const startedAt = Date.now()
   const draft = await requestDraft(access, context, contextPrompt(context), REQUEST_TIMEOUT_MS)
-  if (context.channel !== 'linkedin_message' || draft.body.length <= LINKEDIN_SHORTEN_ABOVE) return draft
+  const shortenAbove = SHORTEN_ABOVE[context.channel]
+  if (shortenAbove === undefined || draft.body.length <= shortenAbove) return draft
 
-  // L'IA compte mal les caractères : un premier message LinkedIn trop long est réécrit une fois,
-  // les relances de la première proposition sont gardées telles quelles
+  // L'IA compte mal les caractères : un premier message LinkedIn ou WhatsApp trop long est réécrit
+  // une fois, les relances de la première proposition sont gardées telles quelles
   const remaining = TOTAL_BUDGET_MS - (Date.now() - startedAt)
   if (remaining < MIN_SHORTEN_TIME_MS) return draft
   try {
@@ -319,7 +333,7 @@ export async function writeDraft(access: AiAccess, context: MessageContext): Pro
     const prompt = [
       contextPrompt(single),
       section('Ta première proposition, trop longue', [
-        `Elle fait ${draft.body.length} caractères : bien trop long pour un premier message LinkedIn. Réécris-la en 25 à 40 mots (150 à 250 caractères), avec la forme demandée : garde le fait précis et la question, coupe tout le reste.`,
+        `Elle fait ${draft.body.length} caractères : bien trop long pour un premier message ${context.channel === 'whatsapp' ? 'WhatsApp' : 'LinkedIn'}. Réécris-la en ${SHORTEN_TARGET[context.channel]}, avec la forme demandée : garde ${context.channel === 'whatsapp' ? 'la présentation, ' : ''}le fait précis et la question, coupe tout le reste.`,
         draft.body,
       ]),
     ]

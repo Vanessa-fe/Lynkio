@@ -145,15 +145,8 @@ const contactFields = {
     .refine((value) => !value || z.string().email().safeParse(value).success, 'L\'e-mail n\'est pas valide'),
   emailSource: z.enum(['manual', 'hunter', 'website', 'linkedin_post', 'other']).optional().nullable(),
   emailConfidence: z.number().int().min(0).max(100).optional().nullable(),
-  phone: z
-    .string()
-    .optional()
-    .nullable()
-    .transform((value) => {
-      if (!value || value.trim() === '') return null
-      // France par défaut : « 06 12 34 56 78 » devient « +33612345678 »
-      return parsePhoneNumberFromString(value, 'FR')?.format('E.164') ?? value.trim()
-    }),
+  // Texte saisi : l'action serveur le met au format E.164 selon le pays de l'entreprise (src/lib/phone.ts)
+  phone: optionalText(40, 'Le numéro de téléphone est trop long'),
   linkedinUrl: optionalUrl('L\'URL LinkedIn est trop longue'),
   notes: optionalText(2000, 'Les notes sont trop longues'),
 }
@@ -163,8 +156,9 @@ export const companyContactSchema = z
     companyId: z.string().uuid('L\'entreprise n\'est pas valide'),
     ...contactFields,
   })
-  .refine((data) => data.firstName || data.lastName || data.email || data.linkedinUrl, {
-    message: 'Renseignez au moins un nom, un e-mail ou un profil LinkedIn',
+  // Un téléphone seul suffit : un artisan trouvé par sa fiche Google n'a souvent que ça
+  .refine((data) => data.firstName || data.lastName || data.email || data.linkedinUrl || data.phone, {
+    message: 'Renseignez au moins un nom, un e-mail, un téléphone ou un profil LinkedIn',
     path: ['lastName'],
   })
 
@@ -235,6 +229,7 @@ export function contactDisplayName(contact: {
 export const companyInteractionTypes = [
   'email',
   'linkedin_message',
+  'whatsapp',
   'call',
   'meeting',
   'note',
@@ -243,6 +238,7 @@ export const companyInteractionTypes = [
 export const companyInteractionTypeLabels: Record<CompanyInteractionType, string> = {
   email: 'E-mail',
   linkedin_message: 'Message LinkedIn',
+  whatsapp: 'WhatsApp',
   call: 'Appel',
   meeting: 'Rendez-vous',
   note: 'Note',

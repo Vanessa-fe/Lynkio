@@ -270,8 +270,9 @@ export function mapRow(raw: Record<string, string>): Partial<Record<ImportField,
   return mapped
 }
 
+// Un téléphone seul suffit (artisan trouvé par sa fiche Google) ; s'il est invalide, il est ignoré à l'import
 export function hasContact(row: CompanyImportRow): boolean {
-  return !!(row.contactFirstName || row.contactLastName || row.contactEmail || row.contactLinkedin)
+  return !!(row.contactFirstName || row.contactLastName || row.contactEmail || row.contactLinkedin || row.contactPhone)
 }
 
 /**

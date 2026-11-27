@@ -18,6 +18,7 @@ import { getUserProfile } from '@/lib/queries/user-profile'
 import { getContactsOutreach, getOrganizationOptions } from '@/lib/queries/people'
 import { getStrategy } from '@/lib/queries/strategies'
 import { hasAiAccess } from '@/lib/queries/ai-access'
+import { getWhatsappUsage } from '@/lib/queries/whatsapp'
 import { explainSignal } from '@/lib/signal-explanation'
 
 interface CompanyPageProps {
@@ -29,7 +30,7 @@ interface CompanyPageProps {
 
 export default async function CompanyPage({ params, searchParams }: CompanyPageProps) {
   const [{ id }, { redaction }] = await Promise.all([params, searchParams])
-  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach, stageEvents, deepAnalysis, aiKey, advice, followUps] =
+  const [company, stages, contacts, signals, interactions, qualification, reminders, icp, profile, outreach, stageEvents, deepAnalysis, aiKey, advice, followUps, whatsappUsage] =
     await Promise.all([
       getCompanyById(id),
       getPipelineStages(),
@@ -46,6 +47,7 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       hasAiAccess(),
       getSignalAdvice(),
       getCompanyFollowUps(id),
+      getWhatsappUsage(),
     ])
 
   if (!company) {
@@ -80,6 +82,7 @@ export default async function CompanyPage({ params, searchParams }: CompanyPageP
       openEmailDraft={redaction === 'email'}
       strategy={strategy}
       stageEvents={stageEvents}
+      whatsappUsage={whatsappUsage}
     />
   )
 }

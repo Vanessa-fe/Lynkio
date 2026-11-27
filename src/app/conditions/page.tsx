@@ -89,10 +89,25 @@ export default function TermsPage() {
           personne contactée, possibilité simple de refuser les messages suivants, prise en compte de toute
           opposition.
         </li>
-        <li>Respecter les conditions des sites et services utilisés, notamment LinkedIn avec l&apos;extension Filonea.</li>
+        <li>
+          Respecter les conditions des sites et services utilisés, notamment LinkedIn avec l&apos;extension Filonea, et
+          WhatsApp.
+        </li>
         <li>Ne pas utiliser Filonea pour envoyer des messages en masse non sollicités, ni pour un usage illicite.</li>
         <li>Ne pas chercher à contourner la sécurité du service ni à en perturber le fonctionnement.</li>
       </ul>
+      <p>
+        <strong>Envoi automatique sur LinkedIn</strong> : cette option de l&apos;extension est désactivée par défaut.
+        L&apos;utilisateur l&apos;active lui-même, après avoir été informé que LinkedIn n&apos;autorise pas les outils
+        automatisés et peut restreindre un compte, et avoir accepté ce risque. L&apos;utilisateur reste responsable de
+        l&apos;usage de son compte LinkedIn : Filonea n&apos;est pas responsable d&apos;une restriction, d&apos;une
+        vérification ou d&apos;une suspension décidée par LinkedIn.
+      </p>
+      <p>
+        <strong>WhatsApp</strong> : Filonea prépare le message et ouvre WhatsApp ; l&apos;utilisateur l&apos;envoie
+        lui-même, depuis son propre numéro, et reste responsable de son usage. Filonea n&apos;est pas responsable
+        d&apos;un blocage décidé par WhatsApp.
+      </p>
 
       <h2>7. Données des prospects</h2>
       <p>

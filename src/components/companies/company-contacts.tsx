@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Mail, Phone, Plus, Pencil, Trash2, Ban, Undo2, User, Search } from 'lucide-react'
+import { Mail, MessageCircle, Phone, Plus, Pencil, Trash2, Ban, Undo2, User, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +19,17 @@ import { OutreachBadge } from '@/components/people/outreach-badge'
 import type { PersonRow } from '@/lib/queries/people'
 import { formatDate } from '@/lib/utils/dates'
 import { confirmAction } from '@/components/ui/confirm-dialog'
+import type { PlanKey } from '@/lib/billing'
+import { WhatsappPanel } from './whatsapp-panel'
+
+export type ContactsWhatsapp = {
+  // WhatsApp est réservé à l'offre Pro (essai compris)
+  plan: PlanKey | null
+  used: number
+  limit: number
+  // Brouillon WhatsApp en cours, par contact
+  drafts: Record<string, { id: string; content: string | null }>
+}
 
 interface CompanyContactsProps {
   companyId: string
@@ -29,6 +41,10 @@ interface CompanyContactsProps {
   isIndividual?: boolean
   // Statut de prospection de chaque contact (déduit des échanges)
   outreach?: Record<string, PersonRow['outreach']>
+  // Prospection par WhatsApp (contacts avec un numéro)
+  whatsapp?: ContactsWhatsapp
+  // L'utilisatrice a rempli sa présentation (Paramètres, Messages de Sophie)
+  hasPitch?: boolean
 }
 
 export function CompanyContacts({
@@ -38,6 +54,8 @@ export function CompanyContacts({
   contacts,
   isIndividual = false,
   outreach = {},
+  whatsapp,
+  hasPitch = false,
 }: CompanyContactsProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -197,6 +215,29 @@ export function CompanyContacts({
                           companyId={companyId}
                           companyName={isIndividual ? '' : companyName}
                         />
+                      )}
+
+                      {contact.phone && !optedOut && whatsapp?.plan === 'pro' && (
+                        <WhatsappPanel
+                          companyId={companyId}
+                          contactId={contact.id}
+                          phone={contact.phone}
+                          draft={whatsapp.drafts[contact.id] ?? null}
+                          used={whatsapp.used}
+                          limit={whatsapp.limit}
+                          hasPitch={hasPitch}
+                          onOptOut={() => handleOptOut(contact)}
+                          optOutBusy={busyId === contact.id}
+                        />
+                      )}
+                      {contact.phone && !optedOut && whatsapp?.plan === 'essentiel' && (
+                        <p className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          Écrire sur WhatsApp avec un message préparé par Sophie : offre Pro.
+                          <Link href="/billing" className="text-primary underline-offset-4 hover:underline">
+                            Passer en Pro
+                          </Link>
+                        </p>
                       )}
 
                       {contact.notes && (

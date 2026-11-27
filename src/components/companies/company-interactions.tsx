@@ -14,6 +14,7 @@ import {
   Copy,
   FileText,
   Mail,
+  MessageCircle,
   MessageSquare,
   Phone,
   Plus,
@@ -65,6 +66,7 @@ import { confirmAction } from '@/components/ui/confirm-dialog'
 const typeIcons: Record<CompanyInteractionType, React.ReactNode> = {
   email: <Mail className="w-5 h-5" />,
   linkedin_message: <MessageSquare className="w-5 h-5" />,
+  whatsapp: <MessageCircle className="w-5 h-5" />,
   call: <Phone className="w-5 h-5" />,
   meeting: <CalendarDays className="w-5 h-5" />,
   note: <FileText className="w-5 h-5" />,
@@ -74,6 +76,7 @@ const typeIcons: Record<CompanyInteractionType, React.ReactNode> = {
 const typeColors: Record<CompanyInteractionType, string> = {
   email: 'text-blue-600 bg-blue-50 dark:bg-blue-950',
   linkedin_message: 'text-sky-600 bg-sky-50 dark:bg-sky-950',
+  whatsapp: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950',
   call: 'text-green-600 bg-green-50 dark:bg-green-950',
   meeting: 'text-purple-600 bg-purple-50 dark:bg-purple-950',
   note: 'text-amber-600 bg-amber-50 dark:bg-amber-950',
@@ -253,8 +256,14 @@ export function CompanyInteractions({
                               <p className="text-sm whitespace-pre-wrap">{interaction.content}</p>
                             </div>
                           )}
+                          {/* Brouillon WhatsApp : il s'envoie depuis le contact (ouverture de WhatsApp, plafond du jour) */}
+                          {interaction.status === 'draft' && interaction.type === 'whatsapp' && (
+                            <p className="pt-2 text-sm text-muted-foreground">
+                              À envoyer depuis le bloc WhatsApp du contact, dans Contacts.
+                            </p>
+                          )}
                           {/* Brouillon (préparé par Sophie ou à la main) : à copier, puis à marquer envoyé */}
-                          {interaction.status === 'draft' && interaction.content && (
+                          {interaction.status === 'draft' && interaction.type !== 'whatsapp' && interaction.content && (
                             <div className="flex flex-wrap gap-2 pt-2">
                               <Button variant="outline" size="sm" onClick={() => handleCopy(interaction)}>
                                 <Copy className="w-4 h-4 mr-2" />

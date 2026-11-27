@@ -2,7 +2,6 @@
 
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
-import { parsePhoneNumberFromString } from 'libphonenumber-js'
 import { createClient } from '@/lib/supabase/server'
 import { contactDisplayName, normalizeLinkedinProfileUrl, toWebsiteDomain } from '@/lib/validations/company'
 import {
@@ -27,6 +26,7 @@ import { SEGMENTS } from '@/lib/constants/segments'
 import type { CompanySegment } from '@/types'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { NO_ACCESS_MESSAGE, PRO_ONLY_MESSAGE } from '@/lib/billing'
+import { toE164 } from '@/lib/phone'
 
 type ActionResult<T> = { success: boolean; error?: string; data?: T }
 
@@ -409,7 +409,7 @@ function activitySummary(row: AnalyzedRow): string | null {
 
 function contactLabel(row: CompanyImportRow | null): string | null {
   if (!row || !hasContact(row)) return null
-  return [row.contactFirstName, row.contactLastName].filter(Boolean).join(' ') || row.contactEmail
+  return [row.contactFirstName, row.contactLastName].filter(Boolean).join(' ') || row.contactEmail || row.contactPhone
 }
 
 function waalaxySummary(analyzed: AnalyzedRow[]): ImportPreview['waalaxy'] {
@@ -683,6 +683,13 @@ export async function importCompanies(
       : { data: [] }
     const usedEmails = new Set((existingEmails ?? []).map((contact) => contact.email?.toLowerCase()))
 
+    // Pays de chaque fiche, pour lire les numéros nationaux (une fiche créée par l'import est en France)
+    const companyIds = [...new Set(withContact.map(({ companyId }) => companyId))]
+    const { data: countries } = companyIds.length
+      ? await supabase.from('companies').select('id, country').eq('user_id', user.id).in('id', companyIds)
+      : { data: [] }
+    const countryById = new Map((countries ?? []).map((company) => [company.id, company.country]))
+
     const contacts = withContact
       .filter(({ row }) => {
         if (!row.contactEmail) return true
@@ -699,14 +706,15 @@ export async function importCompanies(
         role: row.contactRole,
         email: row.contactEmail,
         email_source: row.contactEmail ? ('other' as const) : null,
-        phone: row.contactPhone
-          ? (parsePhoneNumberFromString(row.contactPhone, 'FR')?.format('E.164') ?? row.contactPhone)
-          : null,
+        // Format E.164 ; un numéro invalide est laissé vide, sans bloquer la ligne
+        phone: toE164(row.contactPhone, countryById.get(companyId) ?? 'FR'),
         // Profil au format standard : c'est par lui qu'on reconnaît la personne au prochain import
         linkedin_url: normalizeLinkedinProfileUrl(row.contactLinkedin) ?? row.contactLinkedin,
         // RGPD : origine de la donnée (la date de collecte est celle de l'import)
         data_source: 'import',
       }))
+      // Personne qui n'avait qu'un numéro, invalide : rien à enregistrer (la fiche, elle, est gardée)
+      .filter((contact) => contact.first_name || contact.last_name || contact.email || contact.linkedin_url || contact.phone)
 
     const insertedIds: string[] = []
     for (let start = 0; start < contacts.length; start += INSERT_BATCH_SIZE) {

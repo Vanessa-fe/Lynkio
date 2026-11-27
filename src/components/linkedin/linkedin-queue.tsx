@@ -176,7 +176,7 @@ export function LinkedinQueue({
 
   return (
     <div className="space-y-6">
-      <AutomationPanel automation={automation} now={now} />
+      <AutomationPanel automation={automation} now={now} actionsPerDay={caps.actionsPerDay} />
 
       {showFocus && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">

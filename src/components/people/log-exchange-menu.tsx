@@ -92,6 +92,11 @@ export function LogExchangeMenu({
           <MessageSquareReply className="w-4 h-4 mr-2" />
           Réponse par e-mail
         </DropdownMenuItem>
+        {/* Les messages WhatsApp envoyés se notent depuis la fiche (« C'est envoyé »), qui tient le plafond du jour */}
+        <DropdownMenuItem onSelect={() => log({ type: 'whatsapp', direction: 'incoming' }, 'Réponse notée')}>
+          <MessageSquareReply className="w-4 h-4 mr-2" />
+          Réponse sur WhatsApp
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -9,15 +9,30 @@ import {
   type CompanyContactInput,
 } from '@/lib/validations/company'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { INVALID_PHONE_MESSAGE, toE164 } from '@/lib/phone'
 
 type ActionResult = {
   success: boolean
   error?: string
+  // Champ en cause, pour afficher l'erreur sous ce champ du formulaire
+  field?: 'phone'
 }
 
 const UNIQUE_VIOLATION = '23505'
 
-function toRow(validated: ReturnType<typeof companyContactSchema.parse>) {
+type Supabase = Awaited<ReturnType<typeof createClient>>
+
+/**
+ * Téléphone au format E.164, lu selon le pays de l'entreprise (« 0470 12 34 56 » est belge pour une
+ * entreprise belge). undefined : numéro invalide, à signaler sous le champ.
+ */
+async function normalizedPhone(supabase: Supabase, companyId: string, phone: string | null): Promise<string | null | undefined> {
+  if (!phone) return null
+  const { data: company } = await supabase.from('companies').select('country').eq('id', companyId).maybeSingle()
+  return toE164(phone, company?.country ?? 'FR') ?? undefined
+}
+
+function toRow(validated: ReturnType<typeof companyContactSchema.parse>, phone: string | null) {
   return {
     first_name: validated.firstName,
     last_name: validated.lastName,
@@ -27,7 +42,7 @@ function toRow(validated: ReturnType<typeof companyContactSchema.parse>) {
     // La source de l'e-mail n'a de sens que s'il y a un e-mail
     email_source: validated.email ? (validated.emailSource ?? 'manual') : null,
     email_confidence: validated.email ? (validated.emailConfidence ?? null) : null,
-    phone: validated.phone,
+    phone,
     // Profil LinkedIn remis au format standard (celui qu'attend Waalaxy)
     linkedin_url: normalizeLinkedinProfileUrl(validated.linkedinUrl) ?? validated.linkedinUrl,
     notes: validated.notes,
@@ -53,10 +68,13 @@ export async function createCompanyContact(input: CompanyContactInput): Promise<
       return { success: false, error: 'Vous devez être connecté' }
     }
 
+    const phone = await normalizedPhone(supabase, validated.companyId, validated.phone)
+    if (phone === undefined) return { success: false, error: INVALID_PHONE_MESSAGE, field: 'phone' }
+
     // data_source et collected_at (RGPD : d'où vient la donnée, et quand)
     // sont renseignés par les valeurs par défaut de la base
     const { error } = await supabase.from('company_contacts').insert({
-      ...toRow(validated),
+      ...toRow(validated, phone),
       user_id: user.id,
       company_id: validated.companyId,
       data_source: validated.emailSource === 'hunter' ? 'hunter' : 'manual',
@@ -84,9 +102,12 @@ export async function updateCompanyContact(
     const validated = companyContactSchema.parse(input)
     const supabase = await createClient()
 
+    const phone = await normalizedPhone(supabase, validated.companyId, validated.phone)
+    if (phone === undefined) return { success: false, error: INVALID_PHONE_MESSAGE, field: 'phone' }
+
     const { error } = await supabase
       .from('company_contacts')
-      .update(toRow(validated))
+      .update(toRow(validated, phone))
       .eq('id', contactId)
       .eq('company_id', validated.companyId)
 
