@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { SizeCategory } from '@/types'
 import { MAX_ESTIMATED_AMOUNT, parseEuroAmount } from './company'
+import { normalizeRegistrationId, readCountryCell } from '@/lib/countries'
 
 /**
  * Import et export CSV des entreprises. Les colonnes de l'export sont
@@ -15,6 +16,7 @@ export type ImportField =
   | 'registrationId'
   | 'city'
   | 'postalCode'
+  | 'country'
   | 'sector'
   | 'sizeCategory'
   | 'notes'
@@ -35,6 +37,7 @@ export const COLUMN_LABELS: Record<ImportField, string> = {
   registrationId: 'SIREN',
   city: 'Ville',
   postalCode: 'Code postal',
+  country: 'Pays',
   sector: 'Secteur',
   sizeCategory: 'Taille',
   notes: 'Notes',
@@ -78,6 +81,12 @@ const HEADER_ALIASES: Record<string, ImportField> = {
   codepostal: 'postalCode',
   'postal code': 'postalCode',
   zip: 'postalCode',
+  pays: 'country',
+  'code pays': 'country',
+  country: 'country',
+  'country code': 'country',
+  countrycode: 'country',
+  'company country': 'country',
   secteur: 'sector',
   'secteur d activite': 'sector',
   activite: 'sector',
@@ -189,18 +198,24 @@ export const companyImportRowSchema = z
       .optional()
       .transform((value) => value || null),
     website: text(500),
-    // SIREN, ou SIRET (on garde alors les 9 premiers chiffres)
+    // Identifiant officiel : lu selon le pays de la ligne, une fois celui-ci connu (voir plus bas)
     registrationId: z
       .string()
       .optional()
-      .transform((value) => {
-        const digits = value?.replace(/\s/g, '') ?? ''
-        if (/^\d{14}$/.test(digits)) return digits.slice(0, 9)
-        return digits || null
-      })
-      .refine((value) => !value || /^\d{9}$/.test(value), 'SIREN invalide (9 chiffres)'),
+      .transform((value) => value?.trim() || null),
     city: text(100),
     postalCode: text(10),
+    // Code ISO (« Belgique », « Belgium », « BE » → BE) ; vide : France. Un pays inconnu rend la ligne
+    // invalide plutôt que de classer l'entreprise en France (son téléphone serait lu comme français)
+    country: z
+      .string()
+      .optional()
+      .transform((value, ctx) => {
+        const country = readCountryCell(value)
+        if ('value' in country) return country.value
+        ctx.addIssue({ code: 'custom', message: country.error })
+        return z.NEVER
+      }),
     sector: text(200),
     sizeCategory: z.string().optional().transform(parseSizeCategory),
     notes: text(5000),
@@ -229,6 +244,15 @@ export const companyImportRowSchema = z
   .refine((row) => row.name || row.contactFirstName || row.contactLastName, {
     message: 'Nom manquant (entreprise ou personne)',
     path: ['name'],
+  })
+  // SIREN en France (un SIRET donne son SIREN), numéro BCE en Belgique… : la règle dépend du pays
+  .transform((row, ctx) => {
+    const registration = normalizeRegistrationId(row.registrationId, row.country)
+    if ('error' in registration) {
+      ctx.addIssue({ code: 'custom', message: registration.error, path: ['registrationId'] })
+      return z.NEVER
+    }
+    return { ...row, registrationId: registration.value }
   })
 
 export type CompanyImportRow = z.output<typeof companyImportRowSchema>

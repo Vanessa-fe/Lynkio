@@ -7,6 +7,7 @@ import { suggestApproachAngle } from '@/lib/utils/approach-angle'
 import type { StrategyOverview } from '@/lib/queries/strategies'
 import type { Company, CompanyQualification } from '@/types'
 import { ScoreDetails } from './company-score-card'
+import { registrationUrl } from '@/lib/countries'
 
 const SIZE_LABELS: Record<string, string> = {
   solo: 'indépendant, sans salarié',
@@ -52,6 +53,8 @@ export function CompanyWhyCard({
 }) {
   const fromStrategy = Boolean(company.strategy_id)
   const fromRegistry = Boolean(company.naf_code || company.registration_id)
+  // Fiche publique dans le registre du pays (annuaire des entreprises, BCE belge…)
+  const registryUrl = company.registration_id ? registrationUrl(company.registration_id, company.country) : null
 
   const nafCodes = strategy ? nafCodesForGroups(strategy.sectorGroups) : []
   const department = departmentFromPostalCode(company.postal_code)
@@ -149,9 +152,9 @@ export function CompanyWhyCard({
           {fromRegistry && (
           <p className="text-xs text-muted-foreground">
             Source : registre officiel des entreprises, consulté le {formatDate(new Date(company.collected_at), 'd MMMM yyyy')}.{' '}
-            {company.registration_id && (
+            {registryUrl && (
               <a
-                href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${company.registration_id}`}
+                href={registryUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-foreground"

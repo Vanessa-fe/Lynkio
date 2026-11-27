@@ -13,6 +13,7 @@ const TEMPLATE_EXAMPLE: Record<ImportField, string> = {
   registrationId: '123456789',
   city: 'Lyon',
   postalCode: '69002',
+  country: 'France',
   sector: 'Agence de communication',
   sizeCategory: 'TPE',
   notes: 'Rencontrée au salon',

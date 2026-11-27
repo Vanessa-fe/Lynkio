@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Search } from 'lucide-react'
 import {
-  createCompanySchema,
+  companySchemaFor,
   formatEuros,
   sizeCategories,
   sizeCategoryLabels,
@@ -33,6 +33,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { CompanyLookup, type CompanyLookupPick } from '@/components/companies/company-lookup'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
+import { DEFAULT_COUNTRY, registrationLabel, usesSiren } from '@/lib/countries'
 
 interface CompanyFormProps {
   company?: CompanyWithRelations
@@ -62,6 +63,9 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
   // Personne seule : son nom suit celui de son contact (synchronisé par la base)
   const isIndividual = company?.kind === 'individual'
   const defaultStage = stages.find((stage) => stage.is_default) ?? stages[0]
+  // Identifiant officiel lu selon le pays : SIREN, ou numéro BCE d'une fiche belge importée
+  const country = company?.country ?? DEFAULT_COUNTRY
+  const schema = useMemo(() => companySchemaFor(country), [country])
 
   const {
     register,
@@ -71,7 +75,7 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
     setValue,
     getValues,
   } = useForm<CreateCompanyInput>({
-    resolver: zodResolver(createCompanySchema),
+    resolver: zodResolver(schema),
     defaultValues: company
       ? {
           name: company.name,
@@ -319,11 +323,11 @@ export function CompanyForm({ company, stages, sources }: CompanyFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="registrationId">SIREN</Label>
+                <Label htmlFor="registrationId">{registrationLabel(country)}</Label>
                 <Input
                   id="registrationId"
-                  inputMode="numeric"
-                  placeholder="123 456 789"
+                  inputMode={usesSiren(country) || country === 'BE' ? 'numeric' : 'text'}
+                  placeholder={usesSiren(country) ? '123 456 789' : country === 'BE' ? '0123.456.749' : undefined}
                   disabled={isLoading}
                   {...register('registrationId')}
                 />
