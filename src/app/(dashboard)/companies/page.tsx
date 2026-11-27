@@ -9,6 +9,7 @@ import { getPipelineCards } from '@/lib/queries/pipeline'
 import { getStrategies, getStrategy } from '@/lib/queries/strategies'
 import { getPipelineRun } from '@/lib/queries/prospection'
 import { getUserProfile } from '@/lib/queries/user-profile'
+import { ADDED_TODAY_PARAM, COMPANIES_LIMIT } from '@/lib/constants/companies'
 import { formatDate } from '@/lib/utils/dates'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -23,9 +24,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export default async function CompaniesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ strategie?: string; passage?: string; vue?: string }>
+  searchParams: Promise<{ strategie?: string; passage?: string; vue?: string; ajoutees?: string }>
 }) {
-  const { strategie, passage, vue } = await searchParams
+  const { strategie, passage, vue, ajoutees } = await searchParams
   const strategyId = strategie && UUID.test(strategie) ? strategie : undefined
   // « Voir les entreprises » à la fin d'une recherche : celles ajoutées par ce passage
   const pipelineRunId = !strategyId && passage && UUID.test(passage) ? passage : undefined
@@ -57,7 +58,11 @@ export default async function CompaniesPage({
         </div>
       </div>
 
-      {view === 'kanban' ? <KanbanView /> : <TableView strategyId={strategyId} pipelineRunId={pipelineRunId} />}
+      {view === 'kanban' ? (
+        <KanbanView />
+      ) : (
+        <TableView strategyId={strategyId} pipelineRunId={pipelineRunId} addedToday={ajoutees === ADDED_TODAY_PARAM} />
+      )}
     </div>
   )
 }
@@ -67,9 +72,18 @@ async function KanbanView() {
   return <PipelineBoard cards={cards} stages={stages} />
 }
 
-async function TableView({ strategyId, pipelineRunId }: { strategyId?: string; pipelineRunId?: string }) {
+async function TableView({
+  strategyId,
+  pipelineRunId,
+  addedToday,
+}: {
+  strategyId?: string
+  pipelineRunId?: string
+  // Fin d'un import : « Voir les entreprises ajoutées »
+  addedToday: boolean
+}) {
   const [companies, stages, sources, strategy, strategies, run] = await Promise.all([
-    getCompanies(200, { strategyId, pipelineRunId }),
+    getCompanies(COMPANIES_LIMIT, { strategyId, pipelineRunId }),
     getPipelineStages(),
     getLeadSources(),
     strategyId ? getStrategy(strategyId) : Promise.resolve(null),
@@ -109,7 +123,14 @@ async function TableView({ strategyId, pipelineRunId }: { strategyId?: string; p
         stages={stages}
         sources={sources}
         strategies={strategyId || pipelineRunId ? undefined : strategies.map(({ id, name }) => ({ id, name }))}
+        now={readTime()}
+        initialAdded={addedToday ? 'today' : undefined}
       />
     </>
   )
+}
+
+/** Heure de la lecture, la même pour le rendu serveur et le navigateur (filtres « Ajoutées… ») */
+function readTime(): number {
+  return Date.now()
 }

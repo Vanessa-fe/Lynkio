@@ -113,6 +113,40 @@ export async function removeContactsFromList(listId: string, contactIds: string[
   }
 }
 
+/**
+ * Crée une liste vide (bouton « Créer une liste ») : on y range ensuite des personnes depuis Personnes
+ * ou pendant un import
+ */
+export async function createProspectList(listName: string): Promise<ActionResult<{ listId: string }>> {
+  try {
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+
+    const name = cleanName(listName)
+    if (typeof name !== 'string') return { success: false, error: name.error }
+
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('prospect_lists')
+      .insert({ user_id: user.id, name })
+      .select('id')
+      .single()
+
+    if (error || !data) {
+      if (error?.code === UNIQUE_VIOLATION) return { success: false, error: 'Une liste porte déjà ce nom' }
+      console.error('Create prospect list error:', error)
+      return { success: false, error: 'Impossible de créer la liste' }
+    }
+
+    revalidatePath('/lists')
+    revalidatePath('/people')
+    return { success: true, data: { listId: data.id } }
+  } catch (error) {
+    console.error('Create prospect list error:', error)
+    return { success: false, error: 'Une erreur est survenue' }
+  }
+}
+
 export async function renameProspectList(listId: string, newName: string): Promise<ActionResult> {
   try {
     const user = await getAuthUser()

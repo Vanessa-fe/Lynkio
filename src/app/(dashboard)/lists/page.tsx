@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { ArrowRight, ListPlus } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LinkedinIcon } from '@/components/ui/linkedin-icon'
 import { Counter } from '@/components/motion/counter'
 import { Stagger, StaggerItem } from '@/components/motion/reveal'
 import { ListActions } from '@/components/lists/list-actions'
+import { CreateListDialog } from '@/components/lists/create-list-dialog'
 import { ContactsTabs } from '@/components/people/contacts-tabs'
 import { getListsOverview, type ListOverview } from '@/lib/queries/lists'
 
@@ -104,19 +105,16 @@ export default async function ListsPage() {
               Envoi LinkedIn
             </Link>
           </Button>
-          <Button asChild>
-            <Link href="/people" title="Cochez des personnes, puis « Ajouter à une liste »">
-              <ListPlus className="w-4 h-4 mr-2" />
-              Créer une liste
-            </Link>
-          </Button>
+          <CreateListDialog />
         </div>
       </div>
 
       {lists.length === 0 ? (
         <Card>
           <CardContent className="py-10">
-            <p className="text-muted-foreground max-w-xl">Aucune liste. Dans Personnes, cochez des contacts puis « Ajouter à une liste ».</p>
+            <p className="text-muted-foreground max-w-xl">
+              Aucune liste. Créez-en une ici, ou dans Personnes : cochez des contacts puis « Ajouter à une liste ».
+            </p>
           </CardContent>
         </Card>
       ) : (
