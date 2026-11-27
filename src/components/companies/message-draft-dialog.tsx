@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FunctionsHttpError } from '@supabase/supabase-js'
@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
 import { createCompanyInteraction } from '@/lib/actions/company-interactions'
+import { rememberMessageStyle } from '@/lib/actions/message-style'
 import { contactDisplayName } from '@/lib/validations/company'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { LINKEDIN_FIRST_MESSAGE_MAX, LINKEDIN_FIRST_MESSAGE_TARGET } from '@/lib/constants/outreach'
@@ -92,6 +93,8 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
   const [isWriting, setIsWriting] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Dernier texte proposé comme exemple de son style : pas deux fois le même
+  const rememberedText = useRef<string | null>(null)
 
   const handleContactChange = (value: string) => {
     const id = value === NONE ? null : value
@@ -137,9 +140,26 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
     }
   }
 
+  /**
+   * Message validé (copié ou enregistré) : s'il a été réécrit, Sophie s'en inspirera pour les suivants.
+   * Vrai si la version de la freelance vient d'être retenue.
+   */
+  const rememberStyle = async (): Promise<boolean> => {
+    const text = body.trim()
+    if (!draft || !text || rememberedText.current === text) return false
+    rememberedText.current = text
+    try {
+      const result = await rememberMessageStyle(channel, text)
+      return result.data?.remembered === true
+    } catch {
+      return false
+    }
+  }
+
   const copy = async (text: string, what: string) => {
     try {
       await navigator.clipboard.writeText(text)
+      if (what === 'Message') void rememberStyle()
       toast({ title: `${what} copié` })
       posthog.capture('message_copied', { channel, part: what === 'Objet' ? 'subject' : 'body' })
     } catch {
@@ -174,9 +194,12 @@ export function MessageDraftDialog({ companyId, contacts, hasPitch, open, onOpen
       return
     }
 
+    const remembered = await rememberStyle()
     toast({
       title: 'Message enregistré',
-      description: 'Retrouvez-le dans les échanges. Une fois envoyé, marquez-le comme envoyé.',
+      description: remembered
+        ? 'Retrouvez-le dans les échanges. Sophie s’inspirera de votre version pour les prochains messages.'
+        : 'Retrouvez-le dans les échanges. Une fois envoyé, marquez-le comme envoyé.',
     })
     onOpenChange(false)
     router.refresh()

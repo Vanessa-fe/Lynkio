@@ -25,6 +25,8 @@ import { UserFacingError, writeDraft, type Channel, type SignalForMessage, type 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_INSTRUCTIONS_LENGTH = 500
 const MAX_SIGNALS = 5
+// Messages écrits ou réécrits par la freelance donnés à Sophie comme modèles (même canal)
+const STYLE_EXAMPLES_IN_PROMPT = 3
 const MAX_REFERENCES = 10
 const MAX_JOB_AD_LENGTH = 3000
 
@@ -109,6 +111,29 @@ function originNotice(emailSource: string | null, companyName: string, optOutUrl
     : `${origin}Si vous préférez ne plus recevoir de message de ma part, répondez simplement « stop ».`
 }
 
+/** Message modèle sans la signature de la freelance à la fin (elle est ajoutée après la rédaction) */
+function withoutSignature(text: string, signatures: (string | null | undefined)[]): string {
+  let result = text.trim()
+  for (const signature of signatures) {
+    const value = signature?.trim()
+    if (value && result.endsWith(value)) result = result.slice(0, -value.length).trim()
+  }
+  return result
+}
+
+/**
+ * Garde le brouillon de Sophie 30 jours (table sophie_drafts) : un message envoyé presque identique ne
+ * sera pas pris pour un message réécrit par la freelance. Un échec ne bloque pas la rédaction.
+ */
+async function rememberSophieDraft(admin: ReturnType<typeof createClient>, userId: string, channel: Channel, body: string) {
+  try {
+    const { error } = await admin.from('sophie_drafts').insert({ user_id: userId, channel, body: body.slice(0, 6000) })
+    if (error) console.error('draft-message: brouillon non gardé', error)
+  } catch (error) {
+    console.error('draft-message: brouillon non gardé', error)
+  }
+}
+
 /**
  * Crée un lien « ne plus être contacté » propre à ce contact (page publique /stop/<jeton>).
  * Seule l'empreinte du jeton est enregistrée. En cas d'échec, l'e-mail garde la phrase « stop ».
@@ -188,7 +213,7 @@ Deno.serve(async (request) => {
 
   try {
     const access = await loadAiAccess(admin, user.id, 'draft')
-    const [company, signals, contact, profile, icp, references, lastOutgoing] = await Promise.all([
+    const [company, signals, contact, profile, icp, references, lastOutgoing, styleExamples] = await Promise.all([
       supabase
         .from('companies')
         .select('name, kind, segment, sector, city, size_category, website, detected_stack, strategy_id')
@@ -212,7 +237,7 @@ Deno.serve(async (request) => {
         : Promise.resolve({ data: null, error: null }),
       supabase
         .from('user_profiles')
-        .select('first_name, business_name, message_pitch, message_signature, profession:professions(label)')
+        .select('first_name, business_name, message_pitch, message_signature, message_style, profession:professions(label)')
         .eq('id', user.id)
         .maybeSingle(),
       supabase
@@ -239,9 +264,17 @@ Deno.serve(async (request) => {
         .order('occurred_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
+      // Messages qu'elle a écrits ou réécrits elle-même sur ce canal : les derniers servent de modèle
+      supabase
+        .from('message_style_examples')
+        .select('content')
+        .eq('user_id', user.id)
+        .eq('channel', channel)
+        .order('created_at', { ascending: false })
+        .limit(STYLE_EXAMPLES_IN_PROMPT),
     ])
 
-    for (const result of [company, signals, contact, profile, icp, references, lastOutgoing]) {
+    for (const result of [company, signals, contact, profile, icp, references, lastOutgoing, styleExamples]) {
       if (result.error) throw result.error
     }
 
@@ -328,6 +361,13 @@ Deno.serve(async (request) => {
     const siteText = website ? await fetchSiteText(website) : null
 
     const referenceRows = references.data ?? []
+    const firstName = senderProfile?.first_name?.trim() || null
+    const signature =
+      channel === 'email'
+        ? senderProfile?.message_signature?.trim() ||
+          [firstName, senderProfile?.business_name?.trim()].filter(Boolean).join('\n') ||
+          null
+        : firstName
     const draft = await writeDraft(access, {
       channel,
       sender: {
@@ -371,15 +411,14 @@ Deno.serve(async (request) => {
       instructions,
       afterInvitation,
       sequence,
+      style: {
+        instructions: senderProfile?.message_style?.trim() || null,
+        // Sans la signature : elle est ajoutée après, l'IA ne doit pas l'écrire
+        examples: (styleExamples.data ?? [])
+          .map((example) => withoutSignature(example.content, [signature, senderProfile?.message_signature, firstName]))
+          .filter((example) => example.length > 0),
+      },
     })
-
-    const firstName = senderProfile?.first_name?.trim() || null
-    const signature =
-      channel === 'email'
-        ? senderProfile?.message_signature?.trim() ||
-          [firstName, senderProfile?.business_name?.trim()].filter(Boolean).join('\n') ||
-          null
-        : firstName
 
     const firstEmail = channel === 'email' && !lastOutgoing.data
     const optOutUrl = firstEmail && contactId ? await createOptOutLink(admin, user.id, contactId) : null
@@ -405,6 +444,7 @@ Deno.serve(async (request) => {
     }
     await recordAiUsage(admin, user.id, access, 'draft')
     const checked = checkDraft(draft, checks)
+    await rememberSophieDraft(admin, user.id, channel, checked.body)
     if (!sequence) return json(checked)
 
     // Les relances passent les mêmes vérifications, signature comprise

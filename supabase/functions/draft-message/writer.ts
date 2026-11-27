@@ -100,6 +100,9 @@ export type MessageContext = {
   afterInvitation: boolean
   // Séquence LinkedIn : Sophie écrit aussi les deux relances
   sequence: boolean
+  // Style de la freelance : ses consignes permanentes, et des messages qu'elle a écrits ou réécrits
+  // elle-même sur ce canal (les plus récents d'abord), à imiter sans en reprendre les faits
+  style: { instructions: string | null; examples: string[] }
 }
 
 export type DraftFromAi = {
@@ -160,7 +163,8 @@ Ce qui fait un bon premier message :
 - il est sobre et naturel : vouvoiement, phrases courtes, aucune flatterie, aucun jargon commercial, pas d'emoji, pas de tiret long (—), pas de « J'espère que vous allez bien » ;
 - chaque phrase apporte quelque chose : aucune phrase générique qui pourrait s'adresser à n'importe quelle entreprise ;
 - si elle a listé ses prestations, il en propose au plus une, la plus proche du besoin de l'entreprise, avec ses mots à elle ; n'invente aucune autre prestation ;
-- si la freelance donne des consignes pour ce message, applique-les en priorité et de façon visible.
+- si la freelance donne des consignes pour ce message, applique-les en priorité et de façon visible ;
+- si elle a donné des consignes de style ou des messages écrits par elle (sections « Style de la freelance » et « Messages écrits par la freelance »), écris comme elle : ils priment sur les règles de ton, de longueur et de forme de ce texte, mais jamais sur l'honnêteté (ne rien inventer, ne jamais affirmer une hypothèse, ne citer que des faits fournis).
 
 Selon la nature de chaque signal (indiquée entre crochets) :
 - fait constaté : tu peux le citer simplement, sans l'exagérer ;
@@ -309,6 +313,13 @@ function contextPrompt(context: MessageContext): string {
         "La personne vient d'accepter l'invitation LinkedIn de la freelance, envoyée sans note : elle ne sait pas encore pourquoi elle l'a invitée. N'ouvre pas sur un remerciement pour l'acceptation : entre directement dans le sujet.",
     ]),
     section('Ton du message', [TONE_RULES[context.tone]]),
+    section('Style de la freelance (ses consignes pour tous ses messages)', [context.style.instructions]),
+    context.style.examples.length > 0
+      ? section('Messages écrits par la freelance elle-même, à prendre pour modèle', [
+          "Imite leur ton, leur longueur, leur structure et leurs tournures. N'en reprends jamais les faits, les noms, les entreprises ni les chiffres : ils concernaient d'autres personnes. N'écris ni signature ni mention de désinscription : elles sont ajoutées après.",
+          ...context.style.examples.map((example, index) => `Exemple ${index + 1} :\n${example}`),
+        ])
+      : null,
     section('Consignes de la freelance pour ce message', [context.instructions]),
   ]
     .filter((part): part is string => part !== null)
@@ -321,7 +332,12 @@ function contextPrompt(context: MessageContext): string {
 export async function writeDraft(access: AiAccess, context: MessageContext): Promise<DraftFromAi> {
   const startedAt = Date.now()
   const draft = await requestDraft(access, context, contextPrompt(context), REQUEST_TIMEOUT_MS)
-  const shortenAbove = SHORTEN_ABOVE[context.channel]
+  // Ses propres messages font la longueur de référence quand ils sont plus longs que la limite habituelle
+  const longestExample = Math.max(0, ...context.style.examples.map((example) => example.length))
+  const shortenAbove =
+    SHORTEN_ABOVE[context.channel] === undefined
+      ? undefined
+      : Math.max(SHORTEN_ABOVE[context.channel]!, Math.round(longestExample * 1.2))
   if (shortenAbove === undefined || draft.body.length <= shortenAbove) return draft
 
   // L'IA compte mal les caractères : un premier message LinkedIn ou WhatsApp trop long est réécrit

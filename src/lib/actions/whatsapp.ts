@@ -8,6 +8,7 @@ import { NO_ACCESS_MESSAGE, PRO_ONLY_MESSAGE } from '@/lib/billing'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { readWhatsappUsage } from '@/lib/queries/whatsapp'
 import { WHATSAPP_CAP_MESSAGE, WHATSAPP_MAX_LENGTH } from '@/lib/whatsapp'
+import { rememberWrittenMessage } from '@/lib/style-memory'
 
 type ActionResult<T = void> = {
   success: boolean
@@ -140,12 +141,13 @@ export async function saveWhatsappDraft(input: {
  * « C'est envoyé » : l'utilisatrice a envoyé le message elle-même dans WhatsApp. Le brouillon devient
  * un échange effectué, daté de maintenant, avec le texte tel qu'il a été ouvert dans WhatsApp.
  * La base fait alors avancer la fiche (trigger advance_stage_on_exchange : contacté, puis relancé).
- * Refusé au-delà du plafond du jour (heure de Paris).
+ * Refusé au-delà du plafond du jour (heure de Paris). Un message réécrit par la freelance devient un
+ * exemple de son style pour les prochains (remembered).
  */
 export async function markWhatsappSent(
   interactionId: string,
   content: string
-): Promise<ActionResult<{ used: number; limit: number }>> {
+): Promise<ActionResult<{ used: number; limit: number; remembered: boolean }>> {
   try {
     const denied = await whatsappDenied()
     if (denied) return { success: false, error: denied }
@@ -187,14 +189,16 @@ export async function markWhatsappSent(
       return { success: false, error: 'Impossible de noter le message comme envoyé' }
     }
 
-    captureServerEvent(user.id, 'whatsapp_sent', { used: used + 1, limit })
+    const remembered = await rememberWrittenMessage(supabase, user.id, 'whatsapp', text)
+    captureServerEvent(user.id, 'whatsapp_sent', { used: used + 1, limit, style_example: remembered })
+    if (remembered) revalidatePath('/settings/messages')
 
     revalidatePath(`/companies/${draft.company_id}`)
     revalidatePath('/companies')
     revalidatePath('/people')
     revalidatePath('/pipeline')
     revalidatePath('/dashboard')
-    return { success: true, data: { used: used + 1, limit } }
+    return { success: true, data: { used: used + 1, limit, remembered } }
   } catch (error) {
     console.error('Mark WhatsApp sent error:', error)
     return { success: false, error: 'Une erreur est survenue' }

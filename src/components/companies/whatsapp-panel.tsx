@@ -148,7 +148,12 @@ export function WhatsappPanel({
       setError(result.error ?? 'Une erreur est survenue')
       return
     }
-    toast({ title: 'Message WhatsApp noté comme envoyé', description: 'La fiche passe à l’étape suivante.' })
+    toast({
+      title: 'Message WhatsApp noté comme envoyé',
+      description: result.data?.remembered
+        ? 'La fiche passe à l’étape suivante. Sophie s’inspirera de votre version pour les prochains messages.'
+        : 'La fiche passe à l’étape suivante.',
+    })
     setStep('idle')
     setDraftId(null)
     setText('')

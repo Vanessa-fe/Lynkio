@@ -82,6 +82,14 @@ export const messageSettingsSchema = z.object({
     .nullable()
     .optional()
     .transform((value) => value || null),
+  // Consignes de style pour tous ses messages (longueur, ton, ce qu'elle ne veut jamais lire)
+  messageStyle: z
+    .string()
+    .trim()
+    .max(1000, 'Vos consignes sont trop longues (1 000 caractères au plus)')
+    .nullable()
+    .optional()
+    .transform((value) => value || null),
   // Plafond de messages WhatsApp par jour (offre Pro) ; absent : inchangé
   whatsappDailyLimit: z
     .number({ error: 'Indiquez un nombre entre 1 et 50' })

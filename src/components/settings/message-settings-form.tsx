@@ -18,11 +18,13 @@ import { WHATSAPP_MAX_DAILY_LIMIT, WHATSAPP_MIN_DAILY_LIMIT, WHATSAPP_SAFE_DAILY
 interface MessageSettingsFormProps {
   pitch: string | null
   signature: string | null
+  // Consignes de style pour tous les messages
+  messageStyle: string | null
   // Plafond WhatsApp du jour ; null : pas d'offre Pro, réglage masqué
   whatsappDailyLimit: number | null
 }
 
-export function MessageSettingsForm({ pitch, signature, whatsappDailyLimit }: MessageSettingsFormProps) {
+export function MessageSettingsForm({ pitch, signature, messageStyle, whatsappDailyLimit }: MessageSettingsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
@@ -38,11 +40,13 @@ export function MessageSettingsForm({ pitch, signature, whatsappDailyLimit }: Me
     defaultValues: {
       pitch: pitch ?? '',
       signature: signature ?? '',
+      messageStyle: messageStyle ?? '',
       ...(whatsappDailyLimit !== null ? { whatsappDailyLimit } : {}),
     },
   })
 
   const pitchLength = useWatch({ control, name: 'pitch' })?.length ?? 0
+  const styleLength = useWatch({ control, name: 'messageStyle' })?.length ?? 0
   const dailyLimit = useWatch({ control, name: 'whatsappDailyLimit' })
 
   const onSubmit = async (data: MessageSettingsInput) => {
@@ -88,6 +92,34 @@ export function MessageSettingsForm({ pitch, signature, whatsappDailyLimit }: Me
           <div className="flex justify-between gap-4 text-sm">
             {errors.pitch ? <p className="text-destructive">{errors.pitch.message}</p> : <span />}
             <span className="text-muted-foreground tabular-nums">{pitchLength} / 1 500</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Votre style</CardTitle>
+          <CardDescription>
+            Comment vous écrivez, pour tous vos messages : longueur, ton, formules que vous aimez ou que vous ne voulez
+            jamais lire. Sophie s’y tient à chaque rédaction.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Label htmlFor="messageStyle" className="sr-only">
+            Votre style
+          </Label>
+          <Textarea
+            id="messageStyle"
+            rows={4}
+            placeholder={
+              'Ex. : Messages très courts, 3 phrases maximum. Ton direct et simple. Je me présente en une phrase, je propose un appel de 10 minutes. Jamais de « J’espère que vous allez bien ».'
+            }
+            disabled={isSaving}
+            {...register('messageStyle')}
+          />
+          <div className="flex justify-between gap-4 text-sm">
+            {errors.messageStyle ? <p className="text-destructive">{errors.messageStyle.message}</p> : <span />}
+            <span className="text-muted-foreground tabular-nums">{styleLength} / 1 000</span>
           </div>
         </CardContent>
       </Card>
