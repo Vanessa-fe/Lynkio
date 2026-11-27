@@ -14,6 +14,7 @@ import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { formatDate } from '@/lib/utils/dates'
 import { useToast } from '@/lib/hooks/use-toast'
 import type { LinkedinAutomation } from '@/lib/queries/linkedin'
+import type { LinkedinCaps } from '@/lib/linkedin-caps'
 import { confirmAction } from '@/components/ui/confirm-dialog'
 import { LinkedinRiskDialog } from './linkedin-risk-dialog'
 
@@ -38,12 +39,12 @@ const RESTRICTION_ADVICE =
 export function AutomationPanel({
   automation,
   now,
-  actionsPerDay,
+  caps,
 }: {
   automation: LinkedinAutomation
   now: number
-  // Plafond d'actions par jour de l'extension (invitations et messages), rappelé avant d'activer
-  actionsPerDay: number
+  // Plafonds en vigueur, rappelés dans le bandeau et avant d'activer
+  caps: LinkedinCaps
 }) {
   const router = useRouter()
   const { toast } = useToast()
@@ -170,7 +171,8 @@ export function AutomationPanel({
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               <strong>Envoi automatique actif.</strong> LinkedIn peut restreindre les comptes qui utilisent ce type
-              d’outil : gardez des volumes bas.
+              d’outil : gardez des volumes bas. Aujourd’hui : {caps.invitationsTodayCap} invitations et{' '}
+              {caps.messagesTodayCap} messages au plus, et {caps.invitationsWeekCap} invitations par semaine au maximum.
             </span>
           </p>
           <Button variant="outline" size="sm" onClick={pause} disabled={busy} className="shrink-0 bg-background">
@@ -226,7 +228,9 @@ export function AutomationPanel({
       <LinkedinRiskDialog
         open={riskOpen}
         onOpenChange={setRiskOpen}
-        actionsPerDay={actionsPerDay}
+        invitationsPerDay={caps.dailyInvitationsLimit}
+        invitationsPerWeek={caps.invitationsWeekCap}
+        messagesPerDay={caps.dailyMessagesLimit}
         busy={busy}
         onConfirm={activate}
       />

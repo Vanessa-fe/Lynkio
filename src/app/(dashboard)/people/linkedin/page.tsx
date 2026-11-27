@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LinkedinQueue } from '@/components/linkedin/linkedin-queue'
-import { getLinkedinQueue, LINKEDIN_CAPS } from '@/lib/queries/linkedin'
+import { getLinkedinQueue } from '@/lib/queries/linkedin'
 import { getProspectLists } from '@/lib/queries/people'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -15,7 +15,7 @@ interface LinkedinOutreachPageProps {
 export default async function LinkedinOutreachPage({ searchParams }: LinkedinOutreachPageProps) {
   const { depuis, liste } = await searchParams
   const listId = depuis === 'liste' && liste && UUID.test(liste) ? liste : null
-  const [{ sequences, counters, automation, readAt }, lists] = await Promise.all([
+  const [{ sequences, caps, automation, readAt }, lists] = await Promise.all([
     getLinkedinQueue(),
     listId ? getProspectLists() : Promise.resolve([]),
   ])
@@ -43,8 +43,7 @@ export default async function LinkedinOutreachPage({ searchParams }: LinkedinOut
 
       <LinkedinQueue
         sequences={sequences}
-        counters={counters}
-        caps={LINKEDIN_CAPS}
+        caps={caps}
         automation={automation}
         now={readAt}
         backHref={back.href}

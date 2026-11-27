@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
+import { linkedinPaceSchema, type LinkedinPaceInput } from '@/lib/validations/linkedin'
 import type { LinkedinSequenceStatus } from '@/types'
 
 type ActionResult<T = void> = {
@@ -16,8 +17,13 @@ const UNIQUE_VIOLATION = '23505'
 const MAX_MESSAGE_LENGTH = 2000
 const MAX_ANGLE_LENGTH = 500
 const MAX_APPROVALS_PER_CALL = 200
-// Une sélection dans Personnes : pas plus que le plafond d'invitations du mois
+// Une sélection dans Personnes : 200 au plus (deux semaines d'invitations au rythme maximum de LinkedIn)
 const MAX_SELECTION = 200
+// Démarrage en douceur (plafonds du jour divisés par 2) : 14 jours, après une première activation
+// ou plus de 30 jours sans envoi automatique
+const DAY_MS = 24 * 60 * 60 * 1000
+const RAMP_UP_DAYS = 14
+const RAMP_UP_AFTER_IDLE_DAYS = 30
 
 // Messages d'erreur de advance_linkedin_sequence, montrés tels quels
 const STEP_ERRORS = [
@@ -352,6 +358,8 @@ export async function advanceLinkedinSequence(sequenceId: string, step: Linkedin
  * Active ou coupe l'envoi automatique par l'extension. L'activer efface une pause éventuelle, et demande
  * que l'utilisatrice ait accepté le risque de restriction de son compte LinkedIn (case cochée dans la
  * fenêtre d'avertissement) : la date d'acceptation est enregistrée, preuve que l'information a été donnée.
+ * Première activation, ou reprise après plus de 30 jours sans envoi automatique : 14 jours de démarrage
+ * en douceur (la base les rouvre aussi au premier envoi, voir 00090).
  */
 export async function setLinkedinAutomation(enabled: boolean, riskAccepted = false): Promise<ActionResult> {
   try {
@@ -365,6 +373,20 @@ export async function setLinkedinAutomation(enabled: boolean, riskAccepted = fal
     }
 
     const supabase = await createClient()
+    const now = Date.now()
+    let rampUp: { ramp_up_until: string } | Record<string, never> = {}
+    if (enabled) {
+      const { data: current } = await supabase
+        .from('linkedin_automation')
+        .select('last_action_at, ramp_up_until')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      const inProgress = !!current?.ramp_up_until && new Date(current.ramp_up_until).getTime() > now
+      const freshStart =
+        !current?.last_action_at || now - new Date(current.last_action_at).getTime() > RAMP_UP_AFTER_IDLE_DAYS * DAY_MS
+      if (freshStart && !inProgress) rampUp = { ramp_up_until: new Date(now + RAMP_UP_DAYS * DAY_MS).toISOString() }
+    }
+
     const { error } = await supabase
       .from('linkedin_automation')
       .upsert(
@@ -372,7 +394,13 @@ export async function setLinkedinAutomation(enabled: boolean, riskAccepted = fal
           user_id: user.id,
           enabled,
           ...(enabled
-            ? { paused_reason: null, paused_at: null, paused_until: null, risk_accepted_at: new Date().toISOString() }
+            ? {
+                paused_reason: null,
+                paused_at: null,
+                paused_until: null,
+                risk_accepted_at: new Date(now).toISOString(),
+                ...rampUp,
+              }
             : {}),
         },
         { onConflict: 'user_id' }
@@ -414,6 +442,42 @@ export async function resumeLinkedinAutomation(): Promise<ActionResult> {
     return { success: true }
   } catch (error) {
     console.error('Resume LinkedIn automation error:', error)
+    return { success: false, error: 'Une erreur est survenue' }
+  }
+}
+
+/**
+ * Rythme d'envoi sur LinkedIn : invitations et messages par jour au plus (envoi automatique et envois
+ * notés en un clic). La limite de 100 invitations sur 7 jours, elle, ne se règle pas.
+ */
+export async function saveLinkedinPace(input: LinkedinPaceInput): Promise<ActionResult> {
+  try {
+    const user = await getAuthUser()
+    if (!user) return { success: false, error: 'Vous devez être connecté' }
+
+    const parsed = linkedinPaceSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Réglage invalide' }
+
+    const supabase = await createClient()
+    const { error } = await supabase.from('linkedin_automation').upsert(
+      {
+        user_id: user.id,
+        daily_invitations_limit: parsed.data.dailyInvitationsLimit,
+        daily_messages_limit: parsed.data.dailyMessagesLimit,
+      },
+      { onConflict: 'user_id' }
+    )
+
+    if (error) {
+      console.error('Save LinkedIn pace error:', error)
+      return { success: false, error: 'Impossible d’enregistrer le rythme d’envoi' }
+    }
+
+    revalidatePath('/people/linkedin')
+    revalidatePath('/settings/extension')
+    return { success: true }
+  } catch (error) {
+    console.error('Save LinkedIn pace error:', error)
     return { success: false, error: 'Une erreur est survenue' }
   }
 }

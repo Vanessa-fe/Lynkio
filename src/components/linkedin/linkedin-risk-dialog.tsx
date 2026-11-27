@@ -17,8 +17,10 @@ import {
 interface LinkedinRiskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  // Actions par jour (invitations et messages) que l'extension s'autorise au plus
-  actionsPerDay: number
+  // Plafonds réglés par l'utilisatrice (les 14 premiers jours, la moitié seulement)
+  invitationsPerDay: number
+  invitationsPerWeek: number
+  messagesPerDay: number
   busy: boolean
   onConfirm: () => void
 }
@@ -27,7 +29,15 @@ interface LinkedinRiskDialogProps {
  * Avant d'activer l'envoi automatique : LinkedIn interdit les outils automatisés et peut restreindre
  * un compte. L'utilisatrice coche qu'elle a compris et accepte le risque ; sans la case, rien ne s'active.
  */
-export function LinkedinRiskDialog({ open, onOpenChange, actionsPerDay, busy, onConfirm }: LinkedinRiskDialogProps) {
+export function LinkedinRiskDialog({
+  open,
+  onOpenChange,
+  invitationsPerDay,
+  invitationsPerWeek,
+  messagesPerDay,
+  busy,
+  onConfirm,
+}: LinkedinRiskDialogProps) {
   const [accepted, setAccepted] = useState(false)
 
   const handleOpenChange = (next: boolean) => {
@@ -58,8 +68,9 @@ export function LinkedinRiskDialog({ open, onOpenChange, actionsPerDay, busy, on
           <p>Votre compte LinkedIn compte sûrement beaucoup pour votre activité. Nous vous conseillons :</p>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              de garder des volumes bas (Filonea vous limite par défaut à {actionsPerDay} actions par jour, invitations
-              et messages compris) ;
+              de garder des volumes bas (Filonea vous limite à {invitationsPerDay} invitations par jour et{' '}
+              {invitationsPerWeek} par semaine au maximum, et à {messagesPerDay} messages par jour ; la moitié
+              seulement pendant les 14 premiers jours) ;
             </li>
             <li>d’arrêter l’envoi automatique si LinkedIn vous demande une vérification ;</li>
             <li>de préférer l’envoi manuel pour vos prospects les plus importants.</li>

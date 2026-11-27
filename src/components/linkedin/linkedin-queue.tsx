@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, Users } from 'lucide-react'
+import { AlertTriangle, Gauge, Sprout, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import type { LinkedinAutomation, LinkedinCounters, LinkedinSequenceRow } from '@/lib/queries/linkedin'
+import type { LinkedinAutomation, LinkedinSequenceRow } from '@/lib/queries/linkedin'
+import { lowAcceptanceMessage, type LinkedinCaps } from '@/lib/linkedin-caps'
+import { formatDate } from '@/lib/utils/dates'
 import { useSessionState } from '@/lib/hooks/use-session-state'
 import { AutomationPanel } from './automation-panel'
 import { clearLinkedinFocus, LINKEDIN_FOCUS_KEY, parseLinkedinFocus } from './linkedin-focus'
@@ -63,6 +65,8 @@ function todo(key: string, rows: LinkedinSequenceRow[]): number {
   return key === 'follow' ? rows.filter((sequence) => !notYetDue(sequence)).length : rows.length
 }
 
+const DAY_AND_TIME = "d MMMM 'à' HH'h'mm"
+
 function Meter({ label, value, max }: { label: string; value: number; max: number }) {
   const ratio = Math.min(value / max, 1)
   return (
@@ -89,7 +93,6 @@ function Meter({ label, value, max }: { label: string; value: number; max: numbe
  */
 export function LinkedinQueue({
   sequences,
-  counters,
   caps,
   automation,
   now,
@@ -98,8 +101,8 @@ export function LinkedinQueue({
   fromSelection = false,
 }: {
   sequences: LinkedinSequenceRow[]
-  counters: LinkedinCounters
-  caps: { invitationsPerMonth: number; actionsPerDay: number }
+  // Plafonds du jour et de la semaine, calculés par la base comme pour l'extension
+  caps: LinkedinCaps
   automation: LinkedinAutomation
   // Heure du rendu côté serveur : la même pour tout le monde, pas d'écart à l'hydratation
   now: number
@@ -153,8 +156,20 @@ export function LinkedinQueue({
     }
   }
 
-  const monthReached = counters.invitationsThisMonth >= caps.invitationsPerMonth
-  const dayReached = counters.actionsToday >= caps.actionsPerDay
+  // Ce qui bloque les invitations, puis les messages (les deux compteurs sont séparés)
+  const notices: string[] = []
+  if (caps.invitationsHeldUntil) {
+    notices.push(
+      `LinkedIn a atteint sa limite hebdomadaire d’invitations : elles reprendront d’elles-mêmes le ${formatDate(caps.invitationsHeldUntil, DAY_AND_TIME)}. Les messages continuent.`
+    )
+  } else if (caps.invitationsWeek >= caps.invitationsWeekCap) {
+    notices.push(
+      `${caps.invitationsWeekCap} invitations sur les 7 derniers jours : c’est la limite de LinkedIn. Les invitations reprendront ${caps.weekFreesAt ? `le ${formatDate(caps.weekFreesAt, DAY_AND_TIME)}` : 'dans quelques jours'}, les messages continuent.`
+    )
+  } else if (caps.invitationsToday >= caps.invitationsTodayCap) {
+    notices.push('Plafond d’invitations du jour atteint : la suite demain.')
+  }
+  if (!caps.canMessage) notices.push('Plafond de messages du jour atteint : la suite demain.')
 
   if (sequences.length === 0) {
     return (
@@ -176,7 +191,7 @@ export function LinkedinQueue({
 
   return (
     <div className="space-y-6">
-      <AutomationPanel automation={automation} now={now} actionsPerDay={caps.actionsPerDay} />
+      <AutomationPanel automation={automation} now={now} caps={caps} />
 
       {showFocus && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
@@ -191,16 +206,48 @@ export function LinkedinQueue({
       )}
 
       <div className="flex flex-wrap gap-6 rounded-lg border bg-card p-4">
-        <Meter label="Invitations ce mois-ci" value={counters.invitationsThisMonth} max={caps.invitationsPerMonth} />
-        <Meter label="Invitations et messages aujourd'hui" value={counters.actionsToday} max={caps.actionsPerDay} />
-        {(monthReached || dayReached) && (
-          <p className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400 basis-full">
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            {monthReached
-              ? 'Plafond du mois atteint : les invitations reprendront le mois prochain.'
-              : 'Plafond du jour atteint : la suite demain.'}
+        <Meter label="Invitations aujourd’hui" value={caps.invitationsToday} max={caps.invitationsTodayCap} />
+        <Meter label="Invitations cette semaine (7 jours)" value={caps.invitationsWeek} max={caps.invitationsWeekCap} />
+        <Meter label="Messages aujourd’hui" value={caps.messagesToday} max={caps.messagesTodayCap} />
+        <div className="space-y-1.5 min-w-[180px] flex-1">
+          <div className="flex items-baseline justify-between gap-2 text-sm">
+            <span className="text-muted-foreground">Taux d’acceptation</span>
+            <span className={`font-semibold tabular-nums ${caps.lowAcceptance ? 'text-amber-700 dark:text-amber-400' : ''}`}>
+              {caps.acceptanceRate === null ? '—' : `${caps.acceptanceRate} %`}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {caps.acceptanceRate === null
+              ? 'Mesuré dès 20 invitations envoyées depuis plus de 7 jours'
+              : `Sur les ${caps.acceptanceJudged} dernières invitations de plus de 7 jours`}
+          </p>
+        </div>
+        {caps.rampUpUntil && (
+          <p className="flex items-start gap-2 text-sm text-muted-foreground basis-full">
+            <Sprout className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
+            Démarrage en douceur jusqu’au {formatDate(caps.rampUpUntil, 'd MMMM')} : Filonea envoie la moitié des
+            invitations et des messages prévus, le temps que LinkedIn s’habitue à ce nouveau rythme.
           </p>
         )}
+        {caps.lowAcceptance && caps.acceptanceRate !== null && (
+          <p className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400 basis-full">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            {lowAcceptanceMessage(caps.acceptanceRate)}
+          </p>
+        )}
+        {notices.map((notice) => (
+          <p key={notice} className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400 basis-full">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            {notice}
+          </p>
+        ))}
+        <Link
+          href="/settings/extension#rythme"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground underline hover:text-foreground basis-full"
+        >
+          <Gauge className="w-3.5 h-3.5" />
+          Régler le rythme d’envoi
+        </Link>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -237,8 +284,8 @@ export function LinkedinQueue({
                     // Nouvelle étape, nouveau texte à envoyer : la carte repart de zéro
                     key={`${sequence.id}-${sequence.status}`}
                     sequence={sequence}
-                    inviteBlocked={monthReached || dayReached}
-                    messageBlocked={dayReached}
+                    inviteBlocked={!caps.canInvite}
+                    messageBlocked={!caps.canMessage}
                   />
                 ))
               )}
