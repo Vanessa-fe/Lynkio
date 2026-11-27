@@ -247,14 +247,19 @@ const EXPLICIT_COMPANY_HEADERS = new Set(['entreprise', 'societe', 'nom entrepri
 /**
  * Ligne du fichier (clés = intitulés d'origine) → champs reconnus.
  * Si une colonne désigne explicitement l'entreprise (« Entreprise », « Société »…) ou s'il y a
- * une colonne « Prénom », une colonne « Nom » est lue comme le nom de famille du contact.
+ * une colonne « Prénom », une colonne « Nom » est lue comme le nom de famille du contact, sauf si
+ * le nom de famille a déjà sa colonne (« Contact nom » du modèle Filonea, « Nom de famille »…).
  */
 export function mapRow(raw: Record<string, string>): Partial<Record<ImportField, string>> {
   const headers = Object.keys(raw).map(normalizeHeader)
   const hasExplicitCompany = headers.some((header) => EXPLICIT_COMPANY_HEADERS.has(header))
   // Avec une colonne « Prénom », le fichier décrit des personnes : « Nom » est leur nom de famille
   const hasFirstName = headers.some((header) => fieldForHeader(header) === 'contactFirstName')
-  const nameIsPerson = hasExplicitCompany || hasFirstName
+  // Modèle Filonea : « Nom » (l'entreprise), « Contact prénom », « Contact nom » : « Nom » reste l'entreprise
+  const hasLastNameColumn = headers.some(
+    (header) => header !== 'nom' && header !== 'name' && fieldForHeader(header) === 'contactLastName'
+  )
+  const nameIsPerson = (hasExplicitCompany || hasFirstName) && !hasLastNameColumn
 
   const mapped: Partial<Record<ImportField, string>> = {}
   for (const [header, rawValue] of Object.entries(raw)) {

@@ -27,12 +27,22 @@ import { useToast } from '@/lib/hooks/use-toast'
 import type { LeadSource } from '@/types'
 import type { ProspectListWithCount } from '@/lib/queries/people'
 import { SEGMENTS, segmentDescriptions, segmentLabels } from '@/lib/constants/segments'
+import { ADDED_TODAY_PARAM } from '@/lib/constants/companies'
 import type { CompanySegment } from '@/types'
 
 type Step = 'upload' | 'preview' | 'done'
 
 const NO_SOURCE = 'none'
 const AUTO_SEGMENT = 'auto'
+// Liste où ranger les personnes du fichier : aucune, une existante (son id), ou une nouvelle à nommer
+const NO_LIST = 'none'
+const NEW_LIST = 'new'
+
+/** Liste qui porte déjà ce nom (même règle que la base : sans majuscules ni espaces autour) */
+function listNamed(lists: ProspectListWithCount[], name: string) {
+  const wanted = name.trim().toLowerCase()
+  return wanted ? lists.find((list) => list.name.trim().toLowerCase() === wanted) : undefined
+}
 const PREVIEW_LIMIT = 50
 
 const statusBadges: Record<
@@ -56,7 +66,8 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
   const [rows, setRows] = useState<Record<string, string>[]>([])
   const [preview, setPreview] = useState<ImportPreview | null>(null)
   const [sourceId, setSourceId] = useState<string>(sources.find((source) => source.name === 'Autre')?.id ?? NO_SOURCE)
-  const [listName, setListName] = useState('')
+  const [listChoice, setListChoice] = useState<string>(NO_LIST)
+  const [newListName, setNewListName] = useState('')
   const [segment, setSegment] = useState<string>(AUTO_SEGMENT)
   const [result, setResult] = useState<Awaited<ReturnType<typeof importCompanies>>['data'] | null>(null)
 
@@ -99,8 +110,13 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
 
         setRows(parsed.data)
         setPreview(result.data)
-        // Export Waalaxy : sa liste devient la liste Filonea proposée
-        if (result.data.waalaxy?.list) setListName((current) => current || result.data!.waalaxy!.list!)
+        // Export Waalaxy : sa liste devient la liste Filonea proposée (l'existante du même nom, sinon une nouvelle)
+        const waalaxyList = result.data.waalaxy?.list
+        if (waalaxyList) {
+          const existing = listNamed(lists, waalaxyList)
+          setListChoice((current) => (current !== NO_LIST ? current : existing ? existing.id : NEW_LIST))
+          if (!existing) setNewListName((current) => current || waalaxyList)
+        }
         setStep('preview')
       },
       error: () => {
@@ -128,6 +144,12 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
     setStep('done')
     router.refresh()
   }
+
+  // Les listes rangent des personnes : sans contact dans le fichier, rien à y ranger
+  const fileHasContacts = preview?.rows.some((row) => row.contact) ?? false
+  const chosenList = lists.find((list) => list.id === listChoice)
+  const sameNameList = listChoice === NEW_LIST ? listNamed(lists, newListName) : undefined
+  const listName = !fileHasContacts ? '' : listChoice === NEW_LIST ? newListName : (chosenList?.name ?? '')
 
   // Nouvelles fiches et personnes qui rejoignent une fiche ; les personnes déjà suivies
   // comptent seulement si une liste est choisie (elles y sont rangées)
@@ -289,24 +311,52 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
 
             <div className="space-y-2 sm:max-w-sm">
               <Label htmlFor="importList">Ranger les personnes dans une liste (facultatif)</Label>
-              <Input
-                id="importList"
-                list="import-list-options"
-                autoComplete="off"
-                value={listName}
-                onChange={(event) => setListName(event.target.value)}
-                placeholder="Une liste existante, ou le nom d'une nouvelle"
-                maxLength={100}
-                disabled={isWorking}
-              />
-              <datalist id="import-list-options">
-                {lists.map((list) => (
-                  <option key={list.id} value={list.name} />
-                ))}
-              </datalist>
-              <p className="text-xs text-muted-foreground">
-                Pratique pour retrouver ce fichier dans la page Personnes, ou l&apos;exporter en CSV.
-              </p>
+              {fileHasContacts ? (
+                <>
+                  <Select value={listChoice} onValueChange={setListChoice} disabled={isWorking}>
+                    <SelectTrigger id="importList" className="w-full">
+                      <SelectValue>
+                        {listChoice === NEW_LIST ? 'Nouvelle liste' : (chosenList?.name ?? 'Pas de liste')}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_LIST}>Pas de liste</SelectItem>
+                      {lists.map((list) => (
+                        <SelectItem key={list.id} value={list.id}>
+                          {list.name} ({list.count} personne{list.count > 1 ? 's' : ''})
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={NEW_LIST}>+ Nouvelle liste…</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {listChoice === NEW_LIST && (
+                    <Input
+                      aria-label="Nom de la nouvelle liste"
+                      autoComplete="off"
+                      value={newListName}
+                      onChange={(event) => setNewListName(event.target.value)}
+                      placeholder="Nom de la nouvelle liste, par exemple : Bâtiment Belgique"
+                      maxLength={100}
+                      autoFocus
+                      disabled={isWorking}
+                    />
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {listChoice !== NEW_LIST
+                      ? 'Pratique pour retrouver ce fichier dans la page Personnes, ou l’exporter en CSV.'
+                      : !newListName.trim()
+                        ? 'Donnez-lui un nom : elle sera créée pendant l’import.'
+                        : sameNameList
+                          ? `La liste « ${sameNameList.name} » existe déjà : les personnes y seront ajoutées.`
+                          : `La liste « ${newListName.trim()} » sera créée pendant l’import.`}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Ce fichier n’a pas de contact. Les listes rangent des personnes : il n’y a donc rien à y ranger. Ajoutez
+                  des colonnes de contact (prénom, nom, e-mail…) pour en remplir une.
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -367,7 +417,10 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
             </p>
             <div className="flex flex-wrap gap-2">
               <Button asChild>
-                <Link href="/companies">Voir les entreprises</Link>
+                {/* Entreprises ouvertes sur les ajouts du jour, les plus récents d'abord */}
+                <Link href={`/companies?vue=tableau&ajoutees=${ADDED_TODAY_PARAM}`}>
+                  {result.imported > 0 ? 'Voir les entreprises ajoutées' : 'Voir les entreprises'}
+                </Link>
               </Button>
               <Button variant="outline" onClick={reset}>
                 <FileUp className="w-4 h-4 mr-2" />

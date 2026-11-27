@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
@@ -31,7 +31,8 @@ import { useToast } from '@/lib/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { CompanyWithRelations, LeadSource, PipelineStage } from '@/types'
 import { confirmAction } from '@/components/ui/confirm-dialog'
-import { DELETE_COMPANY_WARNING } from '@/lib/constants/companies'
+import { COMPANIES_LIMIT, COMPANIES_PAGE_SIZE, DELETE_COMPANY_WARNING } from '@/lib/constants/companies'
+import { parisMidnight } from '@/lib/billing'
 import { CompanyScore, CompanyStageSelect, DiscoveryStageSelect } from './company-stage-select'
 import { SEGMENTS, segmentLabels } from '@/lib/constants/segments'
 
@@ -41,6 +42,10 @@ interface CompaniesListProps {
   sources: LeadSource[]
   // Recherches enregistrées, pour filtrer par recherche d'origine (absent : liste déjà filtrée par l'adresse)
   strategies?: { id: string; name: string }[]
+  // Heure de la lecture côté serveur : point de départ des filtres « Ajoutées… »
+  now: number
+  // Arrivée depuis « Voir les entreprises ajoutées » (fin d'un import) : les ajouts du jour, les plus récents d'abord
+  initialAdded?: AddedFilter
 }
 
 const ALL = 'all'
@@ -61,6 +66,8 @@ type Filters = {
   strategy: string
   score: string
   contact: string
+  // Date d'ajout dans Filonea : aujourd'hui, 7 ou 30 derniers jours
+  added: string
 }
 const DEFAULT_FILTERS: Filters = {
   pipeline: ALL,
@@ -72,6 +79,24 @@ const DEFAULT_FILTERS: Filters = {
   strategy: ALL,
   score: ALL,
   contact: ALL,
+  added: ALL,
+}
+
+// Date d'ajout dans Filonea (import, recherche, ajout à la main)
+export type AddedFilter = 'today' | 'week' | 'month'
+const ADDED_FILTERS: { value: AddedFilter; label: string }[] = [
+  { value: 'today', label: 'Ajoutées aujourd’hui' },
+  { value: 'week', label: 'Ajoutées ces 7 derniers jours' },
+  { value: 'month', label: 'Ajoutées ces 30 derniers jours' },
+]
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Début de la période choisie (aujourd'hui : depuis minuit, heure de Paris), ou null : toutes les dates */
+function addedSince(filter: string, now: number): number | null {
+  if (filter === 'today') return parisMidnight(new Date(now)).getTime()
+  if (filter === 'week') return now - 7 * DAY_MS
+  if (filter === 'month') return now - 30 * DAY_MS
+  return null
 }
 
 // Mêmes paliers que la couleur du score (CompanyScore)
@@ -166,13 +191,14 @@ function parseFilters(raw: string): Filters {
       strategy: typeof saved.strategy === 'string' ? saved.strategy : ALL,
       score: typeof saved.score === 'string' ? saved.score : ALL,
       contact: typeof saved.contact === 'string' ? saved.contact : ALL,
+      added: ADDED_FILTERS.some((option) => option.value === saved.added) ? (saved.added as string) : ALL,
     }
   } catch {
     return DEFAULT_FILTERS
   }
 }
 
-export function CompaniesList({ companies, stages, sources, strategies }: CompaniesListProps) {
+export function CompaniesList({ companies, stages, sources, strategies, now, initialAdded }: CompaniesListProps) {
   const router = useRouter()
   const { toast } = useToast()
   // Serveur : filtres par défaut ; navigateur : ceux de la session
@@ -199,7 +225,23 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
   const setSourceFilter = (source: string) => writeFilters({ ...filters, source })
   const setSegmentFilter = (segment: string) => writeFilters({ ...filters, segment })
   const setSearch = (value: string) => writeFilters({ ...filters, search: value })
+  const addedFilter = filters.added
+  // Choisir une période trie aussi par date d'ajout : les dernières en premier
+  const setAddedFilter = (added: string) =>
+    writeFilters({ ...filters, added, ...(added !== ALL ? { sort: 'recent' as SortKey } : {}) })
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Arrivée depuis la fin d'un import : on montre les ajouts du jour, sans autre filtre, puis l'adresse redevient simple
+  useEffect(() => {
+    if (!initialAdded) return
+    writeFilters({ ...DEFAULT_FILTERS, added: initialAdded, sort: 'recent' })
+    router.replace('/companies?vue=tableau', { scroll: false })
+  }, [initialAdded, router])
+
+  // Lignes affichées : 100 de plus à chaque « Afficher plus », de nouveau 100 quand les filtres changent
+  const filtersKey = JSON.stringify(filters)
+  const [page, setPage] = useState({ key: filtersKey, count: COMPANIES_PAGE_SIZE })
+  const visibleCount = page.key === filtersKey ? page.count : COMPANIES_PAGE_SIZE
 
   // Nombre d'entreprises par étape, pour la vue d'ensemble du pipeline. Seulement les fiches en suivi
   // commercial : une découverte porte l'étape de départ (« À contacter ») sans être en démarche, et le
@@ -214,6 +256,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
     return counts
   }, [companies])
 
+  const since = addedSince(addedFilter, now)
   const filteredCompanies = companies.filter((company) => {
     const term = search.trim().toLowerCase()
     const matchesSearch =
@@ -232,6 +275,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
     const matchesContact =
       contactFilter === ALL ||
       (contactFilter === 'never' ? company.last_interaction_at === null : company.last_interaction_at !== null)
+    const matchesAdded = since === null || new Date(company.created_at).getTime() >= since
 
     return (
       matchesSearch &&
@@ -241,12 +285,20 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
       matchesSegment &&
       matchesStrategy &&
       matchesScore(company.score, scoreFilter) &&
-      matchesContact
+      matchesContact &&
+      matchesAdded
     )
   })
 
   // Le serveur renvoie les entreprises par score ; les autres ordres se font ici, sans recharger
   const sortedCompanies = sortKey === 'score' ? filteredCompanies : [...filteredCompanies].sort((a, b) => compareCompanies(sortKey, a, b))
+  const visibleCompanies = sortedCompanies.slice(0, visibleCount)
+  const hiddenCount = sortedCompanies.length - visibleCompanies.length
+  // Nombre d'entreprises ajoutées par période, dans le menu « Ajoutées… »
+  const addedCount = (filter: string) => {
+    const start = addedSince(filter, now)
+    return start === null ? companies.length : companies.filter((company) => new Date(company.created_at).getTime() >= start).length
+  }
 
   const handleDelete = async (company: CompanyWithRelations) => {
     const confirmed = await confirmAction({
@@ -305,6 +357,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
       ? 'Non classées'
       : ((segmentLabels as Record<string, string>)[segmentFilter] ?? 'Tous les segments')
   const sourceLabel = sources.find((source) => source.id === sourceFilter)?.name ?? 'Toutes les sources'
+  const addedLabel = ADDED_FILTERS.find((option) => option.value === addedFilter)?.label ?? 'Ajoutées : toutes dates'
 
   return (
     <div className="space-y-6">
@@ -383,7 +436,20 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
       </div>
 
       <div className="space-y-3">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <Select value={addedFilter} onValueChange={setAddedFilter}>
+            <SelectTrigger className="w-full" aria-label="Filtrer par date d’ajout">
+              <SelectValue placeholder="Ajoutées : toutes dates">{addedLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Ajoutées : toutes dates</SelectItem>
+              {ADDED_FILTERS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label} ({addedCount(option.value)})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {strategies && strategies.length > 0 && (
             <Select value={strategyFilter} onValueChange={setStrategyFilter}>
               <SelectTrigger className="w-full" aria-label="Filtrer par recherche">
@@ -522,7 +588,7 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedCompanies.map((company) => (
+              {visibleCompanies.map((company) => (
                 <TableRow key={company.id}>
                   <TableCell>
                     {/* Le nom seul : ville, secteur et catégorie sont sur la fiche */}
@@ -592,7 +658,24 @@ export function CompaniesList({ companies, stages, sources, strategies }: Compan
               ))}
             </TableBody>
           </Table>
+          {hiddenCount > 0 && (
+            <div className="flex justify-center border-t p-4">
+              <Button
+                variant="outline"
+                onClick={() => setPage({ key: filtersKey, count: visibleCount + COMPANIES_PAGE_SIZE })}
+              >
+                Afficher {Math.min(COMPANIES_PAGE_SIZE, hiddenCount)} de plus ({hiddenCount} restante{hiddenCount > 1 ? 's' : ''})
+              </Button>
+            </div>
+          )}
         </Card>
+      )}
+
+      {companies.length >= COMPANIES_LIMIT && (
+        <p className="text-xs text-muted-foreground">
+          Les {COMPANIES_LIMIT.toLocaleString('fr-FR')} entreprises les mieux notées sont chargées ici : les autres
+          n’apparaissent ni dans la liste ni dans la recherche.
+        </p>
       )}
     </div>
   )

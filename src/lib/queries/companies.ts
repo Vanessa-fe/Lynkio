@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { COMPANIES_LIMIT } from '@/lib/constants/companies'
 import type {
   CompanyContact,
   CompanyQualification,
@@ -21,10 +22,10 @@ const COMPANY_RELATIONS = `
 
 /**
  * Entreprises de l'utilisateur, les mieux notées puis les plus récentes en premier.
- * Le filtrage (recherche, étape, source) se fait côté client sur cette liste.
+ * Le filtrage (recherche, étape, source, date d'ajout) se fait côté client sur cette liste.
  */
 export async function getCompanies(
-  limit = 200,
+  limit = COMPANIES_LIMIT,
   filters: { strategyId?: string; pipelineRunId?: string } = {}
 ): Promise<CompanyWithRelations[]> {
   const supabase = await createClient()
