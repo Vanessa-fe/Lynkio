@@ -60,6 +60,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sophie_drafts: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          body: string
+          channel: string
+          created_at?: string
+          id?: never
+          user_id: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       sophie_actions: {
         Row: {
           args: Json
@@ -1220,6 +1244,30 @@ export type Database = {
         }
         Relationships: []
       }
+      message_style_examples: {
+        Row: {
+          channel: string
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          content: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       portfolio_references: {
         Row: {
           client_name: string | null
@@ -1714,6 +1762,7 @@ export type Database = {
           id: string
           message_pitch: string | null
           message_signature: string | null
+          message_style: string | null
           onboarding_completed: boolean | null
           profession_key: string | null
           selected_theme: string | null
@@ -1733,6 +1782,7 @@ export type Database = {
           id: string
           message_pitch?: string | null
           message_signature?: string | null
+          message_style?: string | null
           onboarding_completed?: boolean | null
           profession_key?: string | null
           selected_theme?: string | null
@@ -1752,6 +1802,7 @@ export type Database = {
           id?: string
           message_pitch?: string | null
           message_signature?: string | null
+          message_style?: string | null
           onboarding_completed?: boolean | null
           profession_key?: string | null
           selected_theme?: string | null

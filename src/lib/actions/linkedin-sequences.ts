@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { captureServerError, captureServerEvent } from '@/lib/posthog-server'
 import { linkedinPaceSchema, type LinkedinPaceInput } from '@/lib/validations/linkedin'
+import { rememberWrittenMessage } from '@/lib/style-memory'
 import type { LinkedinSequenceStatus } from '@/types'
 
 type ActionResult<T = void> = {
@@ -207,7 +208,7 @@ export async function saveLinkedinTexts(
     const supabase = await createClient()
     const { data: sequence } = await supabase
       .from('linkedin_sequences')
-      .select('status')
+      .select('status, message')
       .eq('id', sequenceId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -236,6 +237,9 @@ export async function saveLinkedinTexts(
       return { success: false, error: 'Impossible d\'enregistrer le message' }
     }
 
+    // Premier message réécrit à la main : exemple de son style (un texte de Sophie est reconnu et ignoré)
+    if (update.message) await rememberWrittenMessage(supabase, user.id, 'linkedin_message', update.message, sequence.message)
+
     revalidatePath('/people/linkedin')
     return { success: true }
   } catch (error) {
@@ -260,6 +264,13 @@ export async function approveLinkedinSequences(
 
     const supabase = await createClient()
     let approved = 0
+    // Messages enregistrés avant la validation : un texte modifié au dernier moment est un exemple de son style
+    const { data: before } = await supabase
+      .from('linkedin_sequences')
+      .select('id, message')
+      .eq('user_id', user.id)
+      .in('id', items.map((item) => item.id))
+    const previousMessage = new Map((before ?? []).map((row) => [row.id, row.message]))
 
     for (const item of items) {
       const text = item.message.trim()
@@ -280,6 +291,9 @@ export async function approveLinkedinSequences(
         continue
       }
       approved += data?.length ?? 0
+      if (data?.length) {
+        await rememberWrittenMessage(supabase, user.id, 'linkedin_message', text, previousMessage.get(item.id) ?? null)
+      }
     }
 
     if (approved === 0) return { success: false, error: 'Aucun message validé : vérifiez qu\'ils ne sont pas vides' }

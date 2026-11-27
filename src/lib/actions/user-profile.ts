@@ -273,6 +273,7 @@ export async function saveMessageSettings(input: MessageSettingsInput): Promise<
       .update({
         message_pitch: validated.pitch,
         message_signature: validated.signature,
+        message_style: validated.messageStyle,
         ...(validated.whatsappDailyLimit !== undefined ? { whatsapp_daily_limit: validated.whatsappDailyLimit } : {}),
       })
       .eq('id', user.id)
