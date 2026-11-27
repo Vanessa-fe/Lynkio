@@ -27,6 +27,7 @@ import type { CompanySegment } from '@/types'
 import { getCurrentPlan } from '@/lib/queries/billing'
 import { NO_ACCESS_MESSAGE, PRO_ONLY_MESSAGE } from '@/lib/billing'
 import { toE164 } from '@/lib/phone'
+import { DEFAULT_COUNTRY, countryLabel, parseCountry } from '@/lib/countries'
 
 type ActionResult<T> = { success: boolean; error?: string; data?: T }
 
@@ -44,6 +45,8 @@ export type ImportPreviewRow = {
   line: number
   name: string
   city: string | null
+  // Pays de la fiche, quand ce n'est pas la France (« Belgique »)
+  country: string | null
   contact: string | null
   status: ImportRowStatus
   // Erreurs de validation, fiche rejointe, personne ou entreprise déjà présente
@@ -145,6 +148,9 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
   const fromWaalaxy = isWaalaxyFile(Object.keys(rawRows[0] ?? {}))
   const parsedRows = rawRows.map((raw) => {
     const mapped = mapRow(raw)
+    // Export Waalaxy : son pays est celui du profil LinkedIn, écrit par Waalaxy. S'il n'est pas reconnu,
+    // il est ignoré (France) : la personne n'est pas refusée pour une donnée qu'on ne peut pas corriger
+    if (fromWaalaxy && parseCountry(mapped.country) === null) delete mapped.country
     return {
       mapped,
       parsed: companyImportRowSchema.safeParse(mapped),
@@ -161,7 +167,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
   const emails = validRows.map((row) => row.contactEmail).filter((email): email is string => !!email)
 
   const [{ data: existing, error }, byLinkedin, byEmail] = await Promise.all([
-    supabase.from('companies').select('id, name, kind, registration_id, website_domain').eq('user_id', user.id),
+    supabase.from('companies').select('id, name, kind, country, registration_id, website_domain').eq('user_id', user.id),
     contactsWhere(supabase, user.id, 'linkedin_url', linkedinValues),
     contactsWhere(supabase, user.id, 'email', emails),
   ])
@@ -187,17 +193,19 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
     if (contact.email) people.email.set(contact.email.toLowerCase(), value)
   }
 
-  // Entreprises (et personnes seules, à part) : fiche existante ou ligne qui la crée
+  // Entreprises (et personnes seules, à part) : fiche existante ou ligne qui la crée.
+  // Un identifiant officiel n'a de sens que dans son pays (même règle que l'index uq_companies_registration)
   type Known = { ref: FicheRef; name: string }
+  const registrationKey = (country: string, registrationId: string) => `${country}|${registrationId}`
   const fiches = {
-    sirens: new Map<string, Known>(),
+    registrations: new Map<string, Known>(),
     domains: new Map<string, Known>(),
     organizations: new Map<string, Known>(),
     individuals: new Map<string, Known>(),
   }
   for (const company of existing ?? []) {
     const known: Known = { ref: { companyId: company.id }, name: company.name }
-    if (company.registration_id) fiches.sirens.set(company.registration_id, known)
+    if (company.registration_id) fiches.registrations.set(registrationKey(company.country, company.registration_id), known)
     if (company.website_domain) fiches.domains.set(company.website_domain, known)
     const names = company.kind === 'individual' ? fiches.individuals : fiches.organizations
     names.set(company.name.trim().toLowerCase(), known)
@@ -260,7 +268,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
     const match =
       fiche.kind === 'individual'
         ? fiches.individuals.get(fiche.name.toLowerCase())
-        : (row.registrationId && fiches.sirens.get(row.registrationId)) ||
+        : (row.registrationId && fiches.registrations.get(registrationKey(row.country, row.registrationId))) ||
           (domain && fiches.domains.get(domain)) ||
           fiches.organizations.get(fiche.name.toLowerCase())
 
@@ -289,7 +297,7 @@ async function analyzeRows(rawRows: Record<string, string>[]): Promise<AnalyzedR
 
     // 3. Nouvelle fiche : les lignes suivantes pourront la rejoindre
     const created: Known = { ref: { line }, name: fiche.name }
-    if (row.registrationId) fiches.sirens.set(row.registrationId, created)
+    if (row.registrationId) fiches.registrations.set(registrationKey(row.country, row.registrationId), created)
     if (domain) fiches.domains.set(domain, created)
     const names = fiche.kind === 'individual' ? fiches.individuals : fiches.organizations
     names.set(fiche.name.toLowerCase(), created)
@@ -460,6 +468,7 @@ export async function previewCompaniesImport(
           line: row.line,
           name: row.name,
           city: row.row?.city ?? null,
+          country: row.row && row.row.country !== DEFAULT_COUNTRY ? countryLabel(row.row.country) : null,
           contact: contactLabel(row.row),
           status: row.status,
           message: row.message,
@@ -639,6 +648,7 @@ export async function importCompanies(
       source_id: (row.source && sourceByName.get(row.source.toLowerCase())) || fallbackSourceId,
       name: importRowFiche(row).name,
       website: row.website,
+      country: row.country,
       registration_id: row.registrationId,
       city: row.city,
       postal_code: row.postalCode,
@@ -683,7 +693,8 @@ export async function importCompanies(
       : { data: [] }
     const usedEmails = new Set((existingEmails ?? []).map((contact) => contact.email?.toLowerCase()))
 
-    // Pays de chaque fiche, pour lire les numéros nationaux (une fiche créée par l'import est en France)
+    // Pays de chaque fiche, pour lire les numéros nationaux (« 0470 12 34 56 » est belge pour une fiche belge) :
+    // celui de la ligne pour une fiche créée par cet import, celui de la fiche pour une fiche déjà suivie
     const companyIds = [...new Set(withContact.map(({ companyId }) => companyId))]
     const { data: countries } = companyIds.length
       ? await supabase.from('companies').select('id, country').eq('user_id', user.id).in('id', companyIds)
@@ -707,7 +718,7 @@ export async function importCompanies(
         email: row.contactEmail,
         email_source: row.contactEmail ? ('other' as const) : null,
         // Format E.164 ; un numéro invalide est laissé vide, sans bloquer la ligne
-        phone: toE164(row.contactPhone, countryById.get(companyId) ?? 'FR'),
+        phone: toE164(row.contactPhone, countryById.get(companyId) ?? DEFAULT_COUNTRY),
         // Profil au format standard : c'est par lui qu'on reconnaît la personne au prochain import
         linkedin_url: normalizeLinkedinProfileUrl(row.contactLinkedin) ?? row.contactLinkedin,
         // RGPD : origine de la donnée (la date de collecte est celle de l'import)

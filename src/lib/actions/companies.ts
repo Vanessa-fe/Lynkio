@@ -9,8 +9,8 @@ import { findSirenOnSite } from '@/lib/detectors/legal-id'
 import { fetchRegistryRecord } from '@/lib/registry'
 import { blockedReason } from '@/lib/registry-parse'
 import {
+  companySchemaFor,
   createCompanySchema,
-  updateCompanySchema,
   toWebsiteDomain,
   type CreateCompanyInput,
   type UpdateCompanyInput,
@@ -19,6 +19,7 @@ import type { Database } from '@/types/database'
 import type { CompanySegment } from '@/types'
 import { SEGMENTS } from '@/lib/constants/segments'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { DEFAULT_COUNTRY, usesSiren } from '@/lib/countries'
 import { captureServerEvent } from '@/lib/posthog-server'
 import { prospectingStage, type MeaningStage } from '@/lib/stage-meaning'
 
@@ -41,15 +42,16 @@ function validationMessage(error: unknown): string | null {
 }
 
 /**
- * Cherche une entreprise existante avec le même site ou le même SIREN.
- * La base refuse de toute façon le doublon (index uniques) : cette vérification
- * sert uniquement à afficher un message qui nomme l'entreprise concernée.
+ * Cherche une entreprise existante avec le même site ou le même identifiant officiel (dans le même pays,
+ * comme l'index uq_companies_registration). La base refuse de toute façon le doublon (index uniques) :
+ * cette vérification sert uniquement à afficher un message qui nomme l'entreprise concernée.
  */
 async function findDuplicate(
   userId: string,
   website: string | null | undefined,
   registrationId: string | null | undefined,
-  excludeId?: string
+  excludeId?: string,
+  country: string = DEFAULT_COUNTRY
 ): Promise<{ id: string; name: string } | null> {
   const supabase = await createClient()
   const domain = toWebsiteDomain(website)
@@ -68,6 +70,8 @@ async function findDuplicate(
       .select('id, name')
       .eq('user_id', userId)
       .eq(lookup[0], lookup[1])
+
+    if (lookup[0] === 'registration_id') query = query.eq('country', country)
 
     if (excludeId) {
       query = query.neq('id', excludeId)
@@ -201,7 +205,6 @@ export async function updateCompany(
   input: UpdateCompanyInput
 ): Promise<ActionResult> {
   try {
-    const validated = updateCompanySchema.parse(input)
     const supabase = await createClient()
 
     const user = await getAuthUser()
@@ -210,11 +213,22 @@ export async function updateCompany(
       return { success: false, error: 'Vous devez être connecté pour modifier une entreprise' }
     }
 
+    // L'identifiant officiel se lit selon le pays de la fiche : SIREN, numéro BCE pour une fiche belge importée…
+    const { data: current } = await supabase
+      .from('companies')
+      .select('country')
+      .eq('id', companyId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const country = current?.country ?? DEFAULT_COUNTRY
+    const validated = companySchemaFor(country).partial().parse(input)
+
     const duplicate = await findDuplicate(
       user.id,
       validated.website,
       validated.registrationId,
-      companyId
+      companyId,
+      country
     )
     if (duplicate) {
       return { success: false, error: `Cette entreprise existe déjà : ${duplicate.name}` }
@@ -496,7 +510,7 @@ export async function analyzeCompanyWebsite(
 
     const { data: company, error: readError } = await supabase
       .from('companies')
-      .select('website, website_audited_at, website_audit_url, detected_stack, registration_id, sector, naf_code, headcount_code, size_category, founded_on, city, postal_code')
+      .select('website, website_audited_at, website_audit_url, detected_stack, country, registration_id, sector, naf_code, headcount_code, size_category, founded_on, city, postal_code')
       .eq('id', companyId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -516,8 +530,11 @@ export async function analyzeCompanyWebsite(
     }
     const completed: string[] = []
 
-    // SIREN : celui de la fiche, sinon celui des mentions légales du site
-    const siren = company.registration_id ?? (await findSirenOnSite(site.url, site.html))
+    // SIREN : celui de la fiche, sinon celui des mentions légales du site. Hors de France (fiche importée),
+    // pas de registre français : le numéro de la fiche est un autre identifiant (numéro BCE en Belgique…)
+    const siren = !usesSiren(company.country)
+      ? null
+      : (company.registration_id ?? (await findSirenOnSite(site.url, site.html)))
     const registry = siren ? await fetchRegistryRecord(siren) : null
 
     if (registry && !registry.isNonDiffusible) {

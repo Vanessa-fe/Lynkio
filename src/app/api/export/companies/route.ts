@@ -3,6 +3,7 @@ import Papa from 'papaparse'
 import { createClient } from '@/lib/supabase/server'
 import { formatPhoneForDisplay, sizeCategoryLabels } from '@/lib/validations/company'
 import { COLUMN_LABELS } from '@/lib/validations/company-import'
+import { countryLabel, formatRegistrationId, usesSiren } from '@/lib/countries'
 import type { SizeCategory } from '@/types'
 import { APP_TIME_ZONE } from '@/lib/utils/dates'
 import { getAuthUser } from '@/lib/supabase/auth'
@@ -52,7 +53,7 @@ export async function GET() {
     const { data: companies, error } = await supabase
       .from('companies')
       .select(
-        `name, website, registration_id, city, postal_code, sector, size_category, founded_on, notes, score,
+        `name, website, country, registration_id, city, postal_code, sector, size_category, founded_on, notes, score,
          estimated_amount, next_action,
          origin, created_at, last_interaction_at,
          stage:pipeline_stages(name), source:lead_sources(name),
@@ -84,9 +85,16 @@ export async function GET() {
       return {
         [COLUMN_LABELS.name]: safeCell(company.name),
         [COLUMN_LABELS.website]: safeCell(company.website),
-        [COLUMN_LABELS.registrationId]: safeCell(company.registration_id),
+        // Numéro BCE écrit « 0123.456.749 » : en chiffres seuls, Excel le lirait comme un nombre et retirerait le 0
+        [COLUMN_LABELS.registrationId]: safeCell(
+          company.registration_id && !usesSiren(company.country)
+            ? formatRegistrationId(company.registration_id, company.country)
+            : company.registration_id
+        ),
         [COLUMN_LABELS.city]: safeCell(company.city),
         [COLUMN_LABELS.postalCode]: safeCell(company.postal_code),
+        // Nom en français (« Belgique ») : relu par l'import, comme le code ISO
+        [COLUMN_LABELS.country]: safeCell(countryLabel(company.country)),
         [COLUMN_LABELS.sector]: safeCell(company.sector),
         [COLUMN_LABELS.sizeCategory]: company.size_category
           ? sizeCategoryLabels[company.size_category as SizeCategory]

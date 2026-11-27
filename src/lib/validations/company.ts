@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
+import { DEFAULT_COUNTRY, normalizeRegistrationId } from '@/lib/countries'
 import type {
   CompanyInteractionStatus,
   CompanyInteractionType,
@@ -65,39 +66,51 @@ const optionalAmount = z.preprocess(
 )
 
 /**
- * Schéma de création d'une entreprise
+ * Schéma d'une entreprise. Son identifiant officiel se lit selon son pays : SIREN en France
+ * (les espaces saisis sont retirés), numéro BCE en Belgique… (voir normalizeRegistrationId).
+ * Une entreprise ajoutée à la main est en France ; une entreprise importée peut être ailleurs.
  */
-export const createCompanySchema = z.object({
-  name: z.string().trim().min(1, 'Le nom est requis').max(200, 'Le nom est trop long'),
-  website: optionalUrl('L\'URL est trop longue'),
-  // SIREN : 9 chiffres (les espaces saisis sont retirés)
-  registrationId: z
-    .string()
-    .optional()
-    .nullable()
-    .transform((value) => (value ? value.replace(/\s/g, '') : null))
-    .refine((value) => !value || /^\d{9}$/.test(value), 'Le SIREN doit contenir 9 chiffres'),
-  sector: optionalText(200, 'Le secteur est trop long'),
-  sizeCategory: z
-    .enum(sizeCategories, { error: 'La taille n\'est pas valide' })
-    .optional()
-    .nullable(),
-  city: optionalText(100, 'La ville est trop longue'),
-  postalCode: optionalText(10, 'Le code postal est trop long'),
-  stageId: z.string().uuid('L\'étape n\'est pas valide').optional().nullable(),
-  sourceId: z.string().uuid('La source n\'est pas valide').optional().nullable(),
-  notes: optionalText(5000, 'Les notes sont trop longues'),
-  estimatedAmount: optionalAmount,
-  nextAction: optionalText(300, 'La prochaine action est trop longue'),
-  detectedStack: z.array(z.string()).optional(),
-  // Fiche pré-remplie depuis le registre officiel : le serveur relit la fiche du SIREN
-  // pour compléter code NAF, effectif, date de création et chiffres publiés
-  registryLookup: z.boolean().optional(),
-  // Ajouter les dirigeants du registre comme contacts de la nouvelle fiche
-  addDirectors: z.boolean().optional(),
-  // Ajout à la main : en démarche tout de suite, sauf si décoché (lot 1.8b) ; absent = oui
-  startProspecting: z.boolean().optional(),
-})
+export function companySchemaFor(country: string | null | undefined) {
+  return z.object({
+    name: z.string().trim().min(1, 'Le nom est requis').max(200, 'Le nom est trop long'),
+    website: optionalUrl('L\'URL est trop longue'),
+    registrationId: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((value, ctx) => {
+        const registration = normalizeRegistrationId(value, country)
+        if ('error' in registration) {
+          ctx.addIssue({ code: 'custom', message: registration.error })
+          return z.NEVER
+        }
+        return registration.value
+      }),
+    sector: optionalText(200, 'Le secteur est trop long'),
+    sizeCategory: z
+      .enum(sizeCategories, { error: 'La taille n\'est pas valide' })
+      .optional()
+      .nullable(),
+    city: optionalText(100, 'La ville est trop longue'),
+    postalCode: optionalText(10, 'Le code postal est trop long'),
+    stageId: z.string().uuid('L\'étape n\'est pas valide').optional().nullable(),
+    sourceId: z.string().uuid('La source n\'est pas valide').optional().nullable(),
+    notes: optionalText(5000, 'Les notes sont trop longues'),
+    estimatedAmount: optionalAmount,
+    nextAction: optionalText(300, 'La prochaine action est trop longue'),
+    detectedStack: z.array(z.string()).optional(),
+    // Fiche pré-remplie depuis le registre officiel : le serveur relit la fiche du SIREN
+    // pour compléter code NAF, effectif, date de création et chiffres publiés
+    registryLookup: z.boolean().optional(),
+    // Ajouter les dirigeants du registre comme contacts de la nouvelle fiche
+    addDirectors: z.boolean().optional(),
+    // Ajout à la main : en démarche tout de suite, sauf si décoché (lot 1.8b) ; absent = oui
+    startProspecting: z.boolean().optional(),
+  })
+}
+
+/** Schéma de création d'une entreprise (ajoutée à la main : en France) */
+export const createCompanySchema = companySchemaFor(DEFAULT_COUNTRY)
 
 export const updateCompanySchema = createCompanySchema.partial()
 

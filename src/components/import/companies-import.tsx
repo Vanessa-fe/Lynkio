@@ -161,7 +161,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
     <Card>
       <CardHeader>
         <CardTitle>Importer des entreprises et des personnes</CardTitle>
-        <CardDescription>Un CSV, une entreprise par ligne (avec un contact si besoin). Téléchargez le modèle plus bas pour les colonnes.</CardDescription>
+        <CardDescription>Un CSV, une entreprise par ligne (avec un contact si besoin). Téléchargez le modèle plus bas pour les colonnes. Entreprise hors de France : remplissez sa colonne « Pays » (Belgique, Suisse…).</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {step === 'upload' && (
@@ -247,6 +247,7 @@ export function CompaniesImport({ sources, lists }: { sources: LeadSource[]; lis
                       <td className="p-2">
                         <span className="font-medium">{row.name}</span>
                         {row.city && <span className="text-muted-foreground"> · {row.city}</span>}
+                        {row.country && <span className="text-muted-foreground"> · {row.country}</span>}
                         {row.message && <p className="text-xs text-muted-foreground">{row.message}</p>}
                       </td>
                       <td className="p-2 hidden sm:table-cell">{row.contact ?? '–'}</td>

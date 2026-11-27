@@ -82,6 +82,7 @@ import { CompanyDeepDiveCard } from './company-deep-dive-card'
 import type { DeepAnalysisView } from '@/lib/deep-analysis'
 import { ProvenanceBadge, companyProvenance } from './provenance-badge'
 import { ProspectingToggle } from './prospecting-toggle'
+import { formatRegistrationId, registrationLabel, registrationUrl, usesSiren } from '@/lib/countries'
 import type { SignalExplanation } from '@/lib/signal-explanation'
 
 interface CompanyDetailProps {
@@ -207,6 +208,8 @@ export function CompanyDetail({
   }
 
   const location = [company.postal_code, company.city].filter(Boolean).join(' ')
+  // Identifiant officiel : SIREN, numéro BCE d'une fiche belge importée… et sa fiche dans le registre du pays
+  const registryUrl = company.registration_id ? registrationUrl(company.registration_id, company.country) : null
   const age = companyAge(company.founded_on)
   // Signaux qui comptent : prouvés et non écartés (même règle que le score)
   const countedSignals = signals.filter((signal) => !signal.invalidated_at && hasSignalProof(signal))
@@ -408,16 +411,20 @@ export function CompanyDetail({
                     </InfoItem>
                   )}
                   {company.registration_id && (
-                    <InfoItem icon={<Hash className="w-5 h-5" />} label="SIREN">
-                      <a
-                        href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${company.registration_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium hover:underline inline-flex items-center gap-1"
-                      >
-                        {company.registration_id.replace(/(\d{3})(?=\d)/g, '$1 ')}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                    <InfoItem icon={<Hash className="w-5 h-5" />} label={registrationLabel(company.country)}>
+                      {registryUrl ? (
+                        <a
+                          href={registryUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium hover:underline inline-flex items-center gap-1"
+                        >
+                          {formatRegistrationId(company.registration_id, company.country)}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        formatRegistrationId(company.registration_id, company.country)
+                      )}
                     </InfoItem>
                   )}
                   {age && (
@@ -576,7 +583,7 @@ function CompanyStack({ company }: { company: CompanyWithRelations }) {
           : 'Aucune technologie reconnue sur ce site.',
         completed.length
           ? `Fiche complétée grâce aux mentions légales : ${completed.join(', ')}.`
-          : result.data?.siren
+          : result.data?.siren || !usesSiren(company.country)
             ? null
             : 'Aucun SIREN trouvé dans les mentions légales.',
       ]
