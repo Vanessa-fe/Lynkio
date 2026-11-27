@@ -896,9 +896,13 @@ export type Database = {
       }
       linkedin_automation: {
         Row: {
+          daily_invitations_limit: number
+          daily_messages_limit: number
           enabled: boolean
+          invitations_held_until: string | null
           last_action_at: string | null
           last_seen_at: string | null
+          low_acceptance_since: string | null
           paused_at: string | null
           paused_reason: string | null
           paused_until: string | null
@@ -906,14 +910,19 @@ export type Database = {
           post_search_at: string | null
           post_search_enabled: boolean
           post_search_error: string | null
+          ramp_up_until: string | null
           risk_accepted_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          daily_invitations_limit?: number
+          daily_messages_limit?: number
           enabled?: boolean
+          invitations_held_until?: string | null
           last_action_at?: string | null
           last_seen_at?: string | null
+          low_acceptance_since?: string | null
           paused_at?: string | null
           paused_reason?: string | null
           paused_until?: string | null
@@ -921,14 +930,19 @@ export type Database = {
           post_search_at?: string | null
           post_search_enabled?: boolean
           post_search_error?: string | null
+          ramp_up_until?: string | null
           risk_accepted_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          daily_invitations_limit?: number
+          daily_messages_limit?: number
           enabled?: boolean
+          invitations_held_until?: string | null
           last_action_at?: string | null
           last_seen_at?: string | null
+          low_acceptance_since?: string | null
           paused_at?: string | null
           paused_reason?: string | null
           paused_until?: string | null
@@ -936,6 +950,7 @@ export type Database = {
           post_search_at?: string | null
           post_search_enabled?: boolean
           post_search_error?: string | null
+          ramp_up_until?: string | null
           risk_accepted_at?: string | null
           updated_at?: string
           user_id?: string
@@ -1880,6 +1895,7 @@ export type Database = {
         Returns: string
       }
       initialize_prospection_defaults: { Args: never; Returns: undefined }
+      linkedin_send_caps: { Args: never; Returns: Json }
       brevo_contact: { Args: { p_user_id: string }; Returns: Json }
       simplify_pipeline: { Args: { p_steps: string[] }; Returns: Json }
       read_user_api_key: {
