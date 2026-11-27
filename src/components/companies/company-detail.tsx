@@ -53,7 +53,8 @@ import type {
 import { confirmAction } from '@/components/ui/confirm-dialog'
 import { DELETE_COMPANY_WARNING } from '@/lib/constants/companies'
 import { CompanyStageSelect, DiscoveryStageSelect } from './company-stage-select'
-import { CompanyContacts } from './company-contacts'
+import { CompanyContacts, type ContactsWhatsapp } from './company-contacts'
+import type { WhatsappUsage } from '@/lib/whatsapp'
 import { CompanyInteractions } from './company-interactions'
 import { CompanyWhyCard } from './company-why-card'
 import { CompanyStageHistory } from './company-stage-history'
@@ -112,6 +113,8 @@ interface CompanyDetailProps {
   hasAiKey?: boolean
   // Constat, piste et prestation de chaque signal, par identifiant (calculés côté serveur)
   explanations?: Record<string, SignalExplanation>
+  // Prospection par WhatsApp : offre, et messages envoyés aujourd'hui sur le plafond du jour
+  whatsappUsage?: WhatsappUsage
 }
 
 /**
@@ -130,6 +133,19 @@ function BudgetBadge({ revenue, dayRate }: { revenue: number; dayRate: number | 
       {fit === 'comfortable' ? 'Budget confortable' : 'Budget serré'}
     </Badge>
   )
+}
+
+/**
+ * Brouillon WhatsApp en cours de chaque contact : le plus récent (les échanges arrivent du plus récent
+ * au plus ancien)
+ */
+function whatsappDrafts(interactions: CompanyInteractionWithContact[]): ContactsWhatsapp['drafts'] {
+  const drafts: ContactsWhatsapp['drafts'] = {}
+  for (const interaction of interactions) {
+    if (interaction.type !== 'whatsapp' || interaction.status !== 'draft' || !interaction.contact_id) continue
+    drafts[interaction.contact_id] ??= { id: interaction.id, content: interaction.content }
+  }
+  return drafts
 }
 
 export function CompanyDetail({
@@ -151,6 +167,7 @@ export function CompanyDetail({
   deepAnalysis = null,
   hasAiKey = false,
   explanations = {},
+  whatsappUsage,
 }: CompanyDetailProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -483,6 +500,13 @@ export function CompanyDetail({
             contacts={contacts}
             isIndividual={isIndividual}
             outreach={outreach}
+            hasPitch={hasPitch}
+            whatsapp={
+              whatsappUsage && {
+                ...whatsappUsage,
+                drafts: whatsappDrafts(interactions),
+              }
+            }
           />
 
           <Card>

@@ -56,6 +56,7 @@ export function PersonForm({ organizations, stages, lists, initial = {} }: Perso
     control,
     handleSubmit,
     setValue,
+    setError: setFieldError,
     formState: { errors },
   } = useForm<PersonInput>({
     resolver: zodResolver(personSchema),
@@ -103,6 +104,11 @@ export function PersonForm({ organizations, stages, lists, initial = {} }: Perso
       setIsLoading(false)
     }
 
+    if (result.field === 'phone') {
+      // Numéro invalide : l'erreur s'affiche sous le champ Téléphone
+      setFieldError('phone', { message: result.error })
+      return
+    }
     if (!result.success || !result.data) {
       setError(result.error || 'Une erreur est survenue')
       if (result.data?.companyId) setExistingId(result.data.companyId)
@@ -191,6 +197,7 @@ export function PersonForm({ organizations, stages, lists, initial = {} }: Perso
               <div className="space-y-2">
                 <Label htmlFor="phone">Téléphone</Label>
                 <Input id="phone" type="tel" placeholder="06 12 34 56 78" disabled={isLoading} {...register('phone')} />
+                {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
               </div>
             </div>
           </section>

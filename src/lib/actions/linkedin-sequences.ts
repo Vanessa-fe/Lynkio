@@ -349,18 +349,32 @@ export async function advanceLinkedinSequence(sequenceId: string, step: Linkedin
 }
 
 /**
- * Active ou coupe l'envoi automatique par l'extension. L'activer efface une pause éventuelle.
+ * Active ou coupe l'envoi automatique par l'extension. L'activer efface une pause éventuelle, et demande
+ * que l'utilisatrice ait accepté le risque de restriction de son compte LinkedIn (case cochée dans la
+ * fenêtre d'avertissement) : la date d'acceptation est enregistrée, preuve que l'information a été donnée.
  */
-export async function setLinkedinAutomation(enabled: boolean): Promise<ActionResult> {
+export async function setLinkedinAutomation(enabled: boolean, riskAccepted = false): Promise<ActionResult> {
   try {
     const user = await getAuthUser()
     if (!user) return { success: false, error: 'Vous devez être connecté' }
+    if (enabled && !riskAccepted) {
+      return {
+        success: false,
+        error: 'Cochez d’abord la case qui confirme que vous avez compris le risque pour votre compte LinkedIn',
+      }
+    }
 
     const supabase = await createClient()
     const { error } = await supabase
       .from('linkedin_automation')
       .upsert(
-        { user_id: user.id, enabled, ...(enabled ? { paused_reason: null, paused_at: null, paused_until: null } : {}) },
+        {
+          user_id: user.id,
+          enabled,
+          ...(enabled
+            ? { paused_reason: null, paused_at: null, paused_until: null, risk_accepted_at: new Date().toISOString() }
+            : {}),
+        },
         { onConflict: 'user_id' }
       )
 

@@ -11,6 +11,8 @@ const MAX_EMAIL_WORDS = 180
 const MAX_LINKEDIN_LENGTH = 300
 // Relances : 200 à 350 caractères demandés
 const MAX_FOLLOW_UP_LENGTH = 400
+// WhatsApp : 3 à 5 phrases, moins de 600 caractères demandés
+const MAX_WHATSAPP_LENGTH = 600
 
 export type CheckedDraft = {
   subject: string | null
@@ -75,6 +77,10 @@ export function checkDraft(
       warnings.push(`Lien à vérifier : ${url} (Sophie ne l'a pas reçu, elle a pu l'inventer).`)
     }
   }
+  // Un lien dans un premier message WhatsApp d'un numéro inconnu fait penser à du spam
+  if (options.channel === 'whatsapp' && urlsIn(text).length > 0) {
+    warnings.push('Retirez le lien : dans un premier message WhatsApp, il fait penser à du spam.')
+  }
 
   if (/\d[\d\s.,]*\s?(?:€|euros?\b|k€)|\bTJM\b|\btarifs?\b|\bprix\b/i.test(text)) {
     warnings.push('Le message parle de prix : mieux vaut en parler après un premier échange.')
@@ -97,6 +103,10 @@ export function checkDraft(
     if (words > MAX_EMAIL_WORDS) warnings.push(`E-mail long (${words} mots) : un premier e-mail se lit mieux sous 150 mots.`)
     if (!subject) warnings.push('Objet manquant.')
     else if (subject.length > MAX_SUBJECT_LENGTH) warnings.push(`Objet long (${subject.length} caractères).`)
+  } else if (options.channel === 'whatsapp') {
+    if (body.length > MAX_WHATSAPP_LENGTH) {
+      warnings.push(`Message long pour WhatsApp (${body.length} caractères) : visez moins de 600, en 3 à 5 phrases.`)
+    }
   } else if (options.followUp) {
     if (body.length > MAX_FOLLOW_UP_LENGTH) {
       warnings.push(`Message long pour LinkedIn (${body.length} caractères) : visez moins de 350.`)

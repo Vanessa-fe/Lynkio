@@ -1,6 +1,7 @@
-// Sophie prépare un premier message (e-mail ou LinkedIn) pour une entreprise.
+// Sophie prépare un premier message (e-mail, LinkedIn ou WhatsApp) pour une entreprise.
 //
-// POST, JSON : { companyId, channel: "email" | "linkedin_message", contactId?, instructions?, situation? }
+// POST, JSON : { companyId, channel: "email" | "linkedin_message" | "whatsapp", contactId?, instructions?, situation? }
+// WhatsApp (offre Pro) : contactId obligatoire, et le contact doit avoir un numéro de téléphone.
 // situation "after_invitation" : message LinkedIn envoyé juste après l'acceptation d'une invitation sans note.
 // sequence true (LinkedIn) : Sophie écrit aussi les deux relances ; la réponse a alors followUp1 et followUp2.
 // Réponse : { subject, body, angle, signal, warnings }. Rien n'est enregistré ici :
@@ -154,7 +155,7 @@ Deno.serve(async (request) => {
 
   const companyId = typeof input.companyId === 'string' && UUID.test(input.companyId) ? input.companyId : null
   const channel: Channel | null =
-    input.channel === 'email' || input.channel === 'linkedin_message' ? input.channel : null
+    input.channel === 'email' || input.channel === 'linkedin_message' || input.channel === 'whatsapp' ? input.channel : null
   const contactId = typeof input.contactId === 'string' && UUID.test(input.contactId) ? input.contactId : null
   // Ton choisi dans la fenêtre de rédaction (sobre par défaut)
   const tone: Tone = input.tone === 'warm' || input.tone === 'direct' ? input.tone : 'sober'
@@ -164,6 +165,7 @@ Deno.serve(async (request) => {
   const sequence = input.sequence === true && channel === 'linkedin_message'
 
   if (!companyId || !channel) return json({ error: 'Entreprise ou canal invalide' }, 400)
+  if (channel === 'whatsapp' && !contactId) return json({ error: 'Choisissez à qui écrire sur WhatsApp' }, 400)
 
   const authorization = request.headers.get('Authorization') ?? ''
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
@@ -180,8 +182,8 @@ Deno.serve(async (request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  // Messages LinkedIn et relances : offre Pro ; premiers e-mails : toutes les offres
-  const denial = planDenial(await accountPlan(admin, user.id), channel === 'linkedin_message')
+  // Messages LinkedIn, WhatsApp et relances : offre Pro ; premiers e-mails : toutes les offres
+  const denial = planDenial(await accountPlan(admin, user.id), channel !== 'email')
   if (denial) return json({ error: denial.message, code: denial.code }, 403)
 
   try {
@@ -203,7 +205,7 @@ Deno.serve(async (request) => {
       contactId
         ? supabase
             .from('company_contacts')
-            .select('first_name, last_name, role, opted_out_at, email_source')
+            .select('first_name, last_name, role, opted_out_at, email_source, phone')
             .eq('id', contactId)
             .eq('company_id', companyId)
             .maybeSingle()
@@ -233,7 +235,7 @@ Deno.serve(async (request) => {
         .eq('company_id', companyId)
         .eq('direction', 'outgoing')
         .eq('status', 'done')
-        .in('type', ['email', 'linkedin_message'])
+        .in('type', ['email', 'linkedin_message', 'whatsapp'])
         .order('occurred_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -248,6 +250,9 @@ Deno.serve(async (request) => {
     // RGPD : une personne qui a refusé d'être contactée ne l'est plus
     if (contact.data?.opted_out_at) {
       return json({ error: 'Cette personne a demandé à ne plus être contactée' }, 409)
+    }
+    if (channel === 'whatsapp' && !contact.data?.phone) {
+      return json({ error: 'Ajoutez d\'abord le numéro de téléphone de ce contact' }, 409)
     }
 
     const now = Date.now()

@@ -8,11 +8,14 @@ import { captureServerEvent } from '@/lib/posthog-server'
 import { normalizeLinkedinProfileUrl, personSchema, type PersonInput } from '@/lib/validations/company'
 import { findContactByLinkedin } from '@/lib/queries/people'
 import { addContactsToList } from '@/lib/actions/prospect-lists'
+import { INVALID_PHONE_MESSAGE, toE164 } from '@/lib/phone'
 
 type ActionResult<T = void> = {
   success: boolean
   error?: string
   data?: T
+  // Champ en cause, pour afficher l'erreur sous ce champ du formulaire
+  field?: 'phone'
 }
 
 const UNIQUE_VIOLATION = '23505'
@@ -120,6 +123,17 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
       companyId = await findOrganizationByName(supabase, user.id, validated.companyName!)
     }
 
+    // Téléphone au format E.164, lu selon le pays de l'entreprise (une fiche créée ici est en France),
+    // vérifié avant de créer quoi que ce soit
+    let phone: string | null = null
+    if (validated.phone) {
+      const { data: company } = companyId
+        ? await supabase.from('companies').select('country').eq('id', companyId).maybeSingle()
+        : { data: null }
+      phone = toE164(validated.phone, company?.country ?? 'FR')
+      if (!phone) return { success: false, error: INVALID_PHONE_MESSAGE, field: 'phone' }
+    }
+
     if (!companyId) {
       const isIndividual = validated.companyMode === 'none'
       const { data, error } = await supabase
@@ -154,7 +168,7 @@ export async function createPerson(input: PersonInput): Promise<ActionResult<{ c
         email: validated.email,
         email_source: validated.email ? (validated.emailSource ?? 'manual') : null,
         email_confidence: validated.email ? (validated.emailConfidence ?? null) : null,
-        phone: validated.phone,
+        phone,
         linkedin_url: normalizeLinkedinProfileUrl(validated.linkedinUrl) ?? validated.linkedinUrl,
         notes: validated.notes,
         // RGPD : d'où vient la donnée

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,13 +13,16 @@ import { messageSettingsSchema, type MessageSettingsInput } from '@/lib/validati
 import { saveMessageSettings } from '@/lib/actions/user-profile'
 import { CONNECTION_ERROR } from '@/lib/constants/errors'
 import { useToast } from '@/lib/hooks/use-toast'
+import { WHATSAPP_MAX_DAILY_LIMIT, WHATSAPP_MIN_DAILY_LIMIT, WHATSAPP_SAFE_DAILY_LIMIT } from '@/lib/whatsapp'
 
 interface MessageSettingsFormProps {
   pitch: string | null
   signature: string | null
+  // Plafond WhatsApp du jour ; null : pas d'offre Pro, réglage masqué
+  whatsappDailyLimit: number | null
 }
 
-export function MessageSettingsForm({ pitch, signature }: MessageSettingsFormProps) {
+export function MessageSettingsForm({ pitch, signature, whatsappDailyLimit }: MessageSettingsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
@@ -31,10 +35,15 @@ export function MessageSettingsForm({ pitch, signature }: MessageSettingsFormPro
     formState: { errors, isDirty },
   } = useForm<MessageSettingsInput>({
     resolver: zodResolver(messageSettingsSchema),
-    defaultValues: { pitch: pitch ?? '', signature: signature ?? '' },
+    defaultValues: {
+      pitch: pitch ?? '',
+      signature: signature ?? '',
+      ...(whatsappDailyLimit !== null ? { whatsappDailyLimit } : {}),
+    },
   })
 
   const pitchLength = useWatch({ control, name: 'pitch' })?.length ?? 0
+  const dailyLimit = useWatch({ control, name: 'whatsappDailyLimit' })
 
   const onSubmit = async (data: MessageSettingsInput) => {
     setIsSaving(true)
@@ -102,6 +111,43 @@ export function MessageSettingsForm({ pitch, signature }: MessageSettingsFormPro
           {errors.signature && <p className="text-sm text-destructive">{errors.signature.message}</p>}
         </CardContent>
       </Card>
+
+      {whatsappDailyLimit !== null && (
+        <Card>
+          <CardHeader>
+            <CardTitle>WhatsApp</CardTitle>
+            <CardDescription>
+              WhatsApp peut bloquer un numéro quand des destinataires le signalent. Restez sous{' '}
+              {WHATSAPP_SAFE_DAILY_LIMIT} messages par jour, surtout avec un numéro récent.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Label htmlFor="whatsappDailyLimit">Messages WhatsApp par jour</Label>
+            <Input
+              id="whatsappDailyLimit"
+              type="number"
+              inputMode="numeric"
+              min={WHATSAPP_MIN_DAILY_LIMIT}
+              max={WHATSAPP_MAX_DAILY_LIMIT}
+              step={1}
+              className="w-28"
+              disabled={isSaving}
+              {...register('whatsappDailyLimit', { valueAsNumber: true })}
+            />
+            {errors.whatsappDailyLimit ? (
+              <p className="text-sm text-destructive">{errors.whatsappDailyLimit.message}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                De {WHATSAPP_MIN_DAILY_LIMIT} à {WHATSAPP_MAX_DAILY_LIMIT}, 15 par défaut. Le compteur repart à zéro à
+                minuit.
+                {typeof dailyLimit === 'number' && dailyLimit > WHATSAPP_SAFE_DAILY_LIMIT && (
+                  <span className="text-amber-700 dark:text-amber-400"> Au-delà de {WHATSAPP_SAFE_DAILY_LIMIT}, le risque de blocage augmente.</span>
+                )}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="sticky bottom-20 md:bottom-4 z-10 flex items-center gap-3 rounded-lg border bg-background/95 p-3 shadow-sm backdrop-blur">
         <Button type="submit" disabled={isSaving || !isDirty}>

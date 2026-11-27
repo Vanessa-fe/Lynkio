@@ -14,7 +14,7 @@ import { buildSophieWelcome, NO_REPLY_DAYS, type SophieWelcome, type SuggestionF
 const DAY_MS = 24 * 60 * 60 * 1000
 // Au-delà, un envoi sans réponse n'est plus une relance utile à proposer
 const NO_REPLY_WINDOW_DAYS = 45
-const SENT_TYPES = ['email', 'linkedin_message']
+const SENT_TYPES = ['email', 'linkedin_message', 'whatsapp']
 
 /** Fin de la journée en cours, heure de Paris */
 function endOfParisDay(now: Date): Date {

@@ -82,6 +82,13 @@ export const messageSettingsSchema = z.object({
     .nullable()
     .optional()
     .transform((value) => value || null),
+  // Plafond de messages WhatsApp par jour (offre Pro) ; absent : inchangé
+  whatsappDailyLimit: z
+    .number({ error: 'Indiquez un nombre entre 1 et 50' })
+    .int('Indiquez un nombre entier')
+    .min(1, 'Au moins 1 message par jour')
+    .max(50, 'Au plus 50 messages par jour')
+    .optional(),
 })
 
 export type OnboardingInput = z.infer<typeof onboardingSchema>

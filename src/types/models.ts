@@ -69,6 +69,7 @@ export type EmailSource = 'manual' | 'hunter' | 'website' | 'linkedin_post' | 'o
 export type CompanyInteractionType =
   | 'email'
   | 'linkedin_message'
+  | 'whatsapp'
   | 'call'
   | 'meeting'
   | 'note'

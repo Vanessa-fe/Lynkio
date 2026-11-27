@@ -83,6 +83,7 @@ export function CompanyContactDialog({
     setValue,
     getValues,
     reset,
+    setError: setFieldError,
   } = useForm<CompanyContactInput>({
     resolver: zodResolver(companyContactSchema),
     defaultValues: toFormValues(companyId, contact),
@@ -166,7 +167,9 @@ export function CompanyContactDialog({
     setIsLoading(false)
 
     if (!result.success) {
-      setError(result.error || 'Une erreur est survenue')
+      // Numéro invalide : l'erreur s'affiche sous le champ Téléphone
+      if (result.field === 'phone') setFieldError('phone', { message: result.error })
+      else setError(result.error || 'Une erreur est survenue')
       return
     }
 
@@ -314,7 +317,8 @@ export function CompanyContactDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Téléphone</Label>
-              <Input id="phone" type="tel" disabled={isLoading} {...register('phone')} />
+              <Input id="phone" type="tel" placeholder="06 12 34 56 78" disabled={isLoading} {...register('phone')} />
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
             </div>
           </div>
 

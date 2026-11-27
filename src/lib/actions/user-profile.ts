@@ -255,7 +255,7 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
 }
 
 /**
- * Présentation et signature utilisées par Sophie pour rédiger les messages
+ * Présentation et signature utilisées par Sophie pour rédiger les messages, et plafond WhatsApp du jour
  */
 export async function saveMessageSettings(input: MessageSettingsInput): Promise<ActionResult> {
   try {
@@ -270,7 +270,11 @@ export async function saveMessageSettings(input: MessageSettingsInput): Promise<
 
     const { error } = await supabase
       .from('user_profiles')
-      .update({ message_pitch: validated.pitch, message_signature: validated.signature })
+      .update({
+        message_pitch: validated.pitch,
+        message_signature: validated.signature,
+        ...(validated.whatsappDailyLimit !== undefined ? { whatsapp_daily_limit: validated.whatsappDailyLimit } : {}),
+      })
       .eq('id', user.id)
 
     if (error) {

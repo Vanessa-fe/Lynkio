@@ -906,6 +906,7 @@ export type Database = {
           post_search_at: string | null
           post_search_enabled: boolean
           post_search_error: string | null
+          risk_accepted_at: string | null
           updated_at: string
           user_id: string
         }
@@ -920,6 +921,7 @@ export type Database = {
           post_search_at?: string | null
           post_search_enabled?: boolean
           post_search_error?: string | null
+          risk_accepted_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -934,6 +936,7 @@ export type Database = {
           post_search_at?: string | null
           post_search_enabled?: boolean
           post_search_error?: string | null
+          risk_accepted_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1700,6 +1703,7 @@ export type Database = {
           profession_key: string | null
           selected_theme: string | null
           updated_at: string | null
+          whatsapp_daily_limit: number
         }
         Insert: {
           sophie_auto_open?: boolean
@@ -1718,6 +1722,7 @@ export type Database = {
           profession_key?: string | null
           selected_theme?: string | null
           updated_at?: string | null
+          whatsapp_daily_limit?: number
         }
         Update: {
           sophie_auto_open?: boolean
@@ -1736,6 +1741,7 @@ export type Database = {
           profession_key?: string | null
           selected_theme?: string | null
           updated_at?: string | null
+          whatsapp_daily_limit?: number
         }
         Relationships: [
           {

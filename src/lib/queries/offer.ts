@@ -58,7 +58,7 @@ export async function getGoalProgress(): Promise<GoalProgress | null> {
       .eq('user_id', user.id)
       .eq('status', 'done')
       .eq('direction', 'outgoing')
-      .in('type', ['email', 'linkedin_message', 'call'])
+      .in('type', ['email', 'linkedin_message', 'whatsapp', 'call'])
       .gte('occurred_at', parisWeekStart(now).toISOString()),
     supabase
       .from('company_stage_events')

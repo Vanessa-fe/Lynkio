@@ -103,7 +103,7 @@ export async function deleteCompanyInteraction(
  */
 export async function logContactExchange(
   contactId: string,
-  exchange: { type: 'linkedin_message' | 'email'; direction: 'outgoing' | 'incoming' }
+  exchange: { type: 'linkedin_message' | 'email' | 'whatsapp'; direction: 'outgoing' | 'incoming' }
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
@@ -164,6 +164,17 @@ export async function markCompanyInteractionSent(
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
+
+    // Un brouillon WhatsApp se confirme depuis le contact (« C'est envoyé »), qui tient le plafond du jour
+    const { data: draft } = await supabase
+      .from('company_interactions')
+      .select('type')
+      .eq('id', interactionId)
+      .eq('company_id', companyId)
+      .maybeSingle()
+    if (draft?.type === 'whatsapp') {
+      return { success: false, error: 'Confirmez ce message depuis le bloc WhatsApp du contact' }
+    }
 
     const { error } = await supabase
       .from('company_interactions')
